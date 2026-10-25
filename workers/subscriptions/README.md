@@ -28,6 +28,24 @@ node --check workers/subscriptions/src/index.mjs
 node --test workers/subscriptions/security.test.mjs
 ```
 
+## Photo diagnosis via OpenAI Responses API
+
+The branch adds `POST /api/photo-diagnosis`. It requires the same valid Bearer token as billing APIs, and a server-recomputed active `pro` or `warsztat` subscription. Never accept a plan claim, image permission, or token from frontend `localStorage` as authorization.
+
+Required staging-only secret:
+- `OPENAI_API_KEY` — provision with Cloudflare secret management / Wrangler in the staging environment. Never put it in HTML, source control, chat, or `[vars]`.
+- `OPENAI_VISION_MODEL` is a non-secret variable and defaults to `gpt-4.1-mini`.
+
+Limits in the branch:
+- up to 3 JPEG/PNG/WebP images;
+- up to 1.5 MiB per image, 5 MiB request body;
+- text fields are length-limited;
+- 8 calls per authenticated account per hour through the D1 fixed-window limiter;
+- a 45-second upstream timeout and generic error messages (no upstream body / key is returned to the client);
+- Responses API request sets `store: false`. This does not replace configuring account-side OpenAI usage/budget limits or reviewing applicable data-handling requirements.
+
+This endpoint has **not** been deployed or tested with a real OpenAI key by this branch. It intentionally fails closed if the key, current D1 rate-limit table, active subscription, or other required configuration is missing. The static frontend only sends images through `billing.js` and the Cloudflare API; the obsolete Netlify endpoint `/.netlify/functions/photo-diagnosis` is no longer used by this branch.
+
 ## Server-side protection
 
 - Anonymous registration: maximum 10 requests per client IP per 15-minute fixed window.
