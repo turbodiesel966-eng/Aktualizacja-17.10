@@ -21,7 +21,10 @@ STRIPE_PRICE_PRO_MONTHLY = "price_REPLACE_WITH_TEST_PRICE"
 STRIPE_PRICE_PRO_YEARLY = "price_REPLACE_WITH_TEST_PRICE"
 STRIPE_PRICE_WARSZTAT_MONTHLY = "price_REPLACE_WITH_TEST_PRICE"
 STRIPE_PRICE_WARSZTAT_YEARLY = "price_REPLACE_WITH_TEST_PRICE"
+OPENAI_VISION_MODEL = "gpt-4.1-mini"
 
-# Add these separately with `wrangler secret put`, using test credentials only:
+# Do not enable the staging API until the D1 migrations, origin, Stripe test prices and webhook are verified.
+# Add secrets separately with `wrangler secret put` from this staging environment only:
 # STRIPE_SECRET_KEY
 # STRIPE_WEBHOOK_SECRET
+# OPENAI_API_KEY (needed only for the photo-diagnosis endpoint)
