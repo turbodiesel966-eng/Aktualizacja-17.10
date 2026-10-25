@@ -1452,7 +1452,7 @@ function renderLocked(min,label,backJs){
 }
 const NAV_MIN={parts:'pro',obd:'pro',models:'pro',clients:'warsztat',log:'warsztat',checklist:'warsztat'};
 const NAV_LABEL={parts:'Dobór części OEM i zamienników',obd:'Baza kodów OBD',models:'Profile konkretnych silników',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe'};
-/* ===== Funkcje warsztatu ===== *//* ===== Funkcje warsztatu ===== */
+/* ===== Funkcje warsztatu ===== */
 function workshopInfo(){const w=load('naprawnik_workshop');return (Array.isArray(w)&&w[0])||{};}
 function editWorkshop(){
   if(!hasPlan('warsztat')){renderLocked('warsztat','Dane warsztatu na karcie klienta','renderSettings()');return;}
