@@ -665,6 +665,10 @@ async function checkout(request, env, auth) {
 async function createBillingPortalSession(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
+  if (env.STRIPE_EXPECT_LIVEMODE !== "true" && env.STRIPE_EXPECT_LIVEMODE !== "false") {
+    return err("Stripe mode is not configured for this environment", 503);
+  }
+  const expectedLivemode = env.STRIPE_EXPECT_LIVEMODE === "true";
   const appBase = env.APP_BASE_URL;
   let parsedAppBase;
   try { parsedAppBase = new URL(appBase || ""); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
@@ -679,6 +683,22 @@ async function createBillingPortalSession(request, env, auth) {
     "SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1"
   ).bind(auth.userId).first();
   if (!customer?.stripe_customer_id) return err("No Stripe billing customer is linked to this account", 409);
+
+  // Verify the customer belongs to the configured Stripe mode before opening a billing portal.
+  let customerResponse;
+  try {
+    customerResponse = await fetch("https://api.stripe.com/v1/customers/" + encodeURIComponent(customer.stripe_customer_id), {
+      headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+    });
+  } catch {
+    return err("Could not verify the Stripe customer. Please retry.", 502);
+  }
+  let stripeCustomer = null;
+  try { stripeCustomer = await customerResponse.json(); } catch { /* Stripe errors are not exposed to callers. */ }
+  if (!customerResponse.ok || stripeCustomer?.id !== customer.stripe_customer_id ||
+      stripeCustomer?.livemode !== expectedLivemode) {
+    return err("Stripe customer does not match this environment. Billing portal was not opened.", 503);
+  }
 
   const form = new URLSearchParams();
   form.set("customer", customer.stripe_customer_id);
@@ -1064,6 +1084,6 @@ export default {
   },
 };
 
-export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, readBodyLimited, supportedImageBytes, responseOutputText };
+export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText };
 
 
