@@ -45,6 +45,28 @@
     try { return localStorage.getItem(TOKEN_KEY) || ((JSON.parse(localStorage.getItem('naprawnik_license') || 'null') || {}).token) || ''; }
     catch (_) { return ''; }
   }
+  function friendlyError(error, action) {
+    const message = String(error && error.message || error || '');
+    const status = Number(error && error.status || 0);
+    if (message.includes('Płatności są wyłączone dla tej domeny')) return message;
+    if (status === 401 || /\\bunauthorized\\b|user not found|invalid token|token expired/i.test(message)) {
+      return 'Klucz dostępu został odrzucony lub wygasł. Zaloguj się ponownie albo odzyskaj poprzedni klucz; nie utworzono nowego konta automatycznie.';
+    }
+    if (status === 403 || /origin not allowed|active subscription for the required plan is needed/i.test(message)) {
+      return 'Serwer odmówił dostępu. Sprawdź, czy otwierasz oficjalną aplikację i czy Twój plan obejmuje tę funkcję.';
+    }
+    if (status === 409 || /active subscription already exists|checkout.*already|different plan is already open|checkout was completed|another checkout session/i.test(message)) {
+      return 'Masz już aktywną subskrypcję albo otwartą sesję zakupu. Odśwież status planu lub zarządzaj istniejącą subskrypcją.';
+    }
+    if (status === 429) return 'Wykonano zbyt wiele prób w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.';
+    if (status === 503 || /production service is not enabled|stripe is not configured|price is not configured|checkout return urls/i.test(message)) {
+      return 'Płatności są chwilowo niedostępne albo wymagają konfiguracji. Spróbuj ponownie później.';
+    }
+    if (/failed to fetch|networkerror|load failed|could not reach stripe|network request failed/i.test(message)) {
+      return 'Nie udało się połączyć z serwerem płatności. Sprawdź połączenie internetowe i spróbuj ponownie.';
+    }
+    return 'Nie udało się ' + (action || 'wykonać operacji') + '. Spróbuj ponownie później.';
+  }
   function esc(value) {
     if (typeof escapeHtml === 'function') return escapeHtml(String(value == null ? '' : value));
     return String(value == null ? '' : value).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
@@ -142,7 +164,7 @@
       if (!silent) {
         const message = error.status === 401
           ? 'Klucz dostępu został odrzucony. Nie utworzono nowego konta. Sprawdź zapisany klucz lub odzyskaj poprzedni dostęp.'
-          : 'Nie udało się sprawdzić abonamentu: ' + (error.message || error);
+          : friendlyError(error, 'sprawdzić abonamentu');
         alert(message);
       }
       return 'amator';
@@ -185,7 +207,7 @@
         window.renderPlans();
         return;
       }
-      alert('Nie udało się rozpocząć zakupu: ' + (error.message || error));
+      alert(friendlyError(error, 'rozpocząć zakupu'));
     }
   }
 
@@ -235,7 +257,7 @@
       const tier = savePlan(data, token);
       alert(tier === 'amator' ? 'Klucz działa, ale konto nie ma aktywnego abonamentu.' : 'Dostęp ' + NAMES[tier] + ' został aktywowany.');
     } catch (error) {
-      alert('Nie udało się sprawdzić klucza: ' + (error.message || error));
+      alert(friendlyError(error, 'zweryfikować klucz dostępu'));
     }
     renderPlansBridge();
   };
@@ -259,7 +281,7 @@
       if (!data.url || !/^https:\/\/billing\.stripe\.com\//i.test(data.url)) throw new Error('Stripe nie zwrócił poprawnego panelu subskrypcji.');
       window.location.assign(data.url);
     } catch (error) {
-      alert('Nie udało się otworzyć panelu subskrypcji: ' + (error.message || error));
+      alert(friendlyError(error, 'otworzyć panelu subskrypcji'));
     }
   };
   document.addEventListener('click', async event => {
