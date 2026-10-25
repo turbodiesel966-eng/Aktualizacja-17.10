@@ -363,6 +363,7 @@
       metric('Sesje 24 godz.', stats.sessions24h, 'Ponowne otwarcie karty może tworzyć nową sesję') +
       metric('Unikalne przeglądarki · 7 dni', stats.uniqueBrowsers7dEstimate, 'Szacunek, nie dokładna liczba osób') +
       '</div><p style="font-size:11px;line-height:1.5;color:var(--dim)">' + esc(stats.note || '') + '</p><button class="btn" onclick="window.npOpenAdminPanel()">↻ Odśwież statystyki</button></div>' +
+      '<div class="card"><h2>🔎 Diagnostyka bramki płatności</h2><p style="font-size:12px;color:var(--dim);line-height:1.5">Sprawdza połączenie serwera ze Stripe i cztery skonfigurowane ceny. To jest odczyt — nie tworzy Checkoutu ani nie pobiera pieniędzy.</p><button class="btn" type="button" onclick="window.npCheckStripeConfig()">Sprawdź Stripe bez płatności</button><div id="npAdminStripeDiag" style="font-size:12px;line-height:1.6;margin-top:10px"></div></div>' +
       '<div class="card"><h2>🎟️ Utwórz kod promocyjny</h2><label for="npPromoTier">Pakiet</label><select id="npPromoTier"><option value="pro">PRO</option><option value="warsztat">WARSZTAT</option></select><label for="npPromoDuration">Czas dostępu</label><select id="npPromoDuration"><option value="3">3 dni</option><option value="7">7 dni</option></select><div class="grid2"><div><label for="npPromoMax">Maks. użyć</label><input id="npPromoMax" type="number" min="1" max="10000" value="1"></div><div><label for="npPromoExpires">Ważność kodu (dni)</label><input id="npPromoExpires" type="number" min="1" max="365" value="14"></div></div><label for="npPromoLabel">Opis kampanii (opcjonalnie)</label><input id="npPromoLabel" maxlength="120" placeholder="np. testy znajomych / konkurs"><button class="btn" onclick="window.npCreatePromo()">＋ Generuj kod</button>' +
       (newCode ? '<div class="entry" style="border-color:var(--hero)"><b>Nowy kod — pokaż go odbiorcy tylko teraz</b><input id="npPromoCreatedCode" readonly value="' + esc(newCode) + '"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'npPromoCreatedCode\').value).then(()=>alert(\'Skopiowano kod.\')).catch(()=>alert(\'Skopiuj kod ręcznie.\'))">Skopiuj kod</button></div>' : '') +
       '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div><div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
@@ -394,6 +395,47 @@
       alert(friendlyError(error, 'aktywować panelu ADMINA') + (error.message ? '\n' + error.message : ''));
     }
   };
+  window.npCheckStripeConfig = async function() {
+    const root = document.getElementById('npAdminStripeDiag');
+    if (!root) return;
+    root.textContent = 'Sprawdzam konfigurację po stronie serwera…';
+    try {
+      const token = tokenGet();
+      if (!token) throw new Error('Zaloguj się na konto administratora.');
+      const result = await api('/api/admin/stripe-diagnostics', undefined, 'GET', token);
+      const reasonLabels = {
+        ok: 'OK',
+        missing_price_id: 'Brak identyfikatora ceny w konfiguracji',
+        missing_secret: 'Brak sekretu Stripe',
+        network_error: 'Serwer nie może połączyć się ze Stripe',
+        stripe_key_rejected: 'Stripe odrzucił klucz API — sprawdź LIVE/TEST',
+        stripe_api_error: 'Stripe zwrócił błąd API',
+        price_inactive_or_mismatch: 'Cena nieaktywna lub inny identyfikator',
+        livemode_mismatch: 'Niezgodny tryb LIVE/TEST',
+        currency_mismatch: 'Niezgodna waluta (wymagane PLN)',
+        interval_mismatch: 'Niezgodny okres rozliczenia',
+        invalid_amount: 'Nieprawidłowa kwota'
+      };
+      const row = (label, ok, detail) => '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>' + (ok ? '✅ ' : '❌ ') + esc(label) + '</b><div style="color:var(--dim)">' + esc(detail) + '</div></div>';
+      let output = row('Worker włączony', result.productionEnabled === true, result.productionEnabled ? 'PRODUCTION_ENABLED = true' : 'PRODUCTION_ENABLED nie jest true') +
+        row('Tryb Stripe', result.expectedMode === 'live', 'Oczekiwany tryb: ' + String(result.expectedMode || 'brak')) +
+        row('Sekret Stripe istnieje', result.stripeSecretConfigured === true, result.stripeSecretConfigured ? 'Sekret jest skonfigurowany; jego treść nie jest wyświetlana.' : 'STRIPE_SECRET_KEY nie jest skonfigurowany') +
+        row('Adresy powrotu Checkout', result.checkoutReturnUrlsValid === true, result.checkoutReturnUrlsValid ? 'HTTPS i zgodny adres aplikacji' : 'Adresy powrotu są nieprawidłowe lub niezgodne z adresem aplikacji') +
+        row('Adres aplikacji', result.appBaseConfigured === true, result.appBaseConfigured ? 'APP_BASE_URL jest ustawiony' : 'Brak APP_BASE_URL');
+      (Array.isArray(result.prices) ? result.prices : []).forEach(price => {
+        const good = price.valid === true;
+        let detail = reasonLabels[price.reason] || 'Wynik: ' + String(price.reason || 'nieznany');
+        if (price.stripeHttpStatus) detail += ' · HTTP ' + price.stripeHttpStatus;
+        if (price.currency && price.interval) detail += ' · ' + price.currency.toUpperCase() + ' · ' + price.interval + (price.intervalCount > 1 ? ' × ' + price.intervalCount : '');
+        output += row(price.label || price.key, good, detail);
+      });
+      output = row('Wynik całościowy', result.ready === true, result.ready ? 'Konfiguracja jest gotowa do uruchomienia płatności.' : 'Konfiguracja wymaga poprawki; niżej widać konkretny powód.') + output;
+      root.innerHTML = output + '<div style="color:var(--dim);font-size:11px;margin-top:8px">Sprawdzono: ' + esc(result.checkedAt || '') + '. Wykonano wyłącznie żądania GET do API Stripe.</div>';
+    } catch (error) {
+      root.textContent = friendlyError(error, 'sprawdzić konfiguracji Stripe') + (error && error.status ? ' (HTTP ' + error.status + ')' : '');
+    }
+  };
+
   window.npCreatePromo = async function() {
     try {
       const tier = document.getElementById('npPromoTier')?.value;
