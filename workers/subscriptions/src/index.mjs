@@ -916,7 +916,7 @@ async function trackVisit(request, env) {
   if (!isString(body?.visitorId, 128) || !isString(body?.sessionId, 128)) return err("Invalid analytics identifiers", 400);
   const visitorHash = await sha256Hex("naprawnik-visitor:" + body.visitorId);
   const sessionHash = await sha256Hex("naprawnik-session:" + body.sessionId);
-  const limited = await enforceRateLimit(request, env, "analytics-visit", visitorHash, RATE_LIMITS.analyticsVisits);
+  const limited = await enforceRateLimit(request, env, "analytics-visit", request.headers.get("CF-Connecting-IP") || "unknown", RATE_LIMITS.analyticsVisits);
   if (limited) return limited;
   let userId = null;
   if (request.headers.get("Authorization")) {
