@@ -666,7 +666,15 @@ async function createBillingPortalSession(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
   const appBase = env.APP_BASE_URL;
-  if (!appBase || !/^https:\/\//.test(appBase)) return err("APP_BASE_URL must be an HTTPS URL", 500);
+  let parsedAppBase;
+  try { parsedAppBase = new URL(appBase || ""); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
+  if (parsedAppBase.protocol !== "https:" || parsedAppBase.username || parsedAppBase.password) {
+    return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
+  }
+  const appRoot = appBase.replace(/\/$/, "");
+  const portalReturnUrl = safeReturnUrl(`${appRoot}/?billing=return`, `${appRoot}/?billing=return`, appBase);
+  if (!portalReturnUrl) return err("Billing portal return URL must use the APP_BASE_URL origin", 500);
+
   const customer = await env.DB.prepare(
     "SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1"
   ).bind(auth.userId).first();
@@ -674,7 +682,7 @@ async function createBillingPortalSession(request, env, auth) {
 
   const form = new URLSearchParams();
   form.set("customer", customer.stripe_customer_id);
-  form.set("return_url", `${appBase.replace(/\/$/, "")}/?billing=return`);
+  form.set("return_url", portalReturnUrl);
   form.set("locale", "pl");
   let response;
   try {
