@@ -290,6 +290,137 @@
     }
   };
 
+  function secureRandomId() {
+    if (!window.crypto || typeof window.crypto.getRandomValues !== 'function') return '';
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  }
+  function trackVisit() {
+    if (!API) return;
+    try {
+      let visitorId = localStorage.getItem('naprawnik_visitor_id') || '';
+      if (!visitorId) {
+        visitorId = secureRandomId();
+        if (!visitorId) return;
+        localStorage.setItem('naprawnik_visitor_id', visitorId);
+      }
+      let sessionId = sessionStorage.getItem('naprawnik_session_id') || '';
+      if (!sessionId) {
+        sessionId = secureRandomId();
+        if (!sessionId) return;
+        sessionStorage.setItem('naprawnik_session_id', sessionId);
+      }
+      const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+      const token = tokenGet();
+      if (token) headers.Authorization = 'Bearer ' + token;
+      fetch(API + '/api/analytics/visit', {
+        method: 'POST', headers,
+        body: JSON.stringify({ visitorId, sessionId }),
+        credentials: 'omit', cache: 'no-store', keepalive: true
+      }).catch(() => {});
+    } catch (_) { /* Analytics must never break normal app startup. */ }
+  }
+
+  function adminDate(seconds) {
+    const value = Number(seconds || 0);
+    return value > 0 ? new Date(value * 1000).toLocaleString('pl-PL') : '—';
+  }
+  async function fetchAdminData() {
+    const token = tokenGet();
+    if (!token) throw new Error('Brak klucza dostępu do konta. Otwórz Plany, aby zarejestrować konto, lub aktywuj panel kluczem administratora.');
+    const [stats, promos] = await Promise.all([
+      api('/api/admin/stats', undefined, 'GET', token),
+      api('/api/admin/promos', undefined, 'GET', token)
+    ]);
+    return { stats, promos: Array.isArray(promos.promos) ? promos.promos : [] };
+  }
+  function renderAdminPanel(stats, promos, newCode) {
+    const root = document.querySelector('#screen');
+    if (!root) return;
+    const metric = (label, value, note) => '<div class="card"><b style="color:var(--cyan)">' + esc(label) + '</b><div style="font-size:24px;color:var(--hero);margin:8px 0">' + esc(value) + '</div><small style="color:var(--dim)">' + esc(note || '') + '</small></div>';
+    const rows = promos.length ? promos.map(p => '<div class="entry"><b>' + esc(p.label || 'Kod promocyjny') + ' · ' + esc(String(p.code_hint || '••••')) + '</b><small>' + esc(String(p.tier || '').toUpperCase()) + ' · ' + esc(String(p.duration_days)) + ' dni · użycia: ' + esc(String(p.redemption_count)) + '/' + esc(String(p.max_redemptions)) + '<br>Ważny do: ' + esc(adminDate(p.expires_at)) + '<br>' + (Number(p.enabled) === 1 ? 'Aktywny' : 'Wyłączony') + '</small>' + (Number(p.enabled) === 1 ? '<button class="btn" type="button" onclick="window.npDisablePromo(\'' + esc(p.id) + '\')">Wyłącz kod</button>' : '') + '</div>').join('') : '<div class="empty">Nie utworzono jeszcze kodów promocyjnych.</div>';
+    root.innerHTML = '<div class="card"><h2>🛡️ Panel ADMINA</h2><p style="font-size:12px;line-height:1.5">Statystyki i kody są widoczne tylko po potwierdzeniu uprawnień przez serwer.</p><div class="grid2">' +
+      metric('Zarejestrowane konta', stats.registeredAccounts, 'Dokładna liczba kont') +
+      metric('Aktywne 24 godz.', stats.activeAccounts24h, 'Zalogowane konta z ruchem w tym okresie') +
+      metric('Aktywne 7 dni', stats.activeAccounts7d, 'Unikalne konta zalogowane') +
+      metric('Aktywne 30 dni', stats.activeAccounts30d, 'Unikalne konta zalogowane') +
+      metric('Sesje 24 godz.', stats.sessions24h, 'Ponowne otwarcie karty może tworzyć nową sesję') +
+      metric('Unikalne przeglądarki · 7 dni', stats.uniqueBrowsers7dEstimate, 'Szacunek, nie dokładna liczba osób') +
+      '</div><p style="font-size:11px;line-height:1.5;color:var(--dim)">' + esc(stats.note || '') + '</p><button class="btn" onclick="window.npOpenAdminPanel()">↻ Odśwież statystyki</button></div>' +
+      '<div class="card"><h2>🎟️ Utwórz kod promocyjny</h2><label for="npPromoTier">Pakiet</label><select id="npPromoTier"><option value="pro">PRO</option><option value="warsztat">WARSZTAT</option></select><label for="npPromoDuration">Czas dostępu</label><select id="npPromoDuration"><option value="3">3 dni</option><option value="7">7 dni</option></select><div class="grid2"><div><label for="npPromoMax">Maks. użyć</label><input id="npPromoMax" type="number" min="1" max="10000" value="1"></div><div><label for="npPromoExpires">Ważność kodu (dni)</label><input id="npPromoExpires" type="number" min="1" max="365" value="14"></div></div><label for="npPromoLabel">Opis kampanii (opcjonalnie)</label><input id="npPromoLabel" maxlength="120" placeholder="np. testy znajomych / konkurs"><button class="btn" onclick="window.npCreatePromo()">＋ Generuj kod</button>' +
+      (newCode ? '<div class="entry" style="border-color:var(--hero)"><b>Nowy kod — pokaż go odbiorcy tylko teraz</b><input id="npPromoCreatedCode" readonly value="' + esc(newCode) + '"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'npPromoCreatedCode\').value).then(()=>alert(\'Skopiowano kod.\')).catch(()=>alert(\'Skopiuj kod ręcznie.\'))">Skopiuj kod</button></div>' : '') +
+      '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div><div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
+  }
+  window.npOpenAdminPanel = async function() {
+    if (!API) { alert('Panel dostępny wyłącznie w oficjalnej aplikacji.'); return; }
+    const token = tokenGet();
+    if (token) {
+      try {
+        const data = await fetchAdminData();
+        renderAdminPanel(data.stats, data.promos, '');
+        return;
+      } catch (error) {
+        if (error.status !== 401 && error.status !== 403) {
+          alert(friendlyError(error, 'otworzyć panelu ADMINA'));
+          return;
+        }
+      }
+    }
+    const key = window.prompt('Aktywacja panelu właściciela. Wpisz jednorazowy kod aktywacyjny otrzymany od twórcy aplikacji:');
+    if (!key) return;
+    try {
+      const userToken = await accountEnsure();
+      const data = await api('/api/admin/bootstrap', { key: key.trim() }, 'POST', userToken);
+      alert(data.message || 'Uprawnienia administratora aktywowane.');
+      const panel = await fetchAdminData();
+      renderAdminPanel(panel.stats, panel.promos, '');
+    } catch (error) {
+      alert(friendlyError(error, 'aktywować panelu ADMINA') + (error.message ? '\n' + error.message : ''));
+    }
+  };
+  window.npCreatePromo = async function() {
+    try {
+      const tier = document.getElementById('npPromoTier')?.value;
+      const durationDays = Number(document.getElementById('npPromoDuration')?.value);
+      const maxRedemptions = Number(document.getElementById('npPromoMax')?.value);
+      const expiresInDays = Number(document.getElementById('npPromoExpires')?.value);
+      const label = document.getElementById('npPromoLabel')?.value || '';
+      const token = tokenGet();
+      if (!token) throw new Error('Zaloguj się na konto administratora.');
+      const created = await api('/api/admin/promos', { tier, durationDays, maxRedemptions, expiresInDays, label }, 'POST', token);
+      const panel = await fetchAdminData();
+      renderAdminPanel(panel.stats, panel.promos, created.code);
+    } catch (error) {
+      alert(friendlyError(error, 'utworzyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
+    }
+  };
+  window.npDisablePromo = async function(id) {
+    if (!id || !confirm('Wyłączyć ten kod promocyjny? Dotychczas przyznane dostępy pozostaną ważne do końca okresu.')) return;
+    try {
+      const token = tokenGet();
+      await api('/api/admin/promos/disable', { id }, 'POST', token);
+      const panel = await fetchAdminData();
+      renderAdminPanel(panel.stats, panel.promos, '');
+    } catch (error) {
+      alert(friendlyError(error, 'wyłączyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
+    }
+  };
+  window.npRedeemPromo = async function() {
+    const input = document.getElementById('npPromoCode');
+    const code = input && input.value ? input.value.trim().toUpperCase() : '';
+    if (!code) { alert('Wpisz kod promocyjny.'); return; }
+    try {
+      const token = await accountEnsure();
+      const data = await api('/api/promo/redeem', { code }, 'POST', token);
+      await refresh(true);
+      alert(data.message || ('Aktywowano dostęp ' + String(data.tier || '').toUpperCase() + ' na ' + data.durationDays + ' dni.'));
+      renderPlansBridge();
+    } catch (error) {
+      alert(friendlyError(error, 'aktywować kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
+    }
+  };
+
   window.npPhotoDiagnosis = async function(formData, options) {
     const license = typeof window.naprawnikGetVerifiedLicense === 'function'
       ? window.naprawnikGetVerifiedLicense()
@@ -356,5 +487,6 @@
   };
   // Replace the legacy, broken Netlify activation callbacks with the Cloudflare API path.
   window.licBoot = window.npBillingBoot;
+  trackVisit();
   window.npBillingBoot();
 })();
