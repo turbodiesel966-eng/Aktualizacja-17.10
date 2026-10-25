@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession } from "./src/index.mjs";
+import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -742,6 +742,78 @@ test("analiza zdjęcia odrzuca format spoza JPEG/PNG/WebP przed wywołaniem mode
     const response = await photoDiagnosis(makePhotoRequest({ mime: "image/gif", bytes: [0x47, 0x49, 0x46, 0x38] }), env, { userId: "user_test_1" });
     assert.equal(response.status, 415);
     assert.equal(state.upstreamCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("diagnostyka Stripe potwierdza konfigurację LIVE bez tworzenia Checkout", async () => {
+  const originalFetch = globalThis.fetch;
+  const prices = {
+    price_pro_month: { id: "price_pro_month", active: true, livemode: true, currency: "pln", unit_amount: 900, recurring: { interval: "month", interval_count: 1 } },
+    price_pro_year: { id: "price_pro_year", active: true, livemode: true, currency: "pln", unit_amount: 10000, recurring: { interval: "year", interval_count: 1 } },
+    price_warsztat_month: { id: "price_warsztat_month", active: true, livemode: true, currency: "pln", unit_amount: 2900, recurring: { interval: "month", interval_count: 1 } },
+    price_warsztat_year: { id: "price_warsztat_year", active: true, livemode: true, currency: "pln", unit_amount: 30000, recurring: { interval: "year", interval_count: 1 } }
+  };
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url), method: init?.method, auth: init?.headers?.Authorization });
+    const id = String(url).split("/").pop();
+    return new Response(JSON.stringify(prices[id]), { status: 200, headers: { "content-type": "application/json" } });
+  };
+  try {
+    const env = {
+      PRODUCTION_ENABLED: "true",
+      STRIPE_EXPECT_LIVEMODE: "true",
+      STRIPE_SECRET_KEY: "sk_live_mock_secret",
+      APP_BASE_URL: "https://example.test/app/",
+      CHECKOUT_SUCCESS_URL: "https://example.test/app/?checkout=success&session_id={CHECKOUT_SESSION_ID}",
+      CHECKOUT_CANCEL_URL: "https://example.test/app/?checkout=cancelled",
+      STRIPE_PRICE_PRO_MONTHLY: "price_pro_month",
+      STRIPE_PRICE_PRO_YEARLY: "price_pro_year",
+      STRIPE_PRICE_WARSZTAT_MONTHLY: "price_warsztat_month",
+      STRIPE_PRICE_WARSZTAT_YEARLY: "price_warsztat_year"
+    };
+    const response = await diagnoseStripeConfig(env);
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.ready, true);
+    assert.equal(result.allPricesValid, true);
+    assert.equal(result.prices.length, 4);
+    assert.equal(calls.length, 4);
+    assert.ok(calls.every(call => call.method === "GET" && call.url.startsWith("https://api.stripe.com/v1/prices/")));
+    assert.doesNotMatch(JSON.stringify(result), /sk_live_mock_secret/);
+    assert.doesNotMatch(calls.map(call => call.url).join(" "), /checkout\/sessions/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("diagnostyka Stripe wykrywa odrzucony klucz i nie ujawnia treści błędu Stripe", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: "secret-like-private-upstream-detail" } }), {
+    status: 401, headers: { "content-type": "application/json" }
+  });
+  try {
+    const env = {
+      PRODUCTION_ENABLED: "true",
+      STRIPE_EXPECT_LIVEMODE: "true",
+      STRIPE_SECRET_KEY: "sk_live_mock_secret",
+      APP_BASE_URL: "https://example.test/app/",
+      CHECKOUT_SUCCESS_URL: "https://example.test/app/?checkout=success",
+      CHECKOUT_CANCEL_URL: "https://example.test/app/?checkout=cancelled",
+      STRIPE_PRICE_PRO_MONTHLY: "price_pro_month",
+      STRIPE_PRICE_PRO_YEARLY: "price_pro_year",
+      STRIPE_PRICE_WARSZTAT_MONTHLY: "price_warsztat_month",
+      STRIPE_PRICE_WARSZTAT_YEARLY: "price_warsztat_year"
+    };
+    const response = await diagnoseStripeConfig(env);
+    const result = await response.json();
+    assert.equal(result.ready, false);
+    assert.equal(result.allPricesValid, false);
+    assert.ok(result.prices.every(p => p.reason === "stripe_key_rejected"));
+    assert.doesNotMatch(JSON.stringify(result), /secret-like-private-upstream-detail|sk_live_mock_secret/);
   } finally {
     globalThis.fetch = originalFetch;
   }
