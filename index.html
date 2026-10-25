@@ -1984,6 +1984,8 @@ function renderSettings(){
     <small style="color:var(--dim)">${APP_VERSION} — aplikacja działa lokalnie; dane nie są synchronizowane z serwerem.</small><br><br>
     <div class="alert">⚠️ PIN nie szyfruje danych. Dane lokalne mogą zniknąć po wyczyszczeniu danych przeglądarki, zmianie urządzenia lub awarii pamięci.</div>
     <div class="card" style="border-color:var(--hero)"><h2>💎 Plan: ${PLAN_NAMES[curPlan()]}</h2><small style="color:var(--dim)">Płatności obsługuje Stripe. Licencja jest sprawdzana po stronie serwera. Regulamin, politykę prywatności i dane sprzedawcy opublikuj przed sprzedażą.</small><div class="btn" onclick="nav('plans')">Plany, zakup i licencja</div></div>
+    <div class="card" style="border-color:#8b5cf6"><h2>🎟️ Kod promocyjny</h2><small style="color:var(--dim)">Jeśli masz kod od organizatora testów lub konkursu, wpisz go tutaj. Dostęp będzie przypisany do konta i potwierdzony przez serwer.</small><input id="npPromoCode" autocomplete="off" autocapitalize="characters" maxlength="40" placeholder="Wpisz kod promocyjny"><div class="btn" onclick="window.npRedeemPromo()">Aktywuj kod</div></div>
+    <div class="card"><h2>🛡️ Właściciel aplikacji</h2><small style="color:var(--dim)">Panel statystyk i zarządzania promocjami jest dostępny tylko po potwierdzeniu uprawnień przez serwer.</small><div class="btn" onclick="window.npOpenAdminPanel()">Otwórz panel właściciela / ADMINA</div></div>
     <div class="btn" onclick="exportBackup()">⬇️ Eksportuj kopię zapasową</div>
     <div class="btn" onclick="paExportCases()">⬇️ Eksportuj historię asystenta zdjęć (osobny plik)</div>
     <div class="btn" onclick="exportCsv()">${lk('warsztat')}📊 Eksport napraw i klientów (CSV)</div>
@@ -2945,6 +2947,6 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.
 if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
-<script src="./billing.js?v=4"></script>
+<script src="./billing.js?v=5"></script>
 </body>
 </html>
