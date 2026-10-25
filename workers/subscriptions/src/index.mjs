@@ -867,11 +867,11 @@ function stripeSecretDiagnostics(value) {
 function sanitizeStripeErrorMessage(value) {
   if (typeof value !== "string" || !value.trim()) return null;
   return value
-    .replace(/\\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9_-]+\\b/gi, "[REDACTED]")
-    .replace(/\\bwhsec_[A-Za-z0-9_-]+\\b/gi, "[REDACTED]")
-    .replace(/Bearer\\s+\\S+/gi, "Bearer [REDACTED]")
-    .replace(/[\\r\\n\\t]+/g, " ")
-    .replace(/\\s+/g, " ")
+    .replace(/\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9_-]+\b/gi, "[REDACTED]")
+    .replace(/\bwhsec_[A-Za-z0-9_-]+\b/gi, "[REDACTED]")
+    .replace(/Bearer\s+\S+/gi, "Bearer [REDACTED]")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
     .slice(0, 220) || null;
 }
