@@ -1,6 +1,6 @@
 # NAPRAWNIK — Cloudflare subscriptions Worker
 
-This source is a source-controlled mirror of the deployed `naprawnik-subscriptions-live` Worker plus pre-release changes. It has **not** been deployed by this branch.
+This source is a source-controlled mirror of the subscription Worker plus pre-release changes. On 2026-10-25, the branch source was uploaded to `naprawnik-subscriptions-v2-staging` only. It has not been uploaded to `naprawnik-subscriptions-live`; PR #6 remains open and in draft.
 
 ## Read-only audit findings
 
@@ -11,14 +11,27 @@ This source is a source-controlled mirror of the deployed `naprawnik-subscriptio
 - Subscription `paused`/`resumed` lifecycle events are now handled explicitly; repeated failures of the same Stripe invoice no longer extend the grace period on every retry.
 - A D1 checkout lock now prevents concurrent hosted Checkout sessions for the same account, and subscription events restore the Stripe customer-to-account mapping even if webhook events arrive out of order.
 
-The source mirror no longer overrides environment variables in code. Worker requests fail closed when `PRODUCTION_ENABLED` is not exactly `true`. No Cloudflare variables, secrets, D1 data, deployed versions or Stripe settings were changed.
+The source mirror no longer overrides environment variables in code. Worker requests fail closed when `PRODUCTION_ENABLED` is not exactly `true`.
+
+### Staging-only rollout performed 2026-10-25
+
+- Uploaded the branch's `workers/subscriptions/src/index.mjs` to `naprawnik-subscriptions-v2-staging` only. Uploaded the branch UI assets (`index.html`, `billing.js`, `sw.js`, and the technical catalogue) to `naprawnik-pwa-staging` only.
+- Applied migrations `0002_request_limits.sql` and `0003_checkout_locks.sql` only to D1 database `naprawnik-subscriptions-v2-staging` (`c4f3dd75-cf41-48e6-bb48-67f7aff42176`). Confirmed the two tables and indexes exist; user, token, and subscription row counts were unchanged by the migrations. Live D1 was not touched.
+- Set `PRODUCTION_ENABLED = "true"` and `STRIPE_EXPECT_LIVEMODE = "false"` only on the staging Worker. Configured the Stripe Test API and a new staging webhook secret as Cloudflare secrets; no secret values are stored here.
+- Verified four Stripe Test recurring prices are active and in PLN: PRO 9 PLN/month and 100 PLN/year; WARSZTAT 19 PLN/month and 190 PLN/year.
+- Ran a real Stripe Test-mode subscription lifecycle against a temporary staging user: `customer.subscription.created`, `invoice.paid`, and `invoice.payment_succeeded` were processed with no `last_error`; the account tier moved from `amator` to `pro`. Immediate cancellation then generated `customer.subscription.deleted`, processed successfully, and the tier returned to `amator`. Temporary user/subscription/customer-link rows were removed from staging D1; webhook audit rows were kept. The synthetic Stripe Test subscription is cancelled; a synthetic test customer remains in the Stripe Test account.
+- No Stripe Live resources, Live Worker, Live D1, `main`, GitHub Pages production, or production deployment were changed.
+
+**Remaining staging verification:** The available execution connection blocks direct HTTP reads of `workers.dev` hosts, so browser-level register → hosted Checkout → return redirect and the billing-portal button were not executed end-to-end in this session. The actual Stripe-to-Worker webhook path was verified independently as described above. `OPENAI_API_KEY` is not set on staging, so photo diagnosis intentionally fails closed until an OpenAI key is configured as a staging-only secret.
+
+**Webhook cleanup note:** Stripe Test now has a new active endpoint `we_1UUYLcJgi8iwHKRbMbchKh12` with the current secret synced to staging. The previous active Test endpoint `we_1UUIzCJgi8iwHKRb19EbXeDC` points to the same URL; the connected Stripe API tool does not expose its disable/delete operation, so it remains active and should be disabled in the Stripe Test Dashboard to avoid signature-failure retries. It is labelled as superseded. This note applies to Stripe Test only.
 
 ## Migrations and staging
 
 1. Copy `wrangler.example.toml` to local `wrangler.toml` and substitute a verified staging-only D1 ID and test Stripe Price IDs.
 2. Configure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` with Stripe **test mode** values using `wrangler secret put`; do not store secret values in Git.
 3. Verify that `ALLOWED_ORIGINS` is exactly the origin that serves the app, and that `APP_BASE_URL` plus both return URLs are HTTPS and on the same origin.
-4. Apply migrations only to the staging DB after confirming the Wrangler environment and database ID. Migrations `0002_request_limits.sql` and `0003_checkout_locks.sql` have not been applied remotely by this branch.
+4. Migrations `0002_request_limits.sql` and `0003_checkout_locks.sql` have been applied to the verified staging database only (see the rollout notes above). Never apply them to Live as part of this PR.
 5. Keep `PRODUCTION_ENABLED = false` until configuration and tests pass. Any staging deployment must be a deliberate separate action.
 
 Suggested local checks:
@@ -61,10 +74,10 @@ Before production, reconcile the Cloudflare variables with the actual app origin
 
 ### Remote D1 inventory (read-only, 2026-10-25)
 
-A read-only `SELECT name FROM sqlite_master WHERE type = 'table'` was run against the configured live, v2-staging and sandbox D1 bindings. All three contained the existing application tables but **none contained `request_limits` or `checkout_locks`**. The query returned zero written rows and did not change any database. Consequently, the Worker version in this PR will fail closed for anonymous registration and user-data writes until migration `0002_request_limits.sql` is applied, and Checkout is not ready until migration `0003_checkout_locks.sql` is applied to the specifically verified staging database. Do not apply either migration to live as part of this PR.
+A read-only schema inventory on 2026-10-25 initially found that the live, v2-staging and separate sandbox D1 databases lacked `request_limits` and `checkout_locks`. Since that inventory, migrations `0002_request_limits.sql` and `0003_checkout_locks.sql` have been applied to `naprawnik-subscriptions-v2-staging` only and verified by a fresh schema query. The Live and separate sandbox D1 databases were not modified. The query returned no row changes during schema verification.
 
 - `STRIPE_EXPECT_LIVEMODE` is mandatory: use `false` on staging and `true` only in a separately approved production environment. Checkout reads the selected Stripe Price and rejects a mismatch in live/test mode, active status, PLN currency, or recurring interval before acquiring a checkout lock. Signed webhook events whose `livemode` does not match this binding are rejected.
-- The currently deployed staging Worker does not yet contain this guard or the current photo-diagnosis and checkout-lock code; the branch source is intentionally not published. Configure the binding and deploy only after explicit staging approval and after the staging-only D1 migrations are applied.
+- The staging Worker now contains the branch source and the staging-only D1 migrations are present. The test subscription lifecycle webhook was verified against this version. Do not deploy this branch to Live as part of the staging work.
 
 ## Additional payment safety checks (pre-release)
 
