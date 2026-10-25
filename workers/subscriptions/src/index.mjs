@@ -19,6 +19,7 @@ const RATE_LIMITS = Object.freeze({
   registration: Object.freeze({ maxRequests: 10, windowSeconds: 15 * 60 }),
   userDataWrites: Object.freeze({ maxRequests: 120, windowSeconds: 60 }),
   photoDiagnosis: Object.freeze({ maxRequests: 8, windowSeconds: 60 * 60 }),
+  billingPortal: Object.freeze({ maxRequests: 10, windowSeconds: 15 * 60 }),
 });
 const CHECKOUT_LOCK_LEASE_SECONDS = 30 * 60;
 const SUBSCRIPTION_LIFECYCLE_EVENTS = new Set([
@@ -1061,7 +1062,10 @@ export default {
       } else if (url.pathname === "/api/billing-portal" && request.method === "POST") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
-        else response = await createBillingPortalSession(request, env, auth);
+        else {
+          const limited = await enforceRateLimit(request, env, "billing-portal", auth.userId, RATE_LIMITS.billingPortal);
+          response = limited || await createBillingPortalSession(request, env, auth);
+        }
       } else if (url.pathname === "/api/me" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
