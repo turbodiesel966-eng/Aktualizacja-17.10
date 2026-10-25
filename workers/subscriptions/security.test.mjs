@@ -313,19 +313,38 @@ test("niepoprawny URL powrotu nie zostawia blokady Checkout ani nie tworzy sesji
   }
 });
 
-test("billing portal weryfikuje tryb klienta Stripe przed stworzeniem sesji", async () => {
+test("billing portal sprawdza tryb Stripe i odtwarza powiązanie legacy bez dostępu do Live", async () => {
   const originalFetch = globalThis.fetch;
-  const state = { posts: 0, customerLivemode: false, returnUrl: null };
+  const state = { posts: 0, customerLivemode: false, returnUrl: null, linked: false };
   const env = {
     STRIPE_SECRET_KEY: "sk_test_mock_portal_key",
     STRIPE_EXPECT_LIVEMODE: "false",
     APP_BASE_URL: "https://staging.example.test/app/",
     DB: {
       prepare(sql) {
-        return { bind() { return { async first() {
-          assert.match(sql, /SELECT stripe_customer_id FROM stripe_customers/);
-          return { stripe_customer_id: "cus_test_portal" };
-        } }; } };
+        return { bind(...params) {
+          return {
+            async first() {
+              if (sql.includes("SELECT stripe_customer_id FROM stripe_customers")) {
+                return state.linked ? { stripe_customer_id: "cus_test_portal" } : null;
+              }
+              if (sql.includes("SELECT stripe_customer_id FROM subscriptions")) {
+                return { stripe_customer_id: "cus_test_portal" };
+              }
+              if (sql.includes("SELECT user_id FROM stripe_customers")) {
+                return state.linked && params[0] === "cus_test_portal" ? { user_id: "user_test_1" } : null;
+              }
+              throw new Error("Unexpected portal first() SQL: " + sql);
+            },
+            async run() {
+              if (sql.includes("INSERT INTO stripe_customers")) {
+                state.linked = true;
+                return { success: true, meta: { changes: 1 } };
+              }
+              throw new Error("Unexpected portal run() SQL: " + sql);
+            }
+          };
+        } };
       }
     }
   };
@@ -346,6 +365,7 @@ test("billing portal weryfikuje tryb klienta Stripe przed stworzeniem sesji", as
     const mismatched = await createBillingPortalSession(new Request("https://api.example.test/api/billing-portal", { method: "POST" }), env, { userId: "user_test_1" });
     assert.equal(mismatched.status, 503);
     assert.equal(state.posts, 0);
+    assert.equal(state.linked, false, "nie naprawiaj powiązania przed weryfikacją trybu klienta");
 
     state.customerLivemode = false;
     const ok = await createBillingPortalSession(new Request("https://api.example.test/api/billing-portal", { method: "POST" }), env, { userId: "user_test_1" });
@@ -353,6 +373,7 @@ test("billing portal weryfikuje tryb klienta Stripe przed stworzeniem sesji", as
     assert.equal(ok.status, 200);
     assert.equal(body.url, "https://billing.stripe.com/p/session/test_portal");
     assert.equal(state.posts, 1);
+    assert.equal(state.linked, true, "legacy customer link should be repaired after mode validation");
     assert.equal(state.returnUrl, "https://staging.example.test/app/?billing=return");
   } finally {
     globalThis.fetch = originalFetch;
