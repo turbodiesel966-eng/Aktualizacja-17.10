@@ -58,8 +58,8 @@ test("Stripe diagnostics identifies a restricted LIVE key and sanitizes error de
       assert.equal(price.stripeErrorType, "invalid_request_error");
       assert.equal(price.stripeErrorCode, "restricted_key");
       assert.equal(price.stripeRequestId, "req_diag_redacted_123");
-      assert.ok(price.stripeErrorMessage.includes("[REDACTED]"));
-      assert.ok(!price.stripeErrorMessage.includes(fakeSecret));
+      assert.equal(price.stripeErrorHint, "Klucz Stripe nie ma wymaganych uprawnień do odczytu cen.");
+      assert.equal("stripeErrorMessage" in price, false);
     }
   } finally {
     globalThis.fetch = originalFetch;
@@ -96,7 +96,7 @@ test("Stripe diagnostics validates prices and reports no upstream error data on 
     assert.equal(data.stripeSecretMode, "live");
     assert.equal(data.stripeSecretModeMatchesExpected, true);
     assert.equal(data.prices.every(price => price.valid === true), true);
-    assert.equal(data.prices.every(price => price.stripeErrorMessage === null && price.stripeRequestId === null), true);
+    assert.equal(data.prices.every(price => price.stripeErrorHint === null && price.stripeRequestId === null), true);
   } finally {
     globalThis.fetch = originalFetch;
   }
