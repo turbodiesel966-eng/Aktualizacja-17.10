@@ -1426,6 +1426,6 @@ export default {
   },
 };
 
-export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig };
+export { authenticate, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig };
 
 
