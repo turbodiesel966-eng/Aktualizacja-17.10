@@ -824,7 +824,7 @@ async function getAdminStats(env) {
     uniqueBrowsers7dEstimate: Number(browsers7d?.count || 0),
     activePromoCodes: Number(promos?.count || 0),
     promoRedemptions: Number(redemptions?.count || 0),
-    note: "Konta to dokładna liczba unikalnych kont. Unikalne przeglądarki są szacunkiem, nie liczbą osób."
+    note: "Konta to dokładna liczba unikalnych kont. Statystyki ruchu obejmują urządzenia, które wyraziły zgodę na anonimowe pomiary. Unikalne przeglądarki są szacunkiem, nie liczbą osób."
   });
 }
 
