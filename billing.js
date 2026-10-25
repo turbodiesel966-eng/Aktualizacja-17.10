@@ -423,7 +423,7 @@
       let output = row('Worker włączony', result.productionEnabled === true, result.productionEnabled ? 'PRODUCTION_ENABLED = true' : 'PRODUCTION_ENABLED nie jest true') +
         row('Tryb środowiska Stripe', result.expectedMode === 'live', 'Oczekiwany tryb: ' + String(result.expectedMode || 'brak')) +
         row('Sekret Stripe istnieje', result.stripeSecretConfigured === true, result.stripeSecretConfigured ? 'Sekret jest skonfigurowany; jego treść nie jest wyświetlana.' : 'STRIPE_SECRET_KEY nie jest skonfigurowany') +
-        infoRow('Typ klucza Stripe', keyKindLabel, 'Wartość sekretu nie jest wyświetlana.') +
+        infoRow('Typ klucza Stripe', 'Wykryto: ' + keyKindLabel + '. Wartość sekretu nie jest wyświetlana.') +
         row('Tryb klucza Stripe', result.stripeSecretModeMatchesExpected === true, 'Wykryty tryb: ' + keyModeLabel + ' · oczekiwany: ' + String(result.expectedMode || 'brak')) +
         row('Sekret bez białych znaków na końcach', result.stripeSecretHasOuterWhitespace !== true, result.stripeSecretHasOuterWhitespace ? 'Wykryto spację lub znak końca linii poza treścią klucza.' : 'Nie wykryto spacji ani znaku końca linii na początku lub końcu sekretu.') +
         row('Adresy powrotu Checkout', result.checkoutReturnUrlsValid === true, result.checkoutReturnUrlsValid ? 'HTTPS i zgodny adres aplikacji' : 'Adresy powrotu są nieprawidłowe lub niezgodne z adresem aplikacji') +
