@@ -43,7 +43,9 @@ jobs:
         run: node --check billing.js
       - name: Sprawdź katalog techniczny
         run: node --check katalog-techniczny.js
-      - name: Sprawdź Service Workera
+      - name: Sprawdź Service Workera aplikacji
         run: node --check sw.js
-      - name: Testy regresyjne audytu
-        run: node --test tests/*.test.cjs
+      - name: Sprawdź składnię Cloudflare Worker
+        run: node --check workers/subscriptions/src/index.mjs
+      - name: Testy regresyjne aplikacji i backendu
+        run: node --test tests/*.test.cjs workers/subscriptions/security.test.mjs
