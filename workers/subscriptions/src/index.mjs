@@ -828,6 +828,78 @@ async function getAdminStats(env) {
   });
 }
 
+async function diagnoseStripeConfig(env) {
+  const now = nowSeconds();
+  const expectedMode = env.STRIPE_EXPECT_LIVEMODE === "true" ? true : env.STRIPE_EXPECT_LIVEMODE === "false" ? false : null;
+  const appBase = env.APP_BASE_URL || "";
+  let urlsValid = false;
+  try {
+    const root = appBase.replace(/\/$/, "");
+    urlsValid = safeReturnUrl(env.CHECKOUT_SUCCESS_URL, `${root}/?checkout=success`, appBase) !== null &&
+      safeReturnUrl(env.CHECKOUT_CANCEL_URL, `${root}/?checkout=cancelled`, appBase) !== null;
+  } catch { urlsValid = false; }
+  const definitions = [
+    { key: "PRO_MONTHLY", label: "PRO miesięcznie", id: env.STRIPE_PRICE_PRO_MONTHLY, interval: "month" },
+    { key: "PRO_YEARLY", label: "PRO rocznie", id: env.STRIPE_PRICE_PRO_YEARLY, interval: "year" },
+    { key: "WARSZTAT_MONTHLY", label: "WARSZTAT miesięcznie", id: env.STRIPE_PRICE_WARSZTAT_MONTHLY, interval: "month" },
+    { key: "WARSZTAT_YEARLY", label: "WARSZTAT rocznie", id: env.STRIPE_PRICE_WARSZTAT_YEARLY, interval: "year" }
+  ];
+  const prices = await Promise.all(definitions.map(async item => {
+    if (!item.id || !item.id.startsWith("price_")) {
+      return { key: item.key, label: item.label, configured: false, valid: false, reason: "missing_price_id" };
+    }
+    if (!env.STRIPE_SECRET_KEY) {
+      return { key: item.key, label: item.label, configured: true, valid: false, reason: "missing_secret" };
+    }
+    let response;
+    try {
+      response = await fetch("https://api.stripe.com/v1/prices/" + encodeURIComponent(item.id), {
+        method: "GET",
+        headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` }
+      });
+    } catch {
+      return { key: item.key, label: item.label, configured: true, valid: false, reason: "network_error" };
+    }
+    let price = null;
+    try { price = await response.json(); } catch { /* Never return upstream error bodies. */ }
+    const livemodeMatches = expectedMode !== null && price?.livemode === expectedMode;
+    const intervalCount = Number(price?.recurring?.interval_count || 1);
+    const valid = response.ok && price?.id === item.id && price.active === true &&
+      livemodeMatches && price.currency === "pln" &&
+      price.recurring?.interval === item.interval && intervalCount === 1 &&
+      Number.isSafeInteger(Number(price.unit_amount)) && Number(price.unit_amount) > 0;
+    let reason = "ok";
+    if (!response.ok) reason = response.status === 401 || response.status === 403 ? "stripe_key_rejected" : "stripe_api_error";
+    else if (price?.id !== item.id || price?.active !== true) reason = "price_inactive_or_mismatch";
+    else if (!livemodeMatches) reason = "livemode_mismatch";
+    else if (price?.currency !== "pln") reason = "currency_mismatch";
+    else if (price?.recurring?.interval !== item.interval || intervalCount !== 1) reason = "interval_mismatch";
+    else if (!Number.isSafeInteger(Number(price?.unit_amount)) || Number(price?.unit_amount) <= 0) reason = "invalid_amount";
+    return {
+      key: item.key, label: item.label, configured: true, valid,
+      stripeHttpStatus: response.status, reason,
+      active: typeof price?.active === "boolean" ? price.active : null,
+      livemode: typeof price?.livemode === "boolean" ? price.livemode : null,
+      currency: typeof price?.currency === "string" ? price.currency : null,
+      interval: typeof price?.recurring?.interval === "string" ? price.recurring.interval : null,
+      intervalCount: Number.isFinite(intervalCount) ? intervalCount : null
+    };
+  }));
+  const allPricesValid = prices.length === definitions.length && prices.every(p => p.valid);
+  return json({
+    checkedAt: new Date(now * 1000).toISOString(),
+    productionEnabled: env.PRODUCTION_ENABLED === "true",
+    expectedMode: expectedMode === null ? "not_configured" : expectedMode ? "live" : "test",
+    stripeSecretConfigured: !!env.STRIPE_SECRET_KEY,
+    appBaseConfigured: !!appBase,
+    checkoutReturnUrlsValid: urlsValid,
+    allPricesValid,
+    ready: env.PRODUCTION_ENABLED === "true" && expectedMode === true &&
+      !!env.STRIPE_SECRET_KEY && !!appBase && urlsValid && allPricesValid,
+    prices
+  });
+}
+
 async function listAdminPromos(env) {
   const { results = [] } = await env.DB.prepare(`SELECT id, code_hint, label, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled, created_at
     FROM promo_codes ORDER BY created_at DESC LIMIT 100`).all();
@@ -1272,6 +1344,13 @@ export default {
           const denied = await requireAdminResponse(env, auth);
           response = denied || await getAdminStats(env);
         }
+      } else if (url.pathname === "/api/admin/stripe-diagnostics" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const denied = await requireAdminResponse(env, auth);
+          response = denied || await diagnoseStripeConfig(env);
+        }
       } else if (url.pathname === "/api/admin/promos" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -1323,6 +1402,6 @@ export default {
   },
 };
 
-export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, createAdminPromo, redeemPromo, trackVisit, recalcUserTier };
+export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig };
 
 
