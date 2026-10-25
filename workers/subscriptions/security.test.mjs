@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook } from "./src/index.mjs";
+import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -459,6 +459,129 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
     assert.equal(resumed.status, 200);
     assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "active");
     assert.equal(state.users.get("user_test_1")?.tier, "pro");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
+  const now = Math.floor(Date.now() / 1000);
+  const state = { upstreamRequest: null, upstreamCalls: 0, storedTier: tier };
+  const env = {
+    OPENAI_API_KEY: openAiKey,
+    OPENAI_VISION_MODEL: "gpt-4.1-mini",
+    DB: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async first() {
+                if (sql.includes("INSERT INTO request_limits")) return { request_count: 1 };
+                throw new Error("Unexpected photo first() SQL: " + sql);
+              },
+              async all() {
+                if (sql.includes("SELECT tier, status, current_period_end, grace_until FROM subscriptions WHERE user_id")) {
+                  return {
+                    results: [{
+                      tier: state.storedTier,
+                      status: "active",
+                      current_period_end: now + 3600,
+                      grace_until: null
+                    }]
+                  };
+                }
+                throw new Error("Unexpected photo all() SQL: " + sql);
+              },
+              async run() {
+                if (sql.includes("UPDATE users SET tier = ?")) return { success: true, meta: { changes: 1 } };
+                if (sql.includes("DELETE FROM request_limits")) return { success: true, meta: { changes: 0 } };
+                throw new Error("Unexpected photo run() SQL: " + sql);
+              }
+            };
+          }
+        };
+      }
+    },
+    state
+  };
+  return { env, state };
+}
+function makePhotoRequest({ mime = "image/jpeg", bytes = [0xff, 0xd8, 0xff, 0x00], symptoms = "Gubi iskrę na ciepło" } = {}) {
+  const form = new FormData();
+  form.append("symptoms", symptoms);
+  form.append("category", "spark");
+  form.append("make", "Yamaha");
+  form.append("model", "Aerox");
+  form.append("year", "2013");
+  form.append("engine", "2T 50 cm3");
+  form.append("extra", "");
+  form.append("photos", new Blob([new Uint8Array(bytes)], { type: mime }), "plug.jpg");
+  return new Request("https://worker.example.test/api/photo-diagnosis", { method: "POST", body: form });
+}
+
+test("analiza zdjęcia wymaga klucza OpenAI skonfigurowanego po stronie serwera", async () => {
+  const response = await photoDiagnosis(
+    new Request("https://worker.example.test/api/photo-diagnosis", { method: "POST" }),
+    {},
+    { userId: "user_test_1" }
+  );
+  assert.equal(response.status, 503);
+  assert.match((await response.json()).error, /nie jest skonfigurowana/);
+});
+
+test("analiza zdjęcia wymaga aktywnego PRO/WARSZTAT i nie wywołuje modelu dla planu AMATOR", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makePhotoTestEnv("amator");
+  globalThis.fetch = async () => { state.upstreamCalls += 1; throw new Error("Upstream must not be called for AMATOR"); };
+  try {
+    const response = await photoDiagnosis(makePhotoRequest(), env, { userId: "user_test_1" });
+    assert.equal(response.status, 403);
+    assert.equal(state.upstreamCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("analiza zdjęcia przekazuje obrazy jako data URL do Responses API i zwraca wynik", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makePhotoTestEnv("pro");
+  globalThis.fetch = async (input, init) => {
+    assert.equal(String(input), "https://api.openai.com/v1/responses");
+    state.upstreamCalls += 1;
+    state.upstreamRequest = JSON.parse(init.body);
+    assert.equal(init.headers.authorization, "Bearer " + env.OPENAI_API_KEY);
+    return new Response(JSON.stringify({
+      output_text: "Możliwa usterka świecy; sprawdź szczelinę według DTR właściwego modelu."
+    }), { status: 200, headers: { "content-type": "application/json", "x-request-id": "req_test_photo" } });
+  };
+  try {
+    const response = await photoDiagnosis(makePhotoRequest(), env, { userId: "user_test_1" });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.model, "gpt-4.1-mini");
+    assert.match(result.analysis, /Możliwa usterka świecy/);
+    assert.equal(state.upstreamRequest.store, false);
+    assert.equal(state.upstreamRequest.max_output_tokens, 1100);
+    const content = state.upstreamRequest.input[0].content;
+    assert.ok(content.some(item => item.type === "input_text" && item.text.includes("Gubi iskrę na ciepło")));
+    const image = content.find(item => item.type === "input_image");
+    assert.ok(image);
+    assert.match(image.image_url, /^data:image\/jpeg;base64,/);
+    assert.equal(state.upstreamCalls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("analiza zdjęcia odrzuca format spoza JPEG/PNG/WebP przed wywołaniem modelu", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makePhotoTestEnv("pro");
+  globalThis.fetch = async () => { state.upstreamCalls += 1; throw new Error("Unsupported images must not reach the model"); };
+  try {
+    const response = await photoDiagnosis(makePhotoRequest({ mime: "image/gif", bytes: [0x47, 0x49, 0x46, 0x38] }), env, { userId: "user_test_1" });
+    assert.equal(response.status, 415);
+    assert.equal(state.upstreamCalls, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
