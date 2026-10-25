@@ -297,3 +297,38 @@ test('podgląd/nieznana domena nie wysyła płatności do Workera Live', async (
   assert.equal(calls.length, 0);
   assert.ok(alerts.some(message => message.includes('wyłączone dla tej domeny')));
 });
+
+
+test('błędy Workera są pokazywane po polsku, bez wyświetlania surowego komunikatu angielskiego', async () => {
+  const store = new Map();
+  const calls = [];
+  const alerts = [];
+  const context = {
+    window: {},
+    document: { addEventListener() {}, querySelector(selector) { return selector === '#screen' ? { innerHTML: '' } : null; } },
+    localStorage: {
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); }
+    },
+    fetch: async (url) => {
+      const target = String(url);
+      calls.push(target);
+      if (target.endsWith('/api/register')) return { ok: true, status: 201, json: async () => ({ token: 't'.repeat(64) }) };
+      if (target.endsWith('/api/checkout')) return { ok: false, status: 503, json: async () => ({ error: 'Production service is not enabled' }) };
+      return { ok: false, status: 404, json: async () => ({ error: 'Not found' }) };
+    },
+    URL, URLSearchParams,
+    location: { hostname: 'turbodiesel966-eng.github.io', search: '', pathname: '/' },
+    history: { replaceState() {} },
+    alert(message) { alerts.push(String(message)); }, confirm() { return true; },
+    console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.npStartCheckout('pro', 'month');
+  assert.ok(calls.some(url => url.endsWith('/api/register')));
+  assert.ok(calls.some(url => url.endsWith('/api/checkout')));
+  assert.ok(alerts.some(message => message.includes('Płatności są chwilowo niedostępne')));
+  assert.ok(alerts.every(message => !message.includes('Production service is not enabled')));
+});
