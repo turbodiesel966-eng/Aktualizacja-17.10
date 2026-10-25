@@ -616,6 +616,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
   const now = Math.floor(Date.now() / 1000);
   const state = { upstreamRequest: null, upstreamCalls: 0, storedTier: tier };
   const env = {
+    PHOTO_ANALYSIS_ENABLED: "true",
     OPENAI_API_KEY: openAiKey,
     OPENAI_VISION_MODEL: "gpt-4.1-mini",
     DB: {
@@ -667,10 +668,20 @@ function makePhotoRequest({ mime = "image/jpeg", bytes = [0xff, 0xd8, 0xff, 0x00
   return new Request("https://worker.example.test/api/photo-diagnosis", { method: "POST", body: form });
 }
 
+test("analiza zdjęć jest zablokowana bez jawnego włączenia", async () => {
+  const response = await photoDiagnosis(
+    new Request("https://worker.example.test/api/photo-diagnosis", { method: "POST" }),
+    { OPENAI_API_KEY: "sk_test_mock_openai_key" },
+    { userId: "user_test_1" }
+  );
+  assert.equal(response.status, 503);
+  assert.match((await response.json()).error, /tymczasowo wyłączona/);
+});
+
 test("analiza zdjęcia wymaga klucza OpenAI skonfigurowanego po stronie serwera", async () => {
   const response = await photoDiagnosis(
     new Request("https://worker.example.test/api/photo-diagnosis", { method: "POST" }),
-    {},
+    { PHOTO_ANALYSIS_ENABLED: "true" },
     { userId: "user_test_1" }
   );
   assert.equal(response.status, 503);
