@@ -1,11 +1,14 @@
 /* NAPRAWNIK billing bridge — served from the same GitHub Pages project. */
 (() => {
   'use strict';
-  const isStagingHost = typeof location !== 'undefined' &&
-    location.hostname === 'naprawnik-pwa-staging.turbodiesel966.workers.dev';
+  const host = typeof location !== 'undefined' ? location.hostname : '';
+  const isStagingHost = host === 'naprawnik-pwa-staging.turbodiesel966.workers.dev';
+  const isProductionHost = host === 'turbodiesel966-eng.github.io';
   const API = isStagingHost
     ? 'https://naprawnik-subscriptions-v2-staging.turbodiesel966.workers.dev'
-    : 'https://naprawnik-subscriptions-live.turbodiesel966.workers.dev';
+    : isProductionHost
+      ? 'https://naprawnik-subscriptions-live.turbodiesel966.workers.dev'
+      : null;
   const TOKEN_KEY = 'naprawnik_api_token';
   const ORDER = { amator: 0, pro: 1, warsztat: 2 };
   const NAMES = { amator: 'AMATOR', pro: 'PRO', warsztat: 'WARSZTAT' };
@@ -47,6 +50,7 @@
     return String(value == null ? '' : value).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
   }
   async function api(path, body, method, bearer) {
+    if (!API) throw new Error('Płatności są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.');
     const token = bearer === undefined ? tokenGet() : bearer;
     const headers = { Accept: 'application/json' };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -93,15 +97,23 @@
   function savePlan(data, token) {
     const user = data && data.user || {};
     const requestedTier = Object.prototype.hasOwnProperty.call(ORDER, user.tier) ? user.tier : 'amator';
+    const now = Date.now();
+    const nowSeconds = now / 1000;
     const subscriptions = Array.isArray(data && data.subscriptions) ? data.subscriptions : [];
-    const active = subscriptions.filter(item =>
-      ['active', 'trialing'].includes(item.status) ||
-      (item.status === 'past_due' && Number(item.grace_until || 0) > Date.now() / 1000)
-    );
-    const periods = active.map(item => Math.max(Number(item.current_period_end || 0), Number(item.grace_until || 0))).filter(Boolean);
-    const expires = periods.length ? Math.max(...periods) * 1000 : 0;
-    // Paid tiers require both a recognized server tier and an active subscription period.
-    const tier = requestedTier !== 'amator' && active.length > 0 && expires > Date.now() ? requestedTier : 'amator';
+    const active = subscriptions.filter(item => {
+      if (!item || !Object.prototype.hasOwnProperty.call(ORDER, item.tier) || item.tier === 'amator') return false;
+      if (['active', 'trialing'].includes(item.status)) return Number(item.current_period_end || 0) > nowSeconds;
+      return item.status === 'past_due' && Number(item.grace_until || 0) > nowSeconds;
+    });
+    const activeTier = active.reduce((best, item) =>
+      ORDER[item.tier] > ORDER[best] ? item.tier : best, 'amator');
+    // Expiry must come from the active subscription for the granted tier, not another lower-tier plan.
+    const matchingPeriods = active.filter(item => item.tier === requestedTier).map(item =>
+      Number(item.status === 'past_due' ? item.grace_until : item.current_period_end)
+    ).filter(value => Number.isFinite(value) && value > nowSeconds);
+    const expires = requestedTier === activeTier && matchingPeriods.length ? Math.max(...matchingPeriods) * 1000 : 0;
+    // The server's calculated tier and the current subscription tier must agree; mismatches fail closed.
+    const tier = requestedTier !== 'amator' && requestedTier === activeTier && expires > now ? requestedTier : 'amator';
     if (tier === 'amator') {
       localStorage.removeItem('naprawnik_license');
     } else {
@@ -145,6 +157,7 @@
     }
   }
   async function checkoutRequest(tier, interval, token) {
+    if (!API) throw new Error('Płatności są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.');
     const key = 'np-' + Date.now() + '-' + Math.random().toString(36).slice(2, 12);
     const headers = { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: 'Bearer ' + token, 'Idempotency-Key': key };
     const response = await fetch(API + '/api/checkout', {
