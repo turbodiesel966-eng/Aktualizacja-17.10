@@ -2586,7 +2586,7 @@ const PA_DB_NAME = 'naprawnik_photo_assistant_v1';
 const PA_DB_VERSION = 1;
 let paSelectedFiles = [];
 let paDbPromise = null;
-const PA_AI_ENDPOINT = '/.netlify/functions/photo-diagnosis';
+// Analiza online idzie przez billing.js do uwierzytelnionego Cloudflare Workera; brak klucza AI w HTML.
 
 function paOpenDb(){
   if(paDbPromise) return paDbPromise;
@@ -2744,20 +2744,26 @@ async function paRunAI(id){
     renderPhotoAssistantCase(id);
     const fd=new FormData();fd.append('symptoms',r.symptoms||'');fd.append('category',r.category||'other');fd.append('make',r.make||'');fd.append('model',r.model||'');fd.append('year',r.year||'');fd.append('engine',r.engine||'');fd.append('extra',r.extra||'');
     for(const p of r.photos){fd.append('photos',paDataUrlToBlob(p.dataUrl),p.name||'photo.jpg');}
-    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),60000); let response;
-    try{ response=await fetch(PA_AI_ENDPOINT,{method:'POST',body:fd,headers:{'Accept':'application/json','X-License-Token':(licGet()||{}).token||''},signal:ctl.signal}); }
-    catch(e){ if(e&&e.name==='AbortError') throw new Error('Przekroczono czas oczekiwania na odpowiedź serwera (60 s).'); throw e; }
+    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),60000); let data;
+    try{
+      if(typeof window.npPhotoDiagnosis!=='function') throw new Error('Brak modułu bezpiecznej analizy AI. Odśwież aplikację lub użyj najnowszej wersji.');
+      data=await window.npPhotoDiagnosis(fd,{signal:ctl.signal});
+    }
+    catch(e){
+      if(e&&e.name==='AbortError') throw new Error('Przekroczono czas oczekiwania na serwer analizy AI (60 s).');
+      throw e;
+    }
     finally{ clearTimeout(to); }
-    let data={};try{data=await response.json();}catch(e){}
-    if(response.status===402) licRefresh(true);
-    if(!response.ok) throw new Error(data.error||`Backend AI zwrócił HTTP ${response.status}${response.status===504||response.status===502?' (serwer nie odpowiedział w limicie czasu lub usługa AI jest niedostępna)':''}.`);
-    if(!data.analysis||typeof data.analysis!=='string') throw new Error('Backend nie zwrócił wyniku analizy.');
+    if(!data.analysis||typeof data.analysis!=='string') throw new Error('Serwer nie zwrócił tekstowego wyniku analizy.');
     await paUpdateCase(id,x=>{x.analysis=data.analysis;x.analysisStatus='done';x.analysisAt=new Date().toISOString();x.aiModel=data.model||'AI (backend)';});
   }catch(e){ console.error('NAPRAWNIK AI:',e); fail=e; }
   paActive.delete(id);
   if(fail){
-    const cfg=/skonfigurowany|OPENAI|ALLOWED_ORIGIN|niedozwolonego/i.test(String(fail.message||fail));
-    const msg='Analiza AI nie została wykonana. '+(fail.message||fail)+'\n\nDane, zdjęcia i checklista pozostają zapisane lokalnie.'+(cfg?' Sprawdź konfigurację funkcji Netlify (OPENAI_API_KEY, ALLOWED_ORIGIN).':'');
+    if([401,402,403].includes(Number(fail.status)) && typeof licRefresh==='function') {
+      try { await licRefresh(true); } catch (_) {}
+    }
+    const cfg=/skonfigurowana|OPENAI|rate limit|konfiguracj/i.test(String(fail.message||fail));
+    const msg='Analiza AI nie została wykonana. '+(fail.message||fail)+'\n\nDane, zdjęcia i checklista pozostają zapisane lokalnie.'+(cfg?' Sprawdź konfigurację Workera i zmienne OPENAI_API_KEY / OPENAI_VISION_MODEL.':'');
     try{ await paUpdateCase(id,x=>{x.analysisStatus='error';x.analysis=msg;x.analysisAt=new Date().toISOString();}); }catch(se){ alert('Analiza AI nie powiodła się: '+(fail.message||fail)); }
   }
   paRefreshIfViewing(id);
