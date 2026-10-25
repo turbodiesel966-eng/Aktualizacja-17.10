@@ -899,6 +899,17 @@ async function redeemPromo(request, env, auth) {
   return json({ ok: true, tier: currentTier, durationDays: Number(promo.duration_days), expiresAt: grantExpiresAt, message: "Kod aktywowany." });
 }
 
+async function disableAdminPromo(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const limited = await enforceRateLimit(request, env, "admin-writes", auth.userId, RATE_LIMITS.adminWrites);
+  if (limited) return limited;
+  const body = await readJson(request, 4096);
+  if (typeof body?.id !== "string" || !/^[0-9a-f-]{36}$/i.test(body.id)) return err("Nieprawidłowy identyfikator promocji.");
+  const result = await env.DB.prepare("UPDATE promo_codes SET enabled = 0 WHERE id = ? AND enabled = 1").bind(body.id).run();
+  if (!Number(result?.meta?.changes || 0)) return err("Kod nie istnieje albo jest już wyłączony.", 404);
+  return json({ ok: true, message: "Kod promocyjny został wyłączony." });
+}
+
 async function trackVisit(request, env) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   const body = await readJson(request, 4096);
@@ -1274,6 +1285,13 @@ export default {
         else {
           const denied = await requireAdminResponse(env, auth);
           response = denied || await createAdminPromo(request, env, auth);
+        }
+      } else if (url.pathname === "/api/admin/promos/disable" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const denied = await requireAdminResponse(env, auth);
+          response = denied || await disableAdminPromo(request, env, auth);
         }
       } else if (url.pathname === "/api/photo-diagnosis") {
         const auth = await authenticate(request, env);
