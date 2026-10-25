@@ -852,9 +852,34 @@ async function getAdminStats(env) {
   });
 }
 
+function stripeSecretDiagnostics(value) {
+  const raw = typeof value === "string" ? value : "";
+  const secret = raw.trim();
+  const modeMatch = /^(?:sk|rk)_(live|test)_/.exec(secret);
+  const kind = !secret ? "missing" : secret.startsWith("rk_") ? "restricted" : secret.startsWith("sk_") ? "standard" : "unknown";
+  return {
+    kind,
+    mode: modeMatch ? modeMatch[1] : null,
+    hasOuterWhitespace: raw !== secret
+  };
+}
+
+function sanitizeStripeErrorMessage(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  return value
+    .replace(/\\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9_-]+\\b/gi, "[REDACTED]")
+    .replace(/\\bwhsec_[A-Za-z0-9_-]+\\b/gi, "[REDACTED]")
+    .replace(/Bearer\\s+\\S+/gi, "Bearer [REDACTED]")
+    .replace(/[\\r\\n\\t]+/g, " ")
+    .replace(/\\s+/g, " ")
+    .trim()
+    .slice(0, 220) || null;
+}
+
 async function diagnoseStripeConfig(env) {
   const now = nowSeconds();
   const expectedMode = env.STRIPE_EXPECT_LIVEMODE === "true" ? true : env.STRIPE_EXPECT_LIVEMODE === "false" ? false : null;
+  const secretInfo = stripeSecretDiagnostics(env.STRIPE_SECRET_KEY);
   const appBase = env.APP_BASE_URL || "";
   let urlsValid = false;
   try {
@@ -886,6 +911,8 @@ async function diagnoseStripeConfig(env) {
     }
     let price = null;
     try { price = await response.json(); } catch { /* Never return upstream error bodies. */ }
+    const stripeError = response.ok || !price?.error || typeof price.error !== "object" ? null : price.error;
+    const requestId = !response.ok ? response.headers.get("request-id") || null : null;
     const livemodeMatches = expectedMode !== null && price?.livemode === expectedMode;
     const intervalCount = Number(price?.recurring?.interval_count || 1);
     const valid = response.ok && price?.id === item.id && price.active === true &&
@@ -902,6 +929,10 @@ async function diagnoseStripeConfig(env) {
     return {
       key: item.key, label: item.label, configured: true, valid,
       stripeHttpStatus: response.status, reason,
+      stripeRequestId: requestId,
+      stripeErrorType: typeof stripeError?.type === "string" ? stripeError.type.slice(0, 80) : null,
+      stripeErrorCode: typeof stripeError?.code === "string" ? stripeError.code.slice(0, 80) : null,
+      stripeErrorMessage: sanitizeStripeErrorMessage(stripeError?.message),
       active: typeof price?.active === "boolean" ? price.active : null,
       livemode: typeof price?.livemode === "boolean" ? price.livemode : null,
       currency: typeof price?.currency === "string" ? price.currency : null,
@@ -914,7 +945,13 @@ async function diagnoseStripeConfig(env) {
     checkedAt: new Date(now * 1000).toISOString(),
     productionEnabled: env.PRODUCTION_ENABLED === "true",
     expectedMode: expectedMode === null ? "not_configured" : expectedMode ? "live" : "test",
-    stripeSecretConfigured: !!env.STRIPE_SECRET_KEY,
+    stripeSecretConfigured: secretInfo.kind !== "missing",
+    stripeSecretKind: secretInfo.kind,
+    stripeSecretMode: secretInfo.mode,
+    stripeSecretModeMatchesExpected: secretInfo.mode !== null && expectedMode !== null
+      ? secretInfo.mode === (expectedMode ? "live" : "test")
+      : null,
+    stripeSecretHasOuterWhitespace: secretInfo.hasOuterWhitespace,
     appBaseConfigured: !!appBase,
     checkoutReturnUrlsValid: urlsValid,
     allPricesValid,
