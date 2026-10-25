@@ -47,9 +47,9 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
 
 test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkout', () => {
   const billing = read('billing.js');
-  assert.match(billing, /function applyVerifiedPlan\\(state\\)/);
-  assert.match(billing, /Object\\.defineProperty\\(window, 'naprawnikGetVerifiedLicense'/);
-  assert.doesNotMatch(billing, /window\\.naprawnikApplyVerifiedLicense|window\\.naprawnikClearVerifiedLicense/);
+  assert.match(billing, /function applyVerifiedPlan\(state\)/);
+  assert.match(billing, /Object\.defineProperty\(window, 'naprawnikGetVerifiedLicense'/);
+  assert.doesNotMatch(billing, /window\.naprawnikApplyVerifiedLicense|window\.naprawnikClearVerifiedLicense/);
   assert.match(billing, /Idempotency-Key/);
   assert.match(billing, /checkout\.stripe\.com/);
   assert.equal((billing.match(/async function checkout\(tier, interval\)/g) || []).length, 1);
