@@ -288,6 +288,21 @@ test("Checkout tworzy jedną sesję i ponowne kliknięcie tej samej taryfy używ
   }
 });
 
+test("niepoprawny URL powrotu nie zostawia blokady Checkout ani nie tworzy sesji Stripe", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makeCheckoutTestEnv();
+  env.CHECKOUT_SUCCESS_URL = "https://attacker.example/return";
+  globalThis.fetch = mockStripeCheckoutFetch(state);
+  try {
+    const response = await checkout(checkoutRequest("test-checkout-bad-return-001"), env, { userId: "user_test_1" });
+    assert.equal(response.status, 500);
+    assert.equal(state.lock, null);
+    assert.equal(state.stripePosts, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("dwa równoczesne Checkouty nie wywołują dwóch sesji Stripe", async () => {
   const originalFetch = globalThis.fetch;
   const { env, state } = makeCheckoutTestEnv();
