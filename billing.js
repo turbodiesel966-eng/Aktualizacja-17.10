@@ -230,7 +230,7 @@
     if (!confirm('Wylogować dostęp z tego urządzenia? Abonament w Stripe nie zostanie anulowany.')) return;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('naprawnik_license');
-    if (typeof updatePlanBadge === 'function') updatePlanBadge();
+    clearVerifiedPlan();
     renderPlansBridge();
   };
   window.licCopy = function() {
