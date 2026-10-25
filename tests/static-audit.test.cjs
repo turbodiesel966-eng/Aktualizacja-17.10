@@ -104,14 +104,13 @@ test('odrzucony token nie powoduje cichej rejestracji nowego konta', async () =>
       return { ok: false, status: 401, json: async () => ({ error: 'Unauthorized' }) };
     },
     URL, URLSearchParams,
-    location: { search: '', pathname: '/' },
+    location: { hostname: 'turbodiesel966-eng.github.io', search: '', pathname: '/' },
     history: { replaceState() {} },
     alert(message) { alerts.push(String(message)); },
     confirm(message) { confirms.push(String(message)); return false; },
     console, Date, Math, JSON, setTimeout
   };
   context.window = context;
-  context.naprawnikClearVerifiedLicense = () => {};
   vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
   store.set('naprawnik_api_token', 'expired-token');
   await context.npStartCheckout('pro', 'month');
@@ -119,6 +118,7 @@ test('odrzucony token nie powoduje cichej rejestracji nowego konta', async () =>
   assert.equal(calls.filter(call => call.url.endsWith('/api/register')).length, 0);
   assert.equal(confirms.length, 1);
   assert.ok(alerts.some(message => message.includes('Nie utworzono nowego konta')));
+});
 
 test('host stagingowy korzysta wyłącznie z testowego Workera', async () => {
   const calls = [];
@@ -145,6 +145,4 @@ test('host stagingowy korzysta wyłącznie z testowego Workera', async () => {
   assert.ok(calls.every(call => call.url.startsWith('https://naprawnik-subscriptions-v2-staging.turbodiesel966.workers.dev/')));
   assert.ok(calls.some(call => call.url.endsWith('/api/checkout')));
   assert.equal(redirected, 'https://checkout.stripe.com/c/pay/cs_test_123');
-});
-
 });
