@@ -229,7 +229,7 @@
       if (tier !== 'amator' && !own && ORDER[current] < ORDER[tier]) {
         if (current !== 'amator') {
           // Checkout refuses a second subscription; paid customers manage existing billing in Stripe.
-          buttons = '<div class="btn" data-np-portal="1">Zarządzaj subskrypcją w Stripe, aby zmienić plan</div>';
+          buttons = '<div class="btn" data-np-portal="1">Otwórz panel Stripe — zarządzaj subskrypcją</div>';
         } else {
           const monthly = 'Miesięcznie (cena w Stripe)';
           const yearly = 'Rocznie (cena w Stripe)';
