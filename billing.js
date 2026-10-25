@@ -12,6 +12,11 @@
   const TOKEN_KEY = 'naprawnik_api_token';
   const ORDER = { amator: 0, pro: 1, warsztat: 2 };
   const NAMES = { amator: 'AMATOR', pro: 'PRO', warsztat: 'WARSZTAT' };
+  // Zweryfikowane aktywne ceny subskrypcji LIVE. Aktualizuj je razem z cenami w Stripe.
+  const DISPLAY_PRICES = {
+    pro: { month: '9 zł / miesiąc', year: '100 zł / rok (oszczędzasz 8 zł)' },
+    warsztat: { month: '29 zł / miesiąc', year: '300 zł / rok (oszczędzasz 48 zł)' }
+  };
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   let verifiedLicenseState = null;
   function applyVerifiedPlan(state) {
@@ -231,8 +236,9 @@
           // Checkout refuses a second subscription; paid customers manage existing billing in Stripe.
           buttons = '<div class="btn" data-np-portal="1">Otwórz panel Stripe — zarządzaj subskrypcją</div>';
         } else {
-          const monthly = 'Miesięcznie (cena w Stripe)';
-          const yearly = 'Rocznie (cena w Stripe)';
+          const prices = DISPLAY_PRICES[tier];
+          const monthly = prices ? prices.month : 'Cena miesięczna';
+          const yearly = prices ? prices.year : 'Cena roczna';
           buttons = '<div class="btn np-buy" data-plan="' + tier + '" data-interval="month">Wybieram ' + titles[tier].replace(/^\S+ /, '') + ' — ' + monthly + '</div>' +
             '<div class="btn np-buy" data-plan="' + tier + '" data-interval="year">Wybieram ' + titles[tier].replace(/^\S+ /, '') + ' — ' + yearly + '</div>';
         }
