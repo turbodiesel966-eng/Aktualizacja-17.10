@@ -6,9 +6,33 @@
   const ORDER = { amator: 0, pro: 1, warsztat: 2 };
   const NAMES = { amator: 'AMATOR', pro: 'PRO', warsztat: 'WARSZTAT' };
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-  function clearVerifiedPlan() {
-    if (typeof window.naprawnikClearVerifiedLicense === 'function') window.naprawnikClearVerifiedLicense();
+  let verifiedLicenseState = null;
+  function applyVerifiedPlan(state) {
+    if (state && state.verified === true &&
+        Object.prototype.hasOwnProperty.call(ORDER, state.tier) &&
+        state.tier !== 'amator' &&
+        Number.isFinite(Number(state.exp)) && Number(state.exp) > Date.now()) {
+      verifiedLicenseState = { tier: state.tier, exp: Number(state.exp), token: typeof state.token === 'string' ? state.token : '', verified: true };
+    } else {
+      verifiedLicenseState = null;
+    }
+    if (typeof updatePlanBadge === 'function') updatePlanBadge();
   }
+  function clearVerifiedPlan() {
+    const hadPaid = !!(verifiedLicenseState && verifiedLicenseState.tier !== 'amator');
+    verifiedLicenseState = null;
+    if (typeof updatePlanBadge === 'function') updatePlanBadge();
+    if (hadPaid && typeof nav === 'function') nav('home');
+  }
+  Object.defineProperty(window, 'naprawnikGetVerifiedLicense', {
+    value: function() {
+      if (verifiedLicenseState && Number(verifiedLicenseState.exp) <= Date.now()) verifiedLicenseState = null;
+      return verifiedLicenseState ? { ...verifiedLicenseState } : null;
+    },
+    enumerable: false,
+    writable: false,
+    configurable: false
+  });
 
   function tokenGet() {
     try { return localStorage.getItem(TOKEN_KEY) || ((JSON.parse(localStorage.getItem('naprawnik_license') || 'null') || {}).token) || ''; }
@@ -80,9 +104,7 @@
       localStorage.setItem('naprawnik_license', JSON.stringify({ token, tier, exp: expires, checkedAt: Date.now() }));
     }
     if (token) localStorage.setItem(TOKEN_KEY, token);
-    if (typeof window.naprawnikApplyVerifiedLicense === 'function') {
-      window.naprawnikApplyVerifiedLicense({ verified: true, tier, exp: expires, token });
-    }
+    applyVerifiedPlan({ verified: true, tier, exp: expires, token });
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
     return tier;
   }
