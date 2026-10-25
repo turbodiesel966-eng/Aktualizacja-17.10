@@ -338,7 +338,9 @@ test('analiza zdjęć używa endpointu Workera z tokenem Bearer, a nie starej fu
   const html = read('index.html');
   const billing = read('billing.js');
   const worker = read('workers/subscriptions/src/index.mjs');
-  assert.doesNotMatch(html, /PA_AI_ENDPOINT|X-License-Token|\\/\\.netlify\\/functions\\/photo-diagnosis/);
+  assert.ok(!html.includes('PA_AI_ENDPOINT'));
+  assert.ok(!html.includes('X-License-Token'));
+  assert.ok(!html.includes('/.netlify/functions/photo-diagnosis'));
   assert.ok(html.includes('window.npPhotoDiagnosis(fd,{signal:ctl.signal})'));
   assert.ok(billing.includes('window.npPhotoDiagnosis = async function(formData, options)'));
   assert.ok(billing.includes("Authorization: 'Bearer ' + license.token"));
