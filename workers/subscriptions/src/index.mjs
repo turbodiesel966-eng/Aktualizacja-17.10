@@ -17,6 +17,16 @@ const RATE_LIMITS = Object.freeze({
   registration: Object.freeze({ maxRequests: 10, windowSeconds: 15 * 60 }),
   userDataWrites: Object.freeze({ maxRequests: 120, windowSeconds: 60 }),
 });
+const CHECKOUT_LOCK_LEASE_SECONDS = 30 * 60;
+const SUBSCRIPTION_LIFECYCLE_EVENTS = new Set([
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "customer.subscription.paused",
+  "customer.subscription.resumed",
+  "customer.subscription.pending_update_applied",
+  "customer.subscription.pending_update_expired",
+]);
 const encoder = new TextEncoder();
 
 function json(data, status = 200, extraHeaders = {}) {
@@ -176,6 +186,21 @@ function subscriptionTierFromStripe(sub, map) {
   return null;
 }
 function stripeTimestamp(v) { return Number.isFinite(Number(v)) && Number(v) > 0 ? Math.floor(Number(v)) : null; }
+function isSubscriptionLifecycleEvent(type) { return SUBSCRIPTION_LIFECYCLE_EVENTS.has(type); }
+function graceUntilForFailedInvoice(subscription, invoice, now = nowSeconds()) {
+  if (subscription && subscription.status === "past_due" &&
+      Number.isFinite(Number(subscription.grace_until)) && Number(subscription.grace_until) > 0) {
+    return Math.floor(Number(subscription.grace_until));
+  }
+  // Invoice.created does not change between payment retries; using event.created would extend grace on every retry.
+  return (stripeTimestamp(invoice?.created) || now) + BILLING_GRACE_SECONDS;
+}
+function checkoutLockAction(lock, tier, interval, now = nowSeconds()) {
+  if (!lock || !Number.isFinite(Number(lock.expires_at)) || Number(lock.expires_at) <= now) return "acquire";
+  if (lock.tier !== tier || lock.billing_interval !== interval) return "different_plan";
+  if (!lock.session_id) return "in_progress";
+  return "inspect_session";
+}
 function invoiceSubscriptionId(invoice) {
   return asId(invoice?.subscription) || asId(invoice?.parent?.subscription_details?.subscription);
 }
@@ -265,6 +290,17 @@ async function userForSubscription(env, sub, eventObject = null) {
   return null;
 }
 
+async function ensureStripeCustomerLink(env, customerId, userId) {
+  if (!isString(customerId, 128) || !isString(userId, 128)) throw new Error("STRIPE_CUSTOMER_LINK_INVALID");
+  await env.DB.prepare(`INSERT INTO stripe_customers (stripe_customer_id,user_id,created_at) VALUES (?,?,?)
+    ON CONFLICT(stripe_customer_id) DO UPDATE SET user_id=excluded.user_id
+    WHERE stripe_customers.user_id=excluded.user_id`)
+    .bind(customerId, userId, nowSeconds()).run();
+  const link = await env.DB.prepare("SELECT user_id FROM stripe_customers WHERE stripe_customer_id = ? LIMIT 1")
+    .bind(customerId).first();
+  if (link?.user_id !== userId) throw new Error("STRIPE_CUSTOMER_ALREADY_LINKED_TO_DIFFERENT_USER");
+}
+
 async function fetchStripeSubscription(env, subscriptionId) {
   if (!env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY_MISSING");
   const response = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subscriptionId)}?expand[]=items.data.price`, {
@@ -331,21 +367,24 @@ async function handleWebhook(request, env) {
       if (!isString(userId, 128) || !subscriptionId || !customerId) throw new Error("CHECKOUT_METADATA_OR_IDS_MISSING");
       const user = await env.DB.prepare("SELECT id FROM users WHERE id = ? LIMIT 1").bind(userId).first();
       if (!user) throw new Error("CHECKOUT_USER_NOT_FOUND");
-      await env.DB.prepare(`INSERT INTO stripe_customers (stripe_customer_id,user_id,created_at) VALUES (?,?,?)
-        ON CONFLICT(stripe_customer_id) DO UPDATE SET user_id=excluded.user_id WHERE stripe_customers.user_id=excluded.user_id`)
-        .bind(customerId, userId, nowSeconds()).run();
+      await ensureStripeCustomerLink(env, customerId, userId);
       const sub = await fetchStripeSubscription(env, subscriptionId);
       const info = subscriptionTierFromStripe(sub, map);
       if (!info) throw new Error("UNKNOWN_STRIPE_PRICE_ID");
       await persistSubscription(env, { userId, sub, priceInfo: info });
       await recalcUserTier(env, userId);
-    } else if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ?").bind(userId).run();
+    } else if (isSubscriptionLifecycleEvent(event.type)) {
       const subId = asId(obj);
       if (!subId) throw new Error("SUBSCRIPTION_ID_MISSING");
-      // Fetch latest state to avoid out-of-order snapshot events reviving a canceled subscription.
+      // Fetch latest state to avoid out-of-order snapshot events reviving a canceled/paused subscription.
       const latest = await fetchStripeSubscription(env, subId);
       const userId = await userForSubscription(env, latest, obj);
       if (!userId) throw new Error("SUBSCRIPTION_USER_NOT_RESOLVED");
+      const customerId = asId(latest.customer);
+      if (!customerId) throw new Error("SUBSCRIPTION_CUSTOMER_NOT_RESOLVED");
+      // Also link the customer here because Stripe does not guarantee webhook delivery order.
+      await ensureStripeCustomerLink(env, customerId, userId);
       const info = subscriptionTierFromStripe(latest, map);
       if (!info) {
         if (latest.status === "canceled" || event.type === "customer.subscription.deleted") {
@@ -358,12 +397,14 @@ async function handleWebhook(request, env) {
         await persistSubscription(env, { userId, sub: normalized, priceInfo: info });
         await recalcUserTier(env, userId);
       }
+      await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ?").bind(userId).run();
     } else if (event.type === "invoice.payment_failed") {
       const subId = invoiceSubscriptionId(obj);
       if (subId) {
-        const existing = await env.DB.prepare("SELECT user_id, tier, price_id, billing_interval FROM subscriptions WHERE stripe_subscription_id = ? LIMIT 1").bind(subId).first();
+        const existing = await env.DB.prepare("SELECT user_id, stripe_customer_id, tier, price_id, billing_interval, status, grace_until FROM subscriptions WHERE stripe_subscription_id = ? LIMIT 1").bind(subId).first();
         if (existing) {
-          const graceUntil = nowSeconds() + BILLING_GRACE_SECONDS;
+          if (existing.stripe_customer_id) await ensureStripeCustomerLink(env, existing.stripe_customer_id, existing.user_id);
+          const graceUntil = graceUntilForFailedInvoice(existing, obj);
           await env.DB.prepare("UPDATE subscriptions SET status = 'past_due', grace_until = ?, updated_at = ? WHERE stripe_subscription_id = ?")
             .bind(graceUntil, nowSeconds(), subId).run();
           await recalcUserTier(env, existing.user_id);
@@ -375,7 +416,10 @@ async function handleWebhook(request, env) {
           const info = subscriptionTierFromStripe(latest, map);
           if (!userId) throw new Error("FAILED_INVOICE_USER_NOT_RESOLVED");
           if (!info) throw new Error("FAILED_INVOICE_PRICE_NOT_RESOLVED");
-          const graceUntil = nowSeconds() + BILLING_GRACE_SECONDS;
+          const customerId = asId(latest.customer);
+          if (!customerId) throw new Error("FAILED_INVOICE_CUSTOMER_NOT_RESOLVED");
+          await ensureStripeCustomerLink(env, customerId, userId);
+          const graceUntil = graceUntilForFailedInvoice(null, obj);
           await persistSubscription(env, { userId, sub: { ...latest, status: "past_due" }, priceInfo: info });
           await env.DB.prepare("UPDATE subscriptions SET status = 'past_due', grace_until = ?, updated_at = ? WHERE stripe_subscription_id = ?")
             .bind(graceUntil, nowSeconds(), subId).run();
@@ -392,8 +436,12 @@ async function handleWebhook(request, env) {
         // Returning 500 lets Stripe retry after identity or price configuration is repaired.
         if (!userId) throw new Error("PAID_INVOICE_USER_NOT_RESOLVED");
         if (!info) throw new Error("PAID_INVOICE_PRICE_NOT_RESOLVED");
+        const customerId = asId(latest.customer);
+        if (!customerId) throw new Error("PAID_INVOICE_CUSTOMER_NOT_RESOLVED");
+        await ensureStripeCustomerLink(env, customerId, userId);
         await persistSubscription(env, { userId, sub: latest, priceInfo: info, statusOverride: latest.status === "past_due" ? "active" : null });
         await recalcUserTier(env, userId);
+        await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ?").bind(userId).run();
       }
     }
     await markWebhookProcessed(env, event.id);
@@ -405,6 +453,17 @@ async function handleWebhook(request, env) {
   }
 }
 
+async function fetchStripeCheckoutSession(env, sessionId) {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  if (!response.ok) throw new Error(`STRIPE_CHECKOUT_SESSION_LOOKUP_FAILED_${response.status}`);
+  return response.json();
+}
+async function releaseCheckoutLock(env, userId, idempotencyKey) {
+  await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ? AND idempotency_key = ?")
+    .bind(userId, idempotencyKey).run();
+}
 async function checkout(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
@@ -426,8 +485,35 @@ async function checkout(request, env, auth) {
   const user = await env.DB.prepare("SELECT id, email FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
   if (!user) return err("User not found", 404);
   // Prevent accidental duplicate billing: one account may have only one current active/trial subscription.
-  const existingSub = await env.DB.prepare("SELECT stripe_subscription_id, tier, status, billing_interval, current_period_end FROM subscriptions WHERE user_id = ? AND status IN (?, ?) AND current_period_end > ? ORDER BY current_period_end DESC LIMIT 1").bind(auth.userId, "active", "trialing", nowSeconds()).first();
-  if (existingSub) return err("An active subscription already exists. Refresh your plan or manage the current subscription instead of starting another checkout.", 409);
+  const existingSub = await env.DB.prepare("SELECT stripe_subscription_id, tier, status, billing_interval, current_period_end, grace_until FROM subscriptions WHERE user_id = ? AND status IN ('active','trialing','past_due','paused','unpaid','incomplete') ORDER BY current_period_end DESC LIMIT 1").bind(auth.userId).first();
+  if (existingSub) return err("An active subscription already exists or is awaiting payment. Refresh your plan or manage the current subscription instead of starting another checkout.", 409);
+
+  const now = nowSeconds();
+  const currentLock = await env.DB.prepare("SELECT user_id, idempotency_key, tier, billing_interval, session_id, expires_at FROM checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
+  const lockAction = checkoutLockAction(currentLock, tier, interval, now);
+  if (lockAction === "different_plan") return err("A Checkout session for a different plan is already open. Finish or let it expire before choosing another plan.", 409);
+  if (lockAction === "in_progress") return err("Checkout is already being prepared. Wait a moment and retry; no second session was created.", 409);
+  if (lockAction === "inspect_session") {
+    try {
+      const prior = await fetchStripeCheckoutSession(env, currentLock.session_id);
+      if (prior.status === "open" && isString(prior.url, 2048)) return json({ url: prior.url, sessionId: prior.id, reused: true }, 200);
+      if (prior.status === "complete") return err("Checkout was completed. Refresh your subscription status before starting another purchase.", 409);
+      await env.DB.prepare("UPDATE checkout_locks SET expires_at = ? WHERE user_id = ? AND idempotency_key = ?")
+        .bind(now - 1, auth.userId, currentLock.idempotency_key).run();
+    } catch {
+      return err("Could not verify the existing Checkout session. Retry later; no new session was created.", 502);
+    }
+  }
+
+  const lockKey = idempotency;
+  const lockLease = await env.DB.prepare(`INSERT INTO checkout_locks (user_id, idempotency_key, tier, billing_interval, session_id, expires_at, created_at)
+    VALUES (?, ?, ?, ?, NULL, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET idempotency_key=excluded.idempotency_key, tier=excluded.tier,
+      billing_interval=excluded.billing_interval, session_id=NULL, expires_at=excluded.expires_at, created_at=excluded.created_at
+    WHERE checkout_locks.expires_at <= ?`)
+    .bind(auth.userId, lockKey, tier, interval, now + CHECKOUT_LOCK_LEASE_SECONDS, now, now).run();
+  if (Number(lockLease.meta?.changes || 0) !== 1) return err("Another Checkout session is already being prepared. Wait a moment and retry.", 409);
+
   const customer = await env.DB.prepare("SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   const form = new URLSearchParams();
   form.set("mode", "subscription");
@@ -454,12 +540,14 @@ async function checkout(request, env, auth) {
   try {
     response = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers, body: form });
   } catch {
+    await releaseCheckoutLock(env, auth.userId, lockKey).catch(() => {});
     console.error(JSON.stringify({ event: "stripe_checkout_network_error" }));
     return err("Could not reach Stripe Checkout. Please retry.", 502);
   }
   let result = null;
   try { result = await response.json(); } catch { /* Stripe error bodies may be empty or non-JSON. */ }
   if (!response.ok || !isString(result?.url, 2048) || !isString(result?.id, 128)) {
+    await releaseCheckoutLock(env, auth.userId, lockKey).catch(() => {});
     console.error(JSON.stringify({
       event: "stripe_checkout_rejected",
       status: response.status,
@@ -467,6 +555,16 @@ async function checkout(request, env, auth) {
       errorCode: isString(result?.error?.code, 128) ? result.error.code : null,
     }));
     return err("Could not create Checkout session", 502);
+  }
+  try {
+    const sessionExpires = stripeTimestamp(result.expires_at) || (nowSeconds() + 24 * 60 * 60);
+    const lockUpdated = await env.DB.prepare("UPDATE checkout_locks SET session_id = ?, expires_at = ? WHERE user_id = ? AND idempotency_key = ?")
+      .bind(result.id, sessionExpires, auth.userId, lockKey).run();
+    if (Number(lockUpdated.meta?.changes || 0) !== 1) {
+      return err("Checkout was created but its lock could not be saved. Do not start another purchase; retry or contact support.", 503);
+    }
+  } catch {
+    return err("Checkout was created but its lock could not be saved. Do not start another purchase; retry or contact support.", 503);
   }
   try {
     await env.DB.prepare("INSERT INTO checkout_requests (idempotency_key, user_id, session_id, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(idempotency_key) DO NOTHING")
@@ -726,6 +824,6 @@ export default {
   },
 };
 
-export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey };
+export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink };
 
 
