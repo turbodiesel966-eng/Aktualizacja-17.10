@@ -1,19 +1,26 @@
 # NAPRAWNIK — Cloudflare subscriptions Worker
 
-This source is a source-controlled mirror of the subscription Worker plus pre-release changes. On 2026-10-25, the branch source was uploaded to `naprawnik-subscriptions-v2-staging` only. It has not been uploaded to `naprawnik-subscriptions-live`; PR #6 remains open and in draft.
+## Current production state — 2026-10-25
 
-## Read-only audit findings
+The `main` branch is the source of truth for the production release. The Worker `naprawnik-subscriptions-live` runs the current source from `workers/subscriptions/src/index.mjs`; the GitHub Pages UI is published from the same repository.
 
-- The deployed Worker source overwrote `PRODUCTION_ENABLED` with `true` on every request, despite its Cloudflare variable being `false`.
-- The live Worker configuration returned a staging hostname for `ALLOWED_ORIGINS`, `APP_BASE_URL`, `CHECKOUT_SUCCESS_URL` and `CHECKOUT_CANCEL_URL`, rather than the GitHub Pages app origin.
-- The deployed D1 schemas did not have a persistent request-limiter table.
-- Stripe webhook signature verification and event-idempotency handling are already present in the deployed source; this branch keeps those mechanisms.
-- Subscription `paused`/`resumed` lifecycle events are now handled explicitly; repeated failures of the same Stripe invoice no longer extend the grace period on every retry.
-- A D1 checkout lock now prevents concurrent hosted Checkout sessions for the same account, and subscription events restore the Stripe customer-to-account mapping even if webhook events arrive out of order.
+- Production is explicitly enabled with `PRODUCTION_ENABLED=true`; Stripe is configured for Live mode and retains the existing monthly/yearly prices.
+- The production D1 database has the additive migration `0004_admin_promos_analytics.sql` applied. It creates server-side admin roles, one-time bootstrap state, hashed promo codes and redemptions, and opt-in analytics tables.
+- The `ADMIN_BOOTSTRAP_KEY` is stored as a Cloudflare Worker secret. The first successful bootstrap can grant admin only to the authenticated account that wins the one-time bootstrap. Do not commit or log the key.
+- Photo analysis is intentionally disabled by default. The Worker requires `PHOTO_ANALYSIS_ENABLED=true` plus a configured `OPENAI_API_KEY` before it can call OpenAI. Do not enable it until API spend limits are agreed.
+- Anonymous analytics are sent only after a user opts in from application settings. Stored identifiers are hashed and raw IP addresses are not stored by this feature. Account counts are exact; browser counts are estimates, not people.
+- No Checkout or payment transaction was run during the admin/promo rollout.
 
-The source mirror no longer overrides environment variables in code. Worker requests fail closed when `PRODUCTION_ENABLED` is not exactly `true`.
+## Production hardening notes
 
-### Staging-only rollout performed 2026-10-25
+- The Worker no longer overrides `PRODUCTION_ENABLED` in request code and fails closed unless the setting is explicitly `true`.
+- CORS and Checkout return URLs use the production GitHub Pages origin.
+- D1-backed request limits cover registration, account-data writes, billing portal, admin bootstrap/writes, promo redemptions, and analytics.
+- Stripe webhook signature verification, event-idempotency, subscription lifecycle handling, and checkout locking remain enabled.
+
+### Historical staging rollout performed 2026-10-25
+
+The following section records staging work from earlier that day; it is historical context, not the current deployment state.
 
 - Uploaded the branch's `workers/subscriptions/src/index.mjs` to `naprawnik-subscriptions-v2-staging` only. Uploaded the branch UI assets (`index.html`, `billing.js`, `sw.js`, and the technical catalogue) to `naprawnik-pwa-staging` only.
 - Applied migrations `0002_request_limits.sql` and `0003_checkout_locks.sql` only to D1 database `naprawnik-subscriptions-v2-staging` (`c4f3dd75-cf41-48e6-bb48-67f7aff42176`). Confirmed the two tables and indexes exist; user, token, and subscription row counts were unchanged by the migrations. Live D1 was not touched.
