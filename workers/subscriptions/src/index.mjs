@@ -722,6 +722,6 @@ export default {
   },
 };
 
-export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl };
+export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey };
 
 
