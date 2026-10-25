@@ -205,6 +205,33 @@ function safeReturnUrl(configured, fallback, appBase) {
     return null;
   }
 }
+
+async function validateStripePrice(env, priceId, interval) {
+  const configuredMode = env.STRIPE_EXPECT_LIVEMODE;
+  if (configuredMode !== "true" && configuredMode !== "false") {
+    return err("Tryb test/live Stripe nie został jawnie skonfigurowany dla tego środowiska.", 503);
+  }
+  let response;
+  try {
+    response = await fetch("https://api.stripe.com/v1/prices/" + encodeURIComponent(priceId), {
+      headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+    });
+  } catch {
+    return err("Nie udało się zweryfikować ceny w Stripe. Spróbuj później.", 502);
+  }
+  let price = null;
+  try { price = await response.json(); } catch { /* Nie ujawniamy treści błędów Stripe. */ }
+  const expectedLivemode = configuredMode === "true";
+  const intervalCount = Number(price?.recurring?.interval_count || 1);
+  if (!response.ok || price?.id !== priceId || price.active !== true ||
+      price.livemode !== expectedLivemode || price.currency !== "pln" ||
+      price.recurring?.interval !== interval || intervalCount !== 1 ||
+      !Number.isSafeInteger(Number(price.unit_amount)) || Number(price.unit_amount) <= 0) {
+    return err("Cena Stripe jest nieaktywna albo nie pasuje do trybu, waluty lub okresu rozliczenia tego środowiska.", 503);
+  }
+  return null;
+}
+
 function tierRank(tier) { return tier === "warsztat" ? 2 : tier === "pro" ? 1 : 0; }
 function highestTier(subscriptions) {
   const valid = subscriptions.filter(s => ACTIVE_SUB_STATUSES.has(s.status) && Number(s.current_period_end || 0) > nowSeconds());
@@ -380,6 +407,13 @@ async function handleWebhook(request, env) {
   let event;
   try { event = JSON.parse(rawBody); } catch { return err("Malformed JSON", 400); }
   if (!isString(event.id, 128) || !isString(event.type, 128) || !event.data?.object) return err("Invalid Stripe event", 400);
+  const configuredMode = env.STRIPE_EXPECT_LIVEMODE;
+  if (configuredMode !== "true" && configuredMode !== "false") {
+    return err("Stripe mode is not configured for this environment", 503);
+  }
+  if (typeof event.livemode !== "boolean" || event.livemode !== (configuredMode === "true")) {
+    return err("Stripe webhook mode does not match this environment", 400);
+  }
 
   try {
     const claimStatus = await claimWebhookEvent(env, event);
@@ -533,7 +567,11 @@ async function checkout(request, env, auth) {
   if (!user) return err("User not found", 404);
   // Prevent accidental duplicate billing: one account may have only one current active/trial subscription.
   const existingSub = await env.DB.prepare("SELECT stripe_subscription_id, tier, status, billing_interval, current_period_end, grace_until FROM subscriptions WHERE user_id = ? AND status IN ('active','trialing','past_due','paused','unpaid','incomplete') ORDER BY current_period_end DESC LIMIT 1").bind(auth.userId).first();
-  if (existingSub) return err("An active subscription already exists or is awaiting payment. Refresh your plan or manage the current subscription instead of starting another checkout.", 409);
+  if (existingSub) return err("An active subscription already exists or is awaiting payment. Refresh your plan or manage the current subscription instead of starting another checkout.\", 409);
+
+  // Fail closed before creating a lock/session if the Stripe price is not from the configured mode.
+  const priceError = await validateStripePrice(env, priceId, interval);
+  if (priceError) return priceError;
 
   // Read customer data before acquiring the lock so a D1 read failure cannot leave a phantom lock.
   const customer = await env.DB.prepare("SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
