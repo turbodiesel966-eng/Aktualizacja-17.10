@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout } from "./src/index.mjs";
+import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -300,6 +300,164 @@ test("dwa równoczesne Checkouty nie wywołują dwóch sesji Stripe", async () =
     assert.equal(state.stripePosts, 1);
     assert.ok(results.every(response => [200, 409].includes(response.status)));
     assert.ok(results.some(response => response.status === 200));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", async () => {
+  const originalFetch = globalThis.fetch;
+  const now = Math.floor(Date.now() / 1000);
+  const secret = "whsec_test_subscription_lifecycle_only";
+  const state = {
+    events: new Map(),
+    customers: new Map(),
+    subscriptions: new Map(),
+    users: new Map([["user_test_1", { id: "user_test_1", tier: "pro" }]]),
+    stripeStatus: "paused"
+  };
+  const env = {
+    STRIPE_WEBHOOK_SECRET: secret,
+    STRIPE_PRICE_PRO_MONTHLY: "price_test_pro_month",
+    STRIPE_PRICE_PRO_YEARLY: "price_test_pro_year",
+    STRIPE_PRICE_WARSZTAT_MONTHLY: "price_test_warsztat_month",
+    STRIPE_PRICE_WARSZTAT_YEARLY: "price_test_warsztat_year",
+    DB: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async first() {
+                if (sql.includes("SELECT id FROM users")) return state.users.get(params[0]) || null;
+                if (sql.includes("SELECT user_id FROM stripe_customers")) {
+                  const userId = state.customers.get(params[0]);
+                  return userId ? { user_id: userId } : null;
+                }
+                if (sql.includes("SELECT user_id FROM subscriptions WHERE stripe_subscription_id")) {
+                  const subscription = state.subscriptions.get(params[0]);
+                  return subscription ? { user_id: subscription.user_id } : null;
+                }
+                if (sql.includes("SELECT processed_at, processing, claimed_at FROM stripe_events")) {
+                  return state.events.get(params[0]) || null;
+                }
+                if (sql.includes("SELECT tier, price_id, billing_interval FROM subscriptions WHERE stripe_subscription_id")) {
+                  const subscription = state.subscriptions.get(params[0]);
+                  return subscription ? { tier: subscription.tier, price_id: subscription.price_id, billing_interval: subscription.billing_interval } : null;
+                }
+                throw new Error("Unexpected webhook first() SQL: " + sql);
+              },
+              async all() {
+                if (sql.includes("SELECT tier, status, current_period_end, grace_until FROM subscriptions WHERE user_id")) {
+                  return {
+                    results: [...state.subscriptions.values()].filter(item => item.user_id === params[0]).map(item => ({
+                      tier: item.tier, status: item.status, current_period_end: item.current_period_end, grace_until: item.grace_until
+                    }))
+                  };
+                }
+                throw new Error("Unexpected webhook all() SQL: " + sql);
+              },
+              async run() {
+                if (sql.includes("INSERT INTO stripe_events")) {
+                  const [id, type, created, claimedAt] = params;
+                  const current = state.events.get(id);
+                  if (current?.processed_at || (current?.processing && Number(current.claimed_at) >= Number(params[4]))) {
+                    return { success: true, meta: { changes: 0 } };
+                  }
+                  state.events.set(id, { event_id: id, event_type: type, event_created: created, processed_at: null, processing: 1, claimed_at: claimedAt, last_error: null });
+                  return { success: true, meta: { changes: 1 } };
+                }
+                if (sql.includes("UPDATE stripe_events SET processed_at")) {
+                  const [processedAt, id] = params;
+                  const event = state.events.get(id);
+                  if (event) Object.assign(event, { processed_at: processedAt, processing: 0, claimed_at: null, last_error: null });
+                  return { success: true, meta: { changes: event ? 1 : 0 } };
+                }
+                if (sql.includes("UPDATE stripe_events SET processing = 0")) {
+                  const [message, id] = params;
+                  const event = state.events.get(id);
+                  if (event) Object.assign(event, { processing: 0, claimed_at: null, last_error: message });
+                  return { success: true, meta: { changes: event ? 1 : 0 } };
+                }
+                if (sql.includes("INSERT INTO stripe_customers")) {
+                  const [customerId, userId] = params;
+                  if (!state.customers.has(customerId)) {
+                    state.customers.set(customerId, userId);
+                    return { success: true, meta: { changes: 1 } };
+                  }
+                  return { success: true, meta: { changes: 0 } };
+                }
+                if (sql.includes("INSERT INTO subscriptions")) {
+                  const [id, userId, customerId, tier, priceId, interval, status, periodEnd, cancelAtPeriodEnd, created, updated] = params;
+                  const current = state.subscriptions.get(id);
+                  state.subscriptions.set(id, {
+                    stripe_subscription_id: id, user_id: userId, stripe_customer_id: customerId,
+                    tier, price_id: priceId, billing_interval: interval, status,
+                    current_period_end: periodEnd, cancel_at_period_end: cancelAtPeriodEnd,
+                    grace_until: status === "active" || status === "trialing" ? null : current?.grace_until || null,
+                    stripe_created_at: created, updated_at: updated
+                  });
+                  return { success: true, meta: { changes: 1 } };
+                }
+                if (sql.includes("UPDATE users SET tier = ?")) {
+                  const [tier, updatedAt, userId] = params;
+                  const user = state.users.get(userId);
+                  if (user) Object.assign(user, { tier, updated_at: updatedAt });
+                  return { success: true, meta: { changes: user ? 1 : 0 } };
+                }
+                if (sql.includes("DELETE FROM checkout_locks")) return { success: true, meta: { changes: 0 } };
+                throw new Error("Unexpected webhook run() SQL: " + sql);
+              }
+            };
+          }
+        };
+      }
+    }
+  };
+
+  globalThis.fetch = async input => {
+    const url = String(input);
+    if (url.includes("/v1/subscriptions/sub_test_lifecycle?")) {
+      return new Response(JSON.stringify({
+        id: "sub_test_lifecycle",
+        customer: "cus_test_lifecycle",
+        status: state.stripeStatus,
+        current_period_end: now + 3600,
+        cancel_at_period_end: false,
+        created: now - 100,
+        metadata: { user_id: "user_test_1" },
+        items: { data: [{ price: { id: "price_test_pro_month" }, current_period_end: now + 3600 }] }
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    throw new Error("Unexpected external fetch in webhook test: " + url);
+  };
+
+  async function sendEvent(id, type, object) {
+    const event = { id, type, created: now, data: { object } };
+    const rawBody = JSON.stringify(event);
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(now + "." + rawBody)));
+    const signature = [...mac].map(byte => byte.toString(16).padStart(2, "0")).join("");
+    const request = new Request("https://worker.example.test/webhooks/stripe", {
+      method: "POST",
+      headers: { "content-type": "application/json", "Stripe-Signature": "t=" + now + ",v1=" + signature },
+      body: rawBody
+    });
+    return handleWebhook(request, env);
+  }
+
+  try {
+    const object = { id: "sub_test_lifecycle", customer: "cus_test_lifecycle", metadata: { user_id: "user_test_1" } };
+    const paused = await sendEvent("evt_test_paused", "customer.subscription.paused", object);
+    assert.equal(paused.status, 200);
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "paused");
+    assert.equal(state.users.get("user_test_1")?.tier, "amator");
+
+    state.stripeStatus = "active";
+    const resumed = await sendEvent("evt_test_resumed", "customer.subscription.resumed", object);
+    assert.equal(resumed.status, 200);
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "active");
+    assert.equal(state.users.get("user_test_1")?.tier, "pro");
   } finally {
     globalThis.fetch = originalFetch;
   }
