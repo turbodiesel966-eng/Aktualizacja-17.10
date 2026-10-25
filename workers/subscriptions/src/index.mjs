@@ -233,10 +233,13 @@ async function recalcUserTier(env, userId) {
 }
 
 function requiredTierForDataKey(key) {
-  const namespace = String(key || "").split(/[:/.]/, 1)[0].toLowerCase();
-  if (namespace === "warsztat" || namespace === "workshop") return "warsztat";
-  if (namespace === "pro" || namespace === "premium") return "pro";
+  const value = String(key || "");
+  if (/^(?:warsztat|workshop)(?=[:/._-])/i.test(value)) return "warsztat";
+  if (/^(?:pro|premium)(?=[:/._-])/i.test(value)) return "pro";
   return "amator";
+}
+function isReservedDataKey(key) {
+  return /(?:^|[:/._-])(?:license|licence|subscription|billing|entitlement|api[_-]?token|tier|plan)(?:$|[:/._-])/i.test(String(key || ""));
 }
 async function userHasTier(env, userId, minimumTier) {
   const currentTier = await recalcUserTier(env, userId);
@@ -553,6 +556,7 @@ async function writeUserData(request, env, auth) {
   if (request.method !== "PUT" && request.method !== "POST") return err("Method not allowed", 405);
   const body = await readJson(request);
   if (!isString(body?.key, 128) || body.key.includes("\u0000")) return err("Invalid key");
+  if (isReservedDataKey(body.key)) return err("Reserved data key", 400);
   const requiredTier = requiredTierForDataKey(body.key);
   if (requiredTier !== "amator" && !(await userHasTier(env, auth.userId, requiredTier))) {
     return err("An active subscription for the required plan is needed to write this data", 403);
