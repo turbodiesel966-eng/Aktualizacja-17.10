@@ -11,6 +11,7 @@
 
 const ACTIVE_SUB_STATUSES = new Set(["active", "trialing"]);
 const BILLING_GRACE_SECONDS = 3 * 24 * 60 * 60;
+const TOKEN_LIFETIME_SECONDS = 365 * 24 * 60 * 60;
 const MAX_JSON_BYTES = 256 * 1024;
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 const MAX_PHOTO_REQUEST_BYTES = 5 * 1024 * 1024;
@@ -144,18 +145,41 @@ async function readBodyLimited(request, limit) {
 
 async function authenticate(request, env) {
   const header = request.headers.get("Authorization") || "";
-  const match = /^Bearer\s+([A-Za-z0-9_-]{32,200})$/.exec(header);
+  const match = /^Bearer\\s+([A-Za-z0-9_-]{32,200})$/.exec(header);
   if (!match) return null;
   const tokenHash = await sha256Hex(match[1]);
   const row = await env.DB.prepare(
     "SELECT user_id, expires_at, revoked_at FROM api_tokens WHERE token_hash = ? LIMIT 1"
   ).bind(tokenHash).first();
-  if (!row || row.revoked_at || (row.expires_at && Number(row.expires_at) <= nowSeconds())) return null;
-  await env.DB.prepare("UPDATE api_tokens SET last_used_at = ? WHERE token_hash = ?")
-    .bind(nowSeconds(), tokenHash).run();
+  if (!row || row.revoked_at) return null;
+
+  const now = nowSeconds();
+  const expiresAt = row.expires_at === null || row.expires_at === undefined
+    ? null
+    : Number(row.expires_at);
+  if (expiresAt !== null && (!Number.isFinite(expiresAt) || expiresAt <= now)) {
+    // A paid annual subscription can outlive the token's original registration date.
+    // Permit renewal only while the account still has a server-verified entitlement.
+    const entitlement = await env.DB.prepare(`
+      SELECT 1 AS active FROM subscriptions
+      WHERE user_id = ?
+        AND ((status IN ('active', 'trialing') AND current_period_end > ?)
+          OR (status = 'past_due' AND grace_until > ?))
+      UNION ALL
+      SELECT 1 AS active FROM promo_redemptions WHERE user_id = ? AND expires_at > ?
+      LIMIT 1
+    `).bind(row.user_id, now, now, row.user_id, now).first();
+    if (!entitlement) return null;
+  }
+
+  // Sliding renewal avoids expiring long-running customers' bearer tokens after one year.
+  // A NULL expiry remains non-expiring; revoked tokens are still rejected above.
+  await env.DB.prepare(`UPDATE api_tokens
+    SET last_used_at = ?, expires_at = CASE WHEN expires_at IS NULL THEN NULL ELSE ? END
+    WHERE token_hash = ?`)
+    .bind(now, expiresAt === null ? null : now + TOKEN_LIFETIME_SECONDS, tokenHash).run();
   return { userId: row.user_id };
 }
-
 async function enforceRateLimit(request, env, scope, subject, policy) {
   const now = nowSeconds();
   const windowStart = Math.floor(now / policy.windowSeconds) * policy.windowSeconds;
