@@ -65,6 +65,8 @@ test("Worker nie nadpisuje przełącznika produkcji i stosuje kontrole", async (
   const source = await readFile(new URL("./src/index.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(source, /PRODUCTION_ENABLED:\s*["\x27]true["\x27]/);
   assert.match(source, /url\.pathname === ["\x27]\/api\/register["\x27][\s\S]{0,300}enforceRateLimit/);
+  assert.match(source, /url\.pathname === ["\x27]\/api\/billing-portal["\x27][\s\S]{0,500}enforceRateLimit/);
+  assert.match(source, /billingPortal: Object\.freeze\(\{ maxRequests: 10, windowSeconds: 15 \* 60 \}\)/);
   assert.match(source, /url\.pathname === ["\x27]\/api\/data["\x27][\s\S]{0,700}enforceRateLimit/);
   assert.match(source, /originHeader && !allowedOrigin\(request, env\)/);
   assert.match(source, /An active subscription for the required plan is needed/);
