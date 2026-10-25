@@ -1419,14 +1419,18 @@ let currentNav = 'home';
 
 
 /* ===== PLANY: AMATOR (free) / PRO / WARSZTAT — płatności Stripe ===== */
-const NAPRAWNIK_BILLING_API='https://naprawnik-subscriptions-live.turbodiesel966.workers.dev';
-const API_TOKEN_KEY='naprawnik_api_token';
 const PLAN_ORDER={amator:0,pro:1,warsztat:2};
 const PLAN_NAMES={amator:'AMATOR',pro:'PRO',warsztat:'WARSZTAT'};
-function licRaw(){try{return JSON.parse(localStorage.getItem('naprawnik_license')||'null');}catch(e){return null;}}
-function licGet(){const l=licRaw();return (l&&l.token&&l.exp>Date.now()&&PLAN_ORDER[l.tier]!==undefined)?l:null;}
+function getVerifiedLicense(){
+  try{
+    const state=typeof window.naprawnikGetVerifiedLicense==='function'?window.naprawnikGetVerifiedLicense():null;
+    if(!state||state.verified!==true||!Object.prototype.hasOwnProperty.call(PLAN_ORDER,state.tier)||!(Number(state.exp)>Date.now()))return null;
+    return state;
+  }catch(e){return null;}
+}
+function licGet(){return getVerifiedLicense();}
 function curPlan(){const l=licGet();return l?l.tier:'amator';}
-function hasPlan(min){return PLAN_ORDER[curPlan()]>=PLAN_ORDER[min];}
+function hasPlan(min){return Object.prototype.hasOwnProperty.call(PLAN_ORDER,min)&&PLAN_ORDER[curPlan()]>=PLAN_ORDER[min];}
 function lk(min){return hasPlan(min)?'':'🔒 ';}
 function vehicleLimit(){return {amator:3,pro:30,warsztat:Infinity}[curPlan()];}
 function updatePlanBadge(){const b=document.getElementById('planBadge');if(b)b.textContent='· '+PLAN_NAMES[curPlan()];}
@@ -1448,55 +1452,6 @@ function renderLocked(min,label,backJs){
 }
 const NAV_MIN={parts:'pro',obd:'pro',models:'pro',clients:'warsztat',log:'warsztat',checklist:'warsztat'};
 const NAV_LABEL={parts:'Dobór części OEM i zamienników',obd:'Baza kodów OBD',models:'Profile konkretnych silników',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe'};
-function renderPlans(){
-  const l=licGet(), cur=curPlan();
-  const card=(k,link)=>'<div class="card" style="'+(cur===k?'border-color:var(--hero)':'')+'"><h2>'+(k==='pro'?'💎 ':k==='warsztat'?'🛠️ ':'🛵 ')+PLAN_NAMES[k]+(cur===k?' — Twój plan':'')+'</h2><small style="color:var(--dim)">'+(k==='amator'?'Bezpłatny, bez konta':'Subskrypcja — cena i okres rozliczenia na stronie płatności Stripe')+'</small>'+planBullets(k)+(link&&cur!==k&&PLAN_ORDER[cur]<PLAN_ORDER[k]?'<a class="btn" href="'+link+'" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center">Wybieram '+PLAN_NAMES[k]+'</a>':'')+'</div>';
-  const licBox=l?
-    '<div class="card"><h2>🔑 Licencja aktywna</h2><div class="entry"><b>Plan: '+PLAN_NAMES[l.tier]+'</b><small>Odnawia się automatycznie przy połączeniu z internetem. Bez odświeżenia ważna do '+escapeHtml(new Date(l.exp).toLocaleDateString('pl-PL'))+'.</small></div><small style="color:var(--dim)">Klucz licencyjny — wklej go na innym urządzeniu. Nie udostępniaj go innym osobom.</small><textarea id="licKeyShow" readonly style="min-height:70px">'+escapeHtml(l.token)+'</textarea><div class="btn" onclick="licCopy()">📋 Skopiuj klucz</div><div class="btn" onclick="licRefresh(false)">🔄 Odśwież licencję</div><div class="btn" onclick="licDeactivate()">🚪 Dezaktywuj na tym urządzeniu</div></div>':
-    '<div class="card"><h2>🔑 Aktywacja po zakupie</h2><p style="font-size:12px;line-height:1.5">Po płatności Stripe przeniesie Cię z powrotem do aplikacji i plan włączy się sam. Jeśli tak się nie stało, wklej klucz licencyjny (z innego urządzenia) albo identyfikator płatności (zaczyna się od cs_).</p><input id="licKeyIn" placeholder="klucz licencyjny lub cs_live_…"><div class="btn" onclick="licActivateInput()">✅ Aktywuj</div></div>';
-  screen.innerHTML=back()+'<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to pełnoprawna, bezpłatna aplikacja do diagnostyki. PRO i WARSZTAT dodają analizę AI, dane dopasowane do rodziny silnika oraz narzędzia dla warsztatu. Anulowanie i faktury: według wiadomości od Stripe po zakupie.</p></div>'+licBox+card('amator')+card('pro',STRIPE_PRO)+card('warsztat',STRIPE_WARSZTAT)+'<div class="card"><small style="color:var(--dim)">Licencja jest weryfikowana po stronie serwera z Stripe. Funkcje działające lokalnie na urządzeniu są chronione w aplikacji; analiza AI wymaga ważnej licencji na serwerze.</small></div>';
-}
-async function licCall(body){
-  const r=await fetch(LICENSE_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(body)});
-  let d={};try{d=await r.json();}catch(e){}
-  if(!r.ok) throw new Error(d.error||('Błąd serwera licencji (HTTP '+r.status+').'));
-  return d;
-}
-function licSave(d){localStorage.setItem('naprawnik_license',JSON.stringify({token:d.token,tier:d.tier,exp:d.exp,checkedAt:Date.now()}));updatePlanBadge();}
-function licApply(d){
-  if(d&&d.active&&d.token){licSave(d);return true;}
-  localStorage.removeItem('naprawnik_license');updatePlanBadge();return false;
-}
-async function licActivateSession(id){
-  try{const d=await licCall({action:'activate',session_id:id});licApply(d);alert('Plan '+PLAN_NAMES[d.tier]+' został aktywowany. Dziękujemy!');}
-  catch(e){alert('Nie udało się aktywować planu: '+(e.message||e));}
-  nav('plans');
-}
-async function licActivateInput(){
-  const v=(document.getElementById('licKeyIn')||{}).value;const t=(v||'').trim();if(!t)return;
-  try{
-    const d=await licCall(/^cs_(live|test)_/.test(t)?{action:'activate',session_id:t}:{action:'refresh',token:t});
-    if(!licApply(d)){alert('Subskrypcja nie jest aktywna.');}else{alert('Plan '+PLAN_NAMES[d.tier]+' został aktywowany.');}
-  }catch(e){alert('Nie udało się aktywować: '+(e.message||e));}
-  renderPlans();
-}
-async function licRefresh(silent){
-  const l=licRaw();if(!l||!l.token)return;
-  try{const d=await licCall({action:'refresh',token:l.token});const ok=licApply(d);if(!silent){alert(ok?'Licencja odświeżona: '+PLAN_NAMES[d.tier]+'.':'Subskrypcja nie jest już aktywna — plan AMATOR.');}}
-  catch(e){if(!silent)alert('Nie udało się odświeżyć licencji: '+(e.message||e));}
-  if(!silent)renderPlans();
-}
-function licDeactivate(){if(!confirm('Wyłączyć licencję na tym urządzeniu? Subskrypcja w Stripe nie zostanie anulowana.'))return;localStorage.removeItem('naprawnik_license');updatePlanBadge();renderPlans();}
-function licCopy(){const t=(document.getElementById('licKeyShow')||{}).value||'';if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('Skopiowano klucz licencyjny.')).catch(()=>alert('Skopiuj klucz ręcznie.'));else alert('Skopiuj klucz ręcznie z pola.');}
-function licBoot(){
-  updatePlanBadge();
-  try{
-    const q=new URLSearchParams(location.search);const sid=q.get('session_id');
-    if(sid&&/^cs_(live|test)_/.test(sid)){history.replaceState(null,'',location.pathname);licActivateSession(sid);return;}
-    const l=licRaw();
-    if(l&&l.token&&navigator.onLine&&(!l.checkedAt||Date.now()-l.checkedAt>12*3600*1000))licRefresh(true);
-  }catch(e){console.warn('licBoot',e);}
-}
 /* ===== Funkcje warsztatu ===== */
 function workshopInfo(){const w=load('naprawnik_workshop');return (Array.isArray(w)&&w[0])||{};}
 function editWorkshop(){
@@ -2439,7 +2394,7 @@ function specCatalogCards(m){
   const pf0=specProfileFor(m); const full=hasPlan('pro'); const pf=full?pf0:{e:'def',q:null,exact:false}; const tag=pf.exact?'dane z serwisówki tej rodziny — potwierdź dla swojego rocznika':'wartości ogólne / orientacyjne dla skuterów 50–150 cm³ — nie ma sprawdzonych danych dla tego modelu; dla większych silników potwierdź w DTR';
   return '<div class="card"><h3>⚡ Zapłon i elektryka — oporności (Ω)</h3><small style="color:var(--dim)">'+escapeHtml(tag)+'</small>'+specElecBlock(pf.e)+'</div>'+
    '<div class="card"><h3>🔌 Napięcia (V) — ile daje jaka cewka</h3>'+specVoltBlock()+'</div>'+
-   '<div class="card"><h3>🔩 Momenty dokręcania</h3>'+(full?'<small style="color:var(--dim)">'+escapeHtml(pf.exact?'rodzina silnika z serwisówki — potwierdź dla swojego wariantu':'wartości orientacyjne dla rodziny silnika — przy krytycznych połączeniach potwierdź w DTR')+'</small>'+specTorqBlock(pf.q):'<div class="entry"><b>🔒 Dopasowane do rodziny: '+escapeHtml(TORQ[pf0.q].name)+'</b><small>Momenty z serwisówek dla tej rodziny silnika są w planie PRO. Poniżej bezpłatna tabela wg gwintu.</small><a class="btn" href="'+STRIPE_PRO+'" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center">💎 Kup PRO</a></div>')+'<div class="entry"><small>Ogólne wartości wg rozmiaru gwintu (stal; w aluminium i pokrywach silnika ostrożnie, zwykle niżej):</small></div>'+specTable(TORQ_GENERIC)+'</div>'+
+   '<div class="card"><h3>🔩 Momenty dokręcania</h3>'+(full?'<small style="color:var(--dim)">'+escapeHtml(pf.exact?'rodzina silnika z serwisówki — potwierdź dla swojego wariantu':'wartości orientacyjne dla rodziny silnika — przy krytycznych połączeniach potwierdź w DTR')+'</small>'+specTorqBlock(pf.q):'<div class="entry"><b>🔒 Dopasowane do rodziny: '+escapeHtml(TORQ[pf0.q].name)+'</b><small>Momenty z serwisówek dla tej rodziny silnika są w planie PRO. Poniżej bezpłatna tabela wg gwintu.</small><div class="btn" data-billing-nav="plans">💎 Zobacz abonamenty</div></div>')+'<div class="entry"><small>Ogólne wartości wg rozmiaru gwintu (stal; w aluminium i pokrywach silnika ostrożnie, zwykle niżej):</small></div>'+specTable(TORQ_GENERIC)+'</div>'+
    '<div class="card"><h3>Źródła oporności i momentów</h3>'+SPEC_LINKS.map(([n,u])=>'<div class="entry"><a href="'+u+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(n)+' ↗</a></div>').join('')+'</div>';
 }
 let activeSpecProfile='def';
@@ -2466,7 +2421,7 @@ function renderTorque(type){
   screen.innerHTML = back() + `<div class="card"><h2>Momenty dokręcania — ${escapeHtml(typeName(type))}</h2>
     <div class="alert">Momenty zależą od silnika. Poniżej: wartości z serwisówek wybranych rodzin oraz ogólne tabele gwintów. Przy głowicy, sprzęgle, wariatorze i kole magnetowym potwierdź wartość w DTR swojego wariantu.</div>
     <table><tr><th>Element</th><th>Wartość</th></tr>${rows.map(([p,n])=>`<tr><td>${escapeHtml(p)}</td><td>${escapeHtml(String(n))}</td></tr>`).join('')}</table>
-  </div>` + (hasPlan('pro')?keys.map(q=>'<div class="card">'+specTorqBlock(q)+'</div>').join(''):'<div class="card" style="border-color:var(--hero)"><h2>🔒 Momenty wg rodziny silnika</h2><p style="font-size:12px">Wartości z serwisówek (Yamaha Aerox/Vino, Peugeot FB, GY6/Kisbee, Keeway 2T): świeca, głowica, koło magnetowe, wariator, sprzęgło, spusty — w planie PRO. Poniżej bezpłatna tabela wg gwintu.</p><a class="btn" href="'+STRIPE_PRO+'" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center">💎 Kup PRO</a><div class="btn" onclick="nav(\'plans\')">Plany i licencja</div></div>') +
+  </div>` + (hasPlan('pro')?keys.map(q=>'<div class="card">'+specTorqBlock(q)+'</div>').join(''):'<div class="card" style="border-color:var(--hero)"><h2>🔒 Momenty wg rodziny silnika</h2><p style="font-size:12px">Wartości z serwisówek (Yamaha Aerox/Vino, Peugeot FB, GY6/Kisbee, Keeway 2T): świeca, głowica, koło magnetowe, wariator, sprzęgło, spusty — w planie PRO. Poniżej bezpłatna tabela wg gwintu.</p><div class="btn" data-billing-nav="plans">💎 Zobacz abonamenty</div><div class="btn" onclick="nav(\'plans\')">Plany i licencja</div></div>') +
   `<div class="card"><h2>Ogólne wg gwintu</h2>${specTable(TORQ_GENERIC)}</div><div class="card"><h2>Jak używać</h2><p style="font-size:12px;line-height:1.5">Ustal producenta, model, rocznik i kod silnika. Dokręcaj na czystych gwintach, głowicę etapami na krzyż. Gdy łączenie jest krytyczne, a Twój wariant nie jest na liście, potwierdź wartość w DTR.</p></div>`;
 }
 
@@ -2631,7 +2586,7 @@ const PA_DB_NAME = 'naprawnik_photo_assistant_v1';
 const PA_DB_VERSION = 1;
 let paSelectedFiles = [];
 let paDbPromise = null;
-const PA_AI_ENDPOINT = '/.netlify/functions/photo-diagnosis';
+// Analiza online idzie przez billing.js do uwierzytelnionego Cloudflare Workera; brak klucza AI w HTML.
 
 function paOpenDb(){
   if(paDbPromise) return paDbPromise;
@@ -2789,20 +2744,26 @@ async function paRunAI(id){
     renderPhotoAssistantCase(id);
     const fd=new FormData();fd.append('symptoms',r.symptoms||'');fd.append('category',r.category||'other');fd.append('make',r.make||'');fd.append('model',r.model||'');fd.append('year',r.year||'');fd.append('engine',r.engine||'');fd.append('extra',r.extra||'');
     for(const p of r.photos){fd.append('photos',paDataUrlToBlob(p.dataUrl),p.name||'photo.jpg');}
-    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),60000); let response;
-    try{ response=await fetch(PA_AI_ENDPOINT,{method:'POST',body:fd,headers:{'Accept':'application/json','X-License-Token':(licGet()||{}).token||''},signal:ctl.signal}); }
-    catch(e){ if(e&&e.name==='AbortError') throw new Error('Przekroczono czas oczekiwania na odpowiedź serwera (60 s).'); throw e; }
+    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),60000); let data;
+    try{
+      if(typeof window.npPhotoDiagnosis!=='function') throw new Error('Brak modułu bezpiecznej analizy AI. Odśwież aplikację lub użyj najnowszej wersji.');
+      data=await window.npPhotoDiagnosis(fd,{signal:ctl.signal});
+    }
+    catch(e){
+      if(e&&e.name==='AbortError') throw new Error('Przekroczono czas oczekiwania na serwer analizy AI (60 s).');
+      throw e;
+    }
     finally{ clearTimeout(to); }
-    let data={};try{data=await response.json();}catch(e){}
-    if(response.status===402) licRefresh(true);
-    if(!response.ok) throw new Error(data.error||`Backend AI zwrócił HTTP ${response.status}${response.status===504||response.status===502?' (serwer nie odpowiedział w limicie czasu lub usługa AI jest niedostępna)':''}.`);
-    if(!data.analysis||typeof data.analysis!=='string') throw new Error('Backend nie zwrócił wyniku analizy.');
+    if(!data.analysis||typeof data.analysis!=='string') throw new Error('Serwer nie zwrócił tekstowego wyniku analizy.');
     await paUpdateCase(id,x=>{x.analysis=data.analysis;x.analysisStatus='done';x.analysisAt=new Date().toISOString();x.aiModel=data.model||'AI (backend)';});
   }catch(e){ console.error('NAPRAWNIK AI:',e); fail=e; }
   paActive.delete(id);
   if(fail){
-    const cfg=/skonfigurowany|OPENAI|ALLOWED_ORIGIN|niedozwolonego/i.test(String(fail.message||fail));
-    const msg='Analiza AI nie została wykonana. '+(fail.message||fail)+'\n\nDane, zdjęcia i checklista pozostają zapisane lokalnie.'+(cfg?' Sprawdź konfigurację funkcji Netlify (OPENAI_API_KEY, ALLOWED_ORIGIN).':'');
+    if([401,402,403].includes(Number(fail.status)) && typeof licRefresh==='function') {
+      try { await licRefresh(true); } catch (_) {}
+    }
+    const cfg=/skonfigurowana|OPENAI|rate limit|konfiguracj/i.test(String(fail.message||fail));
+    const msg='Analiza AI nie została wykonana. '+(fail.message||fail)+'\n\nDane, zdjęcia i checklista pozostają zapisane lokalnie.'+(cfg?' Sprawdź konfigurację Workera i zmienne OPENAI_API_KEY / OPENAI_VISION_MODEL.':'');
     try{ await paUpdateCase(id,x=>{x.analysisStatus='error';x.analysis=msg;x.analysisAt=new Date().toISOString();}); }catch(se){ alert('Analiza AI nie powiodła się: '+(fail.message||fail)); }
   }
   paRefreshIfViewing(id);
@@ -2980,8 +2941,8 @@ function forgotPinWipe(){
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW:',e))); }
 if(pin){ showLock(); } else { nav('home'); }
-licBoot();
+// Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
-<script src="./billing.js?v=1"></script>
+<script src="./billing.js?v=4"></script>
 </body>
 </html>
