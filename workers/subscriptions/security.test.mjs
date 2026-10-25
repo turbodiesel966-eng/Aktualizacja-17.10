@@ -361,6 +361,10 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
                   const subscription = state.subscriptions.get(params[0]);
                   return subscription ? { tier: subscription.tier, price_id: subscription.price_id, billing_interval: subscription.billing_interval } : null;
                 }
+                if (sql.includes("SELECT user_id, stripe_customer_id, tier, price_id, billing_interval, status, grace_until FROM subscriptions")) {
+                  const subscription = state.subscriptions.get(params[0]);
+                  return subscription ? { ...subscription } : null;
+                }
                 throw new Error("Unexpected webhook first() SQL: " + sql);
               },
               async all() {
@@ -473,6 +477,18 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
     const resumed = await sendEvent("evt_test_resumed", "customer.subscription.resumed", object);
     assert.equal(resumed.status, 200);
     assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "active");
+    assert.equal(state.users.get("user_test_1")?.tier, "pro");
+
+    // A delayed invoice.payment_failed must not downgrade a subscription Stripe already reports active.
+    const failedInvoice = await sendEvent("evt_test_delayed_invoice_failed", "invoice.payment_failed", {
+      id: "in_test_delayed",
+      subscription: "sub_test_lifecycle",
+      customer: "cus_test_lifecycle",
+      created: now - 60
+    });
+    assert.equal(failedInvoice.status, 200);
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "active");
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.grace_until, null);
     assert.equal(state.users.get("user_test_1")?.tier, "pro");
   } finally {
     globalThis.fetch = originalFetch;
