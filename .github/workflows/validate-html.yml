@@ -24,13 +24,13 @@ jobs:
           import re
           from pathlib import Path
           html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r'<script\\b(?![^>]*\\bsrc=)[^>]*>(.*?)</script\\s*>', html, flags=re.I | re.S)
+          scripts = re.findall(r'<script\b(?![^>]*\bsrc=)[^>]*>(.*?)</script\s*>', html, flags=re.I | re.S)
           if not scripts:
               raise SystemExit("Nie znaleziono wbudowanych skryptów JS.")
           for i, script in enumerate(scripts):
               Path(f"/tmp/naprawnik-inline-{i}.js").write_text(script, encoding="utf-8")
           case_block = html.split("const knowledgeCases = [", 1)[1].split("const KNOW_LINKS={", 1)[0]
-          ids = re.findall(r"\\{id:'([^']+)'", case_block)
+          ids = re.findall(r"\{id:'([^']+)'", case_block)
           if len(ids) < 49 or len(ids) != len(set(ids)):
               raise SystemExit(f"Nieprawidłowa liczba/unikalność kart: {len(ids)}")
           for token in ("KNOW_CATEGORY_BY_ID", "KNOW_EVIDENCE_LABELS", "function filterKnowledge()", "function jumpToKnowledge(id)"):
