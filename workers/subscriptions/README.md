@@ -75,23 +75,29 @@ This endpoint has **not** been deployed or tested with a real OpenAI key by this
 - Data keys prefixed `pro:` or `premium:` require an active PRO/WARSZTAT subscription; `warsztat:` or `workshop:` require WARSZTAT. Reserved key namespaces such as licence, subscription, billing, entitlement, tier, plan and API token cannot be written as ordinary user data.
 - All server-side protected computations and records must have explicit Worker-side entitlement checks. Client-only features in static HTML are not tamper-proof and should not be treated as a security boundary.
 
-## Production blockers
+## Current live rollout — 2026-10-25
 
-Before production, reconcile the Live Cloudflare variables with the actual GitHub Pages origin, inspect the Live Stripe price IDs/mode without printing secrets, disable the superseded active Stripe Test webhook endpoint, configure `OPENAI_API_KEY` on staging if photo diagnosis is in scope, and run the browser-level staging `register → Checkout → return → /api/me → Billing Portal/cancel` test. The Stripe Test webhook lifecycle has already been verified. Only then plan a separately reviewed production release.
+- Production Worker: `naprawnik-subscriptions-live`, latest deployed version `08d51ae0-b9f3-4483-a5be-94cc4425d8be` at 100% traffic.
+- Confirmed bindings: `DB` is the Live D1 database `a2da4f07-f769-45f0-9ead-3bd67c385e85`; `PRODUCTION_ENABLED=true`; `STRIPE_EXPECT_LIVEMODE=true`; the allowed origin, return URLs, and all four recurring Price IDs match the GitHub Pages app. The secret values remain masked and were not read or logged.
+- A read-only D1 schema inventory confirmed the tables/indexes from migrations `0001` through `0004`, including `request_limits`, `checkout_locks`, `admin_settings`, `admin_users`, `promo_codes`, and `promo_redemptions`.
+- A token-lifetime defect was confirmed and fixed: a token reaching its original 365-day deadline can now renew on use only when the account has a current server-verified subscription/grace entitlement or a valid promotional entitlement. Expired tokens without active entitlement and revoked tokens remain rejected. Regression tests cover both cases.
+- GitHub Actions validation and Pages deployment passed at commit `e8119ff8a1eed3506f303f58e8ce86a775670729`. The Worker was deployed separately after that commit, with the same binding IDs and secret names verified afterward.
+- The Worker’s admin-only `GET /api/admin/stripe-diagnostics` checks settings and does only Stripe Price `GET` requests; it never creates Checkout sessions or makes payments. The actual `STRIPE_SECRET_KEY` value cannot be inspected through Cloudflare settings. If a checkout still displays a generic availability error, run this diagnostics action from the owner panel before changing any keys.
+- The first admin bootstrap has not been claimed yet. `admin_settings`, `admin_users`, and promo tables are empty. Bootstrap should be run once from the owner’s own app session, not from a temporary audit account.
+- No Checkout session, PaymentIntent, charge, or payment transaction was created in this audit. Do not use real or test payments as a diagnostic step.
 
-### Remote D1 inventory (read-only, 2026-10-25)
+### Historical staging rollout
 
-A read-only schema inventory on 2026-10-25 initially found that the live, v2-staging and separate sandbox D1 databases lacked `request_limits` and `checkout_locks`. Since that inventory, migrations `0002_request_limits.sql` and `0003_checkout_locks.sql` have been applied to `naprawnik-subscriptions-v2-staging` only and verified by a fresh schema query. The Live and separate sandbox D1 databases were not modified. The query returned no row changes during schema verification.
+Earlier staging records below are historical context only. Staging and Live use separate Worker/D1 resources and separate Stripe modes. Never copy a staging D1 ID, Price ID, or test key into the Live configuration.
 
-- `STRIPE_EXPECT_LIVEMODE` is mandatory: use `false` on staging and `true` only in a separately approved production environment. Checkout reads the selected Stripe Price and rejects a mismatch in live/test mode, active status, PLN currency, or recurring interval before acquiring a checkout lock. Signed webhook events whose `livemode` does not match this binding are rejected.
-- The staging Worker now contains the branch source and the staging-only D1 migrations are present. The test subscription lifecycle webhook was verified against this version. Do not deploy this branch to Live as part of the staging work.
+### Migration inventory history
 
-## Additional payment safety checks (pre-release)
+An earlier read-only inventory on 2026-10-25 found that the Live, v2-staging and sandbox databases lacked some request-limit and Checkout-lock tables at that time. The current Live database was checked again after subsequent changes and now contains those tables. The staging-specific notes above refer only to their stated staging resources.
 
-- A staging Worker must set `STRIPE_EXPECT_LIVEMODE = "false"`; an explicitly approved live Worker would need `"true"`. Missing/invalid value fails closed.
-- Before a new Checkout, the Worker reads the selected Stripe Price and rejects it if inactive, not PLN, not recurring at the requested month/year interval, or if its `livemode` differs from the environment. Validation occurs before checkout lock/session creation.
-- Webhook events must include a `livemode` value matching the Worker environment; mismatched events are rejected before processing.
-- Before creating a billing portal session, the Worker verifies the Stripe Customer's `livemode`. Older accounts may have a customer ID in `subscriptions` but no `stripe_customers` link; the Worker repairs that link only after the Customer's mode is validated.
-- Billing portal creation is limited to 10 requests per account per 15 minutes. The limit uses the D1 `request_limits` table and cannot work until migration `0002_request_limits.sql` has been applied.
-- The client displays a neutral “Open Stripe portal” action for an existing paid subscription. Actual upgrade/downgrade availability depends on the Stripe Billing Portal configuration and must be verified with the connected test account before claiming in-product plan switching is supported.
+## Payment safety controls in the current Worker
 
+- `STRIPE_EXPECT_LIVEMODE` must be explicit: `false` for staging and `true` for Live. Checkout reads the selected Stripe Price and rejects inactive prices, non-PLN currency, wrong recurrence, or a mode mismatch before acquiring a Checkout lock.
+- Signed webhook events whose `livemode` does not match the Worker environment are rejected before processing. Failed/unresolved paid subscription events return an error so Stripe can retry after the issue is repaired.
+- Before creating a Billing Portal session, the Worker verifies the Stripe Customer’s `livemode`. Older accounts may have a customer ID in `subscriptions` but no `stripe_customers` link; the Worker repairs that link only after validating the Customer’s mode.
+- Billing Portal creation is limited to 10 requests per account per 15 minutes using the D1 `request_limits` table.
+- The UI directs an existing paid subscriber to Stripe Billing Portal rather than creating a second subscription. Upgrades/downgrades depend on the Stripe Billing Portal configuration and are not claimed as verified until that configuration is checked.
