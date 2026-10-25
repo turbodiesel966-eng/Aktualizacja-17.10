@@ -73,7 +73,7 @@ function createDb({ userIds = ["owner-1", "friend-1"], accountCount = 2 } = {}) 
     state,
     env: {
       DB: {
-        prepare(sql) { return { bind(...params) { return statement(sql, params); } },
+        prepare(sql) { return { bind(...params) { return statement(sql, params); } }; },
         async batch(stmts) {
           const results = [];
           let previousChanges = 0;
