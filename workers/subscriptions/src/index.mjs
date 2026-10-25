@@ -852,9 +852,43 @@ async function getAdminStats(env) {
   });
 }
 
+function stripeSecretDiagnostics(value) {
+  const raw = typeof value === "string" ? value : "";
+  const secret = raw.trim();
+  const modeMatch = /^(?:sk|rk)_(live|test)_/.exec(secret);
+  const kind = !secret ? "missing" : secret.startsWith("rk_") ? "restricted" : secret.startsWith("sk_") ? "standard" : "unknown";
+  return {
+    kind,
+    mode: modeMatch ? modeMatch[1] : null,
+    hasOuterWhitespace: raw !== secret
+  };
+}
+
+function safeStripeErrorHint(error) {
+  const code = typeof error?.code === "string" ? error.code.toLowerCase() : "";
+  const message = typeof error?.message === "string" ? error.message.toLowerCase() : "";
+  if (code === "restricted_key" || /restricted key|missing permissions|does not have permission|not allowed to perform|insufficient permissions/.test(message)) {
+    return "Klucz Stripe nie ma wymaganych uprawnień do odczytu cen.";
+  }
+  if (code === "api_key_expired" || /api key.{0,20}expired|expired.{0,20}api key/.test(message)) {
+    return "Klucz API Stripe wygasł.";
+  }
+  if (code === "invalid_api_key" || /invalid api key|no such api key|authentication required/.test(message)) {
+    return "Klucz API Stripe jest nieprawidłowy lub został unieważniony.";
+  }
+  if (/test mode|live mode|livemode/.test(message)) {
+    return "Sprawdź, czy tryb klucza odpowiada środowisku Stripe.";
+  }
+  if (code === "account_invalid" || /account.{0,30}(not found|invalid|cannot access)/.test(message)) {
+    return "Sprawdź konto Stripe i dostęp klucza do tego konta.";
+  }
+  return null;
+}
+
 async function diagnoseStripeConfig(env) {
   const now = nowSeconds();
   const expectedMode = env.STRIPE_EXPECT_LIVEMODE === "true" ? true : env.STRIPE_EXPECT_LIVEMODE === "false" ? false : null;
+  const secretInfo = stripeSecretDiagnostics(env.STRIPE_SECRET_KEY);
   const appBase = env.APP_BASE_URL || "";
   let urlsValid = false;
   try {
@@ -886,6 +920,8 @@ async function diagnoseStripeConfig(env) {
     }
     let price = null;
     try { price = await response.json(); } catch { /* Never return upstream error bodies. */ }
+    const stripeError = response.ok || !price?.error || typeof price.error !== "object" ? null : price.error;
+    const requestId = !response.ok ? response.headers.get("request-id") || null : null;
     const livemodeMatches = expectedMode !== null && price?.livemode === expectedMode;
     const intervalCount = Number(price?.recurring?.interval_count || 1);
     const valid = response.ok && price?.id === item.id && price.active === true &&
@@ -902,6 +938,10 @@ async function diagnoseStripeConfig(env) {
     return {
       key: item.key, label: item.label, configured: true, valid,
       stripeHttpStatus: response.status, reason,
+      stripeRequestId: requestId,
+      stripeErrorType: typeof stripeError?.type === "string" ? stripeError.type.slice(0, 80) : null,
+      stripeErrorCode: typeof stripeError?.code === "string" ? stripeError.code.slice(0, 80) : null,
+      stripeErrorHint: safeStripeErrorHint(stripeError),
       active: typeof price?.active === "boolean" ? price.active : null,
       livemode: typeof price?.livemode === "boolean" ? price.livemode : null,
       currency: typeof price?.currency === "string" ? price.currency : null,
@@ -914,7 +954,13 @@ async function diagnoseStripeConfig(env) {
     checkedAt: new Date(now * 1000).toISOString(),
     productionEnabled: env.PRODUCTION_ENABLED === "true",
     expectedMode: expectedMode === null ? "not_configured" : expectedMode ? "live" : "test",
-    stripeSecretConfigured: !!env.STRIPE_SECRET_KEY,
+    stripeSecretConfigured: secretInfo.kind !== "missing",
+    stripeSecretKind: secretInfo.kind,
+    stripeSecretMode: secretInfo.mode,
+    stripeSecretModeMatchesExpected: secretInfo.mode !== null && expectedMode !== null
+      ? secretInfo.mode === (expectedMode ? "live" : "test")
+      : null,
+    stripeSecretHasOuterWhitespace: secretInfo.hasOuterWhitespace,
     appBaseConfigured: !!appBase,
     checkoutReturnUrlsValid: urlsValid,
     allPricesValid,

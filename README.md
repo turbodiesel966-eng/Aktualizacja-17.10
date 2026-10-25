@@ -16,24 +16,24 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 
 ## Płatności i uprawnienia
 
-Źródło odczytanego Cloudflare Workera jest teraz wersjonowane w `workers/subscriptions/src/index.mjs`, wraz z migracjami D1 i szablonem konfiguracji stagingowej. To kod w gałęzi PR, a nie wdrożenie na Cloudflare.
-
-Read-only audyt wdrożonego Workera wykazał, że kod nadpisywał `PRODUCTION_ENABLED` na `true`, mimo że zmienna Cloudflare była ustawiona na `false`, a także miał rozbieżność między originem aplikacji a wartościami URL-i w konfiguracji. Wersjonowany kod usuwa nadpisanie i waliduje URL-e powrotne. Konfigurację Cloudflare trzeba oddzielnie uzgodnić i przetestować na stagingu.
-
-Uprawnienia w statycznej aplikacji HTML nie są granicą bezpieczeństwa dla osoby modyfikującej kod w przeglądarce. Stan planu w interfejsie pochodzi teraz z odpowiedzi API w zamknięciu modułu płatności, bez publicznego setter-a. Chronione dane i operacje muszą być weryfikowane przez Worker.
-
-Żadne zmiany nie zostały wdrożone do Cloudflare/Stripe Live. Migracje D1 są tylko w repozytorium i nie zostały zastosowane do żadnej zdalnej bazy.
+- Produkcyjny Worker: `naprawnik-subscriptions-live`; jego kod źródłowy jest wersjonowany w `workers/subscriptions/src/index.mjs`.
+- W Live potwierdzono konfigurację `PRODUCTION_ENABLED=true`, oczekiwany tryb Stripe `live`, cztery identyfikatory cen, adresy powrotu HTTPS i połączenie z produkcyjną bazą D1.
+- Bezpośredni, tylko odczytowy odczyt konta Stripe potwierdził, że wszystkie cztery ceny są aktywne i poprawne: PRO 9 PLN/miesiąc i 100 PLN/rok; WARSZTAT 29 PLN/miesiąc i 300 PLN/rok.
+- Diagnostyka wywołana przez produkcyjny Worker otrzymała HTTP 403 dla odczytu każdej ceny. To wskazuje na uwierzytelnienie lub uprawnienia użytego sekretu, a nie na brak cen. Do czasu uzyskania kodu błędu i typu klucza przyczyna jest **nierozstrzygnięta**. Diagnostyka nie ujawnia wartości sekretu i wykonuje tylko żądania GET.
+- Zabezpieczone ścieżki API weryfikują token i uprawnienia po stronie Workera; ustawienia/interfejs przeglądarki nie nadają samodzielnie dostępu PRO/WARSZTAT.
+- Tokeny API mają odnowienie kroczące tylko wtedy, gdy konto ma nadal aktywny abonament, okres ochronny opóźnionej płatności albo ważny dostęp promocyjny. Unieważnione tokeny pozostają odrzucane.
+- Schemat tabel administracyjnych i kodów promocyjnych jest obecny w produkcyjnej bazie D1. Nie uruchamiaj migracji ponownie bez sprawdzenia aktualnego schematu.
 
 ## Asystent zdjęciowy AI
 
-- Przypadki, zdjęcia i checklisty nadal zapisują się lokalnie w IndexedDB i mogą być używane offline.
-- Analiza online jest kierowana przez `billing.js` do `POST /api/photo-diagnosis` w Cloudflare Workerze. Wymaga tokenu Bearer oraz aktywnego PRO/WARSZTAT zweryfikowanego w D1; UI nie może nadać tego uprawnienia samodzielnie.
-- Worker dopuszcza maksymalnie 3 pliki JPEG/PNG/WebP (do 1,5 MB na plik, do 5 MB całe żądanie) i 8 prób na konto na godzinę. Obrazy są przekazywane do OpenAI Responses API; odpowiedź nie jest przechowywana przez parametr `store: false`.
-- Klucz `OPENAI_API_KEY` musi być dodany jako sekret na stagingowym Workerze; nigdy w HTML ani repozytorium. Nazwa modelu to `OPENAI_VISION_MODEL` (domyślnie `gpt-4.1-mini`).
-- Ta gałąź nie została wdrożona. Bez sekretu i testu online nie można twierdzić, że analiza AI działa produkcyjnie. Przy hostingu statycznym GitHub Pages stary adres `/.netlify/functions/photo-diagnosis` nie istnieje automatycznie i został usunięty z przepływu aplikacji.
+- Zdjęcia i przypadki asystenta są przechowywane lokalnie w IndexedDB; dane te nie są automatycznie synchronizowane między przeglądarkami.
+- Analiza online jest kierowana przez `billing.js` do `POST /api/photo-diagnosis` w Cloudflare Workerze. Wymaga tokenu Bearer i aktywnego PRO/WARSZTAT zweryfikowanego przez serwer.
+- **W produkcji analiza AI pozostaje celowo wyłączona.** Nie włączaj `PHOTO_ANALYSIS_ENABLED` ani nie dodawaj klucza OpenAI, dopóki nie zostanie osobno zatwierdzony budżet, konfiguracja i test bezpieczeństwa. Klucz API nie może trafiać do HTML ani repozytorium.
+- Worker ogranicza typy i rozmiary przesyłanych plików, liczbę zdjęć oraz częstotliwość żądań. Odpowiedzi przekazywane do OpenAI używają `store: false`.
 
-## Pozostałe warunki pełnego testu
+## Ograniczenia i następne kroki
 
-- W tej sesji dostępny przez konektor Stripe jest tylko kontekst Live. Nie używaj go do testów. Do rzeczywistego E2E potrzebny jest połączony kontekst Sandbox/Test, cztery kanoniczne Price IDs testowe (zwłaszcza jedna wybrana para WARSZTAT), podpisany testowy webhook oraz sekret OpenAI dodany bezpiecznie na stagingu.
-- Migracje `0002_request_limits.sql` i `0003_checkout_locks.sql` pozostają tylko w repozytorium; przed uruchomieniem wersji Workera z tej gałęzi trzeba je zastosować do potwierdzonej bazy stagingowej — nigdy live w ramach tego PR.
-- Dane pojazdów, napraw, notatek i checklist w statycznym HTML nadal są lokalne dla przeglądarki. Synchronizacja tych danych przez `/api/data` nie jest zintegrowana z frontendem w tym PR. Klientowe blokady planów nie są mechanizmem autoryzacji serwerowej.
+- Nie utworzono podczas audytu nowych sesji Stripe Checkout, płatności, PaymentIntent ani subskrypcji.
+- Przed uznaniem płatności za gotowe wymagane jest rozwiązanie HTTP 403 po stronie sekretu/uprawnień Stripe, a następnie ręczna weryfikacja właścicielska w panelu aplikacji. Nie wolno używać produkcyjnych transakcji jako testu technicznego.
+- Dane pojazdów, napraw, notatek i checklist w webowej aplikacji pozostają obecnie lokalne dla danej przeglądarki. Worker zawiera API `/api/data`, ale frontend nie jest jeszcze zintegrowany z pełną synchronizacją danych. Kopię zapasową należy eksportować przed zmianami lub czyszczeniem pamięci.
+- Wynik kompilacji i testów automatycznych nie jest równoznaczny z testem na fizycznym telefonie ani z potwierdzeniem realnej płatności.
