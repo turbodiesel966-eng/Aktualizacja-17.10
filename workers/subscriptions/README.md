@@ -65,3 +65,13 @@ A read-only `SELECT name FROM sqlite_master WHERE type = 'table'` was run agains
 
 - `STRIPE_EXPECT_LIVEMODE` is mandatory: use `false` on staging and `true` only in a separately approved production environment. Checkout reads the selected Stripe Price and rejects a mismatch in live/test mode, active status, PLN currency, or recurring interval before acquiring a checkout lock. Signed webhook events whose `livemode` does not match this binding are rejected.
 - The currently deployed staging Worker does not yet contain this guard or the current photo-diagnosis and checkout-lock code; the branch source is intentionally not published. Configure the binding and deploy only after explicit staging approval and after the staging-only D1 migrations are applied.
+
+## Additional payment safety checks (pre-release)
+
+- A staging Worker must set `STRIPE_EXPECT_LIVEMODE = "false"`; an explicitly approved live Worker would need `"true"`. Missing/invalid value fails closed.
+- Before a new Checkout, the Worker reads the selected Stripe Price and rejects it if inactive, not PLN, not recurring at the requested month/year interval, or if its `livemode` differs from the environment. Validation occurs before checkout lock/session creation.
+- Webhook events must include a `livemode` value matching the Worker environment; mismatched events are rejected before processing.
+- Before creating a billing portal session, the Worker verifies the Stripe Customer's `livemode`. Older accounts may have a customer ID in `subscriptions` but no `stripe_customers` link; the Worker repairs that link only after the Customer's mode is validated.
+- Billing portal creation is limited to 10 requests per account per 15 minutes. The limit uses the D1 `request_limits` table and cannot work until migration `0002_request_limits.sql` has been applied.
+- The client displays a neutral “Open Stripe portal” action for an existing paid subscription. Actual upgrade/downgrade availability depends on the Stripe Billing Portal configuration and must be verified with the connected test account before claiming in-product plan switching is supported.
+
