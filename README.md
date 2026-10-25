@@ -9,10 +9,17 @@ node --check billing.js
 node --check katalog-techniczny.js
 node --check sw.js
 node --check workers/subscriptions/src/index.mjs
-node --test tests/*.test.cjs workers/subscriptions/security.test.mjs
+node --test tests/*.test.cjs workers/subscriptions/*.test.mjs
 ```
 
 Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składnię skryptu osadzonego w `index.html`, pozostałe skrypty oraz uruchamia testy regresyjne.
+
+## Instalacja web jako PWA
+
+- Aplikacja publikuje manifest `manifest.webmanifest` z zakresem ograniczonym do `/Aktualizacja-17.10/`, nazwą NAPRAWNIK i ikonami SVG w wariantach 192/512.
+- Service Worker buforuje zasoby startowe, manifest i ikony; w razie utraty sieci próbuje wyświetlić zapisaną stronę startową. Funkcje wymagające Cloudflare/Stripe nadal potrzebują internetu.
+- Na Androidzie otwórz oficjalny adres w Chrome i użyj menu przeglądarki → **Zainstaluj aplikację** lub **Dodaj do ekranu głównego** (nazwa opcji zależy od przeglądarki). To PWA zainstalowana z przeglądarki, a nie jeszcze osobny, podpisany plik APK.
+- Przy zmianach zasobów zwiększ wersję cache w `sw.js` i numer `billing.js?v=...` w `index.html`, a potem uruchom testy regresyjne.
 
 ## Płatności i uprawnienia
 
