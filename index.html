@@ -1986,6 +1986,8 @@ function renderSettings(){
     <div class="card" style="border-color:var(--hero)"><h2>💎 Plan: ${PLAN_NAMES[curPlan()]}</h2><small style="color:var(--dim)">Płatności obsługuje Stripe. Licencja jest sprawdzana po stronie serwera. Regulamin, politykę prywatności i dane sprzedawcy opublikuj przed sprzedażą.</small><div class="btn" onclick="nav('plans')">Plany, zakup i licencja</div></div>
     <div class="card" style="border-color:#8b5cf6"><h2>🎟️ Kod promocyjny</h2><small style="color:var(--dim)">Jeśli masz kod od organizatora testów lub konkursu, wpisz go tutaj. Dostęp będzie przypisany do konta i potwierdzony przez serwer.</small><input id="npPromoCode" autocomplete="off" autocapitalize="characters" maxlength="40" placeholder="Wpisz kod promocyjny"><div class="btn" onclick="window.npRedeemPromo()">Aktywuj kod</div></div>
     <div class="card"><h2>🛡️ Właściciel aplikacji</h2><small style="color:var(--dim)">Panel statystyk i zarządzania promocjami jest dostępny tylko po potwierdzeniu uprawnień przez serwer.</small><div class="btn" onclick="window.npOpenAdminPanel()">Otwórz panel właściciela / ADMINA</div></div>
+    <div class="card"><h2>🔐 Prywatność i statystyki</h2><small style="color:var(--dim)">Anonimowe statystyki są opcjonalne i domyślnie wyłączone. Po włączeniu zapisujemy losowe identyfikatory jako skróty i daty sesji, bez surowych adresów IP. Możesz wyłączyć zbieranie w dowolnym momencie.</small><div class="btn" onclick="window.npSetAnalyticsConsent(true)">Włącz anonimowe statystyki</div><div class="btn" onclick="window.npSetAnalyticsConsent(false)">Wyłącz anonimowe statystyki</div></div>
+
     <div class="btn" onclick="exportBackup()">⬇️ Eksportuj kopię zapasową</div>
     <div class="btn" onclick="paExportCases()">⬇️ Eksportuj historię asystenta zdjęć (osobny plik)</div>
     <div class="btn" onclick="exportCsv()">${lk('warsztat')}📊 Eksport napraw i klientów (CSV)</div>
@@ -2947,6 +2949,6 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.
 if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
-<script src="./billing.js?v=5"></script>
+<script src="./billing.js?v=6"></script>
 </body>
 </html>
