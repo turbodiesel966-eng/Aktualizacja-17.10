@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink } from "./src/index.mjs";
+import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -168,4 +168,139 @@ test("Worker atomowo blokuje drugi Checkout i ma migrację blokad", async () => 
   assert.match(migration, /user_id TEXT PRIMARY KEY/);
   assert.match(migration, /idempotency_key TEXT NOT NULL UNIQUE/);
   assert.doesNotMatch(migration, /DROP TABLE/i);
+});
+
+
+function makeCheckoutTestEnv() {
+  const state = { lock: null, sessions: new Map(), checkoutRequests: [], stripePosts: 0 };
+  const env = {
+    STRIPE_SECRET_KEY: "sk_test_placeholder",
+    STRIPE_PRICE_PRO_MONTHLY: "price_test_pro_month",
+    STRIPE_PRICE_PRO_YEARLY: "price_test_pro_year",
+    STRIPE_PRICE_WARSZTAT_MONTHLY: "price_test_warsztat_month",
+    STRIPE_PRICE_WARSZTAT_YEARLY: "price_test_warsztat_year",
+    APP_BASE_URL: "https://app.example.test/",
+    DB: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async first() {
+                if (sql.includes("SELECT id, email FROM users")) return { id: "user_test_1", email: "test@example.test" };
+                if (sql.includes("FROM subscriptions WHERE user_id = ?")) return null;
+                if (sql.includes("FROM checkout_locks WHERE user_id = ?")) return state.lock ? { ...state.lock } : null;
+                if (sql.includes("SELECT stripe_customer_id FROM stripe_customers")) return null;
+                throw new Error("Unexpected first() SQL: " + sql);
+              },
+              async run() {
+                if (sql.includes("INSERT INTO checkout_locks")) {
+                  const [userId, key, tier, interval, expiresAt, createdAt, conditionNow] = params;
+                  if (!state.lock || Number(state.lock.expires_at) <= Number(conditionNow)) {
+                    state.lock = { user_id: userId, idempotency_key: key, tier, billing_interval: interval, session_id: null, expires_at: expiresAt, created_at: createdAt };
+                    return { success: true, meta: { changes: 1 } };
+                  }
+                  return { success: true, meta: { changes: 0 } };
+                }
+                if (sql.includes("UPDATE checkout_locks SET session_id")) {
+                  const [sessionId, expiresAt, userId, key] = params;
+                  if (state.lock && state.lock.user_id === userId && state.lock.idempotency_key === key) {
+                    state.lock.session_id = sessionId;
+                    state.lock.expires_at = expiresAt;
+                    return { success: true, meta: { changes: 1 } };
+                  }
+                  return { success: true, meta: { changes: 0 } };
+                }
+                if (sql.includes("INSERT INTO checkout_requests")) {
+                  state.checkoutRequests.push(params);
+                  return { success: true, meta: { changes: 1 } };
+                }
+                if (sql.includes("DELETE FROM checkout_locks")) {
+                  if (state.lock && state.lock.user_id === params[0] && (!params[1] || state.lock.idempotency_key === params[1])) state.lock = null;
+                  return { success: true, meta: { changes: 1 } };
+                }
+                if (sql.includes("UPDATE checkout_locks SET expires_at")) {
+                  if (state.lock && state.lock.user_id === params[1] && state.lock.idempotency_key === params[2]) state.lock.expires_at = params[0];
+                  return { success: true, meta: { changes: 1 } };
+                }
+                throw new Error("Unexpected run() SQL: " + sql);
+              }
+            };
+          }
+        };
+      }
+    }
+  };
+  return { env, state };
+}
+function checkoutRequest(key, tier = "pro", interval = "month") {
+  return new Request("https://api.example.test/api/checkout", {
+    method: "POST",
+    headers: { "content-type": "application/json", "Idempotency-Key": key },
+    body: JSON.stringify({ tier, interval })
+  });
+}
+function mockStripeCheckoutFetch(state) {
+  return async (input, init = {}) => {
+    const url = String(input);
+    const method = init.method || "GET";
+    if (url === "https://api.stripe.com/v1/checkout/sessions" && method === "POST") {
+      state.stripePosts += 1;
+      const id = "cs_test_" + state.stripePosts;
+      const session = { id, url: "https://checkout.stripe.com/c/pay/" + id, status: "open", expires_at: Math.floor(Date.now() / 1000) + 3600 };
+      state.sessions.set(id, session);
+      return new Response(JSON.stringify(session), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    const prefix = "https://api.stripe.com/v1/checkout/sessions/";
+    if (url.startsWith(prefix) && method === "GET") {
+      const session = state.sessions.get(decodeURIComponent(url.slice(prefix.length)));
+      return session
+        ? new Response(JSON.stringify(session), { status: 200, headers: { "content-type": "application/json" } })
+        : new Response(JSON.stringify({ error: { message: "not found" } }), { status: 404, headers: { "content-type": "application/json" } });
+    }
+    throw new Error("Unexpected Stripe request: " + method + " " + url);
+  };
+}
+
+test("Checkout tworzy jedną sesję i ponowne kliknięcie tej samej taryfy używa istniejącej", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makeCheckoutTestEnv();
+  globalThis.fetch = mockStripeCheckoutFetch(state);
+  try {
+    const first = await checkout(checkoutRequest("test-checkout-key-001"), env, { userId: "user_test_1" });
+    const firstBody = await first.json();
+    assert.equal(first.status, 200);
+    assert.match(firstBody.url, /^https:\/\/checkout\.stripe\.com\//);
+    assert.equal(state.stripePosts, 1);
+    assert.ok(state.lock && state.lock.session_id);
+
+    const second = await checkout(checkoutRequest("test-checkout-key-002"), env, { userId: "user_test_1" });
+    const secondBody = await second.json();
+    assert.equal(second.status, 200);
+    assert.equal(secondBody.reused, true);
+    assert.equal(secondBody.sessionId, firstBody.sessionId);
+    assert.equal(state.stripePosts, 1);
+
+    const differentPlan = await checkout(checkoutRequest("test-checkout-key-003", "warsztat", "month"), env, { userId: "user_test_1" });
+    assert.equal(differentPlan.status, 409);
+    assert.equal(state.stripePosts, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("dwa równoczesne Checkouty nie wywołują dwóch sesji Stripe", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makeCheckoutTestEnv();
+  globalThis.fetch = mockStripeCheckoutFetch(state);
+  try {
+    const results = await Promise.all([
+      checkout(checkoutRequest("test-checkout-race-001"), env, { userId: "user_test_1" }),
+      checkout(checkoutRequest("test-checkout-race-002"), env, { userId: "user_test_1" })
+    ]);
+    assert.equal(state.stripePosts, 1);
+    assert.ok(results.every(response => [200, 409].includes(response.status)));
+    assert.ok(results.some(response => response.status === 200));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
