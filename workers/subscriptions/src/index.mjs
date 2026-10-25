@@ -23,6 +23,7 @@ const RATE_LIMITS = Object.freeze({
   analyticsVisits: Object.freeze({ maxRequests: 20, windowSeconds: 60 }),
   promoRedemptions: Object.freeze({ maxRequests: 5, windowSeconds: 15 * 60 }),
   adminWrites: Object.freeze({ maxRequests: 30, windowSeconds: 60 * 60 }),
+  adminBootstrap: Object.freeze({ maxRequests: 5, windowSeconds: 60 * 60 }),
 });
 const CHECKOUT_LOCK_LEASE_SECONDS = 30 * 60;
 const SUBSCRIPTION_LIFECYCLE_EVENTS = new Set([
@@ -778,6 +779,8 @@ async function isAdminUser(env, userId) {
 
 async function bootstrapAdmin(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
+  const limited = await enforceRateLimit(request, env, "admin-bootstrap", auth.userId, RATE_LIMITS.adminBootstrap);
+  if (limited) return limited;
   if (!env.ADMIN_BOOTSTRAP_KEY) return err("Aktywacja administratora nie jest jeszcze skonfigurowana.", 503);
   const body = await readJson(request, 4096);
   const supplied = typeof body?.key === "string" ? body.key : "";
@@ -1302,6 +1305,6 @@ export default {
   },
 };
 
-export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText };
+export { enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, createAdminPromo, redeemPromo, trackVisit, recalcUserTier };
 
 
