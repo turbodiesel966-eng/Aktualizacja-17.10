@@ -49,7 +49,7 @@
     const message = String(error && error.message || error || '');
     const status = Number(error && error.status || 0);
     if (message.includes('Płatności są wyłączone dla tej domeny')) return message;
-    if (status === 401 || /\\bunauthorized\\b|user not found|invalid token|token expired/i.test(message)) {
+    if (status === 401 || /\bunauthorized\b|user not found|invalid token|token expired/i.test(message)) {
       return 'Klucz dostępu został odrzucony lub wygasł. Zaloguj się ponownie albo odzyskaj poprzedni klucz; nie utworzono nowego konta automatycznie.';
     }
     if (status === 403 || /origin not allowed|active subscription for the required plan is needed/i.test(message)) {
