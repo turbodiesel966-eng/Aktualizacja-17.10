@@ -297,7 +297,7 @@
     return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   }
   function trackVisit() {
-    if (!API) return;
+    if (!API || localStorage.getItem('naprawnik_analytics_consent') !== 'yes') return;
     try {
       let visitorId = localStorage.getItem('naprawnik_visitor_id') || '';
       if (!visitorId) {
@@ -321,6 +321,21 @@
       }).catch(() => {});
     } catch (_) { /* Analytics must never break normal app startup. */ }
   }
+
+  window.npSetAnalyticsConsent = function(enabled) {
+    try {
+      if (enabled) {
+        localStorage.setItem('naprawnik_analytics_consent', 'yes');
+        alert('Anonimowe statystyki zostały włączone. Zapisywane są losowe identyfikatory jako skróty; nie zapisujemy surowych adresów IP.');
+        trackVisit();
+      } else {
+        localStorage.removeItem('naprawnik_analytics_consent');
+        localStorage.removeItem('naprawnik_visitor_id');
+        sessionStorage.removeItem('naprawnik_session_id');
+        alert('Statystyki na tym urządzeniu zostały wyłączone. Wcześniej zapisane zagregowane wpisy mogą pozostać do końca retencji.');
+      }
+    } catch (_) { alert('Nie udało się zmienić ustawień statystyk w tej przeglądarce.'); }
+  };
 
   function adminDate(seconds) {
     const value = Number(seconds || 0);
