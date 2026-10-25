@@ -146,3 +146,47 @@ test('odrzucony token nie powoduje cichej rejestracji nowego konta', async () =>
   assert.equal(confirms.length, 1);
   assert.ok(alerts.some(message => message.includes('Nie utworzono nowego konta')));
 });
+
+test('wylogowanie usuwa też aktywny plan PRO z pamięci bieżącej strony', async () => {
+  const store = new Map();
+  const rootElement = { innerHTML: '' };
+  const input = { value: 'valid-test-token' };
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const context = {
+    window: {},
+    document: {
+      addEventListener() {},
+      querySelector(selector) {
+        if (selector === '#screen') return rootElement;
+        if (selector === '#licKeyIn') return input;
+        return null;
+      }
+    },
+    localStorage: {
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); }
+    },
+    fetch: async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        user: { id: 'user-1', tier: 'pro' },
+        subscriptions: [{ tier: 'pro', status: 'active', current_period_end: nowSeconds + 3600, grace_until: null }]
+      })
+    }),
+    URL, URLSearchParams,
+    location: { hostname: 'turbodiesel966-eng.github.io', search: '', pathname: '/' },
+    history: { replaceState() {} },
+    alert() {}, confirm() { return true; }, console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.licActivateInput();
+  assert.equal(context.naprawnikGetVerifiedLicense()?.tier, 'pro');
+  assert.ok(store.has('naprawnik_api_token'));
+  context.licDeactivate();
+  assert.equal(context.naprawnikGetVerifiedLicense(), null);
+  assert.equal(store.has('naprawnik_api_token'), false);
+  assert.equal(store.has('naprawnik_license'), false);
+});
