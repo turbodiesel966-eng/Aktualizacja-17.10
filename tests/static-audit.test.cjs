@@ -190,3 +190,110 @@ test('wylogowanie usuwa też aktywny plan PRO z pamięci bieżącej strony', asy
   assert.equal(store.has('naprawnik_api_token'), false);
   assert.equal(store.has('naprawnik_license'), false);
 });
+
+
+test('nie nadaje WARSZTAT, gdy aktywna subskrypcja serwera to tylko PRO', async () => {
+  const store = new Map();
+  const rootElement = { innerHTML: '' };
+  const input = { value: 'test-token' };
+  const expires = Math.floor(Date.now() / 1000) + 3600;
+  const alerts = [];
+  const context = {
+    window: {},
+    document: {
+      addEventListener() {},
+      querySelector(selector) {
+        if (selector === '#screen') return rootElement;
+        if (selector === '#licKeyIn') return input;
+        return null;
+      }
+    },
+    localStorage: {
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); }
+    },
+    fetch: async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        user: { id: 'user-1', tier: 'warsztat' },
+        subscriptions: [{ tier: 'pro', status: 'active', current_period_end: expires }]
+      })
+    }),
+    URL, URLSearchParams,
+    location: { hostname: 'turbodiesel966-eng.github.io', search: '', pathname: '/' },
+    history: { replaceState() {} },
+    alert(message) { alerts.push(String(message)); }, confirm() { return true; },
+    console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.licActivateInput();
+  assert.equal(context.naprawnikGetVerifiedLicense(), null);
+  assert.equal(store.has('naprawnik_license'), false);
+});
+
+test('ważność WARSZTAT jest liczona z WARSZTAT, a nie z dłuższego PRO', async () => {
+  const store = new Map();
+  const rootElement = { innerHTML: '' };
+  const input = { value: 'test-token' };
+  const now = Math.floor(Date.now() / 1000);
+  const workshopEnd = now + 600;
+  const proEnd = now + 30 * 24 * 60 * 60;
+  const context = {
+    window: {},
+    document: {
+      addEventListener() {},
+      querySelector(selector) {
+        if (selector === '#screen') return rootElement;
+        if (selector === '#licKeyIn') return input;
+        return null;
+      }
+    },
+    localStorage: {
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); }
+    },
+    fetch: async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        user: { id: 'user-1', tier: 'warsztat' },
+        subscriptions: [
+          { tier: 'warsztat', status: 'active', current_period_end: workshopEnd },
+          { tier: 'pro', status: 'active', current_period_end: proEnd }
+        ]
+      })
+    }),
+    URL, URLSearchParams,
+    location: { hostname: 'turbodiesel966-eng.github.io', search: '', pathname: '/' },
+    history: { replaceState() {} },
+    alert() {}, confirm() { return true; }, console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.licActivateInput();
+  assert.equal(context.naprawnikGetVerifiedLicense()?.tier, 'warsztat');
+  assert.equal(context.naprawnikGetVerifiedLicense()?.exp, workshopEnd * 1000);
+});
+
+test('podgląd/nieznana domena nie wysyła płatności do Workera Live', async () => {
+  const calls = [];
+  const alerts = [];
+  const context = {
+    window: {},
+    document: { addEventListener() {}, querySelector(selector) { return selector === '#screen' ? { innerHTML: '' } : null; } },
+    localStorage: { getItem() { return null; }, setItem() {}, removeItem() {} },
+    fetch: async url => { calls.push(String(url)); return { ok: false, status: 500, json: async () => ({}) }; },
+    URL, URLSearchParams,
+    location: { hostname: 'preview-branch.example.net', search: '', pathname: '/' },
+    history: { replaceState() {} },
+    alert(message) { alerts.push(String(message)); }, confirm() { return true; },
+    console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.npStartCheckout('pro', 'month');
+  assert.equal(calls.length, 0);
+  assert.ok(alerts.some(message => message.includes('wyłączone dla tej domeny')));
+});
