@@ -1439,11 +1439,11 @@ function planItems(k){
 }
 function planBullets(k){return '<div style="margin:8px 0">'+planItems(k).map(x=>'<div style="font-size:12px">✓ '+escapeHtml(x)+'</div>').join('')+'</div>';}
 function renderLocked(min,label,backJs){
-  const pro=min==='pro', name=PLAN_NAMES[min], link=pro?STRIPE_PRO:STRIPE_WARSZTAT;
+  const name=PLAN_NAMES[min]||'PRO';
   screen.innerHTML=(backJs?'<div class="btn back" onclick="'+backJs+'">← Wróć</div>':back())+
    '<div class="card" style="border-color:var(--hero)"><h2>🔒 '+escapeHtml(label)+'</h2><p style="font-size:13px;line-height:1.5">Ta funkcja jest w planie <b>'+name+'</b>. Plan AMATOR zostaje bezpłatny: pełna diagnostyka, katalog modeli, kalkulatory i checklisty.</p>'+
    '<b style="color:var(--accent);font-size:12px">W planie '+name+':</b>'+planBullets(min)+
-   '<a class="btn" href="'+link+'" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center">💎 Kup '+name+' (Stripe)</a>'+
+   '<div class="btn" data-billing-nav="plans">💎 Zobacz abonamenty</div>'+
    '<div class="btn" onclick="nav(\'plans\')">Porównaj plany / aktywuj licencję</div></div>';
 }
 const NAV_MIN={parts:'pro',obd:'pro',models:'pro',clients:'warsztat',log:'warsztat',checklist:'warsztat'};
