@@ -417,15 +417,25 @@
         invalid_amount: 'Nieprawidłowa kwota'
       };
       const row = (label, ok, detail) => '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>' + (ok ? '✅ ' : '❌ ') + esc(label) + '</b><div style="color:var(--dim)">' + esc(detail) + '</div></div>';
+      const infoRow = (label, detail) => '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>ℹ️ ' + esc(label) + '</b><div style="color:var(--dim)">' + esc(detail) + '</div></div>';
+      const keyKindLabel = result.stripeSecretKind === 'standard' ? 'standardowy klucz tajny' : result.stripeSecretKind === 'restricted' ? 'klucz ograniczony (restricted)' : result.stripeSecretKind === 'missing' ? 'brak' : 'nierozpoznany';
+      const keyModeLabel = result.stripeSecretMode ? result.stripeSecretMode.toUpperCase() : 'nie można rozpoznać trybu po prefiksie';
       let output = row('Worker włączony', result.productionEnabled === true, result.productionEnabled ? 'PRODUCTION_ENABLED = true' : 'PRODUCTION_ENABLED nie jest true') +
-        row('Tryb Stripe', result.expectedMode === 'live', 'Oczekiwany tryb: ' + String(result.expectedMode || 'brak')) +
+        row('Tryb środowiska Stripe', result.expectedMode === 'live', 'Oczekiwany tryb: ' + String(result.expectedMode || 'brak')) +
         row('Sekret Stripe istnieje', result.stripeSecretConfigured === true, result.stripeSecretConfigured ? 'Sekret jest skonfigurowany; jego treść nie jest wyświetlana.' : 'STRIPE_SECRET_KEY nie jest skonfigurowany') +
+        infoRow('Typ klucza Stripe', keyKindLabel, 'Wartość sekretu nie jest wyświetlana.') +
+        row('Tryb klucza Stripe', result.stripeSecretModeMatchesExpected === true, 'Wykryty tryb: ' + keyModeLabel + ' · oczekiwany: ' + String(result.expectedMode || 'brak')) +
+        row('Sekret bez białych znaków na końcach', result.stripeSecretHasOuterWhitespace !== true, result.stripeSecretHasOuterWhitespace ? 'Wykryto spację lub znak końca linii poza treścią klucza.' : 'Nie wykryto spacji ani znaku końca linii na początku lub końcu sekretu.') +
         row('Adresy powrotu Checkout', result.checkoutReturnUrlsValid === true, result.checkoutReturnUrlsValid ? 'HTTPS i zgodny adres aplikacji' : 'Adresy powrotu są nieprawidłowe lub niezgodne z adresem aplikacji') +
         row('Adres aplikacji', result.appBaseConfigured === true, result.appBaseConfigured ? 'APP_BASE_URL jest ustawiony' : 'Brak APP_BASE_URL');
       (Array.isArray(result.prices) ? result.prices : []).forEach(price => {
         const good = price.valid === true;
         let detail = reasonLabels[price.reason] || 'Wynik: ' + String(price.reason || 'nieznany');
         if (price.stripeHttpStatus) detail += ' · HTTP ' + price.stripeHttpStatus;
+        if (price.stripeErrorCode) detail += ' · kod: ' + price.stripeErrorCode;
+        if (price.stripeErrorType) detail += ' · typ: ' + price.stripeErrorType;
+        if (price.stripeErrorMessage) detail += ' · ' + price.stripeErrorMessage;
+        if (price.stripeRequestId) detail += ' · Request ID: ' + price.stripeRequestId;
         if (price.currency && price.interval) detail += ' · ' + price.currency.toUpperCase() + ' · ' + price.interval + (price.intervalCount > 1 ? ' × ' + price.intervalCount : '');
         output += row(price.label || price.key, good, detail);
       });
