@@ -40,7 +40,7 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   const html = read('index.html');
   assert.doesNotMatch(html, /\bLICENSE_ENDPOINT\b|\bSTRIPE_PRO\b|\bSTRIPE_WARSZTAT\b/);
   assert.doesNotMatch(html, /\blicBoot\s*\(\s*\)\s*;/);
-  assert.match(html, /<script src="\.\/billing\.js\?v=3"><\/script>/);
+  assert.match(html, /<script src="\.\/billing\.js\?v=4"><\/script>/);
   assert.match(html, /function licGet\(\)\{return getVerifiedLicense\(\);\}/);
   assert.match(html, /function hasPlan\(min\)\{return Object\.prototype\.hasOwnProperty\.call\(PLAN_ORDER,min\)&&PLAN_ORDER\[curPlan\(\)\]>=PLAN_ORDER\[min\];\}/);
 });
@@ -331,4 +331,18 @@ test('błędy Workera są pokazywane po polsku, bez wyświetlania surowego komun
   assert.ok(calls.some(url => url.endsWith('/api/checkout')));
   assert.ok(alerts.some(message => message.includes('Płatności są chwilowo niedostępne')));
   assert.ok(alerts.every(message => !message.includes('Production service is not enabled')));
+});
+
+
+test('analiza zdjęć używa endpointu Workera z tokenem Bearer, a nie starej funkcji Netlify', () => {
+  const html = read('index.html');
+  const billing = read('billing.js');
+  const worker = read('workers/subscriptions/src/index.mjs');
+  assert.doesNotMatch(html, /PA_AI_ENDPOINT|X-License-Token|\\/\\.netlify\\/functions\\/photo-diagnosis/);
+  assert.ok(html.includes('window.npPhotoDiagnosis(fd,{signal:ctl.signal})'));
+  assert.ok(billing.includes('window.npPhotoDiagnosis = async function(formData, options)'));
+  assert.ok(billing.includes("Authorization: 'Bearer ' + license.token"));
+  assert.ok(worker.includes('url.pathname === "/api/photo-diagnosis"'));
+  assert.ok(worker.includes('userHasTier(env, auth.userId, "pro")'));
+  assert.ok(worker.includes('if (!env.OPENAI_API_KEY)'));
 });
