@@ -845,6 +845,7 @@ function responseOutputText(data) {
   return chunks.join("\n").trim();
 }
 async function photoDiagnosis(request, env, auth) {
+  if (env.PHOTO_ANALYSIS_ENABLED !== "true") return err("Analiza zdjęć AI jest tymczasowo wyłączona.", 503);
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.OPENAI_API_KEY) return err("Analiza AI nie jest skonfigurowana na serwerze.", 503);
   if (!(await userHasTier(env, auth.userId, "pro"))) {
