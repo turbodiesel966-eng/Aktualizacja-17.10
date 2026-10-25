@@ -1,7 +1,11 @@
 /* NAPRAWNIK billing bridge — served from the same GitHub Pages project. */
 (() => {
   'use strict';
-  const API = 'https://naprawnik-subscriptions-live.turbodiesel966.workers.dev';
+  const isStagingHost = typeof location !== 'undefined' &&
+    location.hostname === 'naprawnik-pwa-staging.turbodiesel966.workers.dev';
+  const API = isStagingHost
+    ? 'https://naprawnik-subscriptions-v2-staging.turbodiesel966.workers.dev'
+    : 'https://naprawnik-subscriptions-live.turbodiesel966.workers.dev';
   const TOKEN_KEY = 'naprawnik_api_token';
   const ORDER = { amator: 0, pro: 1, warsztat: 2 };
   const NAMES = { amator: 'AMATOR', pro: 'PRO', warsztat: 'WARSZTAT' };
