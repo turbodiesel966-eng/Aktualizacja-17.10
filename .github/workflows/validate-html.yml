@@ -2,8 +2,6 @@ name: Validate NAPRAWNIK HTML
 
 on:
   push:
-    branches:
-      - feat/knowledge-filters-service-manuals
   pull_request:
     branches:
       - main
@@ -43,5 +41,9 @@ jobs:
           done
       - name: Sprawdź moduł płatności
         run: node --check billing.js
+      - name: Sprawdź katalog techniczny
+        run: node --check katalog-techniczny.js
       - name: Sprawdź Service Workera
         run: node --check sw.js
+      - name: Testy regresyjne audytu
+        run: node --test tests/*.test.cjs
