@@ -2591,7 +2591,7 @@ document.querySelectorAll('.nav-item').forEach(el=>el.addEventListener('click',(
 
 // ---------- ASYSTENT ZE ZDJĘCIAMI: OFFLINE + PRAWDZIWE AI PRZEZ BEZPIECZNY BACKEND ----------
 // Zdjęcia i przypadki są przechowywane w IndexedDB, niezależnie od istniejących kluczy localStorage.
-// W HTML nie ma klucza API. Analiza AI działa wyłącznie po wdrożeniu Netlify Function i ustawieniu zmiennych środowiskowych.
+// W HTML nie ma klucza API. Analiza online idzie przez billing.js do uwierzytelnionego Cloudflare Workera; produkcyjna funkcja AI pozostaje wyłączona do osobnego uruchomienia.
 const PA_DB_NAME = 'naprawnik_photo_assistant_v1';
 const PA_DB_VERSION = 1;
 let paSelectedFiles = [];
@@ -2955,6 +2955,6 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.
 if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
-<script src="./billing.js?v=7"></script>
+<script src="./billing.js?v=8"></script>
 </body>
 </html>
