@@ -284,6 +284,36 @@
       alert(friendlyError(error, 'otworzyć panelu subskrypcji'));
     }
   };
+
+  window.npPhotoDiagnosis = async function(formData, options) {
+    const license = typeof window.naprawnikGetVerifiedLicense === 'function'
+      ? window.naprawnikGetVerifiedLicense()
+      : null;
+    if (!license || license.verified !== true ||
+        !['pro', 'warsztat'].includes(license.tier) ||
+        !Number.isFinite(Number(license.exp)) || Number(license.exp) <= Date.now() ||
+        typeof license.token !== 'string' || !license.token) {
+      throw new Error('Do analizy zdjęć AI potrzebny jest aktywny abonament PRO lub WARSZTAT.');
+    }
+    if (!API) throw new Error('Płatności i analiza AI są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.');
+    if (!formData || typeof formData.append !== 'function') throw new Error('Nie udało się przygotować formularza zdjęć.');
+    const response = await fetch(API + '/api/photo-diagnosis', {
+      method: 'POST',
+      headers: { Accept: 'application/json', Authorization: 'Bearer ' + license.token },
+      body: formData,
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: options && options.signal
+    });
+    let data = {};
+    try { data = await response.json(); } catch (_) {}
+    if (!response.ok) {
+      const error = new Error(data.error || ('Usługa analizy AI zwróciła HTTP ' + response.status));
+      error.status = response.status;
+      throw error;
+    }
+    return data;
+  };
   document.addEventListener('click', async event => {
     const button = event.target.closest('[data-plan][data-interval], .np-buy, [data-np-copy], [data-np-refresh], [data-np-portal], [data-np-logout], [data-np-activate], [data-billing-nav]');
     if (!button) return;
