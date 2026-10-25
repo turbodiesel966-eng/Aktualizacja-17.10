@@ -40,7 +40,7 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   const html = read('index.html');
   assert.doesNotMatch(html, /\bLICENSE_ENDPOINT\b|\bSTRIPE_PRO\b|\bSTRIPE_WARSZTAT\b/);
   assert.doesNotMatch(html, /\blicBoot\s*\(\s*\)\s*;/);
-  assert.match(html, /<script src="\.\/billing\.js\?v=8"><\/script>/);
+  assert.match(html, /<script src="\.\/billing\.js\?v=9"><\/script>/);
   assert.match(html, /function licGet\(\)\{return getVerifiedLicense\(\);\}/);
   assert.match(html, /function hasPlan\(min\)\{return Object\.prototype\.hasOwnProperty\.call\(PLAN_ORDER,min\)&&PLAN_ORDER\[curPlan\(\)\]>=PLAN_ORDER\[min\];\}/);
 });
@@ -48,6 +48,10 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
 test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkout', () => {
   const billing = read('billing.js');
   assert.match(billing, /function applyVerifiedPlan\(state\)/);
+  assert.match(billing, /9 zł \/ miesiąc/);
+  assert.match(billing, /100 zł \/ rok \(oszczędzasz 8 zł\)/);
+  assert.match(billing, /29 zł \/ miesiąc/);
+  assert.match(billing, /300 zł \/ rok \(oszczędzasz 48 zł\)/);
   assert.match(billing, /Object\.defineProperty\(window, 'naprawnikGetVerifiedLicense'/);
   assert.doesNotMatch(billing, /window\.naprawnikApplyVerifiedLicense|window\.naprawnikClearVerifiedLicense/);
   assert.match(billing, /Idempotency-Key/);
