@@ -145,7 +145,7 @@ async function readBodyLimited(request, limit) {
 
 async function authenticate(request, env) {
   const header = request.headers.get("Authorization") || "";
-  const match = /^Bearer\\s+([A-Za-z0-9_-]{32,200})$/.exec(header);
+  const match = /^Bearer\s+([A-Za-z0-9_-]{32,200})$/.exec(header);
   if (!match) return null;
   const tokenHash = await sha256Hex(match[1]);
   const row = await env.DB.prepare(
