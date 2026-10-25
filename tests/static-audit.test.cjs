@@ -233,6 +233,48 @@ test('nie nadaje WARSZTAT, gdy aktywna subskrypcja serwera to tylko PRO', async 
   assert.equal(store.has('naprawnik_license'), false);
 });
 
+test('opłacony plan wyświetla portal zamiast drugiego Checkout', async () => {
+  const store = new Map();
+  const rootElement = { innerHTML: '' };
+  const input = { value: 'test-token' };
+  const now = Math.floor(Date.now() / 1000);
+  const context = {
+    window: {},
+    document: {
+      addEventListener() {},
+      querySelector(selector) {
+        if (selector === '#screen') return rootElement;
+        if (selector === '#licKeyIn') return input;
+        return null;
+      },
+      getElementById() { return null; }
+    },
+    localStorage: {
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); }
+    },
+    fetch: async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        user: { id: 'user-1', tier: 'pro' },
+        subscriptions: [{ tier: 'pro', status: 'active', current_period_end: now + 3600 }]
+      })
+    }),
+    URL, URLSearchParams,
+    location: { hostname: 'turbodiesel966-eng.github.io', search: '', pathname: '/' },
+    history: { replaceState() {} },
+    alert() {}, confirm() { return true; }, console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.licActivateInput();
+  context.renderPlans();
+  assert.equal(context.naprawnikGetVerifiedLicense()?.tier, 'pro');
+  assert.match(rootElement.innerHTML, /data-np-portal="1"/);
+  assert.match(rootElement.innerHTML, /Zarządzaj subskrypcją w Stripe/);
+  assert.doesNotMatch(rootElement.innerHTML, /data-plan="warsztat"/);
+});
 test('ważność WARSZTAT jest liczona z WARSZTAT, a nie z dłuższego PRO', async () => {
   const store = new Map();
   const rootElement = { innerHTML: '' };
