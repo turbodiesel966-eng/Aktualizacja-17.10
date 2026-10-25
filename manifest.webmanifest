@@ -1,0 +1,32 @@
+{
+  "id": "./",
+  "name": "NAPRAWNIK — Warsztat i Diagnostyka",
+  "short_name": "NAPRAWNIK",
+  "description": "Diagnostyka skuterów i motocykli, katalog techniczny, checklisty oraz kartoteka warsztatowa.",
+  "lang": "pl",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0a0a14",
+  "theme_color": "#0a0a14",
+  "icons": [
+    {
+      "src": "./assets/naprawnik-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/naprawnik-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
