@@ -593,7 +593,7 @@
     "Model / kod silnika": "Like 50 2T",
     "Układ": "Elektryka / zapłon",
     "Parametr": "Prąd ładowania — dzień",
-    "Wartość": "min. 1,3 A",
+    "Wartość": "min. 1,3",
     "Jednostka": "A",
     "Warunki pomiaru / zastosowania": "2500 obr./min",
     "Status weryfikacji": "Instrukcja modelowa — zweryfikować rocznik",
@@ -622,7 +622,7 @@
     "Warunki pomiaru / zastosowania": "6000 obr./min",
     "Status weryfikacji": "Instrukcja modelowa — zweryfikować rocznik",
     "Źródło (URL)": "https://www.bike-parts-kymco.uk/catalog/Workshop-Manual/like-50-2T-1-Workshop-manual/page168",
-    "Uwagi / ograniczenia": "Wartość zarówno dzień, jak i noc wg instrukcji."
+    "Uwagi / ograniczenia": "Wartość dotyczy zarówno dnia, jak i nocy (wg instrukcji)."
   },
   {
     "Rodzina": "KYMCO",
@@ -1013,7 +1013,7 @@
     "Model / kod silnika": "Senda 125 4T",
     "Układ": "Elektryka / zapłon",
     "Parametr": "Fajka świecy",
-    "Wartość": "5 kΩ ±20%",
+    "Wartość": "5 ±20%",
     "Jednostka": "kΩ",
     "Warunki pomiaru / zastosowania": "Wg instrukcji",
     "Status weryfikacji": "Dane instrukcji modelowej — sprawdzić wariant",
@@ -1061,24 +1061,24 @@
     "Model / kod silnika": "Senda 125 4T",
     "Układ": "Mechanika",
     "Parametr": "Luz zaworu ssącego",
-    "Wartość": "0,10",
-    "Jednostka": "mm",
-    "Warunki pomiaru / zastosowania": "Zimny silnik",
-    "Status weryfikacji": "Dane instrukcji modelowej — sprawdzić wariant",
-    "Źródło (URL)": "https://www.dealerinfo.net/newsitems/DERBE/DERBE_19627_Wmanualsenda1254t2005y.pdf",
-    "Uwagi / ograniczenia": "Dane z instrukcji Beverly 125 4T, NIE Derbi."
+    "Wartość": "Niepotwierdzone — nie stosować",
+    "Jednostka": "—",
+    "Warunki pomiaru / zastosowania": "Brak potwierdzenia w dokumentacji Derbi; nie używać do regulacji",
+    "Status weryfikacji": "Niepotwierdzone — dane z innego modelu",
+    "Źródło (URL)": "",
+    "Uwagi / ograniczenia": "Wcześniejsza wartość pochodzi z instrukcji Beverly 125 4T, nie Derbi Senda 125 4T. Wymaga potwierdzenia w DTR właściwego wariantu."
   },
   {
     "Rodzina": "Derbi",
     "Model / kod silnika": "Senda 125 4T",
     "Układ": "Mechanika",
     "Parametr": "Luz zaworu wydechowego",
-    "Wartość": "0,15",
-    "Jednostka": "mm",
-    "Warunki pomiaru / zastosowania": "Zimny silnik",
-    "Status weryfikacji": "Dane instrukcji modelowej — sprawdzić wariant",
-    "Źródło (URL)": "https://www.dealerinfo.net/newsitems/DERBE/DERBE_19627_Wmanualsenda1254t2005y.pdf",
-    "Uwagi / ograniczenia": "Dane z instrukcji Beverly 125 4T, NIE Derbi."
+    "Wartość": "Niepotwierdzone — nie stosować",
+    "Jednostka": "—",
+    "Warunki pomiaru / zastosowania": "Brak potwierdzenia w dokumentacji Derbi; nie używać do regulacji",
+    "Status weryfikacji": "Niepotwierdzone — dane z innego modelu",
+    "Źródło (URL)": "",
+    "Uwagi / ograniczenia": "Wcześniejsza wartość pochodzi z instrukcji Beverly 125 4T, nie Derbi Senda 125 4T. Wymaga potwierdzenia w DTR właściwego wariantu."
   },
   {
     "Rodzina": "Derbi",
@@ -1158,7 +1158,7 @@
   function normalize(value) {
     return String(value == null ? "" : value)
       .normalize("NFD")
-      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLocaleLowerCase("pl-PL")
       .trim();
   }
@@ -1206,6 +1206,7 @@
     version: "1.0",
     records: records,
     search: search,
+    normalize: normalize,
     getFacets: getFacets,
     escapeHtml: escapeHtml
   });
