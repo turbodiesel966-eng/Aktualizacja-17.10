@@ -7,7 +7,7 @@ const read = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 
 test('Service Worker clears only its own old caches and bumps its version', () => {
   const source = read('sw.js');
-  assert.match(source, /const CACHE='naprawnik-v5-26'/);
+  assert.match(source, /const CACHE='naprawnik-v5-27'/);
   assert.match(source, /ks\.filter\(k=>k\.startsWith\('naprawnik-'\)&&k!==CACHE\)/);
 });
 
