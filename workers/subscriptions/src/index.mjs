@@ -433,29 +433,35 @@ async function handleWebhook(request, env) {
     } else if (event.type === "invoice.payment_failed") {
       const subId = invoiceSubscriptionId(obj);
       if (subId) {
-        const existing = await env.DB.prepare("SELECT user_id, stripe_customer_id, tier, price_id, billing_interval, status, grace_until FROM subscriptions WHERE stripe_subscription_id = ? LIMIT 1").bind(subId).first();
-        if (existing) {
-          if (existing.stripe_customer_id) await ensureStripeCustomerLink(env, existing.stripe_customer_id, existing.user_id);
+        // Payment-failure webhooks may arrive late or after a successful retry.
+        // Always fetch Stripe's current subscription state before changing entitlements.
+        const latest = await fetchStripeSubscription(env, subId);
+        const userId = await userForSubscription(env, latest, obj);
+        const info = subscriptionTierFromStripe(latest, map);
+        if (!userId) throw new Error("FAILED_INVOICE_USER_NOT_RESOLVED");
+        if (!info) throw new Error("FAILED_INVOICE_PRICE_NOT_RESOLVED");
+        const customerId = asId(latest.customer);
+        if (!customerId) throw new Error("FAILED_INVOICE_CUSTOMER_NOT_RESOLVED");
+        await ensureStripeCustomerLink(env, customerId, userId);
+
+        const existing = await env.DB.prepare(
+          "SELECT user_id, stripe_customer_id, tier, price_id, billing_interval, status, grace_until FROM subscriptions WHERE stripe_subscription_id = ? LIMIT 1"
+        ).bind(subId).first();
+
+        if (latest.status === "past_due") {
+          // Base grace on the original invoice and preserve any existing grace on webhook retries.
           const graceUntil = graceUntilForFailedInvoice(existing, obj);
-          await env.DB.prepare("UPDATE subscriptions SET status = 'past_due', grace_until = ?, updated_at = ? WHERE stripe_subscription_id = ?")
+          await persistSubscription(env, { userId, sub: latest, priceInfo: info, statusOverride: "past_due" });
+          await env.DB.prepare("UPDATE subscriptions SET grace_until = ?, updated_at = ? WHERE stripe_subscription_id = ?")
             .bind(graceUntil, nowSeconds(), subId).run();
-          await recalcUserTier(env, existing.user_id);
         } else {
-          // Stripe can deliver invoice.payment_failed before the subscription row exists locally.
-          // Recover the subscription from Stripe so this failure is not acknowledged and lost.
-          const latest = await fetchStripeSubscription(env, subId);
-          const userId = await userForSubscription(env, latest, obj);
-          const info = subscriptionTierFromStripe(latest, map);
-          if (!userId) throw new Error("FAILED_INVOICE_USER_NOT_RESOLVED");
-          if (!info) throw new Error("FAILED_INVOICE_PRICE_NOT_RESOLVED");
-          const customerId = asId(latest.customer);
-          if (!customerId) throw new Error("FAILED_INVOICE_CUSTOMER_NOT_RESOLVED");
-          await ensureStripeCustomerLink(env, customerId, userId);
-          const graceUntil = graceUntilForFailedInvoice(null, obj);
-          await persistSubscription(env, { userId, sub: { ...latest, status: "past_due" }, priceInfo: info });
-          await env.DB.prepare("UPDATE subscriptions SET status = 'past_due', grace_until = ?, updated_at = ? WHERE stripe_subscription_id = ?")
-            .bind(graceUntil, nowSeconds(), subId).run();
-          await recalcUserTier(env, userId);
+          // Stripe is authoritative: do not downgrade an active/trialing sub because of a stale invoice event,
+          // and do not grant grace if Stripe has already marked the subscription unpaid/canceled/paused.
+          await persistSubscription(env, { userId, sub: latest, priceInfo: info });
+        }
+        await recalcUserTier(env, userId);
+        if (ACTIVE_SUB_STATUSES.has(latest.status)) {
+          await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ?").bind(userId).run();
         }
       }
     } else if (event.type === "invoice.paid" || event.type === "invoice.payment_succeeded") {
