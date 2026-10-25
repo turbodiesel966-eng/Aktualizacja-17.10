@@ -864,16 +864,25 @@ function stripeSecretDiagnostics(value) {
   };
 }
 
-function sanitizeStripeErrorMessage(value) {
-  if (typeof value !== "string" || !value.trim()) return null;
-  return value
-    .replace(/\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9_-]+\b/gi, "[REDACTED]")
-    .replace(/\bwhsec_[A-Za-z0-9_-]+\b/gi, "[REDACTED]")
-    .replace(/Bearer\s+\S+/gi, "Bearer [REDACTED]")
-    .replace(/[\r\n\t]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 220) || null;
+function safeStripeErrorHint(error) {
+  const code = typeof error?.code === "string" ? error.code.toLowerCase() : "";
+  const message = typeof error?.message === "string" ? error.message.toLowerCase() : "";
+  if (code === "restricted_key" || /restricted key|missing permissions|does not have permission|not allowed to perform|insufficient permissions/.test(message)) {
+    return "Klucz Stripe nie ma wymaganych uprawnień do odczytu cen.";
+  }
+  if (code === "api_key_expired" || /api key.{0,20}expired|expired.{0,20}api key/.test(message)) {
+    return "Klucz API Stripe wygasł.";
+  }
+  if (code === "invalid_api_key" || /invalid api key|no such api key|authentication required/.test(message)) {
+    return "Klucz API Stripe jest nieprawidłowy lub został unieważniony.";
+  }
+  if (/test mode|live mode|livemode/.test(message)) {
+    return "Sprawdź, czy tryb klucza odpowiada środowisku Stripe.";
+  }
+  if (code === "account_invalid" || /account.{0,30}(not found|invalid|cannot access)/.test(message)) {
+    return "Sprawdź konto Stripe i dostęp klucza do tego konta.";
+  }
+  return null;
 }
 
 async function diagnoseStripeConfig(env) {
@@ -932,7 +941,7 @@ async function diagnoseStripeConfig(env) {
       stripeRequestId: requestId,
       stripeErrorType: typeof stripeError?.type === "string" ? stripeError.type.slice(0, 80) : null,
       stripeErrorCode: typeof stripeError?.code === "string" ? stripeError.code.slice(0, 80) : null,
-      stripeErrorMessage: sanitizeStripeErrorMessage(stripeError?.message),
+      stripeErrorHint: safeStripeErrorHint(stripeError),
       active: typeof price?.active === "boolean" ? price.active : null,
       livemode: typeof price?.livemode === "boolean" ? price.livemode : null,
       currency: typeof price?.currency === "string" ? price.currency : null,
