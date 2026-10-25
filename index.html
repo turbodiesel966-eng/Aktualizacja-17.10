@@ -1419,9 +1419,8 @@ let currentNav = 'home';
 
 
 /* ===== PLANY: AMATOR (free) / PRO / WARSZTAT — płatności Stripe ===== */
-const STRIPE_PRO='https://buy.stripe.com/aFa3cw4qe7yS9WP6nM04800';
-const STRIPE_WARSZTAT='https://buy.stripe.com/8x200k6ym1aufh96nM04801';
-const LICENSE_ENDPOINT='/.netlify/functions/license';
+const NAPRAWNIK_BILLING_API='https://naprawnik-subscriptions-live.turbodiesel966.workers.dev';
+const API_TOKEN_KEY='naprawnik_api_token';
 const PLAN_ORDER={amator:0,pro:1,warsztat:2};
 const PLAN_NAMES={amator:'AMATOR',pro:'PRO',warsztat:'WARSZTAT'};
 function licRaw(){try{return JSON.parse(localStorage.getItem('naprawnik_license')||'null');}catch(e){return null;}}
