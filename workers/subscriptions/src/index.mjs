@@ -569,10 +569,6 @@ async function checkout(request, env, auth) {
   const existingSub = await env.DB.prepare("SELECT stripe_subscription_id, tier, status, billing_interval, current_period_end, grace_until FROM subscriptions WHERE user_id = ? AND status IN ('active','trialing','past_due','paused','unpaid','incomplete') ORDER BY current_period_end DESC LIMIT 1").bind(auth.userId).first();
   if (existingSub) return err("An active subscription already exists or is awaiting payment. Refresh your plan or manage the current subscription instead of starting another checkout.", 409);
 
-  // Fail closed before creating a lock/session if the Stripe price is not from the configured mode.
-  const priceError = await validateStripePrice(env, priceId, interval);
-  if (priceError) return priceError;
-
   // Read customer data before acquiring the lock so a D1 read failure cannot leave a phantom lock.
   const customer = await env.DB.prepare("SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   const now = nowSeconds();
@@ -591,6 +587,10 @@ async function checkout(request, env, auth) {
       return err("Could not verify the existing Checkout session. Retry later; no new session was created.", 502);
     }
   }
+
+  // Existing sessions are reused above; validate Stripe configuration only before creating a new session.
+  const priceError = await validateStripePrice(env, priceId, interval);
+  if (priceError) return priceError;
 
   const lockKey = idempotency;
   const lockLease = await env.DB.prepare(`INSERT INTO checkout_locks (user_id, idempotency_key, tier, billing_interval, session_id, expires_at, created_at)
