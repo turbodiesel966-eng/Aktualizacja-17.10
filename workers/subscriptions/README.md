@@ -37,3 +37,7 @@ node --test workers/subscriptions/security.test.mjs
 ## Production blockers
 
 Before production, reconcile the Cloudflare variables with the actual app origin, inspect the live Stripe price IDs/mode without printing secret values, apply migrations to staging, test the real staging checkout and webhook cycle, and only then plan a separately reviewed production release.
+
+### Remote D1 inventory (read-only, 2026-10-25)
+
+A read-only `SELECT name FROM sqlite_master WHERE type = 'table'` was run against the configured live, v2-staging and sandbox D1 bindings. All three contained the existing application tables but **none contained `request_limits`**. The query returned zero written rows and did not change any database. Consequently, the Worker version in this PR will fail closed for anonymous registration and user-data writes until migration `0002_request_limits.sql` is applied to the specifically verified staging database. Do not apply it to live as part of this PR.
