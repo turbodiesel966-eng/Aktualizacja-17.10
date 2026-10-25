@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
+import { authenticate, enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -817,4 +817,90 @@ test("diagnostyka Stripe wykrywa odrzucony klucz i nie ujawnia treści błędu S
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("wygasły token aktywnego abonamentu rocznego jest odnawiany bez Checkoutu", async () => {
+  const token = "a".repeat(64);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  const tokenHash = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+  const now = Math.floor(Date.now() / 1000);
+  const state = { entitlementChecks: 0, tokenUpdates: [] };
+  const env = {
+    DB: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async first() {
+                if (sql.includes("SELECT user_id, expires_at, revoked_at FROM api_tokens")) {
+                  assert.equal(params[0], tokenHash);
+                  return { user_id: "annual-user", expires_at: now - 60, revoked_at: null };
+                }
+                if (sql.includes("SELECT 1 AS active FROM subscriptions")) {
+                  state.entitlementChecks += 1;
+                  assert.deepEqual(params, ["annual-user", now, now, "annual-user", now]);
+                  return { active: 1 };
+                }
+                throw new Error("Unexpected auth first() SQL: " + sql);
+              },
+              async run() {
+                if (sql.includes("UPDATE api_tokens")) {
+                  state.tokenUpdates.push(params);
+                  return { success: true, meta: { changes: 1 } };
+                }
+                throw new Error("Unexpected auth run() SQL: " + sql);
+              }
+            };
+          }
+        };
+      }
+    }
+  };
+  const request = new Request("https://api.example.test/api/me", {
+    headers: { Authorization: "Bearer " + token }
+  });
+  const auth = await authenticate(request, env);
+  assert.deepEqual(auth, { userId: "annual-user" });
+  assert.equal(state.entitlementChecks, 1);
+  assert.equal(state.tokenUpdates.length, 1);
+  assert.equal(state.tokenUpdates[0][2], tokenHash);
+  assert.equal(state.tokenUpdates[0][1] - state.tokenUpdates[0][0], 365 * 24 * 60 * 60);
+});
+
+test("wygasły token bez aktywnego abonamentu lub promocji nadal jest odrzucany", async () => {
+  const token = "b".repeat(64);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  const tokenHash = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+  const now = Math.floor(Date.now() / 1000);
+  const state = { tokenUpdates: [] };
+  const env = {
+    DB: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async first() {
+                if (sql.includes("SELECT user_id, expires_at, revoked_at FROM api_tokens")) {
+                  assert.equal(params[0], tokenHash);
+                  return { user_id: "free-user", expires_at: now - 60, revoked_at: null };
+                }
+                if (sql.includes("SELECT 1 AS active FROM subscriptions")) return null;
+                throw new Error("Unexpected auth first() SQL: " + sql);
+              },
+              async run() {
+                state.tokenUpdates.push(params);
+                return { success: true, meta: { changes: 1 } };
+              }
+            };
+          }
+        };
+      }
+    }
+  };
+  const request = new Request("https://api.example.test/api/me", {
+    headers: { Authorization: "Bearer " + token }
+  });
+  assert.equal(await authenticate(request, env), null);
+  assert.equal(state.tokenUpdates.length, 0);
 });
