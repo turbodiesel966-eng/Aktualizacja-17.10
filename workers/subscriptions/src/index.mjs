@@ -567,7 +567,7 @@ async function checkout(request, env, auth) {
   if (!user) return err("User not found", 404);
   // Prevent accidental duplicate billing: one account may have only one current active/trial subscription.
   const existingSub = await env.DB.prepare("SELECT stripe_subscription_id, tier, status, billing_interval, current_period_end, grace_until FROM subscriptions WHERE user_id = ? AND status IN ('active','trialing','past_due','paused','unpaid','incomplete') ORDER BY current_period_end DESC LIMIT 1").bind(auth.userId).first();
-  if (existingSub) return err("An active subscription already exists or is awaiting payment. Refresh your plan or manage the current subscription instead of starting another checkout.\", 409);
+  if (existingSub) return err("An active subscription already exists or is awaiting payment. Refresh your plan or manage the current subscription instead of starting another checkout.", 409);
 
   // Fail closed before creating a lock/session if the Stripe price is not from the configured mode.
   const priceError = await validateStripePrice(env, priceId, interval);
