@@ -513,13 +513,24 @@ async function checkout(request, env, auth) {
   })[tier][interval];
   if (!priceId || !priceId.startsWith("price_")) return err("Price is not configured", 503);
   const appBase = env.APP_BASE_URL;
-  if (!appBase || !/^https:\/\//.test(appBase)) return err("APP_BASE_URL must be an HTTPS URL", 500);
+  let parsedAppBase;
+  try { parsedAppBase = new URL(appBase || ""); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
+  if (parsedAppBase.protocol !== "https:" || parsedAppBase.username || parsedAppBase.password) {
+    return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
+  }
+  const appRoot = appBase.replace(/\/$/, "");
+  const successUrl = safeReturnUrl(env.CHECKOUT_SUCCESS_URL, `${appRoot}/?checkout=success`, appBase);
+  const cancelUrl = safeReturnUrl(env.CHECKOUT_CANCEL_URL, `${appRoot}/?checkout=cancelled`, appBase);
+  if (!successUrl || !cancelUrl) return err("Checkout return URLs must use the APP_BASE_URL origin", 500);
+
   const user = await env.DB.prepare("SELECT id, email FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
   if (!user) return err("User not found", 404);
   // Prevent accidental duplicate billing: one account may have only one current active/trial subscription.
   const existingSub = await env.DB.prepare("SELECT stripe_subscription_id, tier, status, billing_interval, current_period_end, grace_until FROM subscriptions WHERE user_id = ? AND status IN ('active','trialing','past_due','paused','unpaid','incomplete') ORDER BY current_period_end DESC LIMIT 1").bind(auth.userId).first();
   if (existingSub) return err("An active subscription already exists or is awaiting payment. Refresh your plan or manage the current subscription instead of starting another checkout.", 409);
 
+  // Read customer data before acquiring the lock so a D1 read failure cannot leave a phantom lock.
+  const customer = await env.DB.prepare("SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   const now = nowSeconds();
   const currentLock = await env.DB.prepare("SELECT user_id, idempotency_key, tier, billing_interval, session_id, expires_at FROM checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   const lockAction = checkoutLockAction(currentLock, tier, interval, now);
@@ -546,15 +557,10 @@ async function checkout(request, env, auth) {
     .bind(auth.userId, lockKey, tier, interval, now + CHECKOUT_LOCK_LEASE_SECONDS, now, now).run();
   if (Number(lockLease.meta?.changes || 0) !== 1) return err("Another Checkout session is already being prepared. Wait a moment and retry.", 409);
 
-  const customer = await env.DB.prepare("SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   const form = new URLSearchParams();
   form.set("mode", "subscription");
   form.set("line_items[0][price]", priceId);
   form.set("line_items[0][quantity]", "1");
-  const appRoot = appBase.replace(/\/$/, "");
-  const successUrl = safeReturnUrl(env.CHECKOUT_SUCCESS_URL, `${appRoot}/?checkout=success`, appBase);
-  const cancelUrl = safeReturnUrl(env.CHECKOUT_CANCEL_URL, `${appRoot}/?checkout=cancelled`, appBase);
-  if (!successUrl || !cancelUrl) return err("Checkout return URLs must use the APP_BASE_URL origin", 500);
   form.set("success_url", successUrl);
   form.set("cancel_url", cancelUrl);
   form.set("client_reference_id", auth.userId);
