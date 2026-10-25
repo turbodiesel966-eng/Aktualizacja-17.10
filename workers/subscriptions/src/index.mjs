@@ -679,12 +679,20 @@ async function createBillingPortalSession(request, env, auth) {
   const portalReturnUrl = safeReturnUrl(`${appRoot}/?billing=return`, `${appRoot}/?billing=return`, appBase);
   if (!portalReturnUrl) return err("Billing portal return URL must use the APP_BASE_URL origin", 500);
 
-  const customer = await env.DB.prepare(
+  let customer = await env.DB.prepare(
     "SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1"
   ).bind(auth.userId).first();
-  if (!customer?.stripe_customer_id) return err("No Stripe billing customer is linked to this account", 409);
+  let needsLegacyLink = false;
+  if (!customer?.stripe_customer_id) {
+    // Older deployments may have stored the customer only on subscriptions, not in stripe_customers.
+    customer = await env.DB.prepare(
+      "SELECT stripe_customer_id FROM subscriptions WHERE user_id = ? AND stripe_customer_id IS NOT NULL ORDER BY current_period_end DESC LIMIT 1"
+    ).bind(auth.userId).first();
+    if (!customer?.stripe_customer_id) return err("No Stripe billing customer is linked to this account", 409);
+    needsLegacyLink = true;
+  }
 
-  // Verify the customer belongs to the configured Stripe mode before opening a billing portal.
+  // Verify the customer belongs to the configured Stripe mode before opening a billing portal or repairing a link.
   let customerResponse;
   try {
     customerResponse = await fetch("https://api.stripe.com/v1/customers/" + encodeURIComponent(customer.stripe_customer_id), {
@@ -698,6 +706,10 @@ async function createBillingPortalSession(request, env, auth) {
   if (!customerResponse.ok || stripeCustomer?.id !== customer.stripe_customer_id ||
       stripeCustomer?.livemode !== expectedLivemode) {
     return err("Stripe customer does not match this environment. Billing portal was not opened.", 503);
+  }
+  if (needsLegacyLink) {
+    try { await ensureStripeCustomerLink(env, customer.stripe_customer_id, auth.userId); }
+    catch { return err("The existing Stripe customer could not be linked safely. Contact support.", 409); }
   }
 
   const form = new URLSearchParams();
