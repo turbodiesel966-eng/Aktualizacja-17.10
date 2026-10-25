@@ -227,10 +227,15 @@
       const titles = { amator: '🛵 AMATOR', pro: '💎 PRO', warsztat: '🛠️ WARSZTAT' };
       let buttons = '';
       if (tier !== 'amator' && !own && ORDER[current] < ORDER[tier]) {
-        const monthly = 'Miesięcznie (cena w Stripe)';
-        const yearly = 'Rocznie (cena w Stripe)';
-        buttons = '<div class="btn np-buy" data-plan="' + tier + '" data-interval="month">Wybieram ' + titles[tier].replace(/^\S+ /, '') + ' — ' + monthly + '</div>' +
-          '<div class="btn np-buy" data-plan="' + tier + '" data-interval="year">Wybieram ' + titles[tier].replace(/^\S+ /, '') + ' — ' + yearly + '</div>';
+        if (current !== 'amator') {
+          // Checkout refuses a second subscription; paid customers manage existing billing in Stripe.
+          buttons = '<div class="btn" data-np-portal="1">Zarządzaj subskrypcją w Stripe, aby zmienić plan</div>';
+        } else {
+          const monthly = 'Miesięcznie (cena w Stripe)';
+          const yearly = 'Rocznie (cena w Stripe)';
+          buttons = '<div class="btn np-buy" data-plan="' + tier + '" data-interval="month">Wybieram ' + titles[tier].replace(/^\\S+ /, '') + ' — ' + monthly + '</div>' +
+            '<div class="btn np-buy" data-plan="' + tier + '" data-interval="year">Wybieram ' + titles[tier].replace(/^\\S+ /, '') + ' — ' + yearly + '</div>';
+        }
       }
       return '<div class="card" style="' + (own ? 'border-color:var(--hero)' : '') + '"><h2>' + titles[tier] + (own ? ' — Twój plan' : '') + '</h2><small style="color:var(--dim)">' + (tier === 'amator' ? 'Bezpłatny, bez konta' : 'Abonament przez Stripe; anulowanie w panelu subskrypcji') + '</small>' + listHtml(tier) + buttons + '</div>';
     };
