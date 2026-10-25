@@ -85,6 +85,33 @@ test('sam spreparowany localStorage nie oznacza aktywnej licencji w widoku plan�
   assert.match(rootElement.innerHTML, /Wybieram PRO/);
 });
 
+test('host stagingowy korzysta wyłącznie z testowego Workera', async () => {
+  const calls = [];
+  let redirected = '';
+  const store = new Map();
+  const location = { hostname: 'naprawnik-pwa-staging.turbodiesel966.workers.dev', search: '', pathname: '/', assign(url) { redirected = String(url); } };
+  const context = {
+    window: {},
+    document: { addEventListener() {}, querySelector(selector) { return selector === '#screen' ? { innerHTML: '' } : null; } },
+    localStorage: { getItem(key) { return store.has(key) ? store.get(key) : null; }, setItem(key, value) { store.set(key, String(value)); }, removeItem(key) { store.delete(key); } },
+    fetch: async (url, options) => {
+      const value = String(url); calls.push({ url: value, options });
+      if (value.endsWith('/api/register')) return { ok: true, status: 201, json: async () => ({ token: 't'.repeat(64) }) };
+      if (value.endsWith('/api/checkout')) return { ok: true, status: 200, json: async () => ({ url: 'https://checkout.stripe.com/c/pay/cs_test_123' }) };
+      return { ok: false, status: 404, json: async () => ({ error: 'Not found' }) };
+    },
+    URL, URLSearchParams, location, history: { replaceState() {} },
+    alert() {}, confirm() { return true; }, console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.npStartCheckout('pro', 'month');
+  assert.ok(calls.length >= 2);
+  assert.ok(calls.every(call => call.url.startsWith('https://naprawnik-subscriptions-v2-staging.turbodiesel966.workers.dev/')));
+  assert.ok(calls.some(call => call.url.endsWith('/api/checkout')));
+  assert.equal(redirected, 'https://checkout.stripe.com/c/pay/cs_test_123');
+});
+
 test('odrzucony token nie powoduje cichej rejestracji nowego konta', async () => {
   const store = new Map();
   const calls = [];
@@ -118,31 +145,4 @@ test('odrzucony token nie powoduje cichej rejestracji nowego konta', async () =>
   assert.equal(calls.filter(call => call.url.endsWith('/api/register')).length, 0);
   assert.equal(confirms.length, 1);
   assert.ok(alerts.some(message => message.includes('Nie utworzono nowego konta')));
-});
-
-test('host stagingowy korzysta wyłącznie z testowego Workera', async () => {
-  const calls = [];
-  let redirected = '';
-  const store = new Map();
-  const location = { hostname: 'naprawnik-pwa-staging.turbodiesel966.workers.dev', search: '', pathname: '/', assign(url) { redirected = String(url); } };
-  const context = {
-    window: {},
-    document: { addEventListener() {}, querySelector(selector) { return selector === '#screen' ? { innerHTML: '' } : null; } },
-    localStorage: { getItem(key) { return store.has(key) ? store.get(key) : null; }, setItem(key, value) { store.set(key, String(value)); }, removeItem(key) { store.delete(key); } },
-    fetch: async (url, options) => {
-      const value = String(url); calls.push({ url: value, options });
-      if (value.endsWith('/api/register')) return { ok: true, status: 201, json: async () => ({ token: 't'.repeat(64) }) };
-      if (value.endsWith('/api/checkout')) return { ok: true, status: 200, json: async () => ({ url: 'https://checkout.stripe.com/c/pay/cs_test_123' }) };
-      return { ok: false, status: 404, json: async () => ({ error: 'Not found' }) };
-    },
-    URL, URLSearchParams, location, history: { replaceState() {} },
-    alert() {}, confirm() { return true; }, console, Date, Math, JSON, setTimeout
-  };
-  context.window = context;
-  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
-  await context.npStartCheckout('pro', 'month');
-  assert.ok(calls.length >= 2);
-  assert.ok(calls.every(call => call.url.startsWith('https://naprawnik-subscriptions-v2-staging.turbodiesel966.workers.dev/')));
-  assert.ok(calls.some(call => call.url.endsWith('/api/checkout')));
-  assert.equal(redirected, 'https://checkout.stripe.com/c/pay/cs_test_123');
 });
