@@ -434,7 +434,7 @@
         if (price.stripeHttpStatus) detail += ' · HTTP ' + price.stripeHttpStatus;
         if (price.stripeErrorCode) detail += ' · kod: ' + price.stripeErrorCode;
         if (price.stripeErrorType) detail += ' · typ: ' + price.stripeErrorType;
-        if (price.stripeErrorMessage) detail += ' · ' + price.stripeErrorMessage;
+        if (price.stripeErrorHint) detail += ' · ' + price.stripeErrorHint;
         if (price.stripeRequestId) detail += ' · Request ID: ' + price.stripeRequestId;
         if (price.currency && price.interval) detail += ' · ' + price.currency.toUpperCase() + ' · ' + price.interval + (price.intervalCount > 1 ? ' × ' + price.intervalCount : '');
         output += row(price.label || price.key, good, detail);
