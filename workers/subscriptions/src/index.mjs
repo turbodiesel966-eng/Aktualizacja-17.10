@@ -20,6 +20,9 @@ const RATE_LIMITS = Object.freeze({
   userDataWrites: Object.freeze({ maxRequests: 120, windowSeconds: 60 }),
   photoDiagnosis: Object.freeze({ maxRequests: 8, windowSeconds: 60 * 60 }),
   billingPortal: Object.freeze({ maxRequests: 10, windowSeconds: 15 * 60 }),
+  analyticsVisits: Object.freeze({ maxRequests: 20, windowSeconds: 60 }),
+  promoRedemptions: Object.freeze({ maxRequests: 5, windowSeconds: 15 * 60 }),
+  adminWrites: Object.freeze({ maxRequests: 30, windowSeconds: 60 * 60 }),
 });
 const CHECKOUT_LOCK_LEASE_SECONDS = 30 * 60;
 const SUBSCRIPTION_LIFECYCLE_EVENTS = new Set([
@@ -303,15 +306,19 @@ async function persistSubscription(env, { userId, sub, priceInfo, statusOverride
 }
 
 async function recalcUserTier(env, userId) {
-  const { results = [] } = await env.DB.prepare(
+  const now = nowSeconds();
+  const { results: subscriptions = [] } = await env.DB.prepare(
     "SELECT tier, status, current_period_end, grace_until FROM subscriptions WHERE user_id = ?"
   ).bind(userId).all();
-  const now = nowSeconds();
-  const eligible = results.filter(s => (
+  const { results: promotions = [] } = await env.DB.prepare(
+    "SELECT tier, expires_at FROM promo_redemptions WHERE user_id = ? AND expires_at > ?"
+  ).bind(userId, now).all();
+  const activeSubscriptions = subscriptions.filter(s => (
     (ACTIVE_SUB_STATUSES.has(s.status) && Number(s.current_period_end) > now) ||
     (s.status === "past_due" && Number(s.grace_until || 0) > now)
   ));
-  const tier = eligible.reduce((best, s) => tierRank(s.tier) > tierRank(best) ? s.tier : best, "amator");
+  const candidates = [...activeSubscriptions, ...promotions];
+  const tier = candidates.reduce((best, s) => tierRank(s.tier) > tierRank(best) ? s.tier : best, "amator");
   await env.DB.prepare("UPDATE users SET tier = ?, updated_at = ? WHERE id = ?")
     .bind(tier, now, userId).run();
   return tier;
@@ -750,10 +757,173 @@ async function createBillingPortalSession(request, env, auth) {
 async function getMe(env, auth) {
   const user = await env.DB.prepare("SELECT id, email, tier, updated_at FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
   if (!user) return err("User not found", 404);
-  const { results = [] } = await env.DB.prepare(`SELECT tier, status, billing_interval, current_period_end, cancel_at_period_end, grace_until
+  const { results: subscriptions = [] } = await env.DB.prepare(`SELECT tier, status, billing_interval, current_period_end, cancel_at_period_end, grace_until
     FROM subscriptions WHERE user_id = ? ORDER BY current_period_end DESC`).bind(auth.userId).all();
+  const now = nowSeconds();
+  const { results: promotions = [] } = await env.DB.prepare(`SELECT tier, granted_at, expires_at
+    FROM promo_redemptions WHERE user_id = ? AND expires_at > ? ORDER BY expires_at DESC`).bind(auth.userId, now).all();
+  const promoEntitlements = promotions.map(p => ({
+    tier: p.tier, status: "active", billing_interval: "promo", current_period_end: Number(p.expires_at),
+    cancel_at_period_end: 0, grace_until: null, granted_at: Number(p.granted_at)
+  }));
   const currentTier = await recalcUserTier(env, auth.userId);
-  return json({ user: { ...user, tier: currentTier }, subscriptions: results });
+  const admin = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
+  return json({ user: { ...user, tier: currentTier, role: admin?.role || "user" }, subscriptions: [...subscriptions, ...promoEntitlements] });
+}
+
+async function isAdminUser(env, userId) {
+  const row = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(userId).first();
+  return row?.role === "admin";
+}
+
+async function bootstrapAdmin(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  if (!env.ADMIN_BOOTSTRAP_KEY) return err("Aktywacja administratora nie jest jeszcze skonfigurowana.", 503);
+  const body = await readJson(request, 4096);
+  const supplied = typeof body?.key === "string" ? body.key : "";
+  if (!supplied || !constantTimeStringEqual(supplied, env.ADMIN_BOOTSTRAP_KEY)) {
+    return err("Nieprawidłowy kod aktywacyjny administratora.", 403);
+  }
+  const now = nowSeconds();
+  await env.DB.batch([
+    env.DB.prepare("INSERT OR IGNORE INTO admin_settings (singleton, bootstrapped_by, bootstrapped_at) VALUES (1, ?, ?)").bind(auth.userId, now),
+    env.DB.prepare("INSERT OR IGNORE INTO admin_users (user_id, role, granted_at) SELECT ?, 'admin', ? WHERE EXISTS (SELECT 1 FROM admin_settings WHERE singleton = 1 AND bootstrapped_by = ?)").bind(auth.userId, now, auth.userId)
+  ]);
+  if (await isAdminUser(env, auth.userId)) return json({ ok: true, role: "admin", message: "Konto administratora zostało aktywowane." });
+  return err("Aktywacja została już wykorzystana na innym koncie.", 409);
+}
+
+async function requireAdminResponse(env, auth) {
+  return await isAdminUser(env, auth.userId) ? null : err("Dostęp tylko dla administratora.", 403);
+}
+
+async function getAdminStats(env) {
+  const now = nowSeconds();
+  const [accounts, active24h, active7d, active30d, sessions24h, sessions7d, browsers7d, promos, redemptions] = await Promise.all([
+    env.DB.prepare("SELECT COUNT(*) AS count FROM users").first(),
+    env.DB.prepare("SELECT COUNT(DISTINCT user_id) AS count FROM app_visits WHERE user_id IS NOT NULL AND visited_at >= ?").bind(now - 86400).first(),
+    env.DB.prepare("SELECT COUNT(DISTINCT user_id) AS count FROM app_visits WHERE user_id IS NOT NULL AND visited_at >= ?").bind(now - 7 * 86400).first(),
+    env.DB.prepare("SELECT COUNT(DISTINCT user_id) AS count FROM app_visits WHERE user_id IS NOT NULL AND visited_at >= ?").bind(now - 30 * 86400).first(),
+    env.DB.prepare("SELECT COUNT(*) AS count FROM app_visits WHERE visited_at >= ?").bind(now - 86400).first(),
+    env.DB.prepare("SELECT COUNT(*) AS count FROM app_visits WHERE visited_at >= ?").bind(now - 7 * 86400).first(),
+    env.DB.prepare("SELECT COUNT(DISTINCT visitor_hash) AS count FROM app_visits WHERE visited_at >= ?").bind(now - 7 * 86400).first(),
+    env.DB.prepare("SELECT COUNT(*) AS count FROM promo_codes WHERE enabled = 1 AND expires_at > ?").bind(now).first(),
+    env.DB.prepare("SELECT COALESCE(SUM(redemption_count), 0) AS count FROM promo_codes").first()
+  ]);
+  return json({
+    generatedAt: new Date(now * 1000).toISOString(),
+    registeredAccounts: Number(accounts?.count || 0),
+    activeAccounts24h: Number(active24h?.count || 0),
+    activeAccounts7d: Number(active7d?.count || 0),
+    activeAccounts30d: Number(active30d?.count || 0),
+    sessions24h: Number(sessions24h?.count || 0),
+    sessions7d: Number(sessions7d?.count || 0),
+    uniqueBrowsers7dEstimate: Number(browsers7d?.count || 0),
+    activePromoCodes: Number(promos?.count || 0),
+    promoRedemptions: Number(redemptions?.count || 0),
+    note: "Konta to dokładna liczba unikalnych kont. Unikalne przeglądarki są szacunkiem, nie liczbą osób."
+  });
+}
+
+async function listAdminPromos(env) {
+  const { results = [] } = await env.DB.prepare(`SELECT id, code_hint, label, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled, created_at
+    FROM promo_codes ORDER BY created_at DESC LIMIT 100`).all();
+  return json({ promos: results });
+}
+
+async function createAdminPromo(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const limited = await enforceRateLimit(request, env, "admin-writes", auth.userId, RATE_LIMITS.adminWrites);
+  if (limited) return limited;
+  const body = await readJson(request, 8192);
+  const tier = body?.tier;
+  const durationDays = Number(body?.durationDays);
+  const maxRedemptions = Number(body?.maxRedemptions);
+  const expiresInDays = Number(body?.expiresInDays);
+  const label = typeof body?.label === "string" ? body.label.trim() : "";
+  if (!["pro", "warsztat"].includes(tier)) return err("Wybierz pakiet PRO lub WARSZTAT.");
+  if (![3, 7].includes(durationDays)) return err("Pakiet promocyjny może trwać 3 albo 7 dni.");
+  if (!Number.isSafeInteger(maxRedemptions) || maxRedemptions < 1 || maxRedemptions > 10000) return err("Limit użyć musi wynosić od 1 do 10000.");
+  if (!Number.isSafeInteger(expiresInDays) || expiresInDays < 1 || expiresInDays > 365) return err("Termin ważności musi wynosić od 1 do 365 dni.");
+  if (label.length > 120) return err("Nazwa kampanii może mieć maksymalnie 120 znaków.");
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  const code = "NAP-" + [...bytes].map(b => alphabet[b % alphabet.length]).join("");
+  const codeHash = await sha256Hex("naprawnik-promo:" + code);
+  const id = crypto.randomUUID();
+  const now = nowSeconds();
+  const expiresAt = now + expiresInDays * 86400;
+  await env.DB.prepare(`INSERT INTO promo_codes
+    (id, code_hash, code_hint, label, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled, created_by, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 1, ?, ?)`).bind(
+      id, codeHash, code.slice(-4), label, tier, durationDays, maxRedemptions, now, expiresAt, auth.userId, now
+    ).run();
+  return json({ ok: true, code, tier, durationDays, maxRedemptions, expiresAt, label });
+}
+
+async function redeemPromo(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const limited = await enforceRateLimit(request, env, "promo-redemption", auth.userId, RATE_LIMITS.promoRedemptions);
+  if (limited) return limited;
+  const body = await readJson(request, 4096);
+  const rawCode = typeof body?.code === "string" ? body.code.trim().toUpperCase() : "";
+  if (!/^[A-Z0-9-]{8,40}$/.test(rawCode)) return err("Wpisz poprawny kod promocyjny.");
+  const codeHash = await sha256Hex("naprawnik-promo:" + rawCode);
+  const promo = await env.DB.prepare("SELECT id, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled FROM promo_codes WHERE code_hash = ? LIMIT 1").bind(codeHash).first();
+  const now = nowSeconds();
+  if (!promo || Number(promo.enabled) !== 1 || Number(promo.starts_at) > now || Number(promo.expires_at) <= now) {
+    return err("Kod promocyjny jest nieprawidłowy lub wygasł.", 400);
+  }
+  if (Number(promo.redemption_count) >= Number(promo.max_redemptions)) return err("Limit wykorzystania tego kodu został osiągnięty.", 409);
+  const prior = await env.DB.prepare("SELECT id FROM promo_redemptions WHERE promo_id = ? AND user_id = ? LIMIT 1").bind(promo.id, auth.userId).first();
+  if (prior) return err("To konto wykorzystało już ten kod promocyjny.", 409);
+  const redemptionId = crypto.randomUUID();
+  const grantExpiresAt = now + Number(promo.duration_days) * 86400;
+  const result = await env.DB.batch([
+    env.DB.prepare(`UPDATE promo_codes SET redemption_count = redemption_count + 1
+      WHERE id = ? AND enabled = 1 AND starts_at <= ? AND expires_at > ?
+      AND redemption_count < max_redemptions
+      AND NOT EXISTS (SELECT 1 FROM promo_redemptions WHERE promo_id = ? AND user_id = ?)`).bind(promo.id, now, now, promo.id, auth.userId),
+    env.DB.prepare(`INSERT INTO promo_redemptions (id, promo_id, user_id, tier, granted_at, expires_at, redeemed_at)
+      SELECT ?, ?, ?, ?, ?, ?, ? WHERE changes() = 1`).bind(redemptionId, promo.id, auth.userId, promo.tier, now, grantExpiresAt, now)
+  ]);
+  if (!Number(result?.[0]?.meta?.changes || 0) || !Number(result?.[1]?.meta?.changes || 0)) {
+    const updated = await env.DB.prepare("SELECT redemption_count, max_redemptions, enabled, expires_at FROM promo_codes WHERE id = ?").bind(promo.id).first();
+    if (updated && Number(updated.redemption_count) >= Number(updated.max_redemptions)) return err("Limit wykorzystania tego kodu został osiągnięty.", 409);
+    return err("Kod został wykorzystany lub nie można go już aktywować na tym koncie.", 409);
+  }
+  const currentTier = await recalcUserTier(env, auth.userId);
+  return json({ ok: true, tier: currentTier, durationDays: Number(promo.duration_days), expiresAt: grantExpiresAt, message: "Kod aktywowany." });
+}
+
+async function trackVisit(request, env) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const body = await readJson(request, 4096);
+  if (!isString(body?.visitorId, 128) || !isString(body?.sessionId, 128)) return err("Invalid analytics identifiers", 400);
+  const visitorHash = await sha256Hex("naprawnik-visitor:" + body.visitorId);
+  const sessionHash = await sha256Hex("naprawnik-session:" + body.sessionId);
+  const limited = await enforceRateLimit(request, env, "analytics-visit", visitorHash, RATE_LIMITS.analyticsVisits);
+  if (limited) return limited;
+  let userId = null;
+  if (request.headers.get("Authorization")) {
+    const auth = await authenticate(request, env);
+    if (auth) userId = auth.userId;
+  }
+  const now = nowSeconds();
+  const day = new Date(now * 1000).toISOString().slice(0, 10);
+  await env.DB.prepare(`INSERT INTO app_visits (id, visitor_hash, session_hash, user_id, visit_day, visited_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(session_hash) DO UPDATE SET
+      user_id = COALESCE(excluded.user_id, app_visits.user_id),
+      visit_day = excluded.visit_day,
+      visited_at = MAX(app_visits.visited_at, excluded.visited_at)`).bind(
+        crypto.randomUUID(), visitorHash, sessionHash, userId, day, now
+      ).run();
+  if (Math.random() < 0.01) {
+    await env.DB.prepare("DELETE FROM app_visits WHERE visited_at < ?").bind(now - 90 * 86400).run().catch(() => {});
+    await env.DB.prepare("DELETE FROM promo_redemptions WHERE expires_at < ?").bind(now - 90 * 86400).run().catch(() => {});
+  }
+  return json({ ok: true });
 }
 
 async function readUserData(env, auth, url) {
@@ -1067,10 +1237,41 @@ export default {
           const limited = await enforceRateLimit(request, env, "billing-portal", auth.userId, RATE_LIMITS.billingPortal);
           response = limited || await createBillingPortalSession(request, env, auth);
         }
+      } else if (url.pathname === "/api/analytics/visit") {
+        response = await trackVisit(request, env);
+      } else if (url.pathname === "/api/promo/redeem") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await redeemPromo(request, env, auth);
       } else if (url.pathname === "/api/me" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
         else response = await getMe(env, auth);
+      } else if (url.pathname === "/api/admin/bootstrap") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await bootstrapAdmin(request, env, auth);
+      } else if (url.pathname === "/api/admin/stats" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const denied = await requireAdminResponse(env, auth);
+          response = denied || await getAdminStats(env);
+        }
+      } else if (url.pathname === "/api/admin/promos" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const denied = await requireAdminResponse(env, auth);
+          response = denied || await listAdminPromos(env);
+        }
+      } else if (url.pathname === "/api/admin/promos" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const denied = await requireAdminResponse(env, auth);
+          response = denied || await createAdminPromo(request, env, auth);
+        }
       } else if (url.pathname === "/api/photo-diagnosis") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
