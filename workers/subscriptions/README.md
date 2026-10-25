@@ -8,6 +8,8 @@ This source is a source-controlled mirror of the deployed `naprawnik-subscriptio
 - The live Worker configuration returned a staging hostname for `ALLOWED_ORIGINS`, `APP_BASE_URL`, `CHECKOUT_SUCCESS_URL` and `CHECKOUT_CANCEL_URL`, rather than the GitHub Pages app origin.
 - The deployed D1 schemas did not have a persistent request-limiter table.
 - Stripe webhook signature verification and event-idempotency handling are already present in the deployed source; this branch keeps those mechanisms.
+- Subscription `paused`/`resumed` lifecycle events are now handled explicitly; repeated failures of the same Stripe invoice no longer extend the grace period on every retry.
+- A D1 checkout lock now prevents concurrent hosted Checkout sessions for the same account, and subscription events restore the Stripe customer-to-account mapping even if webhook events arrive out of order.
 
 The source mirror no longer overrides environment variables in code. Worker requests fail closed when `PRODUCTION_ENABLED` is not exactly `true`. No Cloudflare variables, secrets, D1 data, deployed versions or Stripe settings were changed.
 
@@ -16,7 +18,7 @@ The source mirror no longer overrides environment variables in code. Worker requ
 1. Copy `wrangler.example.toml` to local `wrangler.toml` and substitute a verified staging-only D1 ID and test Stripe Price IDs.
 2. Configure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` with Stripe **test mode** values using `wrangler secret put`; do not store secret values in Git.
 3. Verify that `ALLOWED_ORIGINS` is exactly the origin that serves the app, and that `APP_BASE_URL` plus both return URLs are HTTPS and on the same origin.
-4. Apply migrations only to the staging DB after confirming the Wrangler environment and database ID. The migration for `request_limits` has not been applied remotely by this branch.
+4. Apply migrations only to the staging DB after confirming the Wrangler environment and database ID. Migrations `0002_request_limits.sql` and `0003_checkout_locks.sql` have not been applied remotely by this branch.
 5. Keep `PRODUCTION_ENABLED = false` until configuration and tests pass. Any staging deployment must be a deliberate separate action.
 
 Suggested local checks:
@@ -29,6 +31,7 @@ node --test workers/subscriptions/security.test.mjs
 ## Server-side protection
 
 - Anonymous registration: maximum 10 requests per client IP per 15-minute fixed window.
+- One hosted Stripe Checkout is allowed at a time per account; an open session is reused only for the same tier and billing interval.
 - Authenticated `/api/data` writes: maximum 120 requests per account per 60-second fixed window.
 - The limiter stores SHA-256 hashes of limiter subjects, not raw client IP values; a Cloudflare edge rate-limiting rule is still recommended against distributed abuse.
 - Data keys prefixed `pro:` or `premium:` require an active PRO/WARSZTAT subscription; `warsztat:` or `workshop:` require WARSZTAT. Reserved key namespaces such as licence, subscription, billing, entitlement, tier, plan and API token cannot be written as ordinary user data.
@@ -40,4 +43,4 @@ Before production, reconcile the Cloudflare variables with the actual app origin
 
 ### Remote D1 inventory (read-only, 2026-10-25)
 
-A read-only `SELECT name FROM sqlite_master WHERE type = 'table'` was run against the configured live, v2-staging and sandbox D1 bindings. All three contained the existing application tables but **none contained `request_limits`**. The query returned zero written rows and did not change any database. Consequently, the Worker version in this PR will fail closed for anonymous registration and user-data writes until migration `0002_request_limits.sql` is applied to the specifically verified staging database. Do not apply it to live as part of this PR.
+A read-only `SELECT name FROM sqlite_master WHERE type = 'table'` was run against the configured live, v2-staging and sandbox D1 bindings. All three contained the existing application tables but **none contained `request_limits` or `checkout_locks`**. The query returned zero written rows and did not change any database. Consequently, the Worker version in this PR will fail closed for anonymous registration and user-data writes until migration `0002_request_limits.sql` is applied, and Checkout is not ready until migration `0003_checkout_locks.sql` is applied to the specifically verified staging database. Do not apply either migration to live as part of this PR.
