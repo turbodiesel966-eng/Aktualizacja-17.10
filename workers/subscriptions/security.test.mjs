@@ -318,6 +318,7 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
     stripeStatus: "paused"
   };
   const env = {
+    STRIPE_SECRET_KEY: "sk_test_mock_not_a_real_key",
     STRIPE_WEBHOOK_SECRET: secret,
     STRIPE_PRICE_PRO_MONTHLY: "price_test_pro_month",
     STRIPE_PRICE_PRO_YEARLY: "price_test_pro_year",
