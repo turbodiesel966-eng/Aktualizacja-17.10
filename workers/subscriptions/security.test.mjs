@@ -172,9 +172,10 @@ test("Worker atomowo blokuje drugi Checkout i ma migrację blokad", async () => 
 
 
 function makeCheckoutTestEnv() {
-  const state = { lock: null, sessions: new Map(), checkoutRequests: [], stripePosts: 0 };
+  const state = { lock: null, sessions: new Map(), checkoutRequests: [], stripePosts: 0, priceLivemode: false, priceCurrency: "pln" };
   const env = {
     STRIPE_SECRET_KEY: "sk_test_placeholder",
+    STRIPE_EXPECT_LIVEMODE: "false",
     STRIPE_PRICE_PRO_MONTHLY: "price_test_pro_month",
     STRIPE_PRICE_PRO_YEARLY: "price_test_pro_year",
     STRIPE_PRICE_WARSZTAT_MONTHLY: "price_test_warsztat_month",
@@ -243,6 +244,15 @@ function mockStripeCheckoutFetch(state) {
   return async (input, init = {}) => {
     const url = String(input);
     const method = init.method || "GET";
+    const pricePrefix = "https://api.stripe.com/v1/prices/";
+    if (url.startsWith(pricePrefix) && method === "GET") {
+      const priceId = decodeURIComponent(url.slice(pricePrefix.length));
+      const interval = priceId.includes("_year") ? "year" : "month";
+      return new Response(JSON.stringify({
+        id: priceId, active: true, livemode: state.priceLivemode, currency: state.priceCurrency,
+        recurring: { interval, interval_count: 1 }, unit_amount: 900
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
     if (url === "https://api.stripe.com/v1/checkout/sessions" && method === "POST") {
       state.stripePosts += 1;
       const id = "cs_test_" + state.stripePosts;
@@ -303,6 +313,36 @@ test("niepoprawny URL powrotu nie zostawia blokady Checkout ani nie tworzy sesji
   }
 });
 
+test("Checkout odrzuca cenę live w środowisku testowym przed blokadą i sesją", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makeCheckoutTestEnv();
+  state.priceLivemode = true;
+  globalThis.fetch = mockStripeCheckoutFetch(state);
+  try {
+    const response = await checkout(checkoutRequest("test-checkout-live-price-001"), env, { userId: "user_test_1" });
+    assert.equal(response.status, 503);
+    assert.equal(state.lock, null);
+    assert.equal(state.stripePosts, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("Checkout wymaga jawnego trybu Stripe dla środowiska", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makeCheckoutTestEnv();
+  delete env.STRIPE_EXPECT_LIVEMODE;
+  globalThis.fetch = mockStripeCheckoutFetch(state);
+  try {
+    const response = await checkout(checkoutRequest("test-checkout-no-mode-001"), env, { userId: "user_test_1" });
+    assert.equal(response.status, 503);
+    assert.equal(state.lock, null);
+    assert.equal(state.stripePosts, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("dwa równoczesne Checkouty nie wywołują dwóch sesji Stripe", async () => {
   const originalFetch = globalThis.fetch;
   const { env, state } = makeCheckoutTestEnv();
@@ -335,6 +375,7 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
   const env = {
     STRIPE_SECRET_KEY: "sk_test_mock_not_a_real_key",
     STRIPE_WEBHOOK_SECRET: secret,
+    STRIPE_EXPECT_LIVEMODE: "false",
     STRIPE_PRICE_PRO_MONTHLY: "price_test_pro_month",
     STRIPE_PRICE_PRO_YEARLY: "price_test_pro_year",
     STRIPE_PRICE_WARSZTAT_MONTHLY: "price_test_warsztat_month",
@@ -453,7 +494,7 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
   };
 
   async function sendEvent(id, type, object) {
-    const event = { id, type, created: now, data: { object } };
+    const event = { id, type, created: now, livemode: arguments.length > 3 ? arguments[3] : false, data: { object } };
     const rawBody = JSON.stringify(event);
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(now + "." + rawBody)));
@@ -489,6 +530,12 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
     assert.equal(failedInvoice.status, 200);
     assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "active");
     assert.equal(state.subscriptions.get("sub_test_lifecycle")?.grace_until, null);
+    assert.equal(state.users.get("user_test_1")?.tier, "pro");
+
+    // A live-mode event with a valid signature is still rejected by a test-only Worker.
+    const wrongModeEvent = await sendEvent("evt_test_wrong_mode", "customer.subscription.deleted", object, true);
+    assert.equal(wrongModeEvent.status, 400);
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "active");
     assert.equal(state.users.get("user_test_1")?.tier, "pro");
   } finally {
     globalThis.fetch = originalFetch;
