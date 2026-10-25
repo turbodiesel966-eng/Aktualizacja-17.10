@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis } from "./src/index.mjs";
+import { enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -308,6 +308,52 @@ test("niepoprawny URL powrotu nie zostawia blokady Checkout ani nie tworzy sesji
     assert.equal(response.status, 500);
     assert.equal(state.lock, null);
     assert.equal(state.stripePosts, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("billing portal weryfikuje tryb klienta Stripe przed stworzeniem sesji", async () => {
+  const originalFetch = globalThis.fetch;
+  const state = { posts: 0, customerLivemode: false, returnUrl: null };
+  const env = {
+    STRIPE_SECRET_KEY: "sk_test_mock_portal_key",
+    STRIPE_EXPECT_LIVEMODE: "false",
+    APP_BASE_URL: "https://staging.example.test/app/",
+    DB: {
+      prepare(sql) {
+        return { bind() { return { async first() {
+          assert.match(sql, /SELECT stripe_customer_id FROM stripe_customers/);
+          return { stripe_customer_id: "cus_test_portal" };
+        } }; } };
+      }
+    }
+  };
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url === "https://api.stripe.com/v1/customers/cus_test_portal") {
+      return new Response(JSON.stringify({ id: "cus_test_portal", livemode: state.customerLivemode }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    if (url === "https://api.stripe.com/v1/billing_portal/sessions" && init.method === "POST") {
+      state.posts += 1;
+      state.returnUrl = init.body.get("return_url");
+      return new Response(JSON.stringify({ url: "https://billing.stripe.com/p/session/test_portal" }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    throw new Error("Unexpected portal request: " + url);
+  };
+  try {
+    state.customerLivemode = true;
+    const mismatched = await createBillingPortalSession(new Request("https://api.example.test/api/billing-portal", { method: "POST" }), env, { userId: "user_test_1" });
+    assert.equal(mismatched.status, 503);
+    assert.equal(state.posts, 0);
+
+    state.customerLivemode = false;
+    const ok = await createBillingPortalSession(new Request("https://api.example.test/api/billing-portal", { method: "POST" }), env, { userId: "user_test_1" });
+    const body = await ok.json();
+    assert.equal(ok.status, 200);
+    assert.equal(body.url, "https://billing.stripe.com/p/session/test_portal");
+    assert.equal(state.posts, 1);
+    assert.equal(state.returnUrl, "https://staging.example.test/app/?billing=return");
   } finally {
     globalThis.fetch = originalFetch;
   }
