@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NAPRAWNIK v5.14 — Asystent AI ze zdjęciami</title>
+<title>NAPRAWNIK v5.14 — diagnostyka i naprawy</title>
 <style>
 :root{
   --bg:#0a0a14; --panel:#15151f; --border:#33334d; --accent:#ff8c1a; --cyan:#22d3ee; --hero:#ffe14d; --text:#e8e8f5; --dim:#8888aa;
@@ -1438,7 +1438,7 @@ function planItems(k){
   const cat=(typeof modelCatalog!=='undefined'?modelCatalog.length:293), kc=(typeof knowledgeCases!=='undefined'?knowledgeCases.length:39);
   return {
    amator:['Pełna diagnostyka: drzewo objawów, krok po kroku, wyszukiwarka objawów','Biblioteka '+kc+' kart przypadków oraz silniki 2T / 4T / CVT','Katalog '+cat+' modeli z opornościami, napięciami i momentami ogólnymi','Checklista elektryczna, schematy i multimetr — procedury z wartościami','Kalkulator mieszanki 2T, notatnik, przeglądy, cennik części','Kartoteka do 3 pojazdów z historią napraw','Asystent zdjęć offline: przypadki, checklisty, eksport','Kopia zapasowa, blokada PIN, praca bez internetu'],
-   pro:['Wszystko z AMATOR','Asystent AI: analiza zdjęć usterek (do 3 zdjęć)','Oporności, napięcia i momenty dopasowane do rodziny silnika w całym katalogu','Pełna baza instalacji elektrycznych (AC/DC, swap, EFI, rozruch)','Dobór części OEM i zamienników','Baza kodów OBD i profile silników','Kartoteka do 30 pojazdów + edycja danych pojazdu'],
+   pro:['Wszystko z AMATOR','Analiza zdjęć AI — chwilowo wyłączona; wróci po konfiguracji kosztów API','Oporności, napięcia i momenty dopasowane do rodziny silnika w całym katalogu','Pełna baza instalacji elektrycznych (AC/DC, swap, EFI, rozruch)','Dobór części OEM i zamienników','Baza kodów OBD i profile silników','Kartoteka do 30 pojazdów + edycja danych pojazdu'],
    warsztat:['Wszystko z PRO','Kartoteka pojazdów bez limitu','Klienci: lista, kontakt i historia obsługi','Czarna Skrzynka (log VIN/usterek) i checklisty warsztatowe','Karta serwisowa dla klienta (wydruk / PDF) z danymi warsztatu','Eksport napraw i klientów do CSV']}[k];
 }
 function planBullets(k){return '<div style="margin:8px 0">'+planItems(k).map(x=>'<div style="font-size:12px">✓ '+escapeHtml(x)+'</div>').join('')+'</div>';}
@@ -1520,12 +1520,12 @@ function renderHome(){
   </div>
 
   <div class="diag-card" style="border-color:#8b5cf6">
-    <h2 style="color:#c4b5fd">📷 Inteligentny asystent AI</h2>
-    <div class="diag-sub">Zdjęcia części • checklisty i historia offline • analiza AI w planie PRO</div>
-    <div class="btn" onclick="nav('photoAssistant')">🧠 Otwórz asystenta ze zdjęciami</div>
+    <h2 style="color:#c4b5fd">📷 Asystent zdjęć offline</h2>
+    <div class="diag-sub">Zapis zdjęć części, checklisty i historia lokalna. Analiza AI wróci po konfiguracji.</div>
+    <div class="btn" onclick="nav('photoAssistant')">📷 Otwórz asystenta zdjęć offline</div>
   </div>
 
-  <div class="alert"><b>⚠️ PRACA OFFLINE</b><br>Funkcje działają lokalnie i bez internetu (po pierwszym wejściu online). Analiza AI i weryfikacja licencji wymagają połączenia.</div>
+  <div class="alert"><b>⚠️ PRACA OFFLINE</b><br>Funkcje lokalne działają offline po pierwszym wejściu online. Analiza zdjęć AI jest chwilowo wyłączona; wróci po konfiguracji osobnego budżetu API.</div>
   <div class="grid2">
     ${tile('🔩','Dwusuw 2T','engine','2T','Budowa silnika, typowe usterki i kontrola podzespołów.')}
     ${tile('⚙️','Czterosuw 4T','engine','4T','Zawory, rozrząd, kompresja, smarowanie i objawy awarii.')}
@@ -2646,8 +2646,8 @@ function paDate(v){try{return new Date(v).toLocaleString('pl-PL');}catch(e){retu
 function paOnline(){return navigator.onLine===true;}
 function renderPhotoAssistant(){
   paSelectedFiles=[];
-  screen.innerHTML=back()+`<div class="pa-intro"><h2>📷 Inteligentny asystent NAPRAWNIKA</h2><p style="font-size:12px;line-height:1.55">Dodaj zdjęcia części lub uszkodzenia i opisz objaw. Zdjęcia, przypadki oraz checklisty zapisują się lokalnie na tym urządzeniu. Analiza obrazu przez AI wymaga internetu i skonfigurowanej funkcji serwerowej — bez niej aplikacja nie udaje, że przeanalizowała zdjęcie.</p></div>
-  <div id="paConnectionStatus" class="pa-status ${paOnline()?'online':'offline'}">${paOnline()?'Internet dostępny. Sprawdzenie backendu AI nastąpi dopiero po wybraniu analizy.':'Offline: zapis zdjęć, historii i checklist nadal jest dostępny.'}</div>
+  screen.innerHTML=back()+`<div class="pa-intro"><h2>📷 Inteligentny asystent NAPRAWNIKA</h2><p style="font-size:12px;line-height:1.55">Dodaj zdjęcia części lub uszkodzenia i opisz objaw. Zdjęcia, przypadki oraz checklisty zapisują się lokalnie na tym urządzeniu. Analiza zdjęć AI jest tymczasowo wyłączona i nie wysyła zdjęć na serwer.</p></div>
+  <div id="paConnectionStatus" class="pa-status ${paOnline()?'online':'offline'}">${paOnline()?'Internet dostępny. Zdjęcia i historia są zapisywane lokalnie; analiza AI jest chwilowo wyłączona.':'Offline: zapis zdjęć, historii i checklist nadal jest dostępny.'}</div>
   <div class="card"><h2>🧰 Nowy przypadek</h2>
     <label for="paCategory">Rodzaj problemu</label><select id="paCategory"><option value="other">Inny / nie wiem</option><option value="spark">Świeca / zapłon</option><option value="electrical">Elektryka / złącza</option><option value="fuel">Gaźnik / paliwo</option><option value="engine">Silnik / mechanika</option><option value="leak">Wyciek / płyny</option><option value="part">Identyfikacja części</option></select>
     <label for="paMake">Marka</label><input id="paMake" placeholder="np. Yamaha, Peugeot, Romet">
@@ -2717,8 +2717,8 @@ async function renderPhotoAssistantCase(id){
     if(!Array.isArray(r.checklist)||!r.checklist.length)r.checklist=paChecklistFor(r.category);
     if(r.analysisStatus==='running'&&!paActive.has(id)){r.analysisStatus='error';r.analysis='Analiza została przerwana (np. zamknięto aplikację). Użyj przycisku, aby ponowić analizę.';r.analysisAt=new Date().toISOString();await paDbRequest('readwrite','put',r);}
     const photos=(r.photos||[]).map((p,i)=>{const url=p&&paSafeImageUrl(p.dataUrl);return url?`<a href="#" class="pa-photo-link" data-i="${i}"><img class="pa-photo" src="${url}" alt="Zdjęcie przypadku"></a>`:'';}).join('');
-    screen.innerHTML=back()+`<div class="card" id="paCaseMarker" data-case="${paEscape(r.id)}"><h2>🧠 Przypadek diagnostyczny</h2><div class="pa-case-title">${paEscape([r.make,r.model,r.year].filter(Boolean).join(' ')||'Pojazd niepodany')}</div><div class="pa-meta">Zapisano: ${paDate(r.createdAt)} • ${paEscape(r.engine||'Silnik niepodany')}</div><p style="font-size:12px;line-height:1.55;margin:10px 0">${paEscape(r.symptoms)}</p>${r.extra?`<div class="entry"><b>Dodatkowe informacje</b><small>${paEscape(r.extra)}</small></div>`:''}<div class="pa-photo-grid">${photos||'<div class="pa-small">Brak zdjęć w tym przypadku.</div>'}</div><button class="btn" onclick="paRunAI('${paEscape(r.id)}')">🧠 Uruchom / ponów prawdziwą analizę AI</button><button class="btn" onclick="paEditCase('${paEscape(r.id)}')">✏️ Dodaj notatkę do przypadku</button></div>
-    <div class="card"><h2>🔎 Wynik analizy AI</h2>${r.analysisStatus==='running'?'<div class="pa-status">Analizuję zdjęcia na serwerze…</div>':''}${r.analysis?`<div class="pa-result">${paEscape(r.analysis)}</div><div class="pa-meta">${r.analysisStatus==='done'?'Analiza zakończona':r.analysisStatus==='error'?'Analiza nieudana':'Status: '+paEscape(r.analysisStatus)} ${r.analysisAt?'• '+paDate(r.analysisAt):''}</div>`:'<div class="pa-status offline">Brak wyniku AI. Zapis offline działa niezależnie od analizy online.</div>'}<div class="pa-small" style="margin-top:8px">AI podaje możliwe przyczyny, nie potwierdza usterki na pewno. Wnioski weryfikuj pomiarami i dokumentacją dokładnego modelu.</div></div>
+    screen.innerHTML=back()+`<div class="card" id="paCaseMarker" data-case="${paEscape(r.id)}"><h2>🧠 Przypadek diagnostyczny</h2><div class="pa-case-title">${paEscape([r.make,r.model,r.year].filter(Boolean).join(' ')||'Pojazd niepodany')}</div><div class="pa-meta">Zapisano: ${paDate(r.createdAt)} • ${paEscape(r.engine||'Silnik niepodany')}</div><p style="font-size:12px;line-height:1.55;margin:10px 0">${paEscape(r.symptoms)}</p>${r.extra?`<div class="entry"><b>Dodatkowe informacje</b><small>${paEscape(r.extra)}</small></div>`:''}<div class="pa-photo-grid">${photos||'<div class="pa-small">Brak zdjęć w tym przypadku.</div>'}</div><button class="btn" type="button" disabled>🧠 Analiza AI — w przygotowaniu</button><button class="btn" onclick="paEditCase('${paEscape(r.id)}')">✏️ Dodaj notatkę do przypadku</button></div>
+    <div class="card"><h2>🔎 Analiza zdjęć AI</h2>${r.analysisStatus==='running'?'<div class="pa-status">Analizuję zdjęcia na serwerze…</div>':''}${r.analysis?`<div class="pa-result">${paEscape(r.analysis)}</div><div class="pa-meta">${r.analysisStatus==='done'?'Analiza zakończona':r.analysisStatus==='error'?'Analiza nieudana':'Status: '+paEscape(r.analysisStatus)} ${r.analysisAt?'• '+paDate(r.analysisAt):''}</div>`:'<div class="pa-status offline">Analiza AI jest tymczasowo wyłączona. Zapis zdjęć, historii i checklist działa offline.</div>'}<div class="pa-small" style="margin-top:8px">AI podaje możliwe przyczyny, nie potwierdza usterki na pewno. Wnioski weryfikuj pomiarami i dokumentacją dokładnego modelu.</div></div>
     <div class="card"><h2>✅ Checklista offline</h2><div class="pa-small">Zaznaczenia są zapisywane na urządzeniu i pozostają dostępne bez internetu.</div>${r.checklist.map((c,i)=>`<label class="pa-check"><input type="checkbox" ${c.done?'checked':''} onchange="paToggleCheck('${paEscape(r.id)}',${i},this.checked)"><span>${paEscape(c.label)}</span></label>`).join('')}<button class="btn" onclick="paResetChecklist('${paEscape(r.id)}')">Resetuj checklistę</button></div>
     <div class="card"><button class="btn" onclick="nav('photoAssistant')">← Wróć do asystenta i historii</button><button class="btn pa-danger" onclick="paDeleteCase('${paEscape(r.id)}')">🗑️ Usuń ten przypadek i zdjęcia</button></div>`;paBindPhotoLinks(r);
   }catch(e){alert('Nie udało się otworzyć przypadku: '+(e.message||e));nav('photoAssistant');}
@@ -2731,7 +2731,9 @@ function paBindPhotoLinks(r){document.querySelectorAll('.pa-photo-link').forEach
 function paDataUrlToBlob(dataUrl){const parts=dataUrl.split(',');const mime=(parts[0].match(/:(.*?);/)||[])[1]||'image/jpeg';const binary=atob(parts[1]);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return new Blob([bytes],{type:mime});}
 const paActive=new Set();
 function paRefreshIfViewing(id){const m=document.getElementById('paCaseMarker');if(m&&m.dataset.case===id)renderPhotoAssistantCase(id);}
+const PHOTO_AI_ENABLED = false;
 async function paRunAI(id){
+  if (!PHOTO_AI_ENABLED) { alert('Analiza zdjęć AI jest tymczasowo wyłączona. Zdjęcia, historia i checklisty nadal działają lokalnie.'); return; }
   if(paActive.has(id)) return;
   if(!hasPlan('pro')){ renderLocked('pro','Asystent AI — analiza zdjęć',"renderPhotoAssistantCase('"+id+"')"); return; }
   let fail=null;
