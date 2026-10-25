@@ -1,0 +1,27 @@
+# Copy this file to a local wrangler.toml and replace placeholders only for staging.
+# Do not commit secret values or live identifiers.
+name = "naprawnik-subscriptions-staging"
+main = "src/index.mjs"
+compatibility_date = "2026-10-18"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "naprawnik-subscriptions-staging"
+database_id = "REPLACE_WITH_STAGING_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[vars]
+PRODUCTION_ENABLED = "false"
+ALLOWED_ORIGINS = "https://turbodiesel966-eng.github.io"
+APP_BASE_URL = "https://turbodiesel966-eng.github.io/Aktualizacja-17.10/"
+CHECKOUT_SUCCESS_URL = "https://turbodiesel966-eng.github.io/Aktualizacja-17.10/?checkout=success"
+CHECKOUT_CANCEL_URL = "https://turbodiesel966-eng.github.io/Aktualizacja-17.10/?checkout=cancelled"
+STRIPE_PRICE_PRO_MONTHLY = "price_REPLACE_WITH_TEST_PRICE"
+STRIPE_PRICE_PRO_YEARLY = "price_REPLACE_WITH_TEST_PRICE"
+STRIPE_PRICE_WARSZTAT_MONTHLY = "price_REPLACE_WITH_TEST_PRICE"
+STRIPE_PRICE_WARSZTAT_YEARLY = "price_REPLACE_WITH_TEST_PRICE"
+
+# Add these separately with `wrangler secret put`, using test credentials only:
+# STRIPE_SECRET_KEY
+# STRIPE_WEBHOOK_SECRET
