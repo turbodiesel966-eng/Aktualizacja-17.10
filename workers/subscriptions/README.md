@@ -70,7 +70,7 @@ This endpoint has **not** been deployed or tested with a real OpenAI key by this
 
 ## Production blockers
 
-Before production, reconcile the Cloudflare variables with the actual app origin, inspect the live Stripe price IDs/mode without printing secret values, apply migrations to staging, test the real staging checkout and webhook cycle, and only then plan a separately reviewed production release.
+Before production, reconcile the Live Cloudflare variables with the actual GitHub Pages origin, inspect the Live Stripe price IDs/mode without printing secrets, disable the superseded active Stripe Test webhook endpoint, configure `OPENAI_API_KEY` on staging if photo diagnosis is in scope, and run the browser-level staging `register → Checkout → return → /api/me → Billing Portal/cancel` test. The Stripe Test webhook lifecycle has already been verified. Only then plan a separately reviewed production release.
 
 ### Remote D1 inventory (read-only, 2026-10-25)
 
