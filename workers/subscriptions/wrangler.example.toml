@@ -13,6 +13,8 @@ migrations_dir = "migrations"
 
 [vars]
 PRODUCTION_ENABLED = "false"
+# The Worker rejects Checkout/webhooks unless this mode matches the Stripe account and prices.
+STRIPE_EXPECT_LIVEMODE = "false"
 ALLOWED_ORIGINS = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev"
 APP_BASE_URL = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev/"
 CHECKOUT_SUCCESS_URL = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev/?checkout=success"
