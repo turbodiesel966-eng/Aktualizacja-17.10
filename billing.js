@@ -159,7 +159,7 @@
       ? window.naprawnikGetVerifiedLicense()
       : null;
     const current = license ? license.tier : 'amator';
-    const root = document.querySelector('#screen');    const root = document.querySelector('#screen');
+    const root = document.querySelector('#screen');
     if (!root) return;
     const card = tier => {
       const own = current === tier;
