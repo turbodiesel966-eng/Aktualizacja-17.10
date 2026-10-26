@@ -559,7 +559,7 @@
       const token = await accountEnsure();
       const data = await api('/api/promo/redeem', { code }, 'POST', token);
       await refresh(true);
-      alert(data.message || ('Aktywowano dostęp ' + String(data.tier || '').toUpperCase() + ' na ' + data.durationDays + ' dni.'));
+      alert(data.messageStyleKey === 'johnny-6m' ? (data.message + '\n\n' + data.messageSubtext) : (data.message || ('Aktywowano dostęp ' + String(data.tier || '').toUpperCase() + ' na ' + data.durationDays + ' dni.')));
       renderPlansBridge();
     } catch (error) {
       alert(friendlyError(error, 'aktywować kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
