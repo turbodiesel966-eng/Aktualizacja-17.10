@@ -867,8 +867,11 @@ function stripeSecretDiagnostics(value) {
 function safeStripeErrorHint(error) {
   const code = typeof error?.code === "string" ? error.code.toLowerCase() : "";
   const message = typeof error?.message === "string" ? error.message.toLowerCase() : "";
+  if (code === "more_permissions_required") {
+    return "Dla tego sprawdzenia brakuje uprawnienia Stripe: Prices → Read (GET /v1/prices/{id}).";
+  }
   if (code === "restricted_key" || /restricted key|missing permissions|does not have permission|not allowed to perform|insufficient permissions/.test(message)) {
-    return "Klucz Stripe nie ma wymaganych uprawnień do odczytu cen.";
+    return "Klucz Stripe nie ma wymaganych uprawnień do odczytu cen. Sprawdź Prices → Read.";
   }
   if (code === "api_key_expired" || /api key.{0,20}expired|expired.{0,20}api key/.test(message)) {
     return "Klucz API Stripe wygasł.";
