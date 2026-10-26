@@ -7,6 +7,24 @@ const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 
+test('baza wiedzy zawiera co najmniej 70 unikalnych kart, w tym wszystkie 20 nowych przypadków', () => {
+  const html = read('index.html');
+  const caseBlock = html.split('const knowledgeCases = [')[1].split('const KNOW_LINKS={')[0];
+  const ids = Array.from(caseBlock.matchAll(/\{\s*["']?id["']?\s*:\s*["']([^"']+)["']/g), match => match[1]);
+  assert.ok(ids.length >= 70, 'Oczekiwano co najmniej 70 kart, znaleziono ' + ids.length);
+  assert.equal(new Set(ids).size, ids.length, 'ID kart diagnostycznych muszą być unikalne');
+  for (const id of [
+    'charging-no-rise', 'charging-overvoltage', 'starter-clicks', 'starter-spins-no-crank',
+    'carb-fuel-overflow', 'fuel-starvation-high-rpm', 'idle-hangs-two-stroke', 'two-stroke-overheat',
+    'four-stroke-hard-start-valves', 'lights-intermittent', 'spark-intermittent-bumps',
+    'rear-wheel-binding', 'brake-overheating', 'coolant-overheating', 'oil-leak-crankcase',
+    'fuel-smell-leak', 'efi-idle-surge', 'engine-noise-sudden', 'compression-low', 'engine-dies-after-wash'
+  ]) {
+    assert.ok(ids.includes(id), 'Brak nowej karty diagnostycznej: ' + id);
+  }
+});
+
+
 test('normalize zachowuje cyfry, wielkie litery i normalizuje polskie znaki', () => {
   const context = { window: {} };
   vm.runInNewContext(read('katalog-techniczny.js'), context, { filename: 'katalog-techniczny.js' });
