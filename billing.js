@@ -289,11 +289,17 @@
     } else {
       activation = '<div class="card"><h2>🔑 Aktywacja / odzyskanie dostępu</h2><p style="font-size:12px;line-height:1.5">Po zakupie dostęp aktywuje się po potwierdzeniu Stripe. Na innym urządzeniu wklej klucz dostępu zapisany po zakupie.</p><input id="licKeyIn" placeholder="Wklej klucz dostępu"><div class="btn" data-np-activate="1">✅ Aktywuj / sprawdź klucz</div></div>';
     }
-    const oneTimePackages = '<div class="card" style="border-color:var(--accent)"><h2>⚡ Pakiety jednorazowe</h2><p style="font-size:12px;line-height:1.5">Dostęp na określony czas. Jednorazowa płatność — bez automatycznego odnowienia.</p>' +
-      '<div class="entry"><b>💎 PRO · 3 dni — 3,00 zł</b><button class="btn" type="button" data-one-time-tier="pro" data-one-time-days="3">Kup PRO na 3 dni</button></div>' +
-      '<div class="entry"><b>💎 PRO · 7 dni — 7,00 zł</b><button class="btn" type="button" data-one-time-tier="pro" data-one-time-days="7">Kup PRO na 7 dni</button></div>' +
-      '<div class="entry"><b>🛠️ WARSZTAT · 3 dni — 5,00 zł</b><button class="btn" type="button" data-one-time-tier="warsztat" data-one-time-days="3">Kup WARSZTAT na 3 dni</button></div>' +
-      '<div class="entry"><b>🛠️ WARSZTAT · 7 dni — 10,00 zł</b><button class="btn" type="button" data-one-time-tier="warsztat" data-one-time-days="7">Kup WARSZTAT na 7 dni</button></div></div>';
+    const oneTimeOffers = [
+      { tier: 'pro', days: 3, price: '3,00 zł', title: 'PRO' },
+      { tier: 'pro', days: 7, price: '7,00 zł', title: 'PRO' },
+      { tier: 'warsztat', days: 3, price: '5,00 zł', title: 'WARSZTAT' },
+      { tier: 'warsztat', days: 7, price: '10,00 zł', title: 'WARSZTAT' }
+    ].filter(offer => ORDER[current] < ORDER[offer.tier]);
+    const oneTimePackages = '<div class="card" style="border-color:var(--accent)"><h2>⚡ Pakiety jednorazowe</h2>' +
+      (oneTimeOffers.length
+        ? '<p style="font-size:12px;line-height:1.5">Dostęp na określony czas. Jednorazowa płatność — bez automatycznego odnowienia.</p>' +
+          oneTimeOffers.map(offer => '<div class="entry"><b>' + esc(offer.title) + ' · ' + esc(String(offer.days)) + ' dni — ' + esc(offer.price) + '</b><button class="btn" type="button" data-one-time-tier="' + esc(offer.tier) + '" data-one-time-days="' + esc(String(offer.days)) + '">Kup ' + esc(offer.title) + ' na ' + esc(String(offer.days)) + ' dni</button></div>').join('')
+        : '<p style="font-size:12px;line-height:1.5">Masz już aktywny plan WARSZTAT. Pakiety równe lub niższe od aktywnego planu są ukryte, aby nie proponować zbędnego zakupu.</p>') + '</div>';
     root.innerHTML = (typeof back === 'function' ? back() : '') +
       '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka. PRO dodaje analizę AI i pełną bazę elektryki. WARSZTAT zawiera PRO oraz narzędzia obsługi klientów i dokumentacji. Abonamentem zarządzasz w panelu Stripe.</p></div>' +
       activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
