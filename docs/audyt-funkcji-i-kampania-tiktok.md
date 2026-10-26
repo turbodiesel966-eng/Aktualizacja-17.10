@@ -1,6 +1,6 @@
 # NAPRAWNIK — audyt funkcji, rozwój bazy i kampania TikTok
 
-Stan odniesienia: 26 października 2026 r. Repozytorium: [Aktualizacja-17.10](https://github.com/turbodiesel966-eng/Aktualizacja-17.10). Ten dokument odróżnia funkcje potwierdzone w kodzie od elementów wymagających testu użytkowego. Nie oznacza, że każda funkcja jest zweryfikowana na każdym telefonie.
+Stan odniesienia: 26 października 2026 r. Wersja interfejsu: NAPRAWNIK v5.16. Repozytorium: [Aktualizacja-17.10](https://github.com/turbodiesel966-eng/Aktualizacja-17.10). Ten dokument odróżnia funkcje potwierdzone w kodzie od elementów wymagających testu użytkowego. Nie oznacza, że każda funkcja jest zweryfikowana na każdym telefonie.
 
 ## 1. Zawartość aplikacji widoczna w kodzie
 
