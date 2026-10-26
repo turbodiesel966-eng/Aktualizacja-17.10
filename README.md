@@ -44,7 +44,7 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 - PRO na 3 dni — 3,00 zł; PRO na 7 dni — 7,00 zł.
 - WARSZTAT na 3 dni — 5,00 zł; WARSZTAT na 7 dni — 10,00 zł.
 - Każdy pakiet ma odrębną cenę Stripe w TEST i LIVE; są to ceny jednorazowe (`type=one_time`), a nie cykliczne abonamenty. Dotychczasowe ceny miesięczne/roczne nie zostały zmienione.
-- Endpoint `POST /api/one-time-checkout` wymaga uwierzytelnionego konta, klucza idempotencji oraz zgodności ceny, kwoty, waluty i trybu ze środowiskiem. Podpisany webhook ponownie odczytuje Checkout i dopiero przy `payment_status=paid` zapisuje dostęp czasowy. `one_time_purchases` używa identyfikatora sesji Checkout jako klucza idempotencji.
+- Endpoint `POST /api/one-time-checkout` wymaga uwierzytelnionego konta, klucza idempotencji oraz zgodności ceny, kwoty, waluty i trybu ze środowiskiem; ma też limit 5 prób na konto na godzinę i nie pozwala prowadzić równolegle sesji abonamentowej i jednorazowej. Podpisany webhook ponownie odczytuje Checkout i dopiero przy `payment_status=paid` zapisuje dostęp czasowy. `one_time_purchases` używa identyfikatora sesji Checkout jako klucza idempotencji.
 - Schematy zakupów i rezerwacji budżetu zostały wdrożone addytywnie do D1 STAGING oraz LIVE. Backend LIVE i STAGING mają nowe bindingi cen, a istniejące bindingi i sekrety zostały zachowane.
 - Nie wykonano rzeczywistej ani testowej płatności. Przed ogłoszeniem gotowości przepływu trzeba przeprowadzić kontrolowany E2E w TEST za odrębną zgodą: sesja → płatność testowa → webhook → nadanie 3/7-dniowego dostępu → wygaśnięcie/odnowienie statusu.
 
