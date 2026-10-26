@@ -78,4 +78,19 @@ mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
   mobileHtml.slice(closingBodyIndex);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
 
-console.log("NAPRAWNIK Android web assets, branded native icon/splash and mobile-only bridge entry prepared.");
+// The native bridge must be available on first launch, including when offline.
+// Use a native-only cache name so old local WebView caches cannot shadow this bundle.
+const mobileSwPath = path.join(webDir, "sw.js");
+let mobileSw = await readFile(mobileSwPath, "utf8");
+if (mobileSw.split("const CACHE='naprawnik-v5-37';").length - 1 !== 1) {
+  throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
+}
+mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-38-native';");
+const precacheMarker = "const PRECACHE=['./index.html'";
+if (mobileSw.split(precacheMarker).length - 1 !== 1) {
+  throw new Error("Could not locate the service-worker precache list for Android.");
+}
+mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js'");
+await writeFile(mobileSwPath, mobileSw, "utf8");
+
+console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge and offline precache prepared.");
