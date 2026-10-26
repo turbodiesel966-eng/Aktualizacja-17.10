@@ -493,7 +493,7 @@
       if (!/^NP-MOB-[A-F0-9]{24}$/.test(code)) throw new Error('Serwer nie zwrócił prawidłowego kodu połączenia.');
       if (root) root.innerHTML = '<div style="color:var(--hero);margin:8px 0">Kod ważny 10 minut · do użycia jeden raz</div>' +
         '<input id="npAdminDeviceCode" autocomplete="off" readonly value="' + esc(code) + '">' +
-        '<button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\\'npAdminDeviceCode\\').value).then(()=>alert(\\'Skopiowano kod połączenia.\\')).catch(()=>alert(\\'Skopiuj kod ręcznie.\\'))">Skopiuj kod</button>';
+        '<button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(&quot;npAdminDeviceCode&quot;).value).then(()=>alert(&quot;Skopiowano kod połączenia.&quot;)).catch(()=>alert(&quot;Skopiuj kod ręcznie.&quot;))">Skopiuj kod</button>';
     } catch (error) {
       if (root) root.textContent = friendlyError(error, 'wygenerować kodu połączenia') + (error.message ? ' ' + error.message : '');
     }
