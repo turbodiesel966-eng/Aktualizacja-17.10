@@ -264,6 +264,16 @@ function mockStripeCheckoutFetch(state) {
       return new Response(JSON.stringify(session), { status: 200, headers: { "content-type": "application/json" } });
     }
     const prefix = "https://api.stripe.com/v1/checkout/sessions/";
+    if (url.startsWith(prefix) && method === "POST" && url.endsWith("/expire")) {
+      const id = decodeURIComponent(url.slice(prefix.length, -"/expire".length));
+      const session = state.sessions.get(id);
+      if (!session || session.status !== "open") {
+        return new Response(JSON.stringify({ error: { message: "session is not open" } }), { status: 400, headers: { "content-type": "application/json" } });
+      }
+      session.status = "expired";
+      state.expirePosts = (state.expirePosts || 0) + 1;
+      return new Response(JSON.stringify(session), { status: 200, headers: { "content-type": "application/json" } });
+    }
     if (url.startsWith(prefix) && method === "GET") {
       const session = state.sessions.get(decodeURIComponent(url.slice(prefix.length)));
       return session
@@ -295,8 +305,14 @@ test("Checkout tworzy jedną sesję i ponowne kliknięcie tej samej taryfy używ
     assert.equal(state.stripePosts, 1);
 
     const differentPlan = await checkout(checkoutRequest("test-checkout-key-003", "warsztat", "month"), env, { userId: "user_test_1" });
-    assert.equal(differentPlan.status, 409);
-    assert.equal(state.stripePosts, 1);
+    const differentPlanBody = await differentPlan.json();
+    assert.equal(differentPlan.status, 200);
+    assert.match(differentPlanBody.url, /^https:\/\/checkout\.stripe\.com\//);
+    assert.equal(differentPlanBody.reused, undefined);
+    assert.equal(state.expirePosts, 1);
+    assert.equal(state.sessions.get(firstBody.sessionId).status, "expired");
+    assert.equal(state.lock.tier, "warsztat");
+    assert.equal(state.stripePosts, 2);
   } finally {
     globalThis.fetch = originalFetch;
   }
