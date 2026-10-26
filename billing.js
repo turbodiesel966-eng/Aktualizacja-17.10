@@ -559,7 +559,7 @@
     icon.textContent = '🎉 🔑 🎉';
     icon.style.cssText = 'font-size:42px;line-height:1.2;margin-bottom:10px';
     const title = document.createElement('h2');
-    title.textContent = data.message || 'Gratulacje Tu Johnny — Dostałeś Dożywotni Dostęp Do NAPRAWNIKA!';
+    title.textContent = data.message || 'Gratulacje Tu Johnny Dostałeś Dożywotni Dostęp Do Naprawnika';
     title.style.cssText = 'font-size:22px;line-height:1.35;color:#ffe14d;text-transform:none;letter-spacing:0;border:0;padding:0;margin:0 0 14px;text-shadow:0 0 12px rgba(255,225,77,.2)';
     const small = document.createElement('p');
     small.textContent = data.messageSubtext || 'Kod daje 6 miesięcy dostępu. Przedłużenie kolejnym kodem co pół roku — chyba że mnie wkurwisz XD 😈';
