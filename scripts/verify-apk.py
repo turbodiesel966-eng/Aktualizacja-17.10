@@ -49,13 +49,17 @@ with zipfile.ZipFile(apk) as bundle:
         raise SystemExit("Technical catalogue module is present but not initialized.")
     if "naprawnik-subscriptions-live.turbodiesel966.workers.dev" not in billing:
         raise SystemExit("Production billing/API integration is missing from the packaged app.")
-    for endpoint in ["/api/admin/device-link", "/api/admin/mobile-login", "/api/checkout", "/api/promo/redeem"]:
+    for endpoint in ["/api/admin/device-link", "/api/admin/mobile-login", "/api/checkout", "/api/one-time-checkout", "/api/promo/redeem"]:
         if endpoint not in billing:
             raise SystemExit(f"Missing billing/admin endpoint in packaged billing bridge: {endpoint}")
+    if "openHostedBillingUrl(data.url, 'subscription')" not in billing or \
+       "openHostedBillingUrl(data.url, 'one-time')" not in billing or \
+       "openHostedBillingUrl(data.url, 'portal')" not in billing:
+        raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
     if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "naprawnik-v5-38-native" not in service_worker or "NAPRAWNIK" not in manifest:
         raise SystemExit("The packaged PWA/service-worker branding or billing version is inconsistent.")
     native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
-    for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile"]:
+    for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
         if marker not in native_bridge:
             raise SystemExit(f"Android-native integration missing from packaged bridge: {marker}")
 
