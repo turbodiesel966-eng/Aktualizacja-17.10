@@ -73,6 +73,7 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /WARSZTAT · 3 dni — 5,00 zł/);
   assert.match(billing, /WARSZTAT · 7 dni — 10,00 zł/);
   assert.match(billing, /data-one-time-tier/);
+  assert.match(billing, /oneTimeOffers\.filter\(offer => ORDER\[current\] < ORDER\[offer\.tier\]\)/);
 
 });
 
