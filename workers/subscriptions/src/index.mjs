@@ -565,6 +565,18 @@ async function fetchStripeCheckoutSession(env, sessionId) {
   if (!response.ok) throw new Error(`STRIPE_CHECKOUT_SESSION_LOOKUP_FAILED_${response.status}`);
   return response.json();
 }
+async function expireStripeCheckoutSession(env, sessionId) {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}/expire`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  let payload = null;
+  try { payload = await response.json(); } catch { /* Never expose upstream details. */ }
+  if (!response.ok || payload?.status !== "expired") {
+    throw new Error(`STRIPE_CHECKOUT_SESSION_EXPIRE_FAILED_${response.status}`);
+  }
+  return payload;
+}
 async function releaseCheckoutLock(env, userId, idempotencyKey) {
   await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ? AND idempotency_key = ?")
     .bind(userId, idempotencyKey).run();
@@ -607,7 +619,29 @@ async function checkout(request, env, auth) {
   const now = nowSeconds();
   const currentLock = await env.DB.prepare("SELECT user_id, idempotency_key, tier, billing_interval, session_id, expires_at FROM checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   const lockAction = checkoutLockAction(currentLock, tier, interval, now);
-  if (lockAction === "different_plan") return err("A Checkout session for a different plan is already open. Finish or let it expire before choosing another plan.", 409);
+  if (lockAction === "different_plan") {
+    // Allow users to switch plan after opening Checkout, while keeping at most one open
+    // hosted payment session per account. Never expire a completed session or a lease
+    // that has not yet received a Stripe session ID.
+    if (!currentLock.session_id) {
+      return err("Checkout is already being prepared. Wait a moment and retry; no second session was created.", 409);
+    }
+    try {
+      const prior = await fetchStripeCheckoutSession(env, currentLock.session_id);
+      if (prior.status === "complete") {
+        return err("Checkout was completed. Refresh your subscription status before starting another purchase.", 409);
+      }
+      if (prior.status === "open") {
+        await expireStripeCheckoutSession(env, currentLock.session_id);
+      } else if (prior.status !== "expired") {
+        return err("The existing Checkout session cannot be safely replaced yet. Retry later.", 409);
+      }
+      await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ? AND idempotency_key = ?")
+        .bind(auth.userId, currentLock.idempotency_key).run();
+    } catch {
+      return err("Could not safely replace the existing Checkout session. Retry later; no new session was created.", 502);
+    }
+  }
   if (lockAction === "in_progress") return err("Checkout is already being prepared. Wait a moment and retry; no second session was created.", 409);
   if (lockAction === "inspect_session") {
     try {
