@@ -42,6 +42,10 @@ const SUBSCRIPTION_LIFECYCLE_EVENTS = new Set([
 ]);
 const encoder = new TextEncoder();
 
+function isNativeAppRequest(request) {
+  return request.headers.get("Origin") === "https://localhost";
+}
+
 function billingReturnPage(url) {
   const result = url.searchParams.get("result");
   const views = {
@@ -776,7 +780,7 @@ async function checkout(request, env, auth) {
     return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
   }
   const appRoot = appBase.replace(/\/$/, "");
-  const nativeReturn = request.headers.get("Origin") === "https://localhost";
+  const nativeReturn = isNativeAppRequest(request);
   const workerOrigin = new URL(request.url).origin;
   const successUrl = nativeReturn
     ? workerOrigin + "/billing/return?result=success"
@@ -929,7 +933,7 @@ async function oneTimeCheckout(request, env, auth) {
   try { parsedAppBase = new URL(appBase || ""); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
   if (parsedAppBase.protocol !== "https:" || parsedAppBase.username || parsedAppBase.password) return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
   const appRoot = appBase.replace(/\/$/, "");
-  const nativeReturn = request.headers.get("Origin") === "https://localhost";
+  const nativeReturn = isNativeAppRequest(request);
   const workerOrigin = new URL(request.url).origin;
   const successUrl = nativeReturn
     ? workerOrigin + "/billing/return?result=success"
@@ -1034,7 +1038,7 @@ async function createBillingPortalSession(request, env, auth) {
     return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
   }
   const appRoot = appBase.replace(/\/$/, "");
-  const nativeReturn = request.headers.get("Origin") === "https://localhost";
+  const nativeReturn = isNativeAppRequest(request);
   const workerOrigin = new URL(request.url).origin;
   const portalReturnUrl = nativeReturn
     ? workerOrigin + "/billing/return?result=portal"
@@ -2060,6 +2064,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
 
 
