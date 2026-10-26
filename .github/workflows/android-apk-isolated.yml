@@ -36,6 +36,9 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Run subscription and admin API regression tests
+        run: node --test workers/subscriptions/*.test.mjs
+
       - name: Prepare and generate the Capacitor Android project
         run: npm run mobile:android
 
