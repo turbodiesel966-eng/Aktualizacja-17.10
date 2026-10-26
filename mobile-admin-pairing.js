@@ -75,12 +75,26 @@
     input.focus();
   }
 
-  window.npOpenAdminPanel = function() {
-    try {
-      if (localStorage.getItem(TOKEN_KEY)) return originalOpenAdminPanel();
-    } catch (_) {
-      return originalOpenAdminPanel();
+  window.npOpenAdminPanel = async function() {
+    let hasToken = false;
+    try { hasToken = Boolean(localStorage.getItem(TOKEN_KEY)); } catch (_) {}
+    if (!hasToken) {
+      renderPairingScreen();
+      return;
     }
-    renderPairingScreen();
+
+    // If a stored token has expired, suppress the WebView prompt and use the pairing form.
+    const previousProvider = window.__naprawnikAdminCodePrompt;
+    let promptRequested = false;
+    window.__naprawnikAdminCodePrompt = () => {
+      promptRequested = true;
+      return null;
+    };
+    try {
+      await originalOpenAdminPanel();
+    } finally {
+      window.__naprawnikAdminCodePrompt = previousProvider;
+      if (promptRequested) renderPairingScreen();
+    }
   };
 })();
