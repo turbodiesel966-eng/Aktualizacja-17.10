@@ -212,13 +212,24 @@
     }
     return data;
   }
+  async function openHostedBillingUrl(url, purpose) {
+    if (!isSafeCheckoutUrl(url) && !(typeof url === 'string' && /^https:\/\/billing\.stripe\.com\//i.test(url))) {
+      throw new Error('Otrzymano niebezpieczny adres zewnętrzny.');
+    }
+    if (typeof window.__naprawnikNativeCheckout === 'function') {
+      await window.__naprawnikNativeCheckout(url, purpose);
+      return;
+    }
+    window.location.assign(url);
+  }
+
   async function checkout(tier, interval) {
     if (!['pro', 'warsztat'].includes(tier) || !['month', 'year'].includes(interval)) return;
     try {
       const token = await accountEnsure();
       const data = await checkoutRequest(tier, interval, token);
       if (!isSafeCheckoutUrl(data.url)) throw new Error('Stripe nie zwrócił bezpiecznego adresu Checkout.');
-      window.location.assign(data.url);
+      await openHostedBillingUrl(data.url, 'subscription');
     } catch (error) {
       if (/active subscription already exists/i.test(error.message || '')) {
         await refresh(true);
@@ -250,7 +261,7 @@
         throw error;
       }
       if (!isSafeCheckoutUrl(data.url)) throw new Error('Stripe nie zwrócił bezpiecznego adresu Checkout.');
-      window.location.assign(data.url);
+      await openHostedBillingUrl(data.url, 'one-time');
     } catch (error) {
       alert(friendlyError(error, 'rozpocząć zakupu jednorazowego pakietu') + (error.message ? '\n' + error.message : ''));
     }
@@ -342,7 +353,7 @@
       const token = await accountEnsure();
       const data = await api('/api/billing-portal', {}, 'POST', token);
       if (!data.url || !/^https:\/\/billing\.stripe\.com\//i.test(data.url)) throw new Error('Stripe nie zwrócił poprawnego panelu subskrypcji.');
-      window.location.assign(data.url);
+      await openHostedBillingUrl(data.url, 'portal');
     } catch (error) {
       alert(friendlyError(error, 'otworzyć panelu subskrypcji'));
     }
