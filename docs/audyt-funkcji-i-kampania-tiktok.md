@@ -41,6 +41,33 @@ Stan odniesienia: 26 października 2026 r. Wersja interfejsu: NAPRAWNIK v5.16. R
 ## 3. Rozszerzenie bazy usterek — zasada jakości
 Nowe przypadki dodane w ramach rozwoju bazy opisują **procedury ogólnej diagnostyki**, nie zastępują serwisówki producenta. Nie podają uniwersalnych momentów dokręcania, luzów zaworowych, rezystancji ani wartości kompresji. Dla każdego modelu należy potwierdzić parametry, kod silnika, rocznik i wersję układu. Jeśli występuje wyciek paliwa, przegrzanie, zatarcie lub problem z hamulcami/kierowaniem — najpierw przerwać użytkowanie i zabezpieczyć pojazd.
 
+### 20 nowych kart diagnostycznych dodanych do bazy
+
+Po dodaniu nowych przypadków główna tablica `knowledgeCases` zawiera **50 kart o unikalnych ID**. Nowe karty obejmują:
+
+1. **Akumulator się rozładowuje — ładowanie nie rośnie.** Sprawdzenie akumulatora i połączeń, pomiar ładowania, regulatora oraz statora według schematu konkretnego pojazdu.
+2. **Przeładowanie akumulatora lub przepalające się żarówki.** Sprawdzenie masy regulatora, zgodności regulatora z instalacją AC/DC oraz pomiary napięcia w danych warunkach pracy.
+3. **Kliknięcie rozrusznika, ale brak obrotu.** Rozdzielenie słabego akumulatora, złych połączeń, przekaźnika, rozrusznika i ewentualnej blokady mechanicznej.
+4. **Rozrusznik kręci, ale wał nie obraca się.** Kontrola bendiksa/sprzęgła jednokierunkowego, zazębienia i swobody obrotu silnika bez wymuszania ruchu.
+5. **Przelewanie gaźnika lub wyciek z przelewu.** Zabezpieczenie paliwa, kontrola pływaka, iglicy, gniazda oraz kranika podciśnieniowego.
+6. **Dławienie na wysokich obrotach lub pod obciążeniem.** Sprawdzenie odpowietrzenia zbiornika, filtra, przewodów, dysz gaźnika albo ciśnienia paliwa w EFI.
+7. **Wysokie obroty w silniku 2T po puszczeniu gazu.** Kontrola linki/przepustnicy, nieszczelności dolotu i skrzyni korbowej oraz procedury testu szczelności.
+8. **Przegrzewanie lub przycieranie silnika 2T.** Zalecenie przerwania jazdy i kontrola smarowania, chłodzenia, szczelności, mieszanki, zapłonu, wydechu oraz tłoka/cylindra.
+9. **Trudny rozruch rozgrzanego silnika 4T — luzy zaworowe.** Pomiar luzów w warunkach z serwisówki i dalsze rozróżnienie przyczyn, jeśli luzy są prawidłowe.
+10. **Migające światła przy poruszaniu kierownicą.** Kontrola wiązki przy główce ramy, stacyjce, złączach i punktach masowych, a następnie bezpieczne pomiary spadków napięcia.
+11. **Zanik iskry na wybojach lub przy poruszaniu wiązką.** Kontrola fajki, przewodu WN, cewki, mas, CDI/ECU i przewodu gaszenia bez wymieniania części „w ciemno”.
+12. **Tylne koło obraca się ciężko po naprawie CVT lub hamulca.** Sprawdzenie tulei, dystansów, podkładek, poprawności montażu napędu, hamulca i łożysk.
+13. **Hamulec grzeje się, trze albo nie odpuszcza.** Wstrzymanie jazdy i kontrola powrotu dźwigni/linki, tłoczka, prowadnic zacisku, klocków/szczęk i przewodu.
+14. **Przegrzewanie silnika 4T z chłodzeniem cieczą.** Kontrola po ostygnięciu poziomu płynu, wycieków, wentylatora, bezpiecznika, czujnika, termostatu i pompy.
+15. **Wyciek oleju z silnika lub przekładni.** Ustalenie dokładnego źródła, rozdzielenie smarowania silnika i przekładni końcowej oraz ocena, czy wolno bezpiecznie jechać.
+16. **Zapach benzyny lub wyciek paliwa.** Natychmiastowe przerwanie prób rozruchu, usunięcie źródeł zapłonu i kontrola przewodów, zbiornika, kranika, filtra i gaźnika.
+17. **Falujące obroty na biegu jałowym w EFI.** Odczyt błędów i danych sterownika oraz kontrola dolotu, mas, złączy i czujników na podstawie dokumentacji modelowej.
+18. **Nagły metaliczny hałas silnika.** Zalecenie wyłączenia silnika i dalsze rozróżnienie osłon/napędu zewnętrznego od rozrządu, tłoka, łożysk i wału.
+19. **Niska kompresja.** Właściwe warunki pomiaru oraz rozróżnienie pierścieni, tłoka, cylindra, zaworów, uszczelki i rozrządu; osobno wskazano ograniczenia testu w silniku 2T.
+20. **Brak rozruchu lub przerywanie po myciu/deszczu.** Osuszenie, kontrola dolotu, fajki, WN, cewek, złączy CDI/ECU i mas przed ponowną próbą.
+
+Każda karta ma sekcje kroków diagnostycznych i ostrzeżeń. Wartości liczbowe są celowo odsyłane do właściwej serwisówki, jeśli zależą od kodu silnika lub wersji pojazdu.
+
 ## 4. Kampania TikTok — 14 dni
 
 ### Cel
