@@ -42,6 +42,7 @@ for (const name of ["splash.png", "splash-dark.png"]) {
 const requiredFiles = [
   "index.html",
   "billing.js",
+  "mobile-admin-pairing.js",
   "katalog-techniczny.js",
   "sw.js",
   "manifest.webmanifest"
@@ -74,6 +75,7 @@ if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
 mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
+  '  <script src="./mobile-admin-pairing.js"></script>\n' +
   '  <script src="./native-bridge.js"></script>\n' +
   mobileHtml.slice(closingBodyIndex);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
@@ -85,12 +87,12 @@ let mobileSw = await readFile(mobileSwPath, "utf8");
 if (mobileSw.split("const CACHE='naprawnik-v5-37';").length - 1 !== 1) {
   throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
 }
-mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-38-native';");
+mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-39-native-admin-pairing';");
 const precacheMarker = "const PRECACHE=['./index.html'";
 if (mobileSw.split(precacheMarker).length - 1 !== 1) {
   throw new Error("Could not locate the service-worker precache list for Android.");
 }
-mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js'");
+mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js','./mobile-admin-pairing.js'");
 await writeFile(mobileSwPath, mobileSw, "utf8");
 
-console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge and offline precache prepared.");
+console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge, owner pairing screen and offline precache prepared.");
