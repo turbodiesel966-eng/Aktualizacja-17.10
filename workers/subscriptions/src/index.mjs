@@ -1352,7 +1352,7 @@ async function redeemPromo(request, env, auth) {
   const johnnyPromo = String(promo.label || "").toUpperCase().startsWith("JOHNNY6M");
   return json({
     ok: true, tier: currentTier, durationDays: Number(promo.duration_days), expiresAt: grantExpiresAt,
-    message: johnnyPromo ? "Gratulacje Tu Johnny — Dostałeś Dożywotni Dostęp Do NAPRAWNIKA!" : "Kod aktywowany.",
+    message: johnnyPromo ? "Gratulacje Tu Johnny Dostałeś Dożywotni Dostęp Do Naprawnika" : "Kod aktywowany.",
     ...(johnnyPromo ? {
       messageStyleKey: "johnny-6m",
       messageSubtext: "Kod daje 6 miesięcy dostępu. Przedłużenie kolejnym kodem co pół roku — chyba że mnie wkurwisz XD 😈"
