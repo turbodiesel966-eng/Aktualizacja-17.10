@@ -58,7 +58,7 @@ test("Stripe diagnostics identifies a restricted LIVE key and sanitizes error de
       assert.equal(price.stripeErrorType, "invalid_request_error");
       assert.equal(price.stripeErrorCode, "restricted_key");
       assert.equal(price.stripeRequestId, "req_diag_redacted_123");
-      assert.equal(price.stripeErrorHint, "Klucz Stripe nie ma wymaganych uprawnień do odczytu cen.");
+      assert.equal(price.stripeErrorHint, "Klucz Stripe nie ma wymaganych uprawnień do odczytu cen. Sprawdź Prices → Read.");
       assert.equal("stripeErrorMessage" in price, false);
     }
   } finally {
