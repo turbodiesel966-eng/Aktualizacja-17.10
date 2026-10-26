@@ -506,6 +506,7 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
                 }
                 if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) return { results: [] };
                 if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
+                if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
                 throw new Error("Unexpected webhook all() SQL: " + sql);
               },
               async run() {
