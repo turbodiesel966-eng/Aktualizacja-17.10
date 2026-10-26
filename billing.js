@@ -551,6 +551,35 @@
       alert(friendlyError(error, 'wyłączyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
     }
   };
+  function showJohnnyPromoSuccess(data) {
+    const existing = document.getElementById('npPromoSuccessModal');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'npPromoSuccessModal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(4,5,15,.86);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(7px)';
+    const card = document.createElement('section');
+    card.style.cssText = 'width:100%;max-width:420px;background:linear-gradient(145deg,#17152d,#25132a);border:2px solid #ff8c1a;border-radius:20px;padding:24px 20px;text-align:center;box-shadow:0 0 36px rgba(255,140,26,.28),0 0 40px rgba(112,65,255,.2)';
+    const icon = document.createElement('div');
+    icon.textContent = '🎉 🔑 🎉';
+    icon.style.cssText = 'font-size:42px;line-height:1.2;margin-bottom:10px';
+    const title = document.createElement('h2');
+    title.textContent = data.message || 'Gratulacje Tu Johnny — Dostałeś Dożywotni Dostęp Do NAPRAWNIKA!';
+    title.style.cssText = 'font-size:22px;line-height:1.35;color:#ffe14d;text-transform:none;letter-spacing:0;border:0;padding:0;margin:0 0 14px;text-shadow:0 0 12px rgba(255,225,77,.2)';
+    const small = document.createElement('p');
+    small.textContent = data.messageSubtext || 'Kod daje 6 miesięcy dostępu. Przedłużenie kolejnym kodem co pół roku — chyba że mnie wkurwisz XD 😈';
+    small.style.cssText = 'font-size:11px;line-height:1.5;color:#c7c4dc;margin:0 0 20px';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = 'No to pięknie 😎';
+    close.style.cssText = 'width:100%;border:0;border-radius:12px;padding:12px;background:linear-gradient(90deg,#7627ef,#ff8c1a);color:#fff;font-weight:800;font-size:15px;cursor:pointer';
+    close.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', event => { if (event.target === overlay) overlay.remove(); });
+    card.append(icon, title, small, close);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  }
   window.npRedeemPromo = async function() {
     const input = document.getElementById('npPromoCode');
     const code = input && input.value ? input.value.trim().toUpperCase() : '';
@@ -559,7 +588,7 @@
       const token = await accountEnsure();
       const data = await api('/api/promo/redeem', { code }, 'POST', token);
       await refresh(true);
-      alert(data.messageStyleKey === 'johnny-6m' ? (data.message + '\n\n' + data.messageSubtext) : (data.message || ('Aktywowano dostęp ' + String(data.tier || '').toUpperCase() + ' na ' + data.durationDays + ' dni.')));
+      if (data.messageStyleKey === 'johnny-6m') showJohnnyPromoSuccess(data);\n      else alert(data.message || ('Aktywowano dostęp ' + String(data.tier || '').toUpperCase() + ' na ' + data.durationDays + ' dni.'));
       renderPlansBridge();
     } catch (error) {
       alert(friendlyError(error, 'aktywować kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
