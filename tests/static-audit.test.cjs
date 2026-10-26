@@ -57,6 +57,9 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /Idempotency-Key/);
   assert.match(billing, /checkout\.stripe\.com/);
   assert.equal((billing.match(/async function checkout\(tier, interval\)/g) || []).length, 1);
+  assert.match(billing, /Serwer zgłasza istniejącą albo nieopłaconą subskrypcję/);
+  assert.match(billing, /Masz otwartą sesję Stripe dla innego planu/);
+  assert.match(billing, /Konflikt płatności \(HTTP 409\)/);
   assert.doesNotMatch(billing, /14,99 zł\/mies\.|29 zł\/mies\.|149,99 zł\/rok|300 zł\/rok/);
   assert.match(billing, /Czy utworzyć NOWE konto\?/);
   assert.match(billing, /Nie utworzono nowego konta/);
