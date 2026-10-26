@@ -26,7 +26,15 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 - Produkcyjny Worker: `naprawnik-subscriptions-live`; jego kod źródłowy jest wersjonowany w `workers/subscriptions/src/index.mjs`.
 - W Live potwierdzono konfigurację `PRODUCTION_ENABLED=true`, oczekiwany tryb Stripe `live`, cztery identyfikatory cen, adresy powrotu HTTPS i połączenie z produkcyjną bazą D1.
 - Bezpośredni, tylko odczytowy odczyt konta Stripe potwierdził, że wszystkie cztery ceny są aktywne i poprawne: PRO 9 PLN/miesiąc i 100 PLN/rok; WARSZTAT 29 PLN/miesiąc i 300 PLN/rok.
-- Diagnostyka wywołana przez produkcyjny Worker otrzymała HTTP 403 dla odczytu każdej ceny. To wskazuje na uwierzytelnienie lub uprawnienia użytego sekretu, a nie na brak cen. Do czasu uzyskania kodu błędu i typu klucza przyczyna jest **nierozstrzygnięta**. Diagnostyka nie ujawnia wartości sekretu i wykonuje tylko żądania GET.
+- Diagnostyka wywołana przez produkcyjny Worker otrzymała HTTP 403, kod `more_permissions_required`, typ `invalid_request_error` dla każdego `GET /v1/prices/{id}`. To potwierdza brak uprawnienia dla użytego klucza ograniczonego, a nie brak cen. Diagnostyka nie ujawnia wartości sekretu i wykonuje tylko żądania GET.
+- **Wymagane uprawnienia restricted LIVE API key (ustawić minimalnie dla używanych endpointów):**
+  - `Prices: Read` — sprawdzanie czterech cen i rozwinięte ceny przy odczycie subskrypcji.
+  - `Checkout Sessions: Read + Write` — odzyskanie istniejącej sesji i tworzenie nowej sesji przez `POST /v1/checkout/sessions`.
+  - `Subscriptions: Read` — odświeżanie aktualnego stanu subskrypcji przez `GET /v1/subscriptions/{id}`.
+  - `Customers: Read + Write` — sprawdzenie klienta przy otwieraniu Billing Portal; tryb subskrypcji Checkout może utworzyć obiekt Customer, jeżeli użytkownik nie ma przypiętego klienta.
+  - `Billing Portal Sessions: Write` (w Dashboardzie może być opisane jako Customer Portal / Billing customer portal session) — tworzenie sesji portalu przez `POST /v1/billing_portal/sessions`.
+  - Nie włączaj uprawnień do płatności, zwrotów, wypłat, kart ani pozostałych zasobów, jeśli żaden endpoint aplikacji ich nie wywołuje. Jeżeli po nadaniu powyższych minimalnych zakresów Stripe nadal zwróci `more_permissions_required`, sprawdź szczegóły konkretnego Request ID w logach żądań Stripe i dodaj tylko jawnie wskazany zakres.
+- Nie zmieniaj klucza ani sekretu w Cloudflare, dopóki nie ustalisz, że to właściwy klucz LIVE i że można edytować jego zakresy. Nie wklejaj wartości klucza do kodu, GitHuba ani czatu.
 - Zabezpieczone ścieżki API weryfikują token i uprawnienia po stronie Workera; ustawienia/interfejs przeglądarki nie nadają samodzielnie dostępu PRO/WARSZTAT.
 - Tokeny API mają odnowienie kroczące tylko wtedy, gdy konto ma nadal aktywny abonament, okres ochronny opóźnionej płatności albo ważny dostęp promocyjny. Unieważnione tokeny pozostają odrzucane.
 - Schemat tabel administracyjnych i kodów promocyjnych jest obecny w produkcyjnej bazie D1. Nie uruchamiaj migracji ponownie bez sprawdzenia aktualnego schematu.
