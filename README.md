@@ -18,8 +18,19 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 
 - Aplikacja publikuje manifest `manifest.webmanifest` z zakresem ograniczonym do `/Aktualizacja-17.10/`, nazwą NAPRAWNIK i ikonami SVG w wariantach 192/512.
 - Service Worker buforuje zasoby startowe, manifest i ikony; w razie utraty sieci próbuje wyświetlić zapisaną stronę startową. Funkcje wymagające Cloudflare/Stripe nadal potrzebują internetu.
-- Na Androidzie otwórz oficjalny adres w Chrome i użyj menu przeglądarki → **Zainstaluj aplikację** lub **Dodaj do ekranu głównego** (nazwa opcji zależy od przeglądarki). To PWA zainstalowana z przeglądarki, a nie jeszcze osobny, podpisany plik APK.
+- Na Androidzie można zainstalować PWA z oficjalnego adresu w Chrome przez menu → **Zainstaluj aplikację** / **Dodaj do ekranu głównego**.
+- Osobny APK debug jest budowany w `.github/workflows/build-android-apk.yml`. Pakiet zawiera lokalne pliki HTML, moduł płatności, katalog techniczny, katalog diagnostyczny, PWA assets i mostek natywny. Ikona oraz ekran startowy są generowane z istniejącego logo SVG NAPRAWNIKA.
 - Przy zmianach zasobów zwiększ wersję cache w `sw.js` i numer `billing.js?v=...` w `index.html`, a potem uruchom testy regresyjne.
+
+
+## Funkcje natywne Androida
+
+- Mostek `scripts/native-bridge.js` jest wstrzykiwany wyłącznie do wygenerowanego katalogu `www`; nie jest dołączany do opublikowanej wersji webowej.
+- Przycisk systemowy Wstecz zamyka najpierw otwarty widok diagnostyczny, następnie wraca do Home, a dopiero na Home zamyka aplikację.
+- Zewnętrzne instrukcje PDF i inne łącza HTTP(S) otwierają się przez natywną kartę przeglądarki. Pasek statusu używa ciemnego tła NAPRAWNIKA.
+- Eksport kopii danych warsztatowych oraz oddzielny eksport historii asystenta ze zdjęciami uruchamiają natywne okno Udostępnij/Zapisz. Plik kopii jest przygotowywany w pamięci tymczasowej aplikacji i nie jest automatycznie wysyłany na serwer.
+- Weryfikacja APK sprawdza obecność minimum 70 unikalnych kart diagnostycznych, plików płatności/katalogu/Service Workera, wejść eksportu/importu, integracji administratora, ikon Androida w kilku rozdzielczościach oraz obrazów splash screen.
+- APK debug nadal wymaga testu na fizycznym urządzeniu. Zmiany nie importują automatycznie lokalnej pamięci Chrome i nie usuwają żadnych zapisanych danych.
 
 ## Płatności i uprawnienia
 
