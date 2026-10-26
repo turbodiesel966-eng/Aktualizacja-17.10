@@ -39,12 +39,12 @@
       submit.disabled = true;
       status.textContent = 'Weryfikuję kod i łączę telefon z kontem właściciela…';
 
-      // Reuse billing.js's established mobile-login path, including /api/me and plan sync.
-      // The original handler reads a synchronous prompt before its first await.
-      const previousPrompt = window.prompt;
+      // The Android-only copy of billing.js accepts this callback in place of window.prompt.
+      // Its existing API flow validates the code and refreshes the owner's account/plan.
+      const previousProvider = window.__naprawnikAdminCodePrompt;
       const previousAlert = window.alert;
       let lastAlert = '';
-      window.prompt = () => code;
+      window.__naprawnikAdminCodePrompt = () => code;
       window.alert = (message) => {
         lastAlert = String(message || '');
         status.textContent = lastAlert;
@@ -52,7 +52,7 @@
 
       try {
         const pending = originalOpenAdminPanel();
-        window.prompt = previousPrompt;
+        window.__naprawnikAdminCodePrompt = previousProvider;
         await pending;
         if (lastAlert) {
           status.textContent = lastAlert;
@@ -62,7 +62,7 @@
       } catch (error) {
         status.textContent = String(error && error.message || 'Nie udało się połączyć telefonu. Sprawdź internet i spróbuj ponownie.');
       } finally {
-        window.prompt = previousPrompt;
+        window.__naprawnikAdminCodePrompt = previousProvider;
         window.alert = previousAlert;
         if (submit.isConnected) submit.disabled = false;
       }
