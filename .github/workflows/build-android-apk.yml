@@ -102,6 +102,8 @@ jobs:
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/naprawnik-release.jks"
           test -s "$RUNNER_TEMP/naprawnik-release.jks"
           chmod 600 "$RUNNER_TEMP/naprawnik-release.jks"
+          keytool -list -keystore "$RUNNER_TEMP/naprawnik-release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
+          echo "Android release keystore password and alias validated."
           echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/naprawnik-release.jks" >> "$GITHUB_ENV"
           echo "enabled=true" >> "$GITHUB_OUTPUT"
 
