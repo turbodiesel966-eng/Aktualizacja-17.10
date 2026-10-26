@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { authenticate, enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
+import { authenticate, enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isNativeAppRequest, billingReturnPage, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -963,3 +963,46 @@ test("wygasły token bez aktywnego abonamentu lub promocji nadal jest odrzucany"
   assert.equal(await authenticate(request, env), null);
   assert.equal(state.tokenUpdates.length, 0);
 });
+
+test("native billing return requires the exact Capacitor Origin and never accepts lookalike hosts", () => {
+  const requestFor = origin => new Request("https://api.example.test/api/checkout", {
+    method: "POST",
+    headers: { Origin: origin }
+  });
+  assert.equal(isNativeAppRequest(requestFor("https://localhost")), true);
+  assert.equal(isNativeAppRequest(requestFor("https://localhost.evil.example")), false);
+  assert.equal(isNativeAppRequest(requestFor("https://127.0.0.1")), false);
+  assert.equal(isNativeAppRequest(requestFor("https://turbodiesel966-eng.github.io")), false);
+  assert.equal(isNativeAppRequest(new Request("https://api.example.test/api/checkout", { method: "POST" })), false);
+});
+
+test("native Stripe return page handles only known results and sends no-store, non-embeddable HTML", async () => {
+  for (const result of ["success", "cancelled", "portal"]) {
+    const response = billingReturnPage(new URL("https://api.example.test/billing/return?result=" + result));
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type"), /text\\/html/i);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("x-frame-options"), "DENY");
+    assert.match(response.headers.get("content-security-policy"), /default-src 'none'/);
+    const html = await response.text();
+    assert.match(html, /NAPRAWNIK/);
+    assert.doesNotMatch(html, /<script\\b/i);
+    if (result === "success") assert.match(html, /wróć do aplikacji NAPRAWNIK/i);
+    if (result === "cancelled") assert.match(html, /anulowany/i);
+    if (result === "portal") assert.match(html, /Panel abonamentu został zamknięty/i);
+  }
+  const invalid = billingReturnPage(new URL("https://api.example.test/billing/return?result=https%3A%2F%2Fevil.example"));
+  assert.equal(invalid.status, 400);
+  assert.match(invalid.headers.get("content-type"), /text\\/plain/i);
+});
+
+test("native checkout return URL branch does not replace the web checkout URLs", async () => {
+  const source = await readFile(new URL("./src/index.mjs", import.meta.url), "utf8");
+  assert.match(source, /const nativeReturn = isNativeAppRequest\\(request\\)/);
+  assert.match(source, /workerOrigin \\+ "\\/billing\\/return\\?result=success"/);
+  assert.match(source, /workerOrigin \\+ "\\/billing\\/return\\?result=cancelled"/);
+  assert.match(source, /workerOrigin \\+ "\\/billing\\/return\\?result=portal"/);
+  assert.match(source, /safeReturnUrl\\(env\\.CHECKOUT_SUCCESS_URL/);
+  assert.match(source, /safeReturnUrl\\(env\\.CHECKOUT_CANCEL_URL/);
+});
+
