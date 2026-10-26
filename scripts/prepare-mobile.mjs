@@ -1,8 +1,44 @@
-import { cp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 const root = process.cwd();
 const webDir = path.join(root, "www");
+const sourceAssets = path.join(root, "assets");
+const appIconPath = path.join(sourceAssets, "naprawnik-icon-512.svg");
+const iconSvg = await readFile(appIconPath, "utf8");
+const iconSvg1024 = iconSvg.replace('width="512" height="512"', 'width="1024" height="1024"');
+const foregroundSvg = iconSvg1024
+  .replace(/<rect width="512" height="512" rx="112" fill="#0a0a14"\/>\s*/, "")
+  .replace(/<rect x="24" y="24" width="464" height="464" rx="92" fill="none" stroke="#33334d" stroke-width="10"\/>\s*/, "");
+
+if (foregroundSvg === iconSvg1024) {
+  throw new Error("Could not derive the transparent NAPRAWNIK launcher foreground from the SVG icon.");
+}
+
+// Generate the official Capacitor asset inputs from the existing vector logo.
+// These PNGs are build assets, not runtime app data, and are recreated on every build.
+await sharp(Buffer.from(iconSvg1024)).resize(1024, 1024).png().toFile(path.join(sourceAssets, "icon-only.png"));
+await sharp(Buffer.from(foregroundSvg)).resize(1024, 1024).png().toFile(path.join(sourceAssets, "icon-foreground.png"));
+await sharp({
+  create: { width: 1024, height: 1024, channels: 4, background: "#0a0a14" }
+}).png().toFile(path.join(sourceAssets, "icon-background.png"));
+
+const splashTitle = Buffer.from(`
+<svg xmlns="http://www.w3.org/2000/svg" width="2732" height="340" viewBox="0 0 2732 340">
+  <text x="1366" y="145" text-anchor="middle" fill="#ff8c1a" font-family="Courier New, monospace" font-size="146" font-weight="700" letter-spacing="8">NAPRAWNIK</text>
+  <text x="1366" y="245" text-anchor="middle" fill="#22d3ee" font-family="Courier New, monospace" font-size="54" font-weight="700" letter-spacing="5">WARSZTAT • DIAGNOSTYKA • NAPRAWY</text>
+</svg>`);
+const splashForeground = await sharp(Buffer.from(foregroundSvg)).resize(1080, 1080).png().toBuffer();
+for (const name of ["splash.png", "splash-dark.png"]) {
+  await sharp({
+    create: { width: 2732, height: 2732, channels: 4, background: "#0a0a14" }
+  }).composite([
+    { input: splashForeground, left: 826, top: 560 },
+    { input: splashTitle, left: 0, top: 1760 }
+  ]).png().toFile(path.join(sourceAssets, name));
+}
+
 const requiredFiles = [
   "index.html",
   "billing.js",
@@ -16,5 +52,8 @@ await mkdir(webDir, { recursive: true });
 for (const file of requiredFiles) {
   await cp(path.join(root, file), path.join(webDir, file));
 }
-await cp(path.join(root, "assets"), path.join(webDir, "assets"), { recursive: true });
-console.log("NAPRAWNIK Android web assets prepared in ./www");
+await mkdir(path.join(webDir, "assets"), { recursive: true });
+for (const file of ["naprawnik-icon.svg", "naprawnik-icon-192.svg", "naprawnik-icon-512.svg"]) {
+  await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
+}
+console.log("NAPRAWNIK Android web assets and branded native icon/splash assets prepared.");
