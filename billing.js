@@ -424,6 +424,12 @@
       '<div><small>Zarezerwowane</small><div style="font-size:16px">' + esc(Number(aiBudget?.reservedUsd || 0).toFixed(4)) + ' USD</div></div>' +
       '<div><small>Żądania w tym miesiącu</small><div style="font-size:16px">' + esc(String(aiBudget?.requests || 0)) + '</div></div>' +
       '</div><small style="color:var(--dim)">' + esc(aiBudget?.modelPricing || 'Limit budżetu działa po stronie serwera; analiza pozostaje domyślnie wyłączona.') + '</small></div>';
+    const newCodes = Array.isArray(newCode) ? newCode : (newCode ? [{ code: newCode, label: 'Nowy kod' }] : []);
+    const newCodeContent = newCodes.length
+      ? '<div class="card" style="border-color:var(--hero)"><b>Nowe kody — skopiuj i przekaż znajomym teraz</b><small style="display:block;color:var(--dim);margin:6px 0 10px">Pełne kody są pokazywane tylko w chwili utworzenia.</small>' +
+        newCodes.map((item, i) => '<div class="entry"><b>' + esc(item.label || ('Kod ' + (i + 1))) + '</b><input id="npPromoCreatedCode' + i + '" readonly value="' + esc(item.code || '') + '"><button class="btn" onclick="window.npCopyAdminPromoCode(' + i + ')">Skopiuj kod</button></div>').join('') +
+        '</div>'
+      : '';
     const rows = promos.length ? promos.map(p => '<div class="entry"><b>' + esc(p.label || 'Kod promocyjny') + ' · ' + esc(String(p.code_hint || '••••')) + '</b><small>' + esc(String(p.tier || '').toUpperCase()) + ' · ' + esc(String(p.duration_days)) + ' dni · użycia: ' + esc(String(p.redemption_count)) + '/' + esc(String(p.max_redemptions)) + '<br>Ważny do: ' + esc(adminDate(p.expires_at)) + '<br>' + (Number(p.enabled) === 1 ? 'Aktywny' : 'Wyłączony') + '</small>' + (Number(p.enabled) === 1 ? '<button class="btn" type="button" onclick="window.npDisablePromo(\'' + esc(p.id) + '\')">Wyłącz kod</button>' : '') + '</div>').join('') : '<div class="empty">Nie utworzono jeszcze kodów promocyjnych.</div>';
     root.innerHTML = '<div class="card"><h2>🛡️ Panel ADMINA</h2><p style="font-size:12px;line-height:1.5">Statystyki i kody są widoczne tylko po potwierdzeniu uprawnień przez serwer.</p><div class="grid2">' +
       metric('Zarejestrowane konta', stats.registeredAccounts, 'Dokładna liczba kont') +
@@ -434,8 +440,8 @@
       metric('Unikalne przeglądarki · 7 dni', stats.uniqueBrowsers7dEstimate, 'Szacunek, nie dokładna liczba osób') +
       '</div><p style="font-size:11px;line-height:1.5;color:var(--dim)">' + esc(stats.note || '') + '</p><button class="btn" onclick="window.npOpenAdminPanel()">↻ Odśwież statystyki</button></div>' +
       '<div class="card"><h2>🔎 Diagnostyka bramki płatności</h2><p style="font-size:12px;color:var(--dim);line-height:1.5">Sprawdza połączenie serwera ze Stripe i cztery skonfigurowane ceny. To jest odczyt — nie tworzy Checkoutu ani nie pobiera pieniędzy.</p><button class="btn" type="button" onclick="window.npCheckStripeConfig()">Sprawdź Stripe bez płatności</button><div id="npAdminStripeDiag" style="font-size:12px;line-height:1.6;margin-top:10px"></div></div>' +
-      '<div class="card"><h2>🎟️ Utwórz kod promocyjny</h2><label for="npPromoTier">Pakiet</label><select id="npPromoTier"><option value="pro">PRO</option><option value="warsztat">WARSZTAT</option></select><label for="npPromoDuration">Czas dostępu</label><select id="npPromoDuration"><option value="3">3 dni</option><option value="7">7 dni</option></select><div class="grid2"><div><label for="npPromoMax">Maks. użyć</label><input id="npPromoMax" type="number" min="1" max="10000" value="1"></div><div><label for="npPromoExpires">Ważność kodu (dni)</label><input id="npPromoExpires" type="number" min="1" max="365" value="14"></div></div><label for="npPromoLabel">Opis kampanii (opcjonalnie)</label><input id="npPromoLabel" maxlength="120" placeholder="np. testy znajomych / konkurs"><button class="btn" onclick="window.npCreatePromo()">＋ Generuj kod</button>' +
-      (newCode ? '<div class="entry" style="border-color:var(--hero)"><b>Nowy kod — pokaż go odbiorcy tylko teraz</b><input id="npPromoCreatedCode" readonly value="' + esc(newCode) + '"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'npPromoCreatedCode\').value).then(()=>alert(\'Skopiowano kod.\')).catch(()=>alert(\'Skopiuj kod ręcznie.\'))">Skopiuj kod</button></div>' : '') +
+      '<div class="card"><h2>🎟️ Utwórz kod promocyjny</h2><label for="npPromoTier">Pakiet</label><select id="npPromoTier"><option value="pro">PRO</option><option value="warsztat">WARSZTAT</option></select><label for="npPromoDuration">Czas dostępu</label><select id="npPromoDuration"><option value="3">3 dni</option><option value="7">7 dni</option><option value="180">6 miesięcy (180 dni)</option></select><div class="grid2"><div><label for="npPromoMax">Maks. użyć</label><input id="npPromoMax" type="number" min="1" max="10000" value="1"></div><div><label for="npPromoExpires">Ważność kodu (dni)</label><input id="npPromoExpires" type="number" min="1" max="365" value="14"></div></div><label for="npPromoLabel">Opis kampanii (opcjonalnie)</label><input id="npPromoLabel" maxlength="120" placeholder="np. testy znajomych / konkurs"><button class="btn" onclick="window.npCreatePromo()">＋ Generuj kod</button><button class="btn" onclick="window.npCreateJohnnyCodes()">🎁 Generuj 5 kodów Johnny — WARSZTAT / 6 miesięcy</button>' +
+      newCodeContent +
       '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div>' +
       aiBudgetCard + '<div class="card"><h2>🧾 Historia wykorzystania kodów</h2><small style="color:var(--dim)">Maksymalnie 100 ostatnich wpisów. Pokazujemy skrócone ID konta, bez adresów e-mail. Historia jest przechowywana przez 12 miesięcy.</small>' + redemptionRows + '</div>' +
       '<div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
@@ -534,6 +540,33 @@
       alert(friendlyError(error, 'utworzyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
     }
   };
+  window.npCopyAdminPromoCode = function(index) {
+    const input = document.getElementById('npPromoCreatedCode' + Number(index));
+    const value = input && input.value || '';
+    if (!value) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(() => alert('Skopiowano kod.')).catch(() => alert('Skopiuj kod ręcznie.'));
+    } else alert('Skopiuj kod ręcznie.');
+  };
+  window.npCreateJohnnyCodes = async function() {
+    if (!window.confirm('Utworzyć 5 osobnych kodów WARSZTAT na 180 dni, każdy do jednorazowego użycia i ważny przez 180 dni? Pełne kody pojawią się tylko raz.')) return;
+    try {
+      const token = tokenGet();
+      if (!token) throw new Error('Zaloguj się na konto administratora.');
+      const created = await api('/api/admin/promos', {
+        tier: 'warsztat', durationDays: 180, maxRedemptions: 1, expiresInDays: 180,
+        count: 5, label: 'JOHNNY6M'
+      }, 'POST', token);
+      if (!Array.isArray(created.codes) || created.codes.length !== 5) {
+        throw new Error('Serwer nie zwrócił kompletu pięciu kodów. Odśwież panel i sprawdź listę przed ponowną próbą.');
+      }
+      const panel = await fetchAdminData();
+      renderAdminPanel(panel.stats, panel.promos, panel.redemptions, panel.aiBudget, created.codes);
+      alert('Utworzono 5 kodów. Skopiuj i przekaż każdemu znajomemu osobny kod.');
+    } catch (error) {
+      alert(friendlyError(error, 'utworzyć pięciu kodów') + (error.message ? '\n' + error.message : ''));
+    }
+  };
   window.npDisablePromo = async function(id) {
     if (!id || !confirm('Wyłączyć ten kod promocyjny? Dotychczas przyznane dostępy pozostaną ważne do końca okresu.')) return;
     try {
@@ -545,6 +578,35 @@
       alert(friendlyError(error, 'wyłączyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
     }
   };
+  function showJohnnyPromoSuccess(data) {
+    const existing = document.getElementById('npPromoSuccessModal');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'npPromoSuccessModal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(4,5,15,.86);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(7px)';
+    const card = document.createElement('section');
+    card.style.cssText = 'width:100%;max-width:420px;background:linear-gradient(145deg,#17152d,#25132a);border:2px solid #ff8c1a;border-radius:20px;padding:24px 20px;text-align:center;box-shadow:0 0 36px rgba(255,140,26,.28),0 0 40px rgba(112,65,255,.2)';
+    const icon = document.createElement('div');
+    icon.textContent = '🎉 🔑 🎉';
+    icon.style.cssText = 'font-size:42px;line-height:1.2;margin-bottom:10px';
+    const title = document.createElement('h2');
+    title.textContent = data.message || 'Gratulacje Tu Johnny Dostałeś Dożywotni Dostęp Do Naprawnika';
+    title.style.cssText = 'font-size:22px;line-height:1.35;color:#ffe14d;text-transform:none;letter-spacing:0;border:0;padding:0;margin:0 0 14px;text-shadow:0 0 12px rgba(255,225,77,.2)';
+    const small = document.createElement('p');
+    small.textContent = data.messageSubtext || 'Kod daje 6 miesięcy dostępu. Przedłużenie kolejnym kodem co pół roku — chyba że mnie wkurwisz XD 😈';
+    small.style.cssText = 'font-size:11px;line-height:1.5;color:#c7c4dc;margin:0 0 20px';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = 'No to pięknie 😎';
+    close.style.cssText = 'width:100%;border:0;border-radius:12px;padding:12px;background:linear-gradient(90deg,#7627ef,#ff8c1a);color:#fff;font-weight:800;font-size:15px;cursor:pointer';
+    close.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', event => { if (event.target === overlay) overlay.remove(); });
+    card.append(icon, title, small, close);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  }
   window.npRedeemPromo = async function() {
     const input = document.getElementById('npPromoCode');
     const code = input && input.value ? input.value.trim().toUpperCase() : '';
@@ -553,7 +615,7 @@
       const token = await accountEnsure();
       const data = await api('/api/promo/redeem', { code }, 'POST', token);
       await refresh(true);
-      alert(data.message || ('Aktywowano dostęp ' + String(data.tier || '').toUpperCase() + ' na ' + data.durationDays + ' dni.'));
+      if (data.messageStyleKey === 'johnny-6m') showJohnnyPromoSuccess(data);\n      else alert(data.message || ('Aktywowano dostęp ' + String(data.tier || '').toUpperCase() + ' na ' + data.durationDays + ' dni.'));
       renderPlansBridge();
     } catch (error) {
       alert(friendlyError(error, 'aktywować kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
