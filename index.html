@@ -9,7 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="./assets/naprawnik-icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NAPRAWNIK v5.17 — diagnostyka i naprawy</title>
+<title>NAPRAWNIK v5.18 — diagnostyka i naprawy</title>
 <style>
 :root{
   --bg:#0a0a14; --panel:#15151f; --border:#33334d; --accent:#ff8c1a; --cyan:#22d3ee; --hero:#ffe14d; --text:#e8e8f5; --dim:#8888aa;
@@ -1513,7 +1513,7 @@ function renderHome(){
     <div class="btn" onclick="nav('parts')">${lk('pro')}Otwórz katalog doboru części</div>
   </div>
 
-  <div class="diag-card" style="border-color:var(--hero)"><h2>💎 Twój plan: ${PLAN_NAMES[curPlan()]}</h2><div class="diag-sub">${curPlan()==='amator'?'Bezpłatnie: pełna diagnostyka, katalog modeli, kalkulatory i checklisty. PRO i WARSZTAT: analiza AI, dane wg rodziny silnika, narzędzia dla warsztatu.':curPlan()==='pro'?'PRO aktywne: analiza AI, pełna elektryka i dobór części. Warsztat dodaje klientów i karty serwisowe.':'WARSZTAT aktywny: wszystkie funkcje aplikacji.'}</div><div class="btn" onclick="nav('plans')">${curPlan()==='warsztat'?'Zarządzaj licencją':'Zobacz plany i funkcje'}</div></div>
+  <div class="diag-card" style="border-color:var(--hero)"><h2>💎 Twój plan: ${PLAN_NAMES[curPlan()]}</h2><div class="diag-sub">${curPlan()==='amator'?'Bezpłatnie: pełna diagnostyka, katalog modeli, kalkulatory i checklisty. PRO i WARSZTAT: rozszerzona elektryka i dane wg rodziny silnika; analiza zdjęć AI jest chwilowo wyłączona.':curPlan()==='pro'?'PRO aktywne: pełna elektryka i dobór części. Analiza zdjęć AI jest chwilowo wyłączona; WARSZTAT dodaje klientów i karty serwisowe.':'WARSZTAT aktywny: wszystkie funkcje aplikacji.'}</div><div class="btn" onclick="nav('plans')">${curPlan()==='warsztat'?'Zarządzaj licencją':'Zobacz plany i funkcje'}</div></div>
 
   <div class="card" style="border-color:var(--cyan)"><h2>🔧 Garażowa prawda dnia</h2><p style="font-size:11px;line-height:1.5">Paliwo w baku i iskra na świecy to nie wszystko, jeśli pod kopułą wiatr. ⚡ Zanim wymienisz połowę skuterka lub motocykla metodą „na chybił trafił”, weź miernik do ręki i sprawdź masę. Fizyki nie oszukasz — zwłaszcza oporu elektrycznego i własnej leniwej diagnozy. 😎</p></div>
   <div class="diag-card">
@@ -2975,6 +2975,6 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.
 if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
-<script src="./billing.js?v=14"></script>
+<script src="./billing.js?v=15"></script>
 </body>
 </html>
