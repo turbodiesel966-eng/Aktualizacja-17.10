@@ -19,6 +19,7 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/katalog-techniczny.js",
         "assets/public/sw.js",
         "assets/public/manifest.webmanifest",
+        "assets/public/native-bridge.js",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -53,6 +54,10 @@ with zipfile.ZipFile(apk) as bundle:
             raise SystemExit(f"Missing billing/admin endpoint in packaged billing bridge: {endpoint}")
     if "./billing.js?v=16" not in service_worker or "NAPRAWNIK" not in manifest:
         raise SystemExit("The packaged PWA/service-worker branding or billing version is inconsistent.")
+    native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
+    for marker in ["backButton", "Browser", "StatusBar"]:
+        if marker not in native_bridge:
+            raise SystemExit(f"Android-native integration missing from packaged bridge: {marker}")
 
     launcher_paths = sorted(
         name for name in names
