@@ -96,6 +96,9 @@ async function verifyStripeSignature(rawBody, signatureHeader, secret, tolerance
 function allowedOrigin(request, env) {
   const origin = request.headers.get("Origin");
   if (!origin) return null;
+  // Capacitor's packaged Android WebView uses https://localhost by default.
+  // This exact origin is explicitly allowed for the native app; other local origins remain blocked.
+  if (origin === "https://localhost") return origin;
   const allowed = (env.ALLOWED_ORIGINS || "").split(",").map(v => v.trim()).filter(Boolean);
   return allowed.includes(origin) ? origin : null;
 }
@@ -1985,6 +1988,6 @@ export default {
   },
 };
 
-export { authenticate, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
 
 
