@@ -19,7 +19,7 @@ test("budżet AI ma mały bezpieczny domyślny limit i odrzuca nieprawidłową k
 
 test("koszt szacowany korzysta z jawnych stawek obsługiwanych modeli", () => {
   assert.equal(estimatePhotoCostMicrousd("gpt-6-luna", 100_000, 1_000), 10_000 + 500);
-  assert.equal(estimatePhotoCostMicrousd("gpt-4.1-mini", 100_000, 1_000), 40_000 + 1_600);
+  assert.equal(estimatePhotoCostMicrousd("gpt-4.1-mini", 100_000, 1_000), null, "deprecated models remain blocked");
   assert.equal(estimatePhotoCostMicrousd("unknown-model", 100, 100), null);
   assert.equal(estimatePhotoCostMicrousd("gpt-6-luna", -1, 100), null);
 });
