@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -56,4 +56,23 @@ await mkdir(path.join(webDir, "assets"), { recursive: true });
 for (const file of ["naprawnik-icon.svg", "naprawnik-icon-192.svg", "naprawnik-icon-512.svg"]) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
 }
-console.log("NAPRAWNIK Android web assets and branded native icon/splash assets prepared.");
+
+// Instrument only the generated Android copy. The published web/PWA source is unchanged.
+const mobileIndexPath = path.join(webDir, "index.html");
+let mobileHtml = await readFile(mobileIndexPath, "utf8");
+const navMarker = "function nav(view, arg){";
+if (mobileHtml.split(navMarker).length - 1 !== 1) {
+  throw new Error("Could not uniquely locate NAPRAWNIK navigation function for the Android back button.");
+}
+mobileHtml = mobileHtml.replace(
+  navMarker,
+  navMarker + '\\n  window.__naprawnikView = String(view || "home");'
+);
+const closingBody = "</body>";
+if (mobileHtml.split(closingBody).length - 1 !== 1) {
+  throw new Error("Could not uniquely locate the document body close tag for the Android bridge.");
+}
+mobileHtml = mobileHtml.replace(closingBody, '  <script src="./native-bridge.js"></script>\\n' + closingBody);
+await writeFile(mobileIndexPath, mobileHtml, "utf8");
+
+console.log("NAPRAWNIK Android web assets, branded native icon/splash and mobile-only bridge entry prepared.");
