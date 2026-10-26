@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - fix/mobile-admin-access-capacitor-apk-20261026
+      - apk/admin-pairing-ui-20261026
   workflow_dispatch:
 
 permissions:
