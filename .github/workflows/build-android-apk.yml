@@ -38,6 +38,9 @@ jobs:
       - name: Prepare bundled web app
         run: npm run mobile:prepare
 
+      - name: Bundle native Android bridge
+        run: npm run mobile:bundle-native
+
       - name: Generate Android project
         run: npx cap add android
 
