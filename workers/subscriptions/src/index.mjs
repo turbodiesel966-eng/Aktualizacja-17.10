@@ -22,6 +22,7 @@ const RATE_LIMITS = Object.freeze({
   photoDiagnosis: Object.freeze({ maxRequests: 8, windowSeconds: 60 * 60 }),
   photoDiagnosisDaily: Object.freeze({ maxRequests: 5, windowSeconds: 24 * 60 * 60 }),
   billingPortal: Object.freeze({ maxRequests: 10, windowSeconds: 15 * 60 }),
+  oneTimeCheckout: Object.freeze({ maxRequests: 5, windowSeconds: 60 * 60 }),
   analyticsVisits: Object.freeze({ maxRequests: 20, windowSeconds: 60 }),
   promoRedemptions: Object.freeze({ maxRequests: 5, windowSeconds: 15 * 60 }),
   adminWrites: Object.freeze({ maxRequests: 30, windowSeconds: 60 * 60 }),
@@ -848,6 +849,8 @@ async function checkout(request, env, auth) {
 async function oneTimeCheckout(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
+  const limited = await enforceRateLimit(request, env, "one-time-checkout", auth.userId, RATE_LIMITS.oneTimeCheckout);
+  if (limited) return limited;
   const body = await readJson(request, 8192);
   const idempotency = request.headers.get("Idempotency-Key");
   if (!idempotency || !/^[A-Za-z0-9_-]{8,128}$/.test(idempotency)) return err("A valid Idempotency-Key is required", 400);
