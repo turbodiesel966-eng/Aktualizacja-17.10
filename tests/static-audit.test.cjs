@@ -40,7 +40,7 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   const html = read('index.html');
   assert.doesNotMatch(html, /\bLICENSE_ENDPOINT\b|\bSTRIPE_PRO\b|\bSTRIPE_WARSZTAT\b/);
   assert.doesNotMatch(html, /\blicBoot\s*\(\s*\)\s*;/);
-  assert.match(html, /<script src="\.\/billing\.js\?v=9"><\/script>/);
+  assert.match(html, /<script src="\.\/billing\.js\?v=10"><\/script>/);
   assert.match(html, /function licGet\(\)\{return getVerifiedLicense\(\);\}/);
   assert.match(html, /function hasPlan\(min\)\{return Object\.prototype\.hasOwnProperty\.call\(PLAN_ORDER,min\)&&PLAN_ORDER\[curPlan\(\)\]>=PLAN_ORDER\[min\];\}/);
 });
@@ -48,8 +48,8 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
 test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkout', () => {
   const billing = read('billing.js');
   assert.match(billing, /function applyVerifiedPlan\(state\)/);
-  assert.match(billing, /9 zł \/ miesiąc/);
-  assert.match(billing, /100 zł \/ rok \(oszczędzasz 8 zł\)/);
+  assert.match(billing, /14,99 zł \/ miesiąc/);
+  assert.match(billing, /149,99 zł \/ rok \(oszczędzasz 29,89 zł\)/);
   assert.match(billing, /29 zł \/ miesiąc/);
   assert.match(billing, /300 zł \/ rok \(oszczędzasz 48 zł\)/);
   assert.match(billing, /Object\.defineProperty\(window, 'naprawnikGetVerifiedLicense'/);
@@ -57,7 +57,7 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /Idempotency-Key/);
   assert.match(billing, /checkout\.stripe\.com/);
   assert.equal((billing.match(/async function checkout\(tier, interval\)/g) || []).length, 1);
-  assert.doesNotMatch(billing, /9 zł\/mies\.|29 zł\/mies\.|100 zł\/rok|300 zł\/rok/);
+  assert.doesNotMatch(billing, /14,99 zł\/mies\.|29 zł\/mies\.|149,99 zł\/rok|300 zł\/rok/);
   assert.match(billing, /Czy utworzyć NOWE konto\?/);
   assert.match(billing, /Nie utworzono nowego konta/);
 });
