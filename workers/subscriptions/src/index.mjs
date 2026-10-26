@@ -1155,10 +1155,14 @@ async function diagnoseStripeConfig(env) {
       safeReturnUrl(env.CHECKOUT_CANCEL_URL, `${root}/?checkout=cancelled`, appBase) !== null;
   } catch { urlsValid = false; }
   const definitions = [
-    { key: "PRO_MONTHLY", label: "PRO miesięcznie", id: env.STRIPE_PRICE_PRO_MONTHLY, interval: "month" },
-    { key: "PRO_YEARLY", label: "PRO rocznie", id: env.STRIPE_PRICE_PRO_YEARLY, interval: "year" },
-    { key: "WARSZTAT_MONTHLY", label: "WARSZTAT miesięcznie", id: env.STRIPE_PRICE_WARSZTAT_MONTHLY, interval: "month" },
-    { key: "WARSZTAT_YEARLY", label: "WARSZTAT rocznie", id: env.STRIPE_PRICE_WARSZTAT_YEARLY, interval: "year" }
+    { key: "PRO_MONTHLY", label: "PRO miesięcznie", id: env.STRIPE_PRICE_PRO_MONTHLY, interval: "month", type: "recurring" },
+    { key: "PRO_YEARLY", label: "PRO rocznie", id: env.STRIPE_PRICE_PRO_YEARLY, interval: "year", type: "recurring" },
+    { key: "WARSZTAT_MONTHLY", label: "WARSZTAT miesięcznie", id: env.STRIPE_PRICE_WARSZTAT_MONTHLY, interval: "month", type: "recurring" },
+    { key: "WARSZTAT_YEARLY", label: "WARSZTAT rocznie", id: env.STRIPE_PRICE_WARSZTAT_YEARLY, interval: "year", type: "recurring" },
+    { key: "PRO_3D", label: "PRO 3 dni — 3 zł", id: env.STRIPE_PRICE_PRO_3D, type: "one_time", amount: 300 },
+    { key: "PRO_7D", label: "PRO 7 dni — 7 zł", id: env.STRIPE_PRICE_PRO_7D, type: "one_time", amount: 700 },
+    { key: "WARSZTAT_3D", label: "WARSZTAT 3 dni — 5 zł", id: env.STRIPE_PRICE_WARSZTAT_3D, type: "one_time", amount: 500 },
+    { key: "WARSZTAT_7D", label: "WARSZTAT 7 dni — 10 zł", id: env.STRIPE_PRICE_WARSZTAT_7D, type: "one_time", amount: 1000 }
   ];
   const prices = await Promise.all(definitions.map(async item => {
     if (!item.id || !item.id.startsWith("price_")) {
@@ -1182,16 +1186,18 @@ async function diagnoseStripeConfig(env) {
     const requestId = !response.ok ? response.headers.get("request-id") || null : null;
     const livemodeMatches = expectedMode !== null && price?.livemode === expectedMode;
     const intervalCount = Number(price?.recurring?.interval_count || 1);
+    const typeMatches = item.type === "one_time"
+      ? price?.type === "one_time" && !price?.recurring && Number(price?.unit_amount) === item.amount
+      : price?.type === "recurring" && price?.recurring?.interval === item.interval && intervalCount === 1;
     const valid = response.ok && price?.id === item.id && price.active === true &&
-      livemodeMatches && price.currency === "pln" &&
-      price.recurring?.interval === item.interval && intervalCount === 1 &&
+      livemodeMatches && price.currency === "pln" && typeMatches &&
       Number.isSafeInteger(Number(price.unit_amount)) && Number(price.unit_amount) > 0;
     let reason = "ok";
     if (!response.ok) reason = response.status === 401 || response.status === 403 ? "stripe_key_rejected" : "stripe_api_error";
     else if (price?.id !== item.id || price?.active !== true) reason = "price_inactive_or_mismatch";
     else if (!livemodeMatches) reason = "livemode_mismatch";
     else if (price?.currency !== "pln") reason = "currency_mismatch";
-    else if (price?.recurring?.interval !== item.interval || intervalCount !== 1) reason = "interval_mismatch";
+    else if (!typeMatches) reason = item.type === "one_time" ? "one_time_type_or_amount_mismatch" : "interval_mismatch";
     else if (!Number.isSafeInteger(Number(price?.unit_amount)) || Number(price?.unit_amount) <= 0) reason = "invalid_amount";
     return {
       key: item.key, label: item.label, configured: true, valid,
@@ -1203,6 +1209,8 @@ async function diagnoseStripeConfig(env) {
       active: typeof price?.active === "boolean" ? price.active : null,
       livemode: typeof price?.livemode === "boolean" ? price.livemode : null,
       currency: typeof price?.currency === "string" ? price.currency : null,
+      type: typeof price?.type === "string" ? price.type : null,
+      amount: Number.isSafeInteger(Number(price?.unit_amount)) ? Number(price.unit_amount) : null,
       interval: typeof price?.recurring?.interval === "string" ? price.recurring.interval : null,
       intervalCount: Number.isFinite(intervalCount) ? intervalCount : null
     };
