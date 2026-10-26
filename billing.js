@@ -362,16 +362,30 @@
   async function fetchAdminData() {
     const token = tokenGet();
     if (!token) throw new Error('Brak klucza dostępu do konta. Otwórz Plany, aby zarejestrować konto, lub aktywuj panel kluczem administratora.');
-    const [stats, promos] = await Promise.all([
+    const [stats, promos, redemptions, aiBudget] = await Promise.all([
       api('/api/admin/stats', undefined, 'GET', token),
-      api('/api/admin/promos', undefined, 'GET', token)
+      api('/api/admin/promos', undefined, 'GET', token),
+      api('/api/admin/promo-redemptions?limit=100', undefined, 'GET', token),
+      api('/api/admin/photo-budget', undefined, 'GET', token)
     ]);
-    return { stats, promos: Array.isArray(promos.promos) ? promos.promos : [] };
+    return {
+      stats,
+      promos: Array.isArray(promos.promos) ? promos.promos : [],
+      redemptions: Array.isArray(redemptions.redemptions) ? redemptions.redemptions : [],
+      aiBudget
+    };
   }
-  function renderAdminPanel(stats, promos, newCode) {
+  function renderAdminPanel(stats, promos, redemptions, aiBudget, newCode) {
     const root = document.querySelector('#screen');
     if (!root) return;
     const metric = (label, value, note) => '<div class="card"><b style="color:var(--cyan)">' + esc(label) + '</b><div style="font-size:24px;color:var(--hero);margin:8px 0">' + esc(value) + '</div><small style="color:var(--dim)">' + esc(note || '') + '</small></div>';
+    const redemptionRows = redemptions.length ? redemptions.map(r => '<div class="entry"><b>' + esc(r.label || 'Kampania') + ' · ' + esc(String(r.code_hint || '••••')) + '</b><small>Pakiet: ' + esc(String(r.tier || '').toUpperCase()) + ' · konto ID: ' + esc(String(r.user_id || '').slice(0, 8)) + '<br>Aktywowano: ' + esc(adminDate(r.redeemed_at)) + '<br>Ważność dostępu do: ' + esc(adminDate(r.expires_at)) + '</small></div>').join('') : '<div class="empty">Brak zapisanych wykorzystań kodów.</div>';
+    const aiBudgetCard = '<div class="card"><h2>🧮 Budżet analizy zdjęć AI</h2><div class="grid2">' +
+      '<div><small>Limit miesięczny</small><div style="font-size:20px;color:var(--hero)">' + esc(Number(aiBudget?.budgetUsd || 0).toFixed(2)) + ' USD</div></div>' +
+      '<div><small>Zużycie szacowane</small><div style="font-size:20px;color:var(--hero)">' + esc(Number(aiBudget?.actualEstimatedUsd || 0).toFixed(4)) + ' USD</div></div>' +
+      '<div><small>Zarezerwowane</small><div style="font-size:16px">' + esc(Number(aiBudget?.reservedUsd || 0).toFixed(4)) + ' USD</div></div>' +
+      '<div><small>Żądania w tym miesiącu</small><div style="font-size:16px">' + esc(String(aiBudget?.requests || 0)) + '</div></div>' +
+      '</div><small style="color:var(--dim)">' + esc(aiBudget?.modelPricing || 'Limit budżetu działa po stronie serwera; analiza pozostaje domyślnie wyłączona.') + '</small></div>';
     const rows = promos.length ? promos.map(p => '<div class="entry"><b>' + esc(p.label || 'Kod promocyjny') + ' · ' + esc(String(p.code_hint || '••••')) + '</b><small>' + esc(String(p.tier || '').toUpperCase()) + ' · ' + esc(String(p.duration_days)) + ' dni · użycia: ' + esc(String(p.redemption_count)) + '/' + esc(String(p.max_redemptions)) + '<br>Ważny do: ' + esc(adminDate(p.expires_at)) + '<br>' + (Number(p.enabled) === 1 ? 'Aktywny' : 'Wyłączony') + '</small>' + (Number(p.enabled) === 1 ? '<button class="btn" type="button" onclick="window.npDisablePromo(\'' + esc(p.id) + '\')">Wyłącz kod</button>' : '') + '</div>').join('') : '<div class="empty">Nie utworzono jeszcze kodów promocyjnych.</div>';
     root.innerHTML = '<div class="card"><h2>🛡️ Panel ADMINA</h2><p style="font-size:12px;line-height:1.5">Statystyki i kody są widoczne tylko po potwierdzeniu uprawnień przez serwer.</p><div class="grid2">' +
       metric('Zarejestrowane konta', stats.registeredAccounts, 'Dokładna liczba kont') +
@@ -384,7 +398,9 @@
       '<div class="card"><h2>🔎 Diagnostyka bramki płatności</h2><p style="font-size:12px;color:var(--dim);line-height:1.5">Sprawdza połączenie serwera ze Stripe i cztery skonfigurowane ceny. To jest odczyt — nie tworzy Checkoutu ani nie pobiera pieniędzy.</p><button class="btn" type="button" onclick="window.npCheckStripeConfig()">Sprawdź Stripe bez płatności</button><div id="npAdminStripeDiag" style="font-size:12px;line-height:1.6;margin-top:10px"></div></div>' +
       '<div class="card"><h2>🎟️ Utwórz kod promocyjny</h2><label for="npPromoTier">Pakiet</label><select id="npPromoTier"><option value="pro">PRO</option><option value="warsztat">WARSZTAT</option></select><label for="npPromoDuration">Czas dostępu</label><select id="npPromoDuration"><option value="3">3 dni</option><option value="7">7 dni</option></select><div class="grid2"><div><label for="npPromoMax">Maks. użyć</label><input id="npPromoMax" type="number" min="1" max="10000" value="1"></div><div><label for="npPromoExpires">Ważność kodu (dni)</label><input id="npPromoExpires" type="number" min="1" max="365" value="14"></div></div><label for="npPromoLabel">Opis kampanii (opcjonalnie)</label><input id="npPromoLabel" maxlength="120" placeholder="np. testy znajomych / konkurs"><button class="btn" onclick="window.npCreatePromo()">＋ Generuj kod</button>' +
       (newCode ? '<div class="entry" style="border-color:var(--hero)"><b>Nowy kod — pokaż go odbiorcy tylko teraz</b><input id="npPromoCreatedCode" readonly value="' + esc(newCode) + '"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'npPromoCreatedCode\').value).then(()=>alert(\'Skopiowano kod.\')).catch(()=>alert(\'Skopiuj kod ręcznie.\'))">Skopiuj kod</button></div>' : '') +
-      '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div><div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
+      '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div>' +
+      aiBudgetCard + '<div class="card"><h2>🧾 Historia wykorzystania kodów</h2><small style="color:var(--dim)">Maksymalnie 100 ostatnich wpisów. Pokazujemy skrócone ID konta, bez adresów e-mail. Historia jest przechowywana przez 12 miesięcy.</small>' + redemptionRows + '</div>' +
+      '<div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
   }
   window.npOpenAdminPanel = async function() {
     if (!API) { alert('Panel dostępny wyłącznie w oficjalnej aplikacji.'); return; }
@@ -392,7 +408,7 @@
     if (token) {
       try {
         const data = await fetchAdminData();
-        renderAdminPanel(data.stats, data.promos, '');
+        renderAdminPanel(data.stats, data.promos, data.redemptions, data.aiBudget, '');
         return;
       } catch (error) {
         if (error.status !== 401 && error.status !== 403) {
@@ -408,7 +424,7 @@
       const data = await api('/api/admin/bootstrap', { key: key.trim() }, 'POST', userToken);
       alert(data.message || 'Uprawnienia administratora aktywowane.');
       const panel = await fetchAdminData();
-      renderAdminPanel(panel.stats, panel.promos, '');
+      renderAdminPanel(panel.stats, panel.promos, panel.redemptions, panel.aiBudget, '');
     } catch (error) {
       alert(friendlyError(error, 'aktywować panelu ADMINA') + (error.message ? '\n' + error.message : ''));
     }
@@ -475,7 +491,7 @@
       if (!token) throw new Error('Zaloguj się na konto administratora.');
       const created = await api('/api/admin/promos', { tier, durationDays, maxRedemptions, expiresInDays, label }, 'POST', token);
       const panel = await fetchAdminData();
-      renderAdminPanel(panel.stats, panel.promos, created.code);
+      renderAdminPanel(panel.stats, panel.promos, panel.redemptions, panel.aiBudget, created.code);
     } catch (error) {
       alert(friendlyError(error, 'utworzyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
     }
