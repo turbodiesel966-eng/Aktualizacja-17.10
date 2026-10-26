@@ -296,7 +296,7 @@
       '<div class="entry"><b>🛠️ WARSZTAT · 7 dni — 10,00 zł</b><button class="btn" type="button" data-one-time-tier="warsztat" data-one-time-days="7">Kup WARSZTAT na 7 dni</button></div></div>';
     root.innerHTML = (typeof back === 'function' ? back() : '') +
       '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka. PRO dodaje analizę AI i pełną bazę elektryki. WARSZTAT zawiera PRO oraz narzędzia obsługi klientów i dokumentacji. Abonamentem zarządzasz w panelu Stripe.</p></div>' +
-      activation + card('amator') + card('pro') + card('warsztat') +
+      activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
       '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small></div>';
   }
   window.renderPlans = renderPlansBridge;
