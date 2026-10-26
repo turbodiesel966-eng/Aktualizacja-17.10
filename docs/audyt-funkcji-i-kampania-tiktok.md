@@ -112,3 +112,35 @@ Po 24 i 72 godzinach zapisuj wyświetlenia, średni czas oglądania, procent obe
 - Nie pokazuj niebezpiecznych prób z paliwem, odsłoniętym napędem, gorącym układem chłodzenia ani pracującymi elementami.
 - Każdy film kończy się jasną wskazówką, że specyfikacje liczbowe muszą odpowiadać konkretnemu modelowi.
 - Nie płacimy za reklamy ani nie uruchamiamy promocji płatnej bez osobnej zgody. Pierwsze 14 dni to test treści organicznych.
+
+## 5. Spis 20 nowych kart diagnostycznych dodanych do bazy
+
+Każda karta zawiera objaw, możliwe przyczyny, kolejność bezpiecznych kontroli oraz zastrzeżenia, gdzie trzeba korzystać z dokumentacji serwisowej konkretnego modelu:
+
+1. **Brak wzrostu napięcia ładowania** — akumulator, połączenia masy, stator i regulator.
+2. **Przeładowanie / przepalające się żarówki** — masa regulatora, zgodność instalacji oraz pomiary napięcia.
+3. **Kliknięcie bez kręcenia rozrusznika** — akumulator, przewody, przekaźnik, rozrusznik i możliwe mechaniczne zablokowanie silnika.
+4. **Rozrusznik kręci, ale nie obraca wałem** — sprzęgło jednokierunkowe, bendiks lub przekładnia rozrusznika.
+5. **Przelewanie gaźnika** — pływak, zawór iglicowy, gniazdo i kranik paliwa.
+6. **Dławienie na wysokich obrotach / pod obciążeniem** — przepływ paliwa, filtr, dysze lub ciśnienie paliwa, zależnie od gaźnika/EFI.
+7. **Wysokie obroty 2T po puszczeniu gazu** — przepustnica, nieszczelny dolot, króciec i uszczelniacze; ostrzeżenie przed ryzykiem ubogiej mieszanki.
+8. **Przegrzewanie/przytarcie 2T** — smarowanie, szczelność, mieszanka, chłodzenie i stan tłoka/cylindra.
+9. **Ciężki rozruch 4T na ciepło** — pomiar luzów zaworowych i dalsza diagnostyka kompresji oraz układów zasilania.
+10. **Migające światła przy skręcaniu kierownicą** — wiązka przy główce ramy, stacyjka, złącza oraz punkty masowe.
+11. **Zanik iskry na wybojach** — fajka, przewód WN, cewka, złącza CDI/ECU i przewód gaszenia.
+12. **Opór tylnego koła po pracach przy CVT/hamulcu** — dystanse, tuleje, montaż napędu, hamulec i łożyska.
+13. **Grzejący się lub trący hamulec** — linka, zacisk, tłoczek, prowadnice i elementy hydrauliczne.
+14. **Przegrzewanie silnika chłodzonego cieczą** — płyn, wycieki, chłodnica, wentylator, termostat i pompa.
+15. **Wyciek oleju z silnika/przekładni** — zlokalizowanie źródła, oddzielenie obiegów i sprawdzenie uszczelnień.
+16. **Zapach benzyny / podejrzenie wycieku** — bezpieczne przerwanie użytkowania, przewody, zbiornik, kranik i gaźnik.
+17. **Falujące wolne obroty EFI** — kody usterek, szczelność dolotu, czujniki i odczyt danych bieżących.
+18. **Nagły metaliczny hałas silnika** — bezpieczne wyłączenie, poziom oleju oraz etapowa kontrola mechaniczna.
+19. **Niska kompresja** — poprawne warunki pomiaru i różnice diagnostyczne między 2T a 4T.
+20. **Problemy po myciu/deszczu** — wilgoć w zapłonie, złączach, dolocie i osprzęcie.
+
+## 6. Materiały kampanii przygotowane w Canva
+
+- **Grafika pionowa TikTok 9:16:** [otwórz podgląd](https://www.canva.com/d/BpxEmJwibYnHzRz) · [edytuj w Canva](https://www.canva.com/d/p5AXcLEYkMg1S7h)
+- **Prezentacja kampanii — 10 slajdów:** [otwórz podgląd](https://www.canva.com/d/4JVIp-tcRot4pDN) · [edytuj w Canva](https://www.canva.com/d/HXadx5HkVKx32ug)
+
+To materiały robocze do publikacji. Nie oznaczają, że filmy opublikowano na TikToku ani że konto TikTok jest połączone z harmonogramem publikacji.
