@@ -596,7 +596,27 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
   }
 
   try {
+    // A successful Checkout must persist the subscription and grant the mapped plan.
+    state.stripeStatus = "active";
+    const checkoutCompleted = await sendEvent("evt_test_checkout_completed", "checkout.session.completed", {
+      id: "cs_test_checkout_completed",
+      object: "checkout.session",
+      mode: "subscription",
+      payment_status: "paid",
+      metadata: { user_id: "user_test_1" },
+      client_reference_id: "user_test_1",
+      customer: "cus_test_lifecycle",
+      subscription: "sub_test_lifecycle"
+    });
+    assert.equal(checkoutCompleted.status, 200);
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "active");
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.tier, "pro");
+    assert.equal(state.subscriptions.get("sub_test_lifecycle")?.price_id, "price_test_pro_month");
+    assert.equal(state.users.get("user_test_1")?.tier, "pro");
+    assert.equal(state.customers.get("cus_test_lifecycle"), "user_test_1");
+
     const object = { id: "sub_test_lifecycle", customer: "cus_test_lifecycle", metadata: { user_id: "user_test_1" } };
+    state.stripeStatus = "paused";
     const paused = await sendEvent("evt_test_paused", "customer.subscription.paused", object);
     assert.equal(paused.status, 200);
     assert.equal(state.subscriptions.get("sub_test_lifecycle")?.status, "paused");
