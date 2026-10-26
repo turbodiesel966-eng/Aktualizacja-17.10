@@ -122,7 +122,7 @@ test("kod jednorazowy łączy telefon z istniejącym kontem admina i nie może b
   const data = await response.json();
   assert.equal(response.status, 200);
   assert.equal(data.role, "admin");
-  assert.match(data.token, /^[A-F0-9]{64}$/);
+  assert.match(data.token, /^[a-f0-9]{64}$/);
   assert.equal(state.tokens.length, 1);
   assert.equal(state.tokens[0].user_id, state.ownerId);
   assert.notEqual(state.tokens[0].token_hash, data.token);
