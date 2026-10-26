@@ -51,6 +51,8 @@ with zipfile.ZipFile(apk) as bundle:
         raise SystemExit("Technical catalogue module is present but not initialized.")
     if "naprawnik-subscriptions-live.turbodiesel966.workers.dev" not in billing:
         raise SystemExit("Production billing/API integration is missing from the packaged app.")
+    if "window.__naprawnikAdminCodePrompt" not in billing:
+        raise SystemExit("Android-only owner code input was not connected to the packaged billing flow.")
     for endpoint in ["/api/admin/device-link", "/api/admin/mobile-login", "/api/checkout", "/api/one-time-checkout", "/api/promo/redeem"]:
         if endpoint not in billing:
             raise SystemExit(f"Missing billing/admin endpoint in packaged billing bridge: {endpoint}")
@@ -58,9 +60,9 @@ with zipfile.ZipFile(apk) as bundle:
        "openHostedBillingUrl(data.url, 'one-time')" not in billing or \
        "openHostedBillingUrl(data.url, 'portal')" not in billing:
         raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
-    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "naprawnik-v5-39-native-admin-pairing" not in service_worker or "NAPRAWNIK" not in manifest:
+    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "naprawnik-v5-40-native-admin-pairing" not in service_worker or "NAPRAWNIK" not in manifest:
         raise SystemExit("The packaged PWA/service-worker branding, owner pairing or billing version is inconsistent.")
-    for marker in ["window.npOpenAdminPanel", "window.prompt = () => code", "NP-MOB-", "location.hostname !== 'localhost'"]:
+    for marker in ["window.npOpenAdminPanel", "window.__naprawnikAdminCodePrompt = () => code", "NP-MOB-", "location.hostname !== 'localhost'"]:
         if marker not in pairing:
             raise SystemExit(f"Android owner-pairing UI is missing required behavior: {marker}")
 
