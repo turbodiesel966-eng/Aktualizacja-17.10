@@ -4,9 +4,11 @@
   const host = typeof location !== 'undefined' ? location.hostname : '';
   const isStagingHost = host === 'naprawnik-pwa-staging.turbodiesel966.workers.dev';
   const isProductionHost = host === 'turbodiesel966-eng.github.io';
+  // The Capacitor Android build serves the bundled web app from https://localhost.
+  const isNativeAppHost = host === 'localhost' || host === '127.0.0.1';
   const API = isStagingHost
     ? 'https://naprawnik-subscriptions-v2-staging.turbodiesel966.workers.dev'
-    : isProductionHost
+    : (isProductionHost || isNativeAppHost)
       ? 'https://naprawnik-subscriptions-live.turbodiesel966.workers.dev'
       : null;
   const TOKEN_KEY = 'naprawnik_api_token';
@@ -434,6 +436,7 @@
       metric('Unikalne przeglądarki · 7 dni', stats.uniqueBrowsers7dEstimate, 'Szacunek, nie dokładna liczba osób') +
       '</div><p style="font-size:11px;line-height:1.5;color:var(--dim)">' + esc(stats.note || '') + '</p><button class="btn" onclick="window.npOpenAdminPanel()">↻ Odśwież statystyki</button></div>' +
       '<div class="card"><h2>🔎 Diagnostyka bramki płatności</h2><p style="font-size:12px;color:var(--dim);line-height:1.5">Sprawdza połączenie serwera ze Stripe i cztery skonfigurowane ceny. To jest odczyt — nie tworzy Checkoutu ani nie pobiera pieniędzy.</p><button class="btn" type="button" onclick="window.npCheckStripeConfig()">Sprawdź Stripe bez płatności</button><div id="npAdminStripeDiag" style="font-size:12px;line-height:1.6;margin-top:10px"></div></div>' +
+      '<div class="card"><h2>📱 Połącz telefon z kontem właściciela</h2><small style="color:var(--dim);line-height:1.5">Na tym urządzeniu wygeneruj jednorazowy kod, a następnie wpisz go na telefonie w panelu właściciela. Kod wygasa po 10 minutach i działa tylko raz.</small><button class="btn" onclick="window.npCreateAdminDeviceCode()">＋ Wygeneruj kod połączenia telefonu</button><div id="npAdminDeviceLink" style="font-size:12px;line-height:1.5"></div></div>' +
       '<div class="card"><h2>🎟️ Utwórz kod promocyjny</h2><label for="npPromoTier">Pakiet</label><select id="npPromoTier"><option value="pro">PRO</option><option value="warsztat">WARSZTAT</option></select><label for="npPromoDuration">Czas dostępu</label><select id="npPromoDuration"><option value="3">3 dni</option><option value="7">7 dni</option></select><div class="grid2"><div><label for="npPromoMax">Maks. użyć</label><input id="npPromoMax" type="number" min="1" max="10000" value="1"></div><div><label for="npPromoExpires">Ważność kodu (dni)</label><input id="npPromoExpires" type="number" min="1" max="365" value="14"></div></div><label for="npPromoLabel">Opis kampanii (opcjonalnie)</label><input id="npPromoLabel" maxlength="120" placeholder="np. testy znajomych / konkurs"><button class="btn" onclick="window.npCreatePromo()">＋ Generuj kod</button>' +
       (newCode ? '<div class="entry" style="border-color:var(--hero)"><b>Nowy kod — pokaż go odbiorcy tylko teraz</b><input id="npPromoCreatedCode" readonly value="' + esc(newCode) + '"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'npPromoCreatedCode\').value).then(()=>alert(\'Skopiowano kod.\')).catch(()=>alert(\'Skopiuj kod ręcznie.\'))">Skopiuj kod</button></div>' : '') +
       '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div>' +
@@ -455,16 +458,44 @@
         }
       }
     }
-    const key = window.prompt('Aktywacja panelu właściciela. Wpisz jednorazowy kod aktywacyjny otrzymany od twórcy aplikacji:');
+    const key = window.prompt('Aktywacja lub połączenie ADMINA. Na telefonie wpisz jednorazowy kod wygenerowany w działającym panelu właściciela na drugim urządzeniu. Kod działa 10 minut. Przy pierwszej aktywacji wpisz kod aktywacyjny administratora:');
     if (!key) return;
     try {
       const userToken = await accountEnsure();
-      const data = await api('/api/admin/bootstrap', { key: key.trim() }, 'POST', userToken);
+      let data;
+      try {
+        data = await api('/api/admin/bootstrap', { key: key.trim() }, 'POST', userToken);
+      } catch (bootstrapError) {
+        if (![403, 409].includes(Number(bootstrapError.status))) throw bootstrapError;
+        // A used bootstrap key is not enough to claim a second account: try the one-time device code.
+        data = await api('/api/admin/mobile-login', { code: key.trim() }, 'POST', '');
+      }
+      if (data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        const ownerAccount = await api('/api/me', undefined, 'GET', data.token);
+        savePlan(ownerAccount, data.token);
+      }
       alert(data.message || 'Uprawnienia administratora aktywowane.');
       const panel = await fetchAdminData();
       renderAdminPanel(panel.stats, panel.promos, panel.redemptions, panel.aiBudget, '');
     } catch (error) {
-      alert(friendlyError(error, 'aktywować panelu ADMINA') + (error.message ? '\n' + error.message : ''));
+      alert(friendlyError(error, 'aktywować lub połączyć panelu ADMINA') + (error.message ? '\n' + error.message : ''));
+    }
+  };
+  window.npCreateAdminDeviceCode = async function() {
+    const root = document.getElementById('npAdminDeviceLink');
+    if (root) root.textContent = 'Generuję jednorazowy kod…';
+    try {
+      const token = tokenGet();
+      if (!token) throw new Error('Zaloguj się na konto administratora.');
+      const result = await api('/api/admin/device-link', {}, 'POST', token);
+      const code = String(result.code || '');
+      if (!/^NP-MOB-[A-F0-9]{24}$/.test(code)) throw new Error('Serwer nie zwrócił prawidłowego kodu połączenia.');
+      if (root) root.innerHTML = '<div style="color:var(--hero);margin:8px 0">Kod ważny 10 minut · do użycia jeden raz</div>' +
+        '<input id="npAdminDeviceCode" autocomplete="off" readonly value="' + esc(code) + '">' +
+        '<button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\\'npAdminDeviceCode\\').value).then(()=>alert(\\'Skopiowano kod połączenia.\\')).catch(()=>alert(\\'Skopiuj kod ręcznie.\\'))">Skopiuj kod</button>';
+    } catch (error) {
+      if (root) root.textContent = friendlyError(error, 'wygenerować kodu połączenia') + (error.message ? ' ' + error.message : '');
     }
   };
   window.npCheckStripeConfig = async function() {
