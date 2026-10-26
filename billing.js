@@ -14,7 +14,7 @@
   const NAMES = { amator: 'AMATOR', pro: 'PRO', warsztat: 'WARSZTAT' };
   // Zweryfikowane aktywne ceny subskrypcji LIVE. Aktualizuj je razem z cenami w Stripe.
   const DISPLAY_PRICES = {
-    pro: { month: '9 zł / miesiąc', year: '100 zł / rok (oszczędzasz 8 zł)' },
+    pro: { month: '14,99 zł / miesiąc', year: '149,99 zł / rok (oszczędzasz 29,89 zł)' },
     warsztat: { month: '29 zł / miesiąc', year: '300 zł / rok (oszczędzasz 48 zł)' }
   };
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
