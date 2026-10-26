@@ -658,6 +658,8 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
     PHOTO_ANALYSIS_ENABLED: "true",
     OPENAI_API_KEY: openAiKey,
     OPENAI_VISION_MODEL: "gpt-4.1-mini",
+    PHOTO_MONTHLY_BUDGET_USD: "5",
+    PHOTO_REQUEST_RESERVE_USD: "0.25",
     DB: {
       prepare(sql) {
         return {
@@ -665,6 +667,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
             return {
               async first() {
                 if (sql.includes("INSERT INTO request_limits")) return { request_count: 1 };
+                if (sql.includes("INSERT INTO photo_usage_budget")) return { period_start: params[0], budget_microusd: params[1] };
                 throw new Error("Unexpected photo first() SQL: " + sql);
               },
               async all() {
@@ -684,6 +687,8 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
               async run() {
                 if (sql.includes("UPDATE users SET tier = ?")) return { success: true, meta: { changes: 1 } };
                 if (sql.includes("DELETE FROM request_limits")) return { success: true, meta: { changes: 0 } };
+                if (sql.includes("UPDATE photo_usage_budget")) return { success: true, meta: { changes: 1 } };
+                if (sql.includes("DELETE FROM photo_usage_budget")) return { success: true, meta: { changes: 0 } };
                 throw new Error("Unexpected photo run() SQL: " + sql);
               }
             };
@@ -695,7 +700,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
   };
   return { env, state };
 }
-function makePhotoRequest({ mime = "image/jpeg", bytes = [0xff, 0xd8, 0xff, 0x00], symptoms = "Gubi iskrę na ciepło" } = {}) {
+function makePhotoRequest({ mime = "image/jpeg", bytes = [0xff,0xd8,0xff,0xc0,0x00,0x11,0x08,0x03,0x00,0x04,0x00,0x03,0x01,0x11,0x00,0x02,0x11,0x00,0x03,0x11,0x00], symptoms = "Gubi iskrę na ciepło" } = {}) {
   const form = new FormData();
   form.append("symptoms", symptoms);
   form.append("category", "spark");
