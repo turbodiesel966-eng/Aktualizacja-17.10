@@ -27,6 +27,8 @@ const RATE_LIMITS = Object.freeze({
   promoRedemptions: Object.freeze({ maxRequests: 5, windowSeconds: 15 * 60 }),
   adminWrites: Object.freeze({ maxRequests: 30, windowSeconds: 60 * 60 }),
   adminBootstrap: Object.freeze({ maxRequests: 5, windowSeconds: 60 * 60 }),
+  adminDeviceLink: Object.freeze({ maxRequests: 5, windowSeconds: 60 * 60 }),
+  adminMobileLogin: Object.freeze({ maxRequests: 5, windowSeconds: 15 * 60 }),
 });
 const CHECKOUT_LOCK_LEASE_SECONDS = 30 * 60;
 const SUBSCRIPTION_LIFECYCLE_EVENTS = new Set([
@@ -94,6 +96,9 @@ async function verifyStripeSignature(rawBody, signatureHeader, secret, tolerance
 function allowedOrigin(request, env) {
   const origin = request.headers.get("Origin");
   if (!origin) return null;
+  // Capacitor's packaged Android WebView uses https://localhost by default.
+  // This exact origin is explicitly allowed for the native app; other local origins remain blocked.
+  if (origin === "https://localhost") return origin;
   const allowed = (env.ALLOWED_ORIGINS || "").split(",").map(v => v.trim()).filter(Boolean);
   return allowed.includes(origin) ? origin : null;
 }
@@ -1063,6 +1068,77 @@ async function isAdminUser(env, userId) {
   return row?.role === "admin";
 }
 
+function createSecureApiToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function createAdminDeviceLink(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const limited = await enforceRateLimit(request, env, "admin-device-link", auth.userId, RATE_LIMITS.adminDeviceLink);
+  if (limited) return limited;
+  const denied = await requireAdminResponse(env, auth);
+  if (denied) return denied;
+  const owner = await env.DB.prepare("SELECT bootstrapped_by FROM admin_settings WHERE singleton = 1 LIMIT 1").first();
+  if (!owner || owner.bootstrapped_by !== auth.userId) return err("Kod połączenia może wygenerować główne konto właściciela.", 403);
+
+  const now = nowSeconds();
+  await env.DB.prepare("DELETE FROM admin_device_codes WHERE expires_at <= ? OR used_at IS NOT NULL").bind(now).run();
+  const code = "NP-MOB-" + [...crypto.getRandomValues(new Uint8Array(12))]
+    .map(value => value.toString(16).padStart(2, "0")).join("").toUpperCase();
+  const codeHash = await sha256Hex("naprawnik-admin-device:" + code);
+  await env.DB.prepare(`INSERT INTO admin_device_codes
+    (code_hash, user_id, created_at, expires_at, used_at, created_by)
+    VALUES (?, ?, ?, ?, NULL, ?)`)
+    .bind(codeHash, auth.userId, now, now + 600, auth.userId).run();
+  return json({
+    ok: true,
+    code,
+    expiresAt: now + 600,
+    expiresInSeconds: 600,
+    message: "Kod jednorazowy działa przez 10 minut i łączy urządzenie z istniejącym kontem właściciela."
+  });
+}
+
+async function adminMobileLogin(request, env) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const limited = await enforceRateLimit(request, env, "admin-mobile-login", ip, RATE_LIMITS.adminMobileLogin);
+  if (limited) return limited;
+  const body = await readJson(request, 4096);
+  const code = typeof body?.code === "string" ? body.code.trim().toUpperCase() : "";
+  if (!/^NP-MOB-[A-F0-9]{24}$/.test(code)) return err("Nieprawidłowy lub wygasły kod połączenia telefonu.", 401);
+
+  const now = nowSeconds();
+  const codeHash = await sha256Hex("naprawnik-admin-device:" + code);
+  const row = await env.DB.prepare(`SELECT user_id FROM admin_device_codes
+    WHERE code_hash = ? AND used_at IS NULL AND expires_at > ? LIMIT 1`)
+    .bind(codeHash, now).first();
+  if (!row) return err("Nieprawidłowy, wykorzystany lub wygasły kod połączenia telefonu.", 401);
+  const owner = await env.DB.prepare("SELECT bootstrapped_by FROM admin_settings WHERE singleton = 1 LIMIT 1").first();
+  if (!owner || owner.bootstrapped_by !== row.user_id || !(await isAdminUser(env, row.user_id))) {
+    return err("Kod nie jest przypisany do aktywnego konta właściciela.", 403);
+  }
+
+  const claimed = await env.DB.prepare(`UPDATE admin_device_codes SET used_at = ?
+    WHERE code_hash = ? AND used_at IS NULL AND expires_at > ?`)
+    .bind(now, codeHash, now).run();
+  if (Number(claimed.meta?.changes || 0) !== 1) return err("Ten kod został już wykorzystany. Wygeneruj nowy kod na koncie właściciela.", 409);
+
+  const token = createSecureApiToken();
+  const tokenHash = await sha256Hex(token);
+  await env.DB.prepare(`INSERT INTO api_tokens
+    (token_hash, user_id, created_at, expires_at, revoked_at, last_used_at)
+    VALUES (?, ?, ?, ?, NULL, ?)`)
+    .bind(tokenHash, row.user_id, now, now + TOKEN_LIFETIME_SECONDS, now).run();
+  return json({
+    ok: true,
+    role: "admin",
+    token,
+    message: "Telefon połączono z istniejącym kontem właściciela NAPRAWNIKA."
+  });
+}
+
 async function bootstrapAdmin(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   const limited = await enforceRateLimit(request, env, "admin-bootstrap", auth.userId, RATE_LIMITS.adminBootstrap);
@@ -1827,6 +1903,12 @@ export default {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
         else response = await bootstrapAdmin(request, env, auth);
+      } else if (url.pathname === "/api/admin/device-link") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await createAdminDeviceLink(request, env, auth);
+      } else if (url.pathname === "/api/admin/mobile-login" && request.method === "POST") {
+        response = await adminMobileLogin(request, env);
       } else if (url.pathname === "/api/admin/stats" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -1906,6 +1988,6 @@ export default {
   },
 };
 
-export { authenticate, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
 
 
