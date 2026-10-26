@@ -18,13 +18,15 @@ Stan odniesienia: 26 października 2026 r. Repozytorium: [Aktualizacja-17.10](ht
 - Plany Stripe PRO/WARSZTAT w abonamencie miesięcznym i rocznym; bieżące ceny miesięczne/roczne pozostają bez zmian.
 - Stripe Checkout, Billing Portal, webhook podpisany i obsługa cyklu życia subskrypcji.
 - Ochrona przed podwójnym Checkout dla jednego konta, klucz idempotencji oraz walidacja trybu test/live, waluty, aktywności ceny i URL powrotu.
-- Istniejący panel ADMINA: serwerowa rola administratora, statystyki wyłącznie w panelu, diagnostyka cen Stripe, generowanie i wyłączanie kodów promocyjnych.
+- Jednorazowe pakiety: PRO 3 dni — 3 zł, PRO 7 dni — 7 zł, WARSZTAT 3 dni — 5 zł, WARSZTAT 7 dni — 10 zł. Mają oddzielne ceny Stripe w trybie TEST i LIVE, niezależne od abonamentów miesięcznych i rocznych.
+- Istniejący panel ADMINA: serwerowa rola administratora, statystyki wyłącznie w panelu, diagnostyka ośmiu cen Stripe, generowanie i wyłączanie kodów promocyjnych, historia do 100 ostatnich wykorzystań bez adresów e-mail oraz agregat kosztu AI.
 
 ### Prywatność i zabezpieczenia
 - Anonimowe pomiary są opcjonalne i domyślnie wyłączone.
 - Przechowywane są hashe identyfikatorów przeglądarki/sesji, bez surowego adresu IP w tym module.
 - Dokładna liczba kont pochodzi z unikalnych rekordów konta; aktywne konta to unikalne ID widziane w ruchu po logowaniu; przeglądarki anonimowe są szacunkiem, nie liczbą osób.
 - Limity żądań D1 dla m.in. rejestracji, zapisów, Checkout/portalu, promocji, statystyk i analizy zdjęć.
+- Analiza zdjęć otrzymała miesięczny budżet (domyślnie 5 USD), rezerwację do 0,25 USD na próbę, limit 5 prób/dobę i 8/godzinę na konto oraz blokadę, gdy nie można potwierdzić rezerwy w D1. Funkcja pozostaje wyłączona w ustawieniach Workera.
 
 ### Asystent zdjęciowy AI
 - Endpoint analizy zdjęć 1–3 plików JPEG/PNG/WebP, walidacja typu/rozmiaru i sprawdzanie planu PRO/WARSZTAT po stronie serwera.
@@ -34,7 +36,7 @@ Stan odniesienia: 26 października 2026 r. Repozytorium: [Aktualizacja-17.10](ht
 - Wynik CI/Pages potwierdza automatyczne kontrole i publikację, a nie pełną zgodność każdego widoku mobilnego.
 - Dane klientów, pojazdów, notatek i checklist są przede wszystkim lokalne; pełna synchronizacja danych warsztatowych przez API nie jest potwierdzona.
 - Pełny test zakupu Stripe, webhooka od strony użytkownika i portalu rozliczeń nie jest równoważny z odczytem ustawień. Nie wykonywać płatności testowych ani prawdziwych bez odrębnej zgody właściciela.
-- Trzeba dopiąć weryfikację pakietów jednorazowych, historii wykorzystania promocji i budżetu AI przed uznaniem ich za gotowe produkcyjnie.
+- Moduły pakietów, historia użycia promocji, migracja budżetu AI i oba Workery zostały wdrożone w LIVE/STAGING. Pozostaje kontrolowany E2E w Stripe TEST (po uzyskaniu zgody na testową transakcję) oraz osobna decyzja właściciela o aktywacji analizy AI. Nie uruchamiano sesji Checkout ani płatności.
 
 ## 3. Rozszerzenie bazy usterek — zasada jakości
 Nowe przypadki dodane w ramach rozwoju bazy opisują **procedury ogólnej diagnostyki**, nie zastępują serwisówki producenta. Nie podają uniwersalnych momentów dokręcania, luzów zaworowych, rezystancji ani wartości kompresji. Dla każdego modelu należy potwierdzić parametry, kod silnika, rocznik i wersję układu. Jeśli występuje wyciek paliwa, przegrzanie, zatarcie lub problem z hamulcami/kierowaniem — najpierw przerwać użytkowanie i zabezpieczyć pojazd.
