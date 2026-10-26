@@ -12,6 +12,56 @@ if (Capacitor.isNativePlatform()) {
   void StatusBar.setBackgroundColor({ color: "#0a0a14" }).catch(() => {});
   void StatusBar.setStyle({ style: Style.Light }).catch(() => {});
 
+  // Keep hosted Stripe Checkout/Portal in a native browser tab. Stripe returns to
+  // the Worker's static return page, so this WebView's local API token is preserved.
+  window.__naprawnikNativeCheckout = async (url, purpose) => {
+    if (typeof url !== "string" ||
+        !/^https:\/\/(checkout\.stripe\.com|buy\.stripe\.com|billing\.stripe\.com)\//i.test(url)) {
+      throw new Error("Odrzucono niebezpieczny adres płatności.");
+    }
+
+    let finish;
+    const finished = new Promise(resolve => { finish = resolve; });
+    const listener = await Browser.addListener("browserFinished", () => finish(true));
+    try {
+      await Browser.open({ url, toolbarColor: "#0a0a14", presentationStyle: "fullscreen" });
+      await finished;
+
+      // Stripe webhooks are asynchronous. Refresh only the authenticated account and
+      // poll for a short bounded window; never claim a purchase was successful from the URL.
+      let tier = "amator";
+      for (let attempt = 0; attempt < 8; attempt++) {
+        try {
+          if (typeof window.npBillingBoot === "function") await window.npBillingBoot();
+          const license = typeof window.naprawnikGetVerifiedLicense === "function"
+            ? window.naprawnikGetVerifiedLicense()
+            : null;
+          tier = license?.tier || "amator";
+          if (tier !== "amator") break;
+        } catch {
+          // Continue the bounded server refresh loop; the visible status stays honest.
+        }
+        if (attempt < 7) await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
+      if (typeof window.renderPlans === "function") window.renderPlans();
+      const names = { amator: "AMATOR", pro: "PRO", warsztat: "WARSZTAT" };
+      if (purpose === "portal") {
+        if (tier !== "amator") {
+          window.alert("Panel Stripe został zamknięty. Serwer potwierdza aktywny plan " + (names[tier] || tier.toUpperCase()) + ".");
+        } else {
+          window.alert("Panel Stripe został zamknięty. Nie udało się potwierdzić aktywnego dostępu na tym koncie; sprawdź status planu w aplikacji.");
+        }
+      } else if (tier !== "amator") {
+        window.alert("Serwer potwierdził aktywny plan " + (names[tier] || tier.toUpperCase()) + ". Możesz wrócić do pracy w NAPRAWNIKU.");
+      } else {
+        window.alert("Karta płatności została zamknięta, ale nie potwierdzono jeszcze nowego dostępu. Jeśli płatność była wykonana, sprawdź plan ponownie za chwilę. Jeśli anulowano zakup, plan się nie zmienił.");
+      }
+    } finally {
+      await listener.remove().catch(() => {});
+    }
+  };
+
   // Keep web and in-app navigation stable when opening external OEM PDF manuals.
   document.addEventListener("click", event => {
     const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
