@@ -25,7 +25,7 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 
 - Produkcyjny Worker: `naprawnik-subscriptions-live`; jego kod źródłowy jest wersjonowany w `workers/subscriptions/src/index.mjs`.
 - W Live potwierdzono konfigurację `PRODUCTION_ENABLED=true`, oczekiwany tryb Stripe `live`, cztery identyfikatory cen, adresy powrotu HTTPS i połączenie z produkcyjną bazą D1.
-- Bezpośredni, tylko odczytowy odczyt konta Stripe potwierdził, że wszystkie cztery ceny są aktywne i poprawne: PRO 9 PLN/miesiąc i 100 PLN/rok; WARSZTAT 29 PLN/miesiąc i 300 PLN/rok.
+- Ceny używane do nowych zakupów: PRO 14,99 PLN/miesiąc i 149,99 PLN/rok; WARSZTAT 29 PLN/miesiąc i 300 PLN/rok. Ceny miesięczne/roczne są przypięte bezpośrednio do produkcyjnego Workera i mają odpowiadające im ceny w trybie testowym.
 - Diagnostyka wywołana przez produkcyjny Worker otrzymała HTTP 403, kod `more_permissions_required`, typ `invalid_request_error` dla każdego `GET /v1/prices/{id}`. To potwierdza brak uprawnienia dla użytego klucza ograniczonego, a nie brak cen. Diagnostyka nie ujawnia wartości sekretu i wykonuje tylko żądania GET.
 - **Wymagane uprawnienia restricted LIVE API key (ustawić minimalnie dla używanych endpointów):**
   - `Prices: Read` — sprawdzanie czterech cen i rozwinięte ceny przy odczycie subskrypcji.
