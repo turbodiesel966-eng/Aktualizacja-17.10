@@ -534,7 +534,7 @@
       const token = tokenGet();
       await api('/api/admin/promos/disable', { id }, 'POST', token);
       const panel = await fetchAdminData();
-      renderAdminPanel(panel.stats, panel.promos, '');
+      renderAdminPanel(panel.stats, panel.promos, panel.redemptions, panel.aiBudget, '');
     } catch (error) {
       alert(friendlyError(error, 'wyłączyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
     }
