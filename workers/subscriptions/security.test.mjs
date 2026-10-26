@@ -660,7 +660,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
   const env = {
     PHOTO_ANALYSIS_ENABLED: "true",
     OPENAI_API_KEY: openAiKey,
-    OPENAI_VISION_MODEL: "gpt-4.1-mini",
+    OPENAI_VISION_MODEL: "gpt-6-luna",
     PHOTO_MONTHLY_BUDGET_USD: "5",
     PHOTO_REQUEST_RESERVE_USD: "0.25",
     DB: {
@@ -766,7 +766,7 @@ test("analiza zdjęcia przekazuje obrazy jako data URL do Responses API i zwraca
     const response = await photoDiagnosis(makePhotoRequest(), env, { userId: "user_test_1" });
     const result = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(result.model, "gpt-4.1-mini");
+    assert.equal(result.model, "gpt-6-luna");
     assert.match(result.analysis, /Możliwa usterka świecy/);
     assert.equal(state.upstreamRequest.store, false);
     assert.equal(state.upstreamRequest.max_output_tokens, 1100);
