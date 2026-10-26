@@ -1,6 +1,6 @@
 # NAPRAWNIK — audyt funkcji, rozwój bazy i kampania TikTok
 
-Stan odniesienia: 26 października 2026 r. Wersja interfejsu: NAPRAWNIK v5.16. Repozytorium: [Aktualizacja-17.10](https://github.com/turbodiesel966-eng/Aktualizacja-17.10). Ten dokument odróżnia funkcje potwierdzone w kodzie od elementów wymagających testu użytkowego. Nie oznacza, że każda funkcja jest zweryfikowana na każdym telefonie.
+Stan odniesienia: 26 października 2026 r. Wersja interfejsu: NAPRAWNIK v5.18. Repozytorium: [Aktualizacja-17.10](https://github.com/turbodiesel966-eng/Aktualizacja-17.10). Ten dokument odróżnia funkcje potwierdzone w kodzie od elementów wymagających testu użytkowego. Nie oznacza, że każda funkcja jest zweryfikowana na każdym telefonie.
 
 ## 1. Zawartość aplikacji widoczna w kodzie
 
@@ -43,7 +43,7 @@ Nowe przypadki dodane w ramach rozwoju bazy opisują **procedury ogólnej diagno
 
 ### 20 nowych kart diagnostycznych dodanych do bazy
 
-Po dodaniu nowych przypadków główna tablica `knowledgeCases` zawiera **50 kart o unikalnych ID**. Nowe karty obejmują:
+Po dodaniu 20 nowych przypadków główna tablica `knowledgeCases` zawiera **70 kart o unikalnych ID: 50 wcześniejszych i 20 nowych**. Nowe karty obejmują:
 
 1. **Akumulator się rozładowuje — ładowanie nie rośnie.** Sprawdzenie akumulatora i połączeń, pomiar ładowania, regulatora oraz statora według schematu konkretnego pojazdu.
 2. **Przeładowanie akumulatora lub przepalające się żarówki.** Sprawdzenie masy regulatora, zgodności regulatora z instalacją AC/DC oraz pomiary napięcia w danych warunkach pracy.
