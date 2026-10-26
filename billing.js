@@ -461,14 +461,14 @@
     const key = window.prompt('Aktywacja lub połączenie ADMINA. Na telefonie wpisz jednorazowy kod wygenerowany w działającym panelu właściciela na drugim urządzeniu. Kod działa 10 minut. Przy pierwszej aktywacji wpisz kod aktywacyjny administratora:');
     if (!key) return;
     try {
-      const userToken = await accountEnsure();
+      const activationCode = key.trim();
       let data;
-      try {
-        data = await api('/api/admin/bootstrap', { key: key.trim() }, 'POST', userToken);
-      } catch (bootstrapError) {
-        if (![403, 409].includes(Number(bootstrapError.status))) throw bootstrapError;
-        // A used bootstrap key is not enough to claim a second account: try the one-time device code.
-        data = await api('/api/admin/mobile-login', { code: key.trim() }, 'POST', '');
+      if (/^NP-MOB-[A-F0-9]{24}$/i.test(activationCode)) {
+        // Pair the existing owner account directly; do not create an unused anonymous account on the phone.
+        data = await api('/api/admin/mobile-login', { code: activationCode }, 'POST', '');
+      } else {
+        const userToken = await accountEnsure();
+        data = await api('/api/admin/bootstrap', { key: activationCode }, 'POST', userToken);
       }
       if (data.token) {
         localStorage.setItem(TOKEN_KEY, data.token);
