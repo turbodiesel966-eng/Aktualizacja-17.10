@@ -78,6 +78,8 @@ test("budżet rezerwuje koszt atomowo i blokuje kolejne wywołania ponad limit",
   await settlePhotoBudget(env,first,80_000);
   assert.equal(DB.state.row.reserved_microusd,250_000);
   assert.equal(DB.state.row.actual_microusd,80_000);
+  await settlePhotoBudget(env,second,100_000);
+  assert.equal(DB.state.row.reserved_microusd,0);
   const fourth=await reservePhotoBudget(env);
   assert.ok(fourth);
   assert.equal(DB.state.row.request_count,3);
