@@ -988,7 +988,7 @@ test("native Stripe return page handles only known results and sends no-store, n
     const html = await response.text();
     assert.ok(html.includes("NAPRAWNIK"));
     assert.equal(html.toLowerCase().includes("<script"), false);
-    if (result === "success") assert.ok(html.toLowerCase().includes("wróć do aplikacji naprawnika"));
+    if (result === "success") assert.ok(html.toLowerCase().includes("wróć do aplikacji naprawnik"));
     if (result === "cancelled") assert.ok(html.toLowerCase().includes("anulowany"));
     if (result === "portal") assert.ok(html.includes("Panel abonamentu został zamknięty"));
   }
