@@ -26,7 +26,7 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 - Produkcyjny Worker: `naprawnik-subscriptions-live`; jego kod źródłowy jest wersjonowany w `workers/subscriptions/src/index.mjs`.
 - W Live potwierdzono konfigurację `PRODUCTION_ENABLED=true`, oczekiwany tryb Stripe `live`, cztery identyfikatory cen, adresy powrotu HTTPS i połączenie z produkcyjną bazą D1.
 - Ceny używane do nowych zakupów: PRO 14,99 PLN/miesiąc i 149,99 PLN/rok; WARSZTAT 29 PLN/miesiąc i 300 PLN/rok. Ceny miesięczne/roczne są przypięte bezpośrednio do produkcyjnego Workera i mają odpowiadające im ceny w trybie testowym.
-- Diagnostyka wywołana przez produkcyjny Worker otrzymała HTTP 403, kod `more_permissions_required`, typ `invalid_request_error` dla każdego `GET /v1/prices/{id}`. To potwierdza brak uprawnienia dla użytego klucza ograniczonego, a nie brak cen. Diagnostyka nie ujawnia wartości sekretu i wykonuje tylko żądania GET.
+- **Stan po ostatniej weryfikacji (26.10.2026):** diagnostyka uruchomiona w panelu właściciela aplikacji pokazuje `Wynik całościowy: Konfiguracja jest gotowa do uruchomienia płatności`, a odczyty wszystkich czterech cen w trybie LIVE zwracają HTTP 200 i OK. Wcześniejszy błąd HTTP 403 `more_permissions_required` nie występuje już w zrzucie ostatniej diagnostyki. Sprawdzenie konfiguracji nie jest jeszcze pełnym testem płatności i nie potwierdza aktywacji subskrypcji przez webhook.
 - **Wymagane uprawnienia restricted LIVE API key (ustawić minimalnie dla używanych endpointów):**
   - `Prices: Read` — sprawdzanie czterech cen i rozwinięte ceny przy odczycie subskrypcji.
   - `Checkout Sessions: Read + Write` — odzyskanie istniejącej sesji i tworzenie nowej sesji przez `POST /v1/checkout/sessions`.
@@ -49,6 +49,6 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 ## Ograniczenia i następne kroki
 
 - Nie utworzono podczas audytu nowych sesji Stripe Checkout, płatności, PaymentIntent ani subskrypcji.
-- Przed uznaniem płatności za gotowe wymagane jest rozwiązanie HTTP 403 po stronie sekretu/uprawnień Stripe, a następnie ręczna weryfikacja właścicielska w panelu aplikacji. Nie wolno używać produkcyjnych transakcji jako testu technicznego.
+- **Przed komercyjnym uruchomieniem:** wykonać i udokumentować pełny test end-to-end wyłącznie w trybie Stripe TEST: Checkout → webhook → przyznanie właściwego planu → panel rozliczeń → anulowanie/aktualizacja subskrypcji. Ostatnia diagnostyka LIVE pokazała wszystkie ceny jako OK (HTTP 200), ale nie wykonano realnego zakupu i nie należy go wykonywać jako testu technicznego.
 - Dane pojazdów, napraw, notatek i checklist w webowej aplikacji pozostają obecnie lokalne dla danej przeglądarki. Worker zawiera API `/api/data`, ale frontend nie jest jeszcze zintegrowany z pełną synchronizacją danych. Kopię zapasową należy eksportować przed zmianami lub czyszczeniem pamięci.
 - Wynik kompilacji i testów automatycznych nie jest równoznaczny z testem na fizycznym telefonie ani z potwierdzeniem realnej płatności.
