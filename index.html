@@ -126,7 +126,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .brand-hero:before{background:radial-gradient(ellipse at 15% 50%,rgba(255,122,0,.18),transparent 35%),radial-gradient(ellipse at 85% 50%,rgba(40,123,255,.20),transparent 38%) !important;}
 
 
-/* NAPRAWNIK v5.14 — asystent zdjęciowy i historia offline */
+/* NAPRAWNIK v5.16 — asystent zdjęciowy i historia offline */
 .pa-intro{border:1px solid #7c3aed;background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(34,211,238,.07));border-radius:12px;padding:13px;margin-bottom:10px}
 .pa-status{font-size:11px;border:1px solid var(--border);border-radius:8px;padding:8px;margin:8px 0;color:var(--dim);line-height:1.45}
 .pa-status.online{border-color:#16875a;color:#8df0ba}.pa-status.offline{border-color:#b7791f;color:#ffd58a}.pa-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:8px 0}
@@ -150,7 +150,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 </head>
 <body>
 <div class="frame">
-  <div class="topbar"><span>⚙️ NAPRAWNIK v5.14 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b></span><span id="clock"></span></div>
+  <div class="topbar"><span>⚙️ NAPRAWNIK v5.16 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b></span><span id="clock"></span></div>
   <div class="screen" id="screen"></div>
   <div class="nav">
     <div class="nav-item" data-nav="home">🏠 Home</div>
@@ -2254,7 +2254,7 @@ function renderClients(){
   screen.querySelectorAll('.cl-hit').forEach(el=>el.addEventListener('click', ()=>{ clientFilter = el.dataset.key; renderClients(); }));
 }
 
-const APP_VERSION = 'NAPRAWNIK v5.14';
+const APP_VERSION = 'NAPRAWNIK v5.16';
 function sendReport(kind){
   const ta = $('#' + kind + 'Text');
   const txt = ta.value.trim();
