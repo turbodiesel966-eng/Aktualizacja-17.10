@@ -42,6 +42,58 @@ const SUBSCRIPTION_LIFECYCLE_EVENTS = new Set([
 ]);
 const encoder = new TextEncoder();
 
+function billingReturnPage(url) {
+  const result = url.searchParams.get("result");
+  const views = {
+    success: {
+      title: "Płatność została zakończona",
+      message: "Zamknij tę kartę przeglądarki i wróć do aplikacji NAPRAWNIK. Dostęp zostanie odświeżony po potwierdzeniu po stronie serwera."
+    },
+    cancelled: {
+      title: "Checkout został anulowany",
+      message: "Jeśli przerwano zakup przed płatnością, plan nie został zmieniony. Zamknij tę kartę i wróć do aplikacji NAPRAWNIK."
+    },
+    portal: {
+      title: "Panel abonamentu został zamknięty",
+      message: "Zamknij tę kartę i wróć do aplikacji NAPRAWNIK, aby odświeżyć stan swojego planu."
+    }
+  };
+  const view = views[result];
+  if (!view) return new Response("Nieprawidłowy adres powrotu.", {
+    status: 400,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer"
+    }
+  });
+  const escape = value => String(value).replace(/[&<>"]/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
+  })[ch]);
+  const html = '<!doctype html><html lang="pl"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<meta name="theme-color" content="#0a0a14"><title>' + escape(view.title) + ' — NAPRAWNIK</title>' +
+    '<style>:root{color-scheme:dark;background:#0a0a14;color:#e8e8f5;font-family:system-ui,sans-serif}' +
+    'body{min-height:100vh;margin:0;display:grid;place-items:center;padding:24px;box-sizing:border-box}' +
+    'main{max-width:560px;border:1px solid #33334d;border-radius:18px;background:#15151f;padding:28px;box-shadow:0 0 22px #0008}' +
+    'h1{font-size:clamp(24px,5vw,34px);color:#ff8c1a;margin:0 0 16px}' +
+    'p{line-height:1.65;color:#e8e8f5}small{display:block;margin-top:24px;color:#22d3ee;letter-spacing:.08em}</style>' +
+    '</head><body><main><h1>' + escape(view.title) + '</h1><p>' + escape(view.message) +
+    '</p><small>NAPRAWNIK · WARSZTAT I DIAGNOSTYKA</small></main></body></html>';
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    }
+  });
+}
+
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -724,8 +776,14 @@ async function checkout(request, env, auth) {
     return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
   }
   const appRoot = appBase.replace(/\/$/, "");
-  const successUrl = safeReturnUrl(env.CHECKOUT_SUCCESS_URL, `${appRoot}/?checkout=success`, appBase);
-  const cancelUrl = safeReturnUrl(env.CHECKOUT_CANCEL_URL, `${appRoot}/?checkout=cancelled`, appBase);
+  const nativeReturn = request.headers.get("Origin") === "https://localhost";
+  const workerOrigin = new URL(request.url).origin;
+  const successUrl = nativeReturn
+    ? workerOrigin + "/billing/return?result=success"
+    : safeReturnUrl(env.CHECKOUT_SUCCESS_URL, appRoot + "/?checkout=success", appBase);
+  const cancelUrl = nativeReturn
+    ? workerOrigin + "/billing/return?result=cancelled"
+    : safeReturnUrl(env.CHECKOUT_CANCEL_URL, appRoot + "/?checkout=cancelled", appBase);
   if (!successUrl || !cancelUrl) return err("Checkout return URLs must use the APP_BASE_URL origin", 500);
 
   const user = await env.DB.prepare("SELECT id, email FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
@@ -871,8 +929,14 @@ async function oneTimeCheckout(request, env, auth) {
   try { parsedAppBase = new URL(appBase || ""); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
   if (parsedAppBase.protocol !== "https:" || parsedAppBase.username || parsedAppBase.password) return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
   const appRoot = appBase.replace(/\/$/, "");
-  const successUrl = safeReturnUrl(env.CHECKOUT_SUCCESS_URL, `${appRoot}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`, appBase);
-  const cancelUrl = safeReturnUrl(env.CHECKOUT_CANCEL_URL, `${appRoot}/?checkout=cancelled`, appBase);
+  const nativeReturn = request.headers.get("Origin") === "https://localhost";
+  const workerOrigin = new URL(request.url).origin;
+  const successUrl = nativeReturn
+    ? workerOrigin + "/billing/return?result=success"
+    : safeReturnUrl(env.CHECKOUT_SUCCESS_URL, appRoot + "/?checkout=success&session_id={CHECKOUT_SESSION_ID}", appBase);
+  const cancelUrl = nativeReturn
+    ? workerOrigin + "/billing/return?result=cancelled"
+    : safeReturnUrl(env.CHECKOUT_CANCEL_URL, appRoot + "/?checkout=cancelled", appBase);
   if (!successUrl || !cancelUrl) return err("Checkout return URLs must use the APP_BASE_URL origin", 500);
   const user = await env.DB.prepare("SELECT id, email FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
   if (!user) return err("User not found", 404);
@@ -970,7 +1034,11 @@ async function createBillingPortalSession(request, env, auth) {
     return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
   }
   const appRoot = appBase.replace(/\/$/, "");
-  const portalReturnUrl = safeReturnUrl(`${appRoot}/?billing=return`, `${appRoot}/?billing=return`, appBase);
+  const nativeReturn = request.headers.get("Origin") === "https://localhost";
+  const workerOrigin = new URL(request.url).origin;
+  const portalReturnUrl = nativeReturn
+    ? workerOrigin + "/billing/return?result=portal"
+    : safeReturnUrl(appRoot + "/?billing=return", appRoot + "/?billing=return", appBase);
   if (!portalReturnUrl) return err("Billing portal return URL must use the APP_BASE_URL origin", 500);
 
   let customer = await env.DB.prepare(
@@ -1869,7 +1937,11 @@ export default {
         return err("Origin not allowed", 403);
       }
       let response;
-      if (url.pathname === "/health" && request.method === "GET") { response = json({ ok: true, service: "naprawnik-subscriptions", version: "2.1.0", enabled: env.PRODUCTION_ENABLED === "true" }); } else if (url.pathname === "/webhooks/stripe") {
+      if (url.pathname === "/billing/return" && request.method === "GET") {
+        response = billingReturnPage(url);
+      } else if (url.pathname === "/health" && request.method === "GET") {
+        response = json({ ok: true, service: "naprawnik-subscriptions", version: "2.1.0", enabled: env.PRODUCTION_ENABLED === "true" });
+      } else if (url.pathname === "/webhooks/stripe") {
         response = await handleWebhook(request, env);
       } else if (env.PRODUCTION_ENABLED !== "true") { response = err("Production service is not enabled", 503);      } else if (url.pathname === "/api/register" && request.method === "POST") {
         const limited = await enforceRateLimit(request, env, "registration", request.headers.get("CF-Connecting-IP") || "unknown", RATE_LIMITS.registration);
@@ -1988,6 +2060,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, billingReturnPage, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
 
 
