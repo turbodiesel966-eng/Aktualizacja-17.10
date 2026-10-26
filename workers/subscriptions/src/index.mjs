@@ -1270,53 +1270,27 @@ async function createAdminPromo(request, env, auth) {
   const durationDays = Number(body?.durationDays);
   const maxRedemptions = Number(body?.maxRedemptions);
   const expiresInDays = Number(body?.expiresInDays);
-  const count = body?.count === undefined ? 1 : Number(body.count);
   const label = typeof body?.label === "string" ? body.label.trim() : "";
   if (!["pro", "warsztat"].includes(tier)) return err("Wybierz pakiet PRO lub WARSZTAT.");
-  if (![3, 7, 180].includes(durationDays)) return err("Pakiet promocyjny może trwać 3, 7 albo 180 dni.");
+  if (![3, 7].includes(durationDays)) return err("Pakiet promocyjny może trwać 3 albo 7 dni.");
   if (!Number.isSafeInteger(maxRedemptions) || maxRedemptions < 1 || maxRedemptions > 10000) return err("Limit użyć musi wynosić od 1 do 10000.");
   if (!Number.isSafeInteger(expiresInDays) || expiresInDays < 1 || expiresInDays > 365) return err("Termin ważności musi wynosić od 1 do 365 dni.");
-  if (!Number.isSafeInteger(count) || count < 1 || count > 10) return err("Jednorazowo można utworzyć od 1 do 10 kodów.");
   if (label.length > 120) return err("Nazwa kampanii może mieć maksymalnie 120 znaków.");
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  const code = "NAP-" + [...bytes].map(b => alphabet[b % alphabet.length]).join("");
+  const codeHash = await sha256Hex("naprawnik-promo:" + code);
+  const id = crypto.randomUUID();
   const now = nowSeconds();
   const expiresAt = now + expiresInDays * 86400;
-  const codes = [];
-  for (let i = 0; i < count; i++) {
-    const bytes = crypto.getRandomValues(new Uint8Array(10));
-    const code = "NAP-" + [...bytes].map(b => alphabet[b % alphabet.length]).join("");
-    const codeHash = await sha256Hex("naprawnik-promo:" + code);
-    const id = crypto.randomUUID();
-    const codeLabel = (count > 1 ? (label ? label + " " : "") + String(i + 1).padStart(2, "0") + "/" + String(count).padStart(2, "0") : label).slice(0, 120);
-    codes.push({ id, code, codeHash, codeLabel, tier, durationDays, maxRedemptions, expiresAt, now, createdBy: auth.userId });
-  }
-  const statements = codes.map(item => env.DB.prepare(`INSERT INTO promo_codes
+  await env.DB.prepare(`INSERT INTO promo_codes
     (id, code_hash, code_hint, label, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled, created_by, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 1, ?, ?)`).bind(
-      item.id, item.codeHash, item.code.slice(-4), item.codeLabel, item.tier, item.durationDays,
-      item.maxRedemptions, item.now, item.expiresAt, item.createdBy, item.now
-    ));
-  if (count === 1) {
-    await statements[0].run();
-    const item = codes[0];
-    return json({ ok: true, code: item.code, tier: item.tier, durationDays: item.durationDays,
-      maxRedemptions: item.maxRedemptions, expiresAt: item.expiresAt, label: item.codeLabel });
-  }
-  // Create a requested batch in one D1 transaction so the owner never receives a partial,
-  // unreturnable set of secret codes if one insert fails. Existing records are never modified.
-  const results = await env.DB.batch(statements);
-  if (!Array.isArray(results) || results.length !== codes.length ||
-      results.some(result => !result?.success || Number(result?.meta?.changes || 0) !== 1)) {
-    throw new Error("PROMO_BATCH_INSERT_FAILED");
-  }
-  return json({
-    ok: true,
-    count: codes.length,
-    codes: codes.map(item => ({ code: item.code, tier: item.tier, durationDays: item.durationDays,
-      maxRedemptions: item.maxRedemptions, expiresAt: item.expiresAt, label: item.codeLabel })),
-    tier, durationDays, maxRedemptions, expiresAt, label
-  });
+      id, codeHash, code.slice(-4), label, tier, durationDays, maxRedemptions, now, expiresAt, auth.userId, now
+    ).run();
+  return json({ ok: true, code, tier, durationDays, maxRedemptions, expiresAt, label });
 }
+
 async function redeemPromo(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   const limited = await enforceRateLimit(request, env, "promo-redemption", auth.userId, RATE_LIMITS.promoRedemptions);
@@ -1325,7 +1299,7 @@ async function redeemPromo(request, env, auth) {
   const rawCode = typeof body?.code === "string" ? body.code.trim().toUpperCase() : "";
   if (!/^[A-Z0-9-]{8,40}$/.test(rawCode)) return err("Wpisz poprawny kod promocyjny.");
   const codeHash = await sha256Hex("naprawnik-promo:" + rawCode);
-  const promo = await env.DB.prepare("SELECT id, label, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled FROM promo_codes WHERE code_hash = ? LIMIT 1").bind(codeHash).first();
+  const promo = await env.DB.prepare("SELECT id, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled FROM promo_codes WHERE code_hash = ? LIMIT 1").bind(codeHash).first();
   const now = nowSeconds();
   if (!promo || Number(promo.enabled) !== 1 || Number(promo.starts_at) > now || Number(promo.expires_at) <= now) {
     return err("Kod promocyjny jest nieprawidłowy lub wygasł.", 400);
@@ -1349,15 +1323,7 @@ async function redeemPromo(request, env, auth) {
     return err("Kod został wykorzystany lub nie można go już aktywować na tym koncie.", 409);
   }
   const currentTier = await recalcUserTier(env, auth.userId);
-  const johnnyPromo = String(promo.label || "").toUpperCase().startsWith("JOHNNY6M");
-  return json({
-    ok: true, tier: currentTier, durationDays: Number(promo.duration_days), expiresAt: grantExpiresAt,
-    message: johnnyPromo ? "Gratulacje Tu Johnny Dostałeś Dożywotni Dostęp Do Naprawnika" : "Kod aktywowany.",
-    ...(johnnyPromo ? {
-      messageStyleKey: "johnny-6m",
-      messageSubtext: "Kod daje 6 miesięcy dostępu. Przedłużenie kolejnym kodem co pół roku — chyba że mnie wkurwisz XD 😈"
-    } : {})
-  });
+  return json({ ok: true, tier: currentTier, durationDays: Number(promo.duration_days), expiresAt: grantExpiresAt, message: "Kod aktywowany." });
 }
 
 async function disableAdminPromo(request, env, auth) {
