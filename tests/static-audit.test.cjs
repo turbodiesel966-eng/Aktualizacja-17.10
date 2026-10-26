@@ -293,6 +293,8 @@ test('opłacony plan wyświetla portal zamiast drugiego Checkout', async () => {
   assert.match(rootElement.innerHTML, /data-np-portal="1"/);
   assert.match(rootElement.innerHTML, /Otwórz panel Stripe/);
   assert.doesNotMatch(rootElement.innerHTML, /data-plan="warsztat"/);
+  assert.doesNotMatch(rootElement.innerHTML, /data-one-time-tier="pro"/);
+  assert.match(rootElement.innerHTML, /data-one-time-tier="warsztat"/);
 });
 test('ważność WARSZTAT jest liczona z WARSZTAT, a nie z dłuższego PRO', async () => {
   const store = new Map();
