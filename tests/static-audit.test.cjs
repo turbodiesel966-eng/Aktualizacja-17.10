@@ -40,7 +40,7 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   const html = read('index.html');
   assert.doesNotMatch(html, /\bLICENSE_ENDPOINT\b|\bSTRIPE_PRO\b|\bSTRIPE_WARSZTAT\b/);
   assert.doesNotMatch(html, /\blicBoot\s*\(\s*\)\s*;/);
-  assert.ok(html.includes('<title>NAPRAWNIK v5.16 — diagnostyka i naprawy</title>'));
+  assert.ok(html.includes('<title>NAPRAWNIK v5.17 — diagnostyka i naprawy</title>'));
   assert.ok(html.includes('⚙️ NAPRAWNIK v5.16'));
   assert.ok(html.includes("const APP_VERSION = 'NAPRAWNIK v5.16';"));
   assert.ok(html.includes('<script src="./billing.js?v=13"></script>'));
@@ -68,10 +68,10 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /Nie utworzono nowego konta/);
   assert.match(billing, /const oneTimePackages =/);
   assert.ok(billing.includes("activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +"));
-  assert.match(billing, /PRO · 3 dni — 3,00 zł/);
-  assert.match(billing, /PRO · 7 dni — 7,00 zł/);
-  assert.match(billing, /WARSZTAT · 3 dni — 5,00 zł/);
-  assert.match(billing, /WARSZTAT · 7 dni — 10,00 zł/);
+  assert.match(billing, /tier: 'pro', days: 3, price: '3,00 zł'/);
+  assert.match(billing, /tier: 'pro', days: 7, price: '7,00 zł'/);
+  assert.match(billing, /tier: 'warsztat', days: 3, price: '5,00 zł'/);
+  assert.match(billing, /tier: 'warsztat', days: 7, price: '10,00 zł'/);
   assert.match(billing, /data-one-time-tier/);
   assert.match(billing, /oneTimeOffers\.filter\(offer => ORDER\[current\] < ORDER\[offer\.tier\]\)/);
 
