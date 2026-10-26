@@ -20,3 +20,7 @@ APK działa z bieżącą konfiguracją API produkcyjnego, dlatego żądania pła
 ## Bezpieczne wdrażanie backendu
 
 Migracja `0006_admin_device_pairing.sql` jest addytywna: tworzy wyłącznie tabelę i indeksy dla kodów parowania; nie usuwa istniejących rekordów, tabel ani subskrypcji. Przed wdrożeniem należy sprawdzić kod i testy, zaktualizować STAGING, zweryfikować origin `https://localhost` i dopiero wtedy wdrażać LIVE.
+
+### Natywne zachowanie APK
+
+W pakiecie Android używana jest własna ikona oraz ekran startowy wygenerowane z logo SVG NAPRAWNIKA. Systemowy przycisk Wstecz obsługuje otwarte widoki, zewnętrzne instrukcje serwisowe otwierają się w karcie przeglądarki, a eksporty JSON korzystają z systemowego okna Udostępnij/Zapisz. Dane eksportowane są przygotowywane lokalnie i nie są samoczynnie wysyłane na serwer.
