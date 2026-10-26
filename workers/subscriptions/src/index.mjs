@@ -636,6 +636,8 @@ async function checkout(request, env, auth) {
 
   const form = new URLSearchParams();
   form.set("mode", "subscription");
+  // Ensure hosted Checkout shows the product brand instead of the account holder personal name.
+  form.set("branding_settings[display_name]", "NAPRAWNIK");
   form.set("line_items[0][price]", priceId);
   form.set("line_items[0][quantity]", "1");
   form.set("success_url", successUrl);
