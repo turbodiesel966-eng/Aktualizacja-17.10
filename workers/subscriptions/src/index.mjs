@@ -1587,7 +1587,6 @@ async function photoDiagnosis(request, env, auth) {
 const PHOTO_MODEL_PRICING = Object.freeze({
   // USD / 1M tokens, verified against the provider's published model pricing. Values are stored as micro-USD.
   "gpt-6-luna": Object.freeze({ inputMicrousdPerMillion: 100000, outputMicrousdPerMillion: 500000 }),
-  "gpt-4.1-mini": Object.freeze({ inputMicrousdPerMillion: 400000, outputMicrousdPerMillion: 1600000 }),
 });
 function photoBudgetConfig(env) {
   const budget = env.PHOTO_MONTHLY_BUDGET_USD === undefined ? 5 : Number(env.PHOTO_MONTHLY_BUDGET_USD);
