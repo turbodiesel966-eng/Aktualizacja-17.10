@@ -40,10 +40,10 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   const html = read('index.html');
   assert.doesNotMatch(html, /\bLICENSE_ENDPOINT\b|\bSTRIPE_PRO\b|\bSTRIPE_WARSZTAT\b/);
   assert.doesNotMatch(html, /\blicBoot\s*\(\s*\)\s*;/);
-  assert.ok(html.includes('<title>NAPRAWNIK v5.17 — diagnostyka i naprawy</title>'));
+  assert.ok(html.includes('<title>NAPRAWNIK v5.18 — diagnostyka i naprawy</title>'));
   assert.ok(html.includes('⚙️ NAPRAWNIK v5.16'));
   assert.ok(html.includes("const APP_VERSION = 'NAPRAWNIK v5.16';"));
-  assert.ok(html.includes('<script src="./billing.js?v=14"></script>'));
+  assert.ok(html.includes('<script src="./billing.js?v=15"></script>'));
   assert.match(html, /function licGet\(\)\{return getVerifiedLicense\(\);\}/);
   assert.match(html, /function hasPlan\(min\)\{return Object\.prototype\.hasOwnProperty\.call\(PLAN_ORDER,min\)&&PLAN_ORDER\[curPlan\(\)\]>=PLAN_ORDER\[min\];\}/);
 });
@@ -73,6 +73,8 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /tier: 'warsztat', days: 3, price: '5,00 zł'/);
   assert.match(billing, /tier: 'warsztat', days: 7, price: '10,00 zł'/);
   assert.match(billing, /data-one-time-tier/);
+  assert.match(billing, /analiza zdjęć AI jest chwilowo wyłączona/i);
+  assert.doesNotMatch(billing, /PRO dodaje analizę AI/);
   assert.ok(billing.includes('.filter(offer => ORDER[current] < ORDER[offer.tier])'));
 
 });
