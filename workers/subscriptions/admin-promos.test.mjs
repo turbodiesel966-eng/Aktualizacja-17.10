@@ -109,6 +109,13 @@ function createDb({ userIds = ["owner-1", "friend-1"], accountCount = 2 } = {}) 
                 } else previousChanges = 0;
               } else previousChanges = 0;
               results.push({ success: true, meta: { changes: previousChanges } });
+            } else if (sql.includes("INSERT INTO promo_codes")) {
+              const [id, code_hash, code_hint, label, tier, duration_days, max_redemptions, starts_at, expires_at, created_by, created_at] = params;
+              const promo = { id, code_hash, code_hint, label, tier, duration_days, max_redemptions, redemption_count: 0, starts_at, expires_at, enabled: 1, created_by, created_at };
+              state.promoInsert = promo;
+              state.promos.push({ ...promo });
+              previousChanges = 1;
+              results.push({ success: true, meta: { changes: 1 } });
             } else throw new Error("Unexpected batch SQL in admin-promos tests: " + sql);
           }
           return results;
@@ -157,6 +164,45 @@ test("kod promocyjny jest losowy i w bazie trafia wyłącznie skrót, nie pełny
   assert.notEqual(state.promoInsert.code_hash, data.code);
   assert.equal(state.promoInsert.code_hash.length, 64);
   assert.equal(state.promoInsert.code_hint, data.code.slice(-4));
+});
+
+test("hurtowa kampania Johnny tworzy pięć unikalnych kodów WARSZTAT na 180 dni", async () => {
+  const { env, state } = createDb();
+  const response = await createAdminPromo(new Request("https://api.example/api/admin/promos", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ tier: "warsztat", durationDays: 180, maxRedemptions: 1, expiresInDays: 180, count: 5, label: "JOHNNY6M" })
+  }), env, { userId: "owner-1" });
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.count, 5);
+  assert.equal(data.codes.length, 5);
+  assert.equal(new Set(data.codes.map(x => x.code)).size, 5);
+  assert.equal(state.promos.length, 5);
+  assert.ok(state.promos.every(p => p.tier === "warsztat" && p.duration_days === 180 && p.max_redemptions === 1));
+  assert.ok(state.promos.every(p => p.label.startsWith("JOHNNY6M")));
+  assert.ok(state.promos.every(p => p.code_hash.length === 64));
+});
+
+test("kod Johnny zwraca specjalny komunikat i wyjaśnia półroczny czas dostępu", async () => {
+  const { env, state } = createDb();
+  const code = "NAP-JOHNNY6M99";
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("naprawnik-promo:" + code));
+  const hex = [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
+  const now = Math.floor(Date.now() / 1000);
+  state.promos.push({
+    id: crypto.randomUUID(), code_hash: hex, code_hint: code.slice(-4), label: "JOHNNY6M 01/05", tier: "warsztat",
+    duration_days: 180, max_redemptions: 1, redemption_count: 0, starts_at: now - 10, expires_at: now + 180 * 86400,
+    enabled: 1, created_by: "owner-1", created_at: now - 10
+  });
+  const response = await redeemPromo(new Request("https://api.example/api/promo/redeem", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code })
+  }), env, { userId: "friend-1" });
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.durationDays, 180);
+  assert.equal(data.messageStyleKey, "johnny-6m");
+  assert.match(data.message, /Gratulacje Tu Johnny Dostałeś Dożywotni Dostęp Do Naprawnika/i);
+  assert.match(data.messageSubtext, /6 miesięcy.*co pół roku/i);
 });
 
 test("promocja aktywuje czasowy dostęp tylko raz na konto i respektuje limit użyć", async () => {
