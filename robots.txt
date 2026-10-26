@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://turbodiesel966-eng.github.io/Aktualizacja-17.10/sitemap.xml
