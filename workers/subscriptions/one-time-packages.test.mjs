@@ -18,8 +18,8 @@ test("mapowanie pakietów jednorazowych jest rozdzielone od mapy abonamentów", 
   assert.deepEqual(map.get("price_d"), { tier: "warsztat", durationDays: 7, amount: 1000 });
 });
 
-function makeCheckoutEnv() {
-  const state = { lock: null, form: null, posts: 0 };
+function makeCheckoutEnv(currentTier = "amator") {
+  const state = { lock: null, form: null, posts: 0, currentTier };
   const env = {
     STRIPE_SECRET_KEY: "sk_test_mock_key",
     STRIPE_EXPECT_LIVEMODE: "false",
@@ -41,7 +41,21 @@ function makeCheckoutEnv() {
                 }
                 throw new Error("Unexpected checkout first SQL: " + sql);
               },
+              async all() {
+                if (sql.includes("SELECT tier, status, current_period_end, grace_until FROM subscriptions WHERE user_id")) {
+                  return { results: state.currentTier === "amator" ? [] : [{
+                    tier: state.currentTier, status: "active", current_period_end: NOW + 3600, grace_until: null
+                  }] };
+                }
+                if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) return { results: [] };
+                if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
+                throw new Error("Unexpected checkout all SQL: " + sql);
+              },
               async run() {
+                if (sql.includes("UPDATE users SET tier = ?")) {
+                  state.currentTier = params[0];
+                  return { meta: { changes: 1 } };
+                }
                 if (sql.includes("INSERT INTO one_time_checkout_locks")) {
                   const [userId,idempotencyKey,tier,durationDays,expiresAt,createdAt] = params;
                   state.lock = { user_id:userId,idempotency_key:idempotencyKey,tier,duration_days:durationDays,session_id:null,expires_at:expiresAt,created_at:createdAt };
@@ -65,6 +79,29 @@ function makeCheckoutEnv() {
   };
   return { env, state };
 }
+
+test("server blocks duplicate or lower-tier one-time purchases before contacting Stripe", async () => {
+  const originalFetch = globalThis.fetch;
+  const { env, state } = makeCheckoutEnv("pro");
+  let stripeCalls = 0;
+  globalThis.fetch = async () => { stripeCalls += 1; throw new Error("Stripe must not be called"); };
+  try {
+    const request = new Request("https://worker.example.test/api/one-time-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Idempotency-Key": "one-time-active-0001" },
+      body: JSON.stringify({ tier: "pro", durationDays: 3 })
+    });
+    const response = await oneTimeCheckout(request, env, { userId: "user_test_1" });
+    const data = await response.json();
+    assert.equal(response.status, 409);
+    assert.match(data.error, /już aktywny dostęp/);
+    assert.equal(stripeCalls, 0);
+    assert.equal(state.posts, 0);
+    assert.equal(state.lock, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("one-time Checkout uses payment mode, exact server price and idempotency; does not call a real payment system in this test", async () => {
   const originalFetch = globalThis.fetch;
