@@ -1084,9 +1084,9 @@ async function createAdminDeviceLink(request, env, auth) {
   const code = "NP-MOB-" + [...crypto.getRandomValues(new Uint8Array(12))]
     .map(value => value.toString(16).padStart(2, "0")).join("").toUpperCase();
   const codeHash = await sha256Hex("naprawnik-admin-device:" + code);
-  await env.DB.prepare(\`INSERT INTO admin_device_codes
+  await env.DB.prepare(`INSERT INTO admin_device_codes
     (code_hash, user_id, created_at, expires_at, used_at, created_by)
-    VALUES (?, ?, ?, ?, NULL, ?)\`)
+    VALUES (?, ?, ?, ?, NULL, ?)`)
     .bind(codeHash, auth.userId, now, now + 600, auth.userId).run();
   return json({
     ok: true,
@@ -1108,8 +1108,8 @@ async function adminMobileLogin(request, env) {
 
   const now = nowSeconds();
   const codeHash = await sha256Hex("naprawnik-admin-device:" + code);
-  const row = await env.DB.prepare(\`SELECT user_id FROM admin_device_codes
-    WHERE code_hash = ? AND used_at IS NULL AND expires_at > ? LIMIT 1\`)
+  const row = await env.DB.prepare(`SELECT user_id FROM admin_device_codes
+    WHERE code_hash = ? AND used_at IS NULL AND expires_at > ? LIMIT 1`)
     .bind(codeHash, now).first();
   if (!row) return err("Nieprawidłowy, wykorzystany lub wygasły kod połączenia telefonu.", 401);
   const owner = await env.DB.prepare("SELECT bootstrapped_by FROM admin_settings WHERE singleton = 1 LIMIT 1").first();
@@ -1117,16 +1117,16 @@ async function adminMobileLogin(request, env) {
     return err("Kod nie jest przypisany do aktywnego konta właściciela.", 403);
   }
 
-  const claimed = await env.DB.prepare(\`UPDATE admin_device_codes SET used_at = ?
-    WHERE code_hash = ? AND used_at IS NULL AND expires_at > ?\`)
+  const claimed = await env.DB.prepare(`UPDATE admin_device_codes SET used_at = ?
+    WHERE code_hash = ? AND used_at IS NULL AND expires_at > ?`)
     .bind(now, codeHash, now).run();
   if (Number(claimed.meta?.changes || 0) !== 1) return err("Ten kod został już wykorzystany. Wygeneruj nowy kod na koncie właściciela.", 409);
 
   const token = createSecureApiToken();
   const tokenHash = await sha256Hex(token);
-  await env.DB.prepare(\`INSERT INTO api_tokens
+  await env.DB.prepare(`INSERT INTO api_tokens
     (token_hash, user_id, created_at, expires_at, revoked_at, last_used_at)
-    VALUES (?, ?, ?, ?, NULL, ?)\`)
+    VALUES (?, ?, ?, ?, NULL, ?)`)
     .bind(tokenHash, row.user_id, now, now + TOKEN_LIFETIME_SECONDS, now).run();
   return json({
     ok: true,
