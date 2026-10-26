@@ -7,15 +7,20 @@
     "mobile:prepare": "node scripts/prepare-mobile.mjs",
     "mobile:sync": "npm run mobile:prepare && npx cap sync android",
     "mobile:android": "npm run mobile:prepare && npx cap add android && npx cap sync android",
-    "mobile:assets": "npx @capacitor/assets generate --android"
+    "mobile:assets": "npx @capacitor/assets generate --android",
+    "mobile:bundle-native": "esbuild scripts/native-bridge.js --bundle --minify --format=iife --platform=browser --target=es2020 --outfile=www/native-bridge.js"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
-    "@capacitor/core": "8.5.3"
+    "@capacitor/core": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/status-bar": "8.0.4"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.3",
     "@capacitor/assets": "3.0.5",
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "esbuild": "0.28.2"
   }
 }
