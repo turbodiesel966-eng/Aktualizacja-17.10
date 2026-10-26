@@ -424,6 +424,12 @@
       '<div><small>Zarezerwowane</small><div style="font-size:16px">' + esc(Number(aiBudget?.reservedUsd || 0).toFixed(4)) + ' USD</div></div>' +
       '<div><small>Żądania w tym miesiącu</small><div style="font-size:16px">' + esc(String(aiBudget?.requests || 0)) + '</div></div>' +
       '</div><small style="color:var(--dim)">' + esc(aiBudget?.modelPricing || 'Limit budżetu działa po stronie serwera; analiza pozostaje domyślnie wyłączona.') + '</small></div>';
+    const newCodes = Array.isArray(newCode) ? newCode : (newCode ? [{ code: newCode, label: 'Nowy kod' }] : []);
+    const newCodeContent = newCodes.length
+      ? '<div class="card" style="border-color:var(--hero)"><b>Nowe kody — skopiuj i przekaż znajomym teraz</b><small style="display:block;color:var(--dim);margin:6px 0 10px">Pełne kody są pokazywane tylko w chwili utworzenia.</small>' +
+        newCodes.map((item, i) => '<div class="entry"><b>' + esc(item.label || ('Kod ' + (i + 1))) + '</b><input id="npPromoCreatedCode' + i + '" readonly value="' + esc(item.code || '') + '"><button class="btn" onclick="window.npCopyAdminPromoCode(' + i + ')">Skopiuj kod</button></div>').join('') +
+        '</div>'
+      : '';
     const rows = promos.length ? promos.map(p => '<div class="entry"><b>' + esc(p.label || 'Kod promocyjny') + ' · ' + esc(String(p.code_hint || '••••')) + '</b><small>' + esc(String(p.tier || '').toUpperCase()) + ' · ' + esc(String(p.duration_days)) + ' dni · użycia: ' + esc(String(p.redemption_count)) + '/' + esc(String(p.max_redemptions)) + '<br>Ważny do: ' + esc(adminDate(p.expires_at)) + '<br>' + (Number(p.enabled) === 1 ? 'Aktywny' : 'Wyłączony') + '</small>' + (Number(p.enabled) === 1 ? '<button class="btn" type="button" onclick="window.npDisablePromo(\'' + esc(p.id) + '\')">Wyłącz kod</button>' : '') + '</div>').join('') : '<div class="empty">Nie utworzono jeszcze kodów promocyjnych.</div>';
     root.innerHTML = '<div class="card"><h2>🛡️ Panel ADMINA</h2><p style="font-size:12px;line-height:1.5">Statystyki i kody są widoczne tylko po potwierdzeniu uprawnień przez serwer.</p><div class="grid2">' +
       metric('Zarejestrowane konta', stats.registeredAccounts, 'Dokładna liczba kont') +
