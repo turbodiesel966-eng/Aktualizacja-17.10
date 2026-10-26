@@ -871,6 +871,10 @@ async function oneTimeCheckout(request, env, auth) {
   if (!successUrl || !cancelUrl) return err("Checkout return URLs must use the APP_BASE_URL origin", 500);
   const user = await env.DB.prepare("SELECT id, email FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
   if (!user) return err("User not found", 404);
+  const currentTier = await recalcUserTier(env, auth.userId);
+  if (tierRank(currentTier) >= tierRank(tier)) {
+    return err("Konto ma już aktywny dostęp do tego pakietu lub wyższego. Nie rozpoczęto zakupu.", 409);
+  }
   const now = nowSeconds();
   const pendingSubscription = await env.DB.prepare("SELECT session_id, expires_at FROM checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   if (pendingSubscription && Number(pendingSubscription.expires_at) > now) {
