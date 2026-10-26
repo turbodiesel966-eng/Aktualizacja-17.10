@@ -192,6 +192,7 @@ function makeCheckoutTestEnv() {
                 if (sql.includes("SELECT id, email FROM users")) return { id: "user_test_1", email: "test@example.test" };
                 if (sql.includes("FROM subscriptions WHERE user_id = ?")) return null;
                 if (sql.includes("FROM checkout_locks WHERE user_id = ?")) return state.lock ? { ...state.lock } : null;
+                if (sql.includes("SELECT expires_at FROM one_time_checkout_locks WHERE user_id = ?")) return null;
                 if (sql.includes("SELECT stripe_customer_id FROM stripe_customers")) return null;
                 throw new Error("Unexpected first() SQL: " + sql);
               },
@@ -504,6 +505,8 @@ test("podpisany webhook odbiera dostęp po pause i przywraca go po resume", asyn
                   };
                 }
                 if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) return { results: [] };
+                if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
+                if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
                 throw new Error("Unexpected webhook all() SQL: " + sql);
               },
               async run() {
@@ -658,6 +661,8 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
     PHOTO_ANALYSIS_ENABLED: "true",
     OPENAI_API_KEY: openAiKey,
     OPENAI_VISION_MODEL: "gpt-4.1-mini",
+    PHOTO_MONTHLY_BUDGET_USD: "5",
+    PHOTO_REQUEST_RESERVE_USD: "0.25",
     DB: {
       prepare(sql) {
         return {
@@ -665,6 +670,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
             return {
               async first() {
                 if (sql.includes("INSERT INTO request_limits")) return { request_count: 1 };
+                if (sql.includes("INSERT INTO photo_usage_budget")) return { period_start: params[0], budget_microusd: params[1] };
                 throw new Error("Unexpected photo first() SQL: " + sql);
               },
               async all() {
@@ -679,11 +685,14 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
                   };
                 }
                 if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) return { results: [] };
+                if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
                 throw new Error("Unexpected photo all() SQL: " + sql);
               },
               async run() {
                 if (sql.includes("UPDATE users SET tier = ?")) return { success: true, meta: { changes: 1 } };
                 if (sql.includes("DELETE FROM request_limits")) return { success: true, meta: { changes: 0 } };
+                if (sql.includes("UPDATE photo_usage_budget")) return { success: true, meta: { changes: 1 } };
+                if (sql.includes("DELETE FROM photo_usage_budget")) return { success: true, meta: { changes: 0 } };
                 throw new Error("Unexpected photo run() SQL: " + sql);
               }
             };
@@ -695,7 +704,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
   };
   return { env, state };
 }
-function makePhotoRequest({ mime = "image/jpeg", bytes = [0xff, 0xd8, 0xff, 0x00], symptoms = "Gubi iskrę na ciepło" } = {}) {
+function makePhotoRequest({ mime = "image/jpeg", bytes = [0xff,0xd8,0xff,0xc0,0x00,0x11,0x08,0x03,0x00,0x04,0x00,0x03,0x01,0x11,0x00,0x02,0x11,0x00,0x03,0x11,0x00], symptoms = "Gubi iskrę na ciepło" } = {}) {
   const form = new FormData();
   form.append("symptoms", symptoms);
   form.append("category", "spark");
@@ -789,10 +798,14 @@ test("analiza zdjęcia odrzuca format spoza JPEG/PNG/WebP przed wywołaniem mode
 test("diagnostyka Stripe potwierdza konfigurację LIVE bez tworzenia Checkout", async () => {
   const originalFetch = globalThis.fetch;
   const prices = {
-    price_pro_month: { id: "price_pro_month", active: true, livemode: true, currency: "pln", unit_amount: 900, recurring: { interval: "month", interval_count: 1 } },
-    price_pro_year: { id: "price_pro_year", active: true, livemode: true, currency: "pln", unit_amount: 10000, recurring: { interval: "year", interval_count: 1 } },
-    price_warsztat_month: { id: "price_warsztat_month", active: true, livemode: true, currency: "pln", unit_amount: 2900, recurring: { interval: "month", interval_count: 1 } },
-    price_warsztat_year: { id: "price_warsztat_year", active: true, livemode: true, currency: "pln", unit_amount: 30000, recurring: { interval: "year", interval_count: 1 } }
+    price_pro_month: { id: "price_pro_month", active: true, livemode: true, currency: "pln", unit_amount: 900, type: "recurring", recurring: { interval: "month", interval_count: 1 } },
+    price_pro_year: { id: "price_pro_year", active: true, livemode: true, currency: "pln", unit_amount: 10000, type: "recurring", recurring: { interval: "year", interval_count: 1 } },
+    price_warsztat_month: { id: "price_warsztat_month", active: true, livemode: true, currency: "pln", unit_amount: 2900, type: "recurring", recurring: { interval: "month", interval_count: 1 } },
+    price_warsztat_year: { id: "price_warsztat_year", active: true, livemode: true, currency: "pln", unit_amount: 30000, type: "recurring", recurring: { interval: "year", interval_count: 1 } },
+    price_pro_3d: { id: "price_pro_3d", active: true, livemode: true, currency: "pln", unit_amount: 300, type: "one_time", recurring: null },
+    price_pro_7d: { id: "price_pro_7d", active: true, livemode: true, currency: "pln", unit_amount: 700, type: "one_time", recurring: null },
+    price_warsztat_3d: { id: "price_warsztat_3d", active: true, livemode: true, currency: "pln", unit_amount: 500, type: "one_time", recurring: null },
+    price_warsztat_7d: { id: "price_warsztat_7d", active: true, livemode: true, currency: "pln", unit_amount: 1000, type: "one_time", recurring: null }
   };
   const calls = [];
   globalThis.fetch = async (url, init) => {
@@ -811,15 +824,19 @@ test("diagnostyka Stripe potwierdza konfigurację LIVE bez tworzenia Checkout", 
       STRIPE_PRICE_PRO_MONTHLY: "price_pro_month",
       STRIPE_PRICE_PRO_YEARLY: "price_pro_year",
       STRIPE_PRICE_WARSZTAT_MONTHLY: "price_warsztat_month",
-      STRIPE_PRICE_WARSZTAT_YEARLY: "price_warsztat_year"
+      STRIPE_PRICE_WARSZTAT_YEARLY: "price_warsztat_year",
+      STRIPE_PRICE_PRO_3D: "price_pro_3d",
+      STRIPE_PRICE_PRO_7D: "price_pro_7d",
+      STRIPE_PRICE_WARSZTAT_3D: "price_warsztat_3d",
+      STRIPE_PRICE_WARSZTAT_7D: "price_warsztat_7d"
     };
     const response = await diagnoseStripeConfig(env);
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.ready, true);
     assert.equal(result.allPricesValid, true);
-    assert.equal(result.prices.length, 4);
-    assert.equal(calls.length, 4);
+    assert.equal(result.prices.length, 8);
+    assert.equal(calls.length, 8);
     assert.ok(calls.every(call => call.method === "GET" && call.url.startsWith("https://api.stripe.com/v1/prices/")));
     assert.doesNotMatch(JSON.stringify(result), /sk_live_mock_secret/);
     assert.doesNotMatch(calls.map(call => call.url).join(" "), /checkout\/sessions/);
@@ -844,7 +861,11 @@ test("diagnostyka Stripe wykrywa odrzucony klucz i nie ujawnia treści błędu S
       STRIPE_PRICE_PRO_MONTHLY: "price_pro_month",
       STRIPE_PRICE_PRO_YEARLY: "price_pro_year",
       STRIPE_PRICE_WARSZTAT_MONTHLY: "price_warsztat_month",
-      STRIPE_PRICE_WARSZTAT_YEARLY: "price_warsztat_year"
+      STRIPE_PRICE_WARSZTAT_YEARLY: "price_warsztat_year",
+      STRIPE_PRICE_PRO_3D: "price_pro_3d",
+      STRIPE_PRICE_PRO_7D: "price_pro_7d",
+      STRIPE_PRICE_WARSZTAT_3D: "price_warsztat_3d",
+      STRIPE_PRICE_WARSZTAT_7D: "price_warsztat_7d"
     };
     const response = await diagnoseStripeConfig(env);
     const result = await response.json();
@@ -877,7 +898,7 @@ test("wygasły token aktywnego abonamentu rocznego jest odnawiany bez Checkoutu"
                 }
                 if (sql.includes("SELECT 1 AS active FROM subscriptions")) {
                   state.entitlementChecks += 1;
-                  assert.deepEqual(params, ["annual-user", now, now, "annual-user", now]);
+                  assert.deepEqual(params, ["annual-user", now, now, "annual-user", now, "annual-user", now]);
                   return { active: 1 };
                 }
                 throw new Error("Unexpected auth first() SQL: " + sql);

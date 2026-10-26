@@ -7,6 +7,10 @@ const PRICE_IDS = {
   PRO_YEARLY: "price_1UUOdWJgi8iwHKRbl85b4ODT",
   WARSZTAT_MONTHLY: "price_1UUOrKJgi8iwHKRbHtsxzDcU",
   WARSZTAT_YEARLY: "price_1UUOrQJgi8iwHKRbIkeq1sUY",
+  PRO_3D: "price_1UUfEJJgi8iwHKRbpU3ivTbn",
+  PRO_7D: "price_1UUfELJgi8iwHKRbx6re7Hb3",
+  WARSZTAT_3D: "price_1UUfEPJgi8iwHKRbqEotj0El",
+  WARSZTAT_7D: "price_1UUfERJgi8iwHKRbrzkPLcQg",
 };
 
 function makeEnv(secret) {
@@ -21,6 +25,10 @@ function makeEnv(secret) {
     STRIPE_PRICE_PRO_YEARLY: PRICE_IDS.PRO_YEARLY,
     STRIPE_PRICE_WARSZTAT_MONTHLY: PRICE_IDS.WARSZTAT_MONTHLY,
     STRIPE_PRICE_WARSZTAT_YEARLY: PRICE_IDS.WARSZTAT_YEARLY,
+    STRIPE_PRICE_PRO_3D: PRICE_IDS.PRO_3D,
+    STRIPE_PRICE_PRO_7D: PRICE_IDS.PRO_7D,
+    STRIPE_PRICE_WARSZTAT_3D: PRICE_IDS.WARSZTAT_3D,
+    STRIPE_PRICE_WARSZTAT_7D: PRICE_IDS.WARSZTAT_7D,
   };
 }
 
@@ -52,7 +60,7 @@ test("Stripe diagnostics identifies a restricted LIVE key and sanitizes error de
     assert.equal(data.stripeSecretModeMatchesExpected, true);
     assert.equal(data.stripeSecretHasOuterWhitespace, false);
     assert.equal(data.ready, false);
-    assert.equal(data.prices.length, 4);
+    assert.equal(data.prices.length, 8);
     for (const price of data.prices) {
       assert.equal(price.stripeHttpStatus, 403);
       assert.equal(price.stripeErrorType, "invalid_request_error");
@@ -96,10 +104,14 @@ test("Stripe diagnostics explains the exact missing LIVE Prices read permission"
 test("Stripe diagnostics validates prices and reports no upstream error data on success", async () => {
   const originalFetch = globalThis.fetch;
   const expected = {
-    [PRICE_IDS.PRO_MONTHLY]: { amount: 900, interval: "month" },
-    [PRICE_IDS.PRO_YEARLY]: { amount: 10000, interval: "year" },
-    [PRICE_IDS.WARSZTAT_MONTHLY]: { amount: 2900, interval: "month" },
-    [PRICE_IDS.WARSZTAT_YEARLY]: { amount: 30000, interval: "year" },
+    [PRICE_IDS.PRO_MONTHLY]: { amount: 900, interval: "month", type: "recurring" },
+    [PRICE_IDS.PRO_YEARLY]: { amount: 10000, interval: "year", type: "recurring" },
+    [PRICE_IDS.WARSZTAT_MONTHLY]: { amount: 2900, interval: "month", type: "recurring" },
+    [PRICE_IDS.WARSZTAT_YEARLY]: { amount: 30000, interval: "year", type: "recurring" },
+    [PRICE_IDS.PRO_3D]: { amount: 300, type: "one_time" },
+    [PRICE_IDS.PRO_7D]: { amount: 700, type: "one_time" },
+    [PRICE_IDS.WARSZTAT_3D]: { amount: 500, type: "one_time" },
+    [PRICE_IDS.WARSZTAT_7D]: { amount: 1000, type: "one_time" },
   };
   globalThis.fetch = async url => {
     const id = new URL(String(url)).pathname.split("/").pop();
@@ -112,7 +124,8 @@ test("Stripe diagnostics validates prices and reports no upstream error data on 
       livemode: true,
       currency: "pln",
       unit_amount: item.amount,
-      recurring: { interval: item.interval, interval_count: 1 },
+      type: item.type,
+      recurring: item.type === "recurring" ? { interval: item.interval, interval_count: 1 } : null,
     }), { status: 200, headers: { "content-type": "application/json", "request-id": "req_ok_123" } });
   };
   try {

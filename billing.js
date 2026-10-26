@@ -228,6 +228,32 @@
     }
   }
 
+  async function checkoutOneTime(tier, durationDays) {
+    if (!['pro', 'warsztat'].includes(tier) || ![3, 7].includes(Number(durationDays))) return;
+    if (!API) { alert('Płatności są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.'); return; }
+    try {
+      const token = await accountEnsure();
+      const key = 'np-onetime-' + Date.now() + '-' + Math.random().toString(36).slice(2, 12);
+      const response = await fetch(API + '/api/one-time-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: 'Bearer ' + token, 'Idempotency-Key': key },
+        body: JSON.stringify({ tier, durationDays: Number(durationDays) }),
+        credentials: 'omit',
+        cache: 'no-store'
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(data.error || ('Błąd API płatności: HTTP ' + response.status));
+        error.status = response.status;
+        throw error;
+      }
+      if (!isSafeCheckoutUrl(data.url)) throw new Error('Stripe nie zwrócił bezpiecznego adresu Checkout.');
+      window.location.assign(data.url);
+    } catch (error) {
+      alert(friendlyError(error, 'rozpocząć zakupu jednorazowego pakietu') + (error.message ? '\n' + error.message : ''));
+    }
+  }
+
   function listHtml(tier) {
     try { return typeof planBullets === 'function' ? planBullets(tier) : ''; }
     catch (_) { return ''; }
@@ -263,6 +289,11 @@
     } else {
       activation = '<div class="card"><h2>🔑 Aktywacja / odzyskanie dostępu</h2><p style="font-size:12px;line-height:1.5">Po zakupie dostęp aktywuje się po potwierdzeniu Stripe. Na innym urządzeniu wklej klucz dostępu zapisany po zakupie.</p><input id="licKeyIn" placeholder="Wklej klucz dostępu"><div class="btn" data-np-activate="1">✅ Aktywuj / sprawdź klucz</div></div>';
     }
+    const oneTimePackages = '<div class="card" style="border-color:var(--accent)"><h2>⚡ Pakiety jednorazowe</h2><p style="font-size:12px;line-height:1.5">Dostęp na określony czas. Jednorazowa płatność — bez automatycznego odnowienia.</p>' +
+      '<div class="entry"><b>💎 PRO · 3 dni — 3,00 zł</b><button class="btn" type="button" data-one-time-tier="pro" data-one-time-days="3">Kup PRO na 3 dni</button></div>' +
+      '<div class="entry"><b>💎 PRO · 7 dni — 7,00 zł</b><button class="btn" type="button" data-one-time-tier="pro" data-one-time-days="7">Kup PRO na 7 dni</button></div>' +
+      '<div class="entry"><b>🛠️ WARSZTAT · 3 dni — 5,00 zł</b><button class="btn" type="button" data-one-time-tier="warsztat" data-one-time-days="3">Kup WARSZTAT na 3 dni</button></div>' +
+      '<div class="entry"><b>🛠️ WARSZTAT · 7 dni — 10,00 zł</b><button class="btn" type="button" data-one-time-tier="warsztat" data-one-time-days="7">Kup WARSZTAT na 7 dni</button></div></div>';
     root.innerHTML = (typeof back === 'function' ? back() : '') +
       '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka. PRO dodaje analizę AI i pełną bazę elektryki. WARSZTAT zawiera PRO oraz narzędzia obsługi klientów i dokumentacji. Abonamentem zarządzasz w panelu Stripe.</p></div>' +
       activation + card('amator') + card('pro') + card('warsztat') +
@@ -270,6 +301,7 @@
   }
   window.renderPlans = renderPlansBridge;
   window.npStartCheckout = checkout;
+  window.npStartOneTimeCheckout = checkoutOneTime;
   window.licRefresh = refresh;
   window.licActivateInput = async function() {
     const input = document.querySelector('#licKeyIn');
@@ -362,16 +394,30 @@
   async function fetchAdminData() {
     const token = tokenGet();
     if (!token) throw new Error('Brak klucza dostępu do konta. Otwórz Plany, aby zarejestrować konto, lub aktywuj panel kluczem administratora.');
-    const [stats, promos] = await Promise.all([
+    const [stats, promos, redemptions, aiBudget] = await Promise.all([
       api('/api/admin/stats', undefined, 'GET', token),
-      api('/api/admin/promos', undefined, 'GET', token)
+      api('/api/admin/promos', undefined, 'GET', token),
+      api('/api/admin/promo-redemptions?limit=100', undefined, 'GET', token),
+      api('/api/admin/photo-budget', undefined, 'GET', token)
     ]);
-    return { stats, promos: Array.isArray(promos.promos) ? promos.promos : [] };
+    return {
+      stats,
+      promos: Array.isArray(promos.promos) ? promos.promos : [],
+      redemptions: Array.isArray(redemptions.redemptions) ? redemptions.redemptions : [],
+      aiBudget
+    };
   }
-  function renderAdminPanel(stats, promos, newCode) {
+  function renderAdminPanel(stats, promos, redemptions, aiBudget, newCode) {
     const root = document.querySelector('#screen');
     if (!root) return;
     const metric = (label, value, note) => '<div class="card"><b style="color:var(--cyan)">' + esc(label) + '</b><div style="font-size:24px;color:var(--hero);margin:8px 0">' + esc(value) + '</div><small style="color:var(--dim)">' + esc(note || '') + '</small></div>';
+    const redemptionRows = redemptions.length ? redemptions.map(r => '<div class="entry"><b>' + esc(r.label || 'Kampania') + ' · ' + esc(String(r.code_hint || '••••')) + '</b><small>Pakiet: ' + esc(String(r.tier || '').toUpperCase()) + ' · konto ID: ' + esc(String(r.user_id || '').slice(0, 8)) + '<br>Aktywowano: ' + esc(adminDate(r.redeemed_at)) + '<br>Ważność dostępu do: ' + esc(adminDate(r.expires_at)) + '</small></div>').join('') : '<div class="empty">Brak zapisanych wykorzystań kodów.</div>';
+    const aiBudgetCard = '<div class="card"><h2>🧮 Budżet analizy zdjęć AI</h2><div class="grid2">' +
+      '<div><small>Limit miesięczny</small><div style="font-size:20px;color:var(--hero)">' + esc(Number(aiBudget?.budgetUsd || 0).toFixed(2)) + ' USD</div></div>' +
+      '<div><small>Zużycie szacowane</small><div style="font-size:20px;color:var(--hero)">' + esc(Number(aiBudget?.actualEstimatedUsd || 0).toFixed(4)) + ' USD</div></div>' +
+      '<div><small>Zarezerwowane</small><div style="font-size:16px">' + esc(Number(aiBudget?.reservedUsd || 0).toFixed(4)) + ' USD</div></div>' +
+      '<div><small>Żądania w tym miesiącu</small><div style="font-size:16px">' + esc(String(aiBudget?.requests || 0)) + '</div></div>' +
+      '</div><small style="color:var(--dim)">' + esc(aiBudget?.modelPricing || 'Limit budżetu działa po stronie serwera; analiza pozostaje domyślnie wyłączona.') + '</small></div>';
     const rows = promos.length ? promos.map(p => '<div class="entry"><b>' + esc(p.label || 'Kod promocyjny') + ' · ' + esc(String(p.code_hint || '••••')) + '</b><small>' + esc(String(p.tier || '').toUpperCase()) + ' · ' + esc(String(p.duration_days)) + ' dni · użycia: ' + esc(String(p.redemption_count)) + '/' + esc(String(p.max_redemptions)) + '<br>Ważny do: ' + esc(adminDate(p.expires_at)) + '<br>' + (Number(p.enabled) === 1 ? 'Aktywny' : 'Wyłączony') + '</small>' + (Number(p.enabled) === 1 ? '<button class="btn" type="button" onclick="window.npDisablePromo(\'' + esc(p.id) + '\')">Wyłącz kod</button>' : '') + '</div>').join('') : '<div class="empty">Nie utworzono jeszcze kodów promocyjnych.</div>';
     root.innerHTML = '<div class="card"><h2>🛡️ Panel ADMINA</h2><p style="font-size:12px;line-height:1.5">Statystyki i kody są widoczne tylko po potwierdzeniu uprawnień przez serwer.</p><div class="grid2">' +
       metric('Zarejestrowane konta', stats.registeredAccounts, 'Dokładna liczba kont') +
@@ -384,7 +430,9 @@
       '<div class="card"><h2>🔎 Diagnostyka bramki płatności</h2><p style="font-size:12px;color:var(--dim);line-height:1.5">Sprawdza połączenie serwera ze Stripe i cztery skonfigurowane ceny. To jest odczyt — nie tworzy Checkoutu ani nie pobiera pieniędzy.</p><button class="btn" type="button" onclick="window.npCheckStripeConfig()">Sprawdź Stripe bez płatności</button><div id="npAdminStripeDiag" style="font-size:12px;line-height:1.6;margin-top:10px"></div></div>' +
       '<div class="card"><h2>🎟️ Utwórz kod promocyjny</h2><label for="npPromoTier">Pakiet</label><select id="npPromoTier"><option value="pro">PRO</option><option value="warsztat">WARSZTAT</option></select><label for="npPromoDuration">Czas dostępu</label><select id="npPromoDuration"><option value="3">3 dni</option><option value="7">7 dni</option></select><div class="grid2"><div><label for="npPromoMax">Maks. użyć</label><input id="npPromoMax" type="number" min="1" max="10000" value="1"></div><div><label for="npPromoExpires">Ważność kodu (dni)</label><input id="npPromoExpires" type="number" min="1" max="365" value="14"></div></div><label for="npPromoLabel">Opis kampanii (opcjonalnie)</label><input id="npPromoLabel" maxlength="120" placeholder="np. testy znajomych / konkurs"><button class="btn" onclick="window.npCreatePromo()">＋ Generuj kod</button>' +
       (newCode ? '<div class="entry" style="border-color:var(--hero)"><b>Nowy kod — pokaż go odbiorcy tylko teraz</b><input id="npPromoCreatedCode" readonly value="' + esc(newCode) + '"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'npPromoCreatedCode\').value).then(()=>alert(\'Skopiowano kod.\')).catch(()=>alert(\'Skopiuj kod ręcznie.\'))">Skopiuj kod</button></div>' : '') +
-      '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div><div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
+      '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div>' +
+      aiBudgetCard + '<div class="card"><h2>🧾 Historia wykorzystania kodów</h2><small style="color:var(--dim)">Maksymalnie 100 ostatnich wpisów. Pokazujemy skrócone ID konta, bez adresów e-mail. Historia jest przechowywana przez 12 miesięcy.</small>' + redemptionRows + '</div>' +
+      '<div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
   }
   window.npOpenAdminPanel = async function() {
     if (!API) { alert('Panel dostępny wyłącznie w oficjalnej aplikacji.'); return; }
@@ -392,7 +440,7 @@
     if (token) {
       try {
         const data = await fetchAdminData();
-        renderAdminPanel(data.stats, data.promos, '');
+        renderAdminPanel(data.stats, data.promos, data.redemptions, data.aiBudget, '');
         return;
       } catch (error) {
         if (error.status !== 401 && error.status !== 403) {
@@ -408,7 +456,7 @@
       const data = await api('/api/admin/bootstrap', { key: key.trim() }, 'POST', userToken);
       alert(data.message || 'Uprawnienia administratora aktywowane.');
       const panel = await fetchAdminData();
-      renderAdminPanel(panel.stats, panel.promos, '');
+      renderAdminPanel(panel.stats, panel.promos, panel.redemptions, panel.aiBudget, '');
     } catch (error) {
       alert(friendlyError(error, 'aktywować panelu ADMINA') + (error.message ? '\n' + error.message : ''));
     }
@@ -475,7 +523,7 @@
       if (!token) throw new Error('Zaloguj się na konto administratora.');
       const created = await api('/api/admin/promos', { tier, durationDays, maxRedemptions, expiresInDays, label }, 'POST', token);
       const panel = await fetchAdminData();
-      renderAdminPanel(panel.stats, panel.promos, created.code);
+      renderAdminPanel(panel.stats, panel.promos, panel.redemptions, panel.aiBudget, created.code);
     } catch (error) {
       alert(friendlyError(error, 'utworzyć kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
     }
@@ -536,8 +584,9 @@
     return data;
   };
   document.addEventListener('click', async event => {
-    const button = event.target.closest('[data-plan][data-interval], .np-buy, [data-np-copy], [data-np-refresh], [data-np-portal], [data-np-logout], [data-np-activate], [data-billing-nav]');
+    const button = event.target.closest('[data-one-time-tier][data-one-time-days], [data-plan][data-interval], .np-buy, [data-np-copy], [data-np-refresh], [data-np-portal], [data-np-logout], [data-np-activate], [data-billing-nav]');
     if (!button) return;
+    if (button.hasAttribute('data-one-time-tier')) { await checkoutOneTime(button.dataset.oneTimeTier, Number(button.dataset.oneTimeDays)); return; }
     if (button.hasAttribute('data-billing-nav')) { if (typeof nav === 'function') nav('plans'); return; }
     if (button.dataset.plan && button.dataset.interval) { await checkout(button.dataset.plan, button.dataset.interval); return; }
     if (button.hasAttribute('data-np-copy')) { window.licCopy(); return; }
@@ -563,7 +612,7 @@
       }
     }
     if (returned) {
-      if (tier !== 'amator') alert('Dziękujemy! Abonament ' + NAMES[tier] + ' jest aktywny.');
+      if (tier !== 'amator') alert('Dziękujemy! Dostęp ' + NAMES[tier] + ' jest aktywny.');
       else alert('Płatność wróciła do aplikacji, ale potwierdzenie jeszcze nie dotarło. Za chwilę kliknij „Sprawdź abonament” w zakładce Plany.');
       renderPlansBridge();
     } else if (cancelled) {
