@@ -83,9 +83,9 @@ function makeEnv() {
     env: {
       DB: {
         prepare(sql) {
-          return {
-            bind(...params) { return statement(sql, params); }
-          };
+          const prepared = statement(sql, []);
+          prepared.bind = (...params) => statement(sql, params);
+          return prepared;
         }
       }
     }
