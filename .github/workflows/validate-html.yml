@@ -48,4 +48,4 @@ jobs:
       - name: Sprawdź składnię Cloudflare Worker
         run: node --check workers/subscriptions/src/index.mjs
       - name: Testy regresyjne aplikacji i backendu
-        run: node --test tests/*.test.cjs workers/subscriptions/security.test.mjs workers/subscriptions/admin-promos.test.mjs workers/subscriptions/stripe-diagnostics.test.mjs workers/subscriptions/photo-budget.test.mjs
+        run: node --test tests/*.test.cjs workers/subscriptions/security.test.mjs workers/subscriptions/admin-promos.test.mjs workers/subscriptions/stripe-diagnostics.test.mjs workers/subscriptions/photo-budget.test.mjs workers/subscriptions/one-time-packages.test.mjs
