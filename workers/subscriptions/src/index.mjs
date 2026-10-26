@@ -168,8 +168,10 @@ async function authenticate(request, env) {
           OR (status = 'past_due' AND grace_until > ?))
       UNION ALL
       SELECT 1 AS active FROM promo_redemptions WHERE user_id = ? AND expires_at > ?
+      UNION ALL
+      SELECT 1 AS active FROM one_time_purchases WHERE user_id = ? AND expires_at > ?
       LIMIT 1
-    `).bind(row.user_id, now, now, row.user_id, now).first();
+    `).bind(row.user_id, now, now, row.user_id, now, row.user_id, now).first();
     if (!entitlement) return null;
   }
 
@@ -225,6 +227,22 @@ function priceMap(env) {
   return map;
 }
 
+
+function oneTimePriceMap(env) {
+  const entries = [
+    [env.STRIPE_PRICE_PRO_3D, { tier: "pro", durationDays: 3, amount: 300 }],
+    [env.STRIPE_PRICE_PRO_7D, { tier: "pro", durationDays: 7, amount: 700 }],
+    [env.STRIPE_PRICE_WARSZTAT_3D, { tier: "warsztat", durationDays: 3, amount: 500 }],
+    [env.STRIPE_PRICE_WARSZTAT_7D, { tier: "warsztat", durationDays: 7, amount: 1000 }],
+  ].filter(([id]) => typeof id === "string" && id.startsWith("price_"));
+  const map = new Map();
+  for (const [id, value] of entries) {
+    if (map.has(id)) throw new Error("DUPLICATE_ONE_TIME_PRICE_ID_CONFIGURATION");
+    map.set(id, value);
+  }
+  return map;
+}
+
 function safeReturnUrl(configured, fallback, appBase) {
   try {
     const base = new URL(appBase);
@@ -258,6 +276,29 @@ async function validateStripePrice(env, priceId, interval) {
       price.recurring?.interval !== interval || intervalCount !== 1 ||
       !Number.isSafeInteger(Number(price.unit_amount)) || Number(price.unit_amount) <= 0) {
     return err("Cena Stripe jest nieaktywna albo nie pasuje do trybu, waluty lub okresu rozliczenia tego środowiska.", 503);
+  }
+  return null;
+}
+
+
+async function validateStripeOneTimePrice(env, priceId, expected) {
+  const configuredMode = env.STRIPE_EXPECT_LIVEMODE;
+  if (configuredMode !== "true" && configuredMode !== "false") return err("Tryb test/live Stripe nie został jawnie skonfigurowany dla tego środowiska.", 503);
+  let response;
+  try {
+    response = await fetch("https://api.stripe.com/v1/prices/" + encodeURIComponent(priceId), {
+      headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+    });
+  } catch {
+    return err("Nie udało się zweryfikować ceny jednorazowej w Stripe.", 502);
+  }
+  let price = null;
+  try { price = await response.json(); } catch { /* Never expose upstream error bodies. */ }
+  if (!response.ok || price?.id !== priceId || price.active !== true ||
+      price.livemode !== (configuredMode === "true") || price.currency !== "pln" ||
+      price.type !== "one_time" || price.recurring ||
+      Number(price.unit_amount) !== Number(expected.amount)) {
+    return err("Cena pakietu jednorazowego jest nieaktywna albo nie pasuje do trybu, kwoty lub waluty.", 503);
   }
   return null;
 }
@@ -339,11 +380,14 @@ async function recalcUserTier(env, userId) {
   const { results: promotions = [] } = await env.DB.prepare(
     "SELECT tier, expires_at FROM promo_redemptions WHERE user_id = ? AND expires_at > ?"
   ).bind(userId, now).all();
+  const { results: oneTimePurchases = [] } = await env.DB.prepare(
+    "SELECT tier, expires_at FROM one_time_purchases WHERE user_id = ? AND expires_at > ?"
+  ).bind(userId, now).all();
   const activeSubscriptions = subscriptions.filter(s => (
     (ACTIVE_SUB_STATUSES.has(s.status) && Number(s.current_period_end) > now) ||
     (s.status === "past_due" && Number(s.grace_until || 0) > now)
   ));
-  const candidates = [...activeSubscriptions, ...promotions];
+  const candidates = [...activeSubscriptions, ...promotions, ...oneTimePurchases];
   const tier = candidates.reduce((best, s) => tierRank(s.tier) > tierRank(best) ? s.tier : best, "amator");
   await env.DB.prepare("UPDATE users SET tier = ?, updated_at = ? WHERE id = ?")
     .bind(tier, now, userId).run();
@@ -429,6 +473,56 @@ async function markWebhookFailed(env, eventId, message) {
     .bind(String(message).slice(0, 500), eventId).run();
 }
 
+async function grantOneTimePurchaseFromWebhook(env, event, eventObject) {
+  const sessionId = asId(eventObject);
+  if (!sessionId) throw new Error("ONE_TIME_CHECKOUT_SESSION_ID_MISSING");
+  const session = await fetchStripeOneTimeCheckoutSession(env, sessionId);
+  const configuredMode = env.STRIPE_EXPECT_LIVEMODE;
+  if (configuredMode !== "true" && configuredMode !== "false") throw new Error("STRIPE_MODE_NOT_CONFIGURED");
+  if (session.mode !== "payment" || session.payment_status !== "paid" || session.livemode !== (configuredMode === "true")) {
+    throw new Error("ONE_TIME_CHECKOUT_PAYMENT_NOT_VERIFIED");
+  }
+  const userId = session.metadata?.user_id || session.client_reference_id;
+  if (!isString(userId, 128) || session.client_reference_id !== userId || eventObject.metadata?.user_id !== userId) {
+    throw new Error("ONE_TIME_CHECKOUT_USER_MISMATCH");
+  }
+  if (session.metadata?.purchase_type !== "one_time") throw new Error("ONE_TIME_CHECKOUT_TYPE_MISMATCH");
+  const oneTimeMap = oneTimePriceMap(env);
+  const lines = Array.isArray(session.line_items?.data) ? session.line_items.data : [];
+  if (lines.length !== 1 || Number(lines[0]?.quantity) !== 1) throw new Error("ONE_TIME_CHECKOUT_LINE_ITEMS_INVALID");
+  const priceId = asId(lines[0]?.price);
+  const packageInfo = priceId ? oneTimeMap.get(priceId) : null;
+  if (!packageInfo) throw new Error("UNKNOWN_ONE_TIME_PRICE_ID");
+  const packageKey = `${packageInfo.tier}_${packageInfo.durationDays}d`;
+  if (session.metadata?.package_key !== packageKey ||
+      session.metadata?.plan_tier !== packageInfo.tier ||
+      Number(session.metadata?.duration_days) !== packageInfo.durationDays ||
+      Number(session.amount_total) !== packageInfo.amount ||
+      String(session.currency || "").toLowerCase() !== "pln" ||
+      String(lines[0]?.currency || session.currency || "").toLowerCase() !== "pln" ||
+      Number(lines[0]?.amount_total || packageInfo.amount) !== packageInfo.amount) {
+    throw new Error("ONE_TIME_CHECKOUT_PACKAGE_VALIDATION_FAILED");
+  }
+  const user = await env.DB.prepare("SELECT id FROM users WHERE id = ? LIMIT 1").bind(userId).first();
+  if (!user) throw new Error("ONE_TIME_CHECKOUT_USER_NOT_FOUND");
+  const now = nowSeconds();
+  const grantedAt = Math.min(now, stripeTimestamp(event.created) || now);
+  const expiresAt = grantedAt + packageInfo.durationDays * 86400;
+  const paymentIntentId = asId(session.payment_intent);
+  await env.DB.prepare(`
+    INSERT INTO one_time_purchases
+      (checkout_session_id, payment_intent_id, user_id, tier, duration_days, price_id, amount_total, currency, granted_at, expires_at, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'pln', ?, ?, ?)
+    ON CONFLICT(checkout_session_id) DO NOTHING
+  `).bind(session.id, paymentIntentId, userId, packageInfo.tier, packageInfo.durationDays, priceId, packageInfo.amount, grantedAt, expiresAt, now).run();
+  const recorded = await env.DB.prepare("SELECT user_id, tier, duration_days, price_id, amount_total FROM one_time_purchases WHERE checkout_session_id = ? LIMIT 1").bind(session.id).first();
+  if (!recorded || recorded.user_id !== userId || recorded.tier !== packageInfo.tier ||
+      Number(recorded.duration_days) !== packageInfo.durationDays || recorded.price_id !== priceId ||
+      Number(recorded.amount_total) !== packageInfo.amount) throw new Error("ONE_TIME_PURCHASE_IDEMPOTENCY_CONFLICT");
+  await recalcUserTier(env, userId);
+  await env.DB.prepare("DELETE FROM one_time_checkout_locks WHERE user_id = ?").bind(userId).run();
+}
+
 async function handleWebhook(request, env) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.STRIPE_WEBHOOK_SECRET) return err("Webhook secret is not configured", 500);
@@ -457,10 +551,16 @@ async function handleWebhook(request, env) {
     const obj = event.data.object;
     const map = priceMap(env);
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
-      if (obj.mode !== "subscription" || (obj.payment_status && obj.payment_status !== "paid" && event.type === "checkout.session.completed")) {
+      if (obj.mode === "payment") {
+        if (event.type === "checkout.session.completed" && obj.payment_status !== "paid") {
+          await markWebhookProcessed(env, event.id);
+          return json({ received: true, ignored: true });
+        }
+        await grantOneTimePurchaseFromWebhook(env, event, obj);
+      } else if (obj.mode !== "subscription" || (obj.payment_status && obj.payment_status !== "paid" && event.type === "checkout.session.completed")) {
         await markWebhookProcessed(env, event.id);
         return json({ received: true, ignored: true });
-      }
+      } else {
       const userId = obj.metadata?.user_id || obj.client_reference_id;
       const subscriptionId = asId(obj.subscription);
       const customerId = asId(obj.customer);
@@ -474,6 +574,7 @@ async function handleWebhook(request, env) {
       await persistSubscription(env, { userId, sub, priceInfo: info });
       await recalcUserTier(env, userId);
       await env.DB.prepare("DELETE FROM checkout_locks WHERE user_id = ?").bind(userId).run();
+      }
     } else if (isSubscriptionLifecycleEvent(event.type)) {
       const subId = asId(obj);
       if (!subId) throw new Error("SUBSCRIPTION_ID_MISSING");
@@ -566,6 +667,13 @@ async function fetchStripeCheckoutSession(env, sessionId) {
   if (!response.ok) throw new Error(`STRIPE_CHECKOUT_SESSION_LOOKUP_FAILED_${response.status}`);
   return response.json();
 }
+async function fetchStripeOneTimeCheckoutSession(env, sessionId) {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=line_items.data.price`, {
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  if (!response.ok) throw new Error(`STRIPE_ONE_TIME_CHECKOUT_LOOKUP_FAILED_${response.status}`);
+  return response.json();
+}
 async function expireStripeCheckoutSession(env, sessionId) {
   const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}/expire`, {
     method: "POST",
@@ -598,6 +706,11 @@ async function checkout(request, env, auth) {
     warsztat: { month: env.STRIPE_PRICE_WARSZTAT_MONTHLY, year: env.STRIPE_PRICE_WARSZTAT_YEARLY },
   })[tier][interval];
   if (!priceId || !priceId.startsWith("price_")) return err("Price is not configured", 503);
+  const nowBeforeCheckout = nowSeconds();
+  const pendingOneTime = await env.DB.prepare("SELECT expires_at FROM one_time_checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
+  if (pendingOneTime && Number(pendingOneTime.expires_at) > nowBeforeCheckout) {
+    return err("Masz już otwartą sesję zakupu jednorazowego. Zakończ ją lub poczekaj na wygaśnięcie przed zakupem abonamentu.", 409);
+  }
   const appBase = env.APP_BASE_URL;
   let parsedAppBase;
   try { parsedAppBase = new URL(appBase || ""); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
@@ -732,6 +845,105 @@ async function checkout(request, env, auth) {
   return json({ url: result.url, sessionId: result.id }, 200);
 }
 
+async function oneTimeCheckout(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
+  const body = await readJson(request, 8192);
+  const idempotency = request.headers.get("Idempotency-Key");
+  if (!idempotency || !/^[A-Za-z0-9_-]{8,128}$/.test(idempotency)) return err("A valid Idempotency-Key is required", 400);
+  const tier = body?.tier;
+  const durationDays = Number(body?.durationDays);
+  if (!["pro", "warsztat"].includes(tier) || ![3, 7].includes(durationDays)) return err("Wybierz prawidłowy pakiet jednorazowy.", 400);
+  const packageKey = `${tier}_${durationDays}d`;
+  const priceMap = oneTimePriceMap(env);
+  const [priceId, expected] = [...priceMap.entries()].find(([,v]) => v.tier === tier && v.durationDays === durationDays) || [];
+  if (!priceId || !expected) return err("Ten pakiet jednorazowy nie został jeszcze skonfigurowany dla tego środowiska.", 503);
+  const appBase = env.APP_BASE_URL;
+  let parsedAppBase;
+  try { parsedAppBase = new URL(appBase || ""); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
+  if (parsedAppBase.protocol !== "https:" || parsedAppBase.username || parsedAppBase.password) return err("APP_BASE_URL must be an HTTPS URL without embedded credentials", 500);
+  const appRoot = appBase.replace(/\/$/, "");
+  const successUrl = safeReturnUrl(env.CHECKOUT_SUCCESS_URL, `${appRoot}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`, appBase);
+  const cancelUrl = safeReturnUrl(env.CHECKOUT_CANCEL_URL, `${appRoot}/?checkout=cancelled`, appBase);
+  if (!successUrl || !cancelUrl) return err("Checkout return URLs must use the APP_BASE_URL origin", 500);
+  const user = await env.DB.prepare("SELECT id, email FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
+  if (!user) return err("User not found", 404);
+  const now = nowSeconds();
+  const pendingSubscription = await env.DB.prepare("SELECT session_id, expires_at FROM checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
+  if (pendingSubscription && Number(pendingSubscription.expires_at) > now) {
+    return err("Masz już otwartą sesję Checkout abonamentu. Zakończ ją lub poczekaj na jej wygaśnięcie przed zakupem jednorazowym.", 409);
+  }
+  const pending = await env.DB.prepare("SELECT user_id, idempotency_key, tier, duration_days, session_id, expires_at FROM one_time_checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
+  if (pending && Number(pending.expires_at) > now) {
+    if (!pending.session_id) return err("Zakup jednorazowy jest już przygotowywany. Odczekaj chwilę.", 409);
+    try {
+      const previous = await fetchStripeCheckoutSession(env, pending.session_id);
+      if (previous.status === "complete") return err("Poprzedni Checkout został już zakończony. Odśwież dostęp przed kolejnym zakupem.", 409);
+      if (previous.status === "open" && pending.tier === tier && Number(pending.duration_days) === durationDays &&
+          isString(previous.url, 2048)) return json({ url: previous.url, sessionId: previous.id, reused: true }, 200);
+      if (previous.status === "open") await expireStripeCheckoutSession(env, pending.session_id);
+      else if (previous.status !== "expired") return err("Nie można bezpiecznie zastąpić poprzedniej sesji Checkout.", 409);
+    } catch {
+      return err("Nie można bezpiecznie zweryfikować poprzedniego Checkout. Spróbuj później.", 502);
+    }
+    await env.DB.prepare("DELETE FROM one_time_checkout_locks WHERE user_id = ? AND idempotency_key = ?").bind(auth.userId, pending.idempotency_key).run();
+  } else if (pending) {
+    await env.DB.prepare("DELETE FROM one_time_checkout_locks WHERE user_id = ? AND idempotency_key = ?").bind(auth.userId, pending.idempotency_key).run();
+  }
+  // Avoid parallel subscription and one-time sessions; validation is read-only and precedes the lock.
+  const priceError = await validateStripeOneTimePrice(env, priceId, expected);
+  if (priceError) return priceError;
+  const lockLease = await env.DB.prepare(`
+    INSERT INTO one_time_checkout_locks (user_id, idempotency_key, tier, duration_days, session_id, expires_at, created_at)
+    VALUES (?, ?, ?, ?, NULL, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET idempotency_key=excluded.idempotency_key, tier=excluded.tier,
+      duration_days=excluded.duration_days, session_id=NULL, expires_at=excluded.expires_at, created_at=excluded.created_at
+    WHERE one_time_checkout_locks.expires_at <= ?
+  `).bind(auth.userId, idempotency, tier, durationDays, now + CHECKOUT_LOCK_LEASE_SECONDS, now, now).run();
+  if (Number(lockLease.meta?.changes || 0) !== 1) return err("Inny zakup jest już przygotowywany. Odczekaj chwilę.", 409);
+  const form = new URLSearchParams();
+  form.set("mode", "payment");
+  form.set("payment_method_types[0]", "card");
+  form.set("branding_settings[display_name]", "NAPRAWNIK");
+  form.set("line_items[0][price]", priceId);
+  form.set("line_items[0][quantity]", "1");
+  form.set("success_url", successUrl);
+  form.set("cancel_url", cancelUrl);
+  form.set("client_reference_id", auth.userId);
+  form.set("metadata[user_id]", auth.userId);
+  form.set("metadata[purchase_type]", "one_time");
+  form.set("metadata[package_key]", packageKey);
+  form.set("metadata[plan_tier]", tier);
+  form.set("metadata[duration_days]", String(durationDays));
+  form.set("payment_intent_data[metadata][user_id]", auth.userId);
+  form.set("payment_intent_data[metadata][purchase_type]", "one_time");
+  form.set("payment_intent_data[metadata][package_key]", packageKey);
+  if (user.email && !user.email.endsWith("@invalid.naprawnik.local") && isString(user.email, 320)) form.set("customer_email", user.email);
+  const headers = { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "content-type": "application/x-www-form-urlencoded",
+    "Idempotency-Key": `naprawnik-one-time-${auth.userId}-${idempotency}` };
+  let response;
+  try {
+    response = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers, body: form });
+  } catch {
+    await env.DB.prepare("DELETE FROM one_time_checkout_locks WHERE user_id = ? AND idempotency_key = ?").bind(auth.userId, idempotency).run().catch(() => {});
+    return err("Nie udało się połączyć ze Stripe Checkout.", 502);
+  }
+  let result = null;
+  try { result = await response.json(); } catch { /* Do not expose provider responses. */ }
+  if (!response.ok || !isString(result?.url, 2048) || !isString(result?.id, 128)) {
+    await env.DB.prepare("DELETE FROM one_time_checkout_locks WHERE user_id = ? AND idempotency_key = ?").bind(auth.userId, idempotency).run().catch(() => {});
+    console.error(JSON.stringify({ event: "stripe_one_time_checkout_rejected", status: response.status, requestId: response.headers.get("request-id") || null }));
+    return err("Nie udało się utworzyć Checkout dla pakietu jednorazowego.", 502);
+  }
+  const sessionExpires = stripeTimestamp(result.expires_at) || (nowSeconds() + 24 * 60 * 60);
+  const lockUpdated = await env.DB.prepare("UPDATE one_time_checkout_locks SET session_id = ?, expires_at = ? WHERE user_id = ? AND idempotency_key = ?")
+    .bind(result.id, sessionExpires, auth.userId, idempotency).run();
+  if (Number(lockUpdated.meta?.changes || 0) !== 1) return err("Checkout utworzono, ale blokada zakupu nie została zapisana. Nie rozpoczynaj drugiego zakupu.", 503);
+  await env.DB.prepare("INSERT INTO checkout_requests (idempotency_key, user_id, session_id, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(idempotency_key) DO NOTHING")
+    .bind(idempotency, auth.userId, result.id, nowSeconds()).run().catch(() => {});
+  return json({ url: result.url, sessionId: result.id }, 200);
+}
+
 async function createBillingPortalSession(request, env, auth) {
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
@@ -828,9 +1040,15 @@ async function getMe(env, auth) {
     tier: p.tier, status: "active", billing_interval: "promo", current_period_end: Number(p.expires_at),
     cancel_at_period_end: 0, grace_until: null, granted_at: Number(p.granted_at)
   }));
+  const { results: oneTimePurchases = [] } = await env.DB.prepare(`SELECT tier, granted_at, expires_at
+    FROM one_time_purchases WHERE user_id = ? AND expires_at > ? ORDER BY expires_at DESC`).bind(auth.userId, now).all();
+  const oneTimeEntitlements = oneTimePurchases.map(p => ({
+    tier: p.tier, status: "active", billing_interval: "one_time", current_period_end: Number(p.expires_at),
+    cancel_at_period_end: 0, grace_until: null, granted_at: Number(p.granted_at)
+  }));
   const currentTier = await recalcUserTier(env, auth.userId);
   const admin = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
-  return json({ user: { ...user, tier: currentTier, role: admin?.role || "user" }, subscriptions: [...subscriptions, ...promoEntitlements] });
+  return json({ user: { ...user, tier: currentTier, role: admin?.role || "user" }, subscriptions: [...subscriptions, ...promoEntitlements, ...oneTimeEntitlements] });
 }
 
 async function isAdminUser(env, userId) {
@@ -1570,6 +1788,10 @@ export default {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
         else response = await checkout(request, env, auth);
+      } else if (url.pathname === "/api/one-time-checkout" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await oneTimeCheckout(request, env, auth);
       } else if (url.pathname === "/api/billing-portal" && request.method === "POST") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -1670,6 +1892,6 @@ export default {
   },
 };
 
-export { authenticate, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget };
+export { authenticate, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget };
 
 
