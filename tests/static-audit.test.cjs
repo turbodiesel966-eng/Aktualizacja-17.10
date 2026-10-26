@@ -97,6 +97,21 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
 
 });
 
+test('APK dostaje własny, jawny ekran parowania właściciela bez zmiany wersji webowej', () => {
+  const mobilePairing = read('mobile-admin-pairing.js');
+  const mobilePrepare = read('scripts/prepare-mobile.mjs');
+  const webIndex = read('index.html');
+  assert.match(mobilePairing, /location\.hostname !== 'localhost'/);
+  assert.match(mobilePairing, /\/api\/admin\/mobile-login/);
+  assert.match(mobilePairing, /\^NP-MOB-\[A-F0-9\]\{24\}\$/);
+  assert.match(mobilePairing, /Połącz telefon właściciela/);
+  assert.match(mobilePairing, /originalOpenAdminPanel\(\)/);
+  assert.doesNotMatch(mobilePairing, /ADMIN_BOOTSTRAP_KEY|\/api\/admin\/bootstrap/);
+  assert.match(mobilePrepare, /"mobile-admin-pairing\.js"/);
+  assert.match(mobilePrepare, /mobile-admin-pairing\.js/);
+  assert.doesNotMatch(webIndex, /mobile-admin-pairing\.js/);
+});
+
 test('sam spreparowany localStorage nie oznacza aktywnej licencji w widoku planów', () => {
   const store = new Map();
   const rootElement = { innerHTML: '' };
