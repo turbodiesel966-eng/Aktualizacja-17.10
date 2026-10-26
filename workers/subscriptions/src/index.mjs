@@ -1349,7 +1349,7 @@ async function redeemPromo(request, env, auth) {
     return err("Kod został wykorzystany lub nie można go już aktywować na tym koncie.", 409);
   }
   const currentTier = await recalcUserTier(env, auth.userId);
-  const johnnyPromo = /^JOHNNY6M\\b/i.test(String(promo.label || ""));
+  const johnnyPromo = String(promo.label || "").toUpperCase().startsWith("JOHNNY6M");
   return json({
     ok: true, tier: currentTier, durationDays: Number(promo.duration_days), expiresAt: grantExpiresAt,
     message: johnnyPromo ? "Gratulacje Tu Johnny — Dostałeś Dożywotni Dostęp Do NAPRAWNIKA!" : "Kod aktywowany.",
