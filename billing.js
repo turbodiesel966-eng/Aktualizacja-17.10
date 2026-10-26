@@ -61,7 +61,19 @@
       return 'Serwer odmówił dostępu. Sprawdź, czy otwierasz oficjalną aplikację i czy Twój plan obejmuje tę funkcję.';
     }
     if (status === 409 || /active subscription already exists|checkout.*already|different plan is already open|checkout was completed|another checkout session/i.test(message)) {
-      return 'Masz już aktywną subskrypcję albo otwartą sesję zakupu. Odśwież status planu lub zarządzaj istniejącą subskrypcją.';
+      if (/active subscription already exists|awaiting payment/i.test(message)) {
+        return 'Serwer zgłasza istniejącą albo nieopłaconą subskrypcję na tym koncie (HTTP 409). Odśwież status planu; jeśli to pozostałość po teście, potrzebna jest weryfikacja konta testowego.';
+      }
+      if (/different plan is already open/i.test(message)) {
+        return 'Masz otwartą sesję Stripe dla innego planu. Wróć do tej sesji i ją zakończ albo zamknij; dopiero potem wybierz PRO.';
+      }
+      if (/checkout is already being prepared|another checkout session is already being prepared/i.test(message)) {
+        return 'Poprzednia próba zakupu nadal jest przygotowywana. Odczekaj 30 sekund i spróbuj ponownie.';
+      }
+      if (/checkout was completed/i.test(message)) {
+        return 'Poprzedni zakup został już zakończony. Odśwież status subskrypcji przed rozpoczęciem kolejnego zakupu.';
+      }
+      return 'Konflikt płatności (HTTP 409): ' + message;
     }
     if (status === 429) return 'Wykonano zbyt wiele prób w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.';
     if (status === 503 || /production service is not enabled|stripe is not configured|price is not configured|checkout return urls/i.test(message)) {
