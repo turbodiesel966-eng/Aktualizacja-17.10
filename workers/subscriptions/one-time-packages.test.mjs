@@ -33,6 +33,7 @@ function makeCheckoutEnv() {
           bind(...params) {
             return {
               async first() {
+                if (sql.includes("INSERT INTO request_limits")) return { request_count: 1 };
                 if (sql.includes("SELECT id, email FROM users")) return { id: "user_test_1", email: "owner@example.test" };
                 if (sql.includes("SELECT session_id, expires_at FROM checkout_locks")) return null;
                 if (sql.includes("SELECT user_id, idempotency_key, tier, duration_days, session_id, expires_at FROM one_time_checkout_locks")) {
