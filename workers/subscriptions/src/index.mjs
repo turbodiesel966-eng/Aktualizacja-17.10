@@ -20,6 +20,7 @@ const RATE_LIMITS = Object.freeze({
   registration: Object.freeze({ maxRequests: 10, windowSeconds: 15 * 60 }),
   userDataWrites: Object.freeze({ maxRequests: 120, windowSeconds: 60 }),
   photoDiagnosis: Object.freeze({ maxRequests: 8, windowSeconds: 60 * 60 }),
+  photoDiagnosisDaily: Object.freeze({ maxRequests: 5, windowSeconds: 24 * 60 * 60 }),
   billingPortal: Object.freeze({ maxRequests: 10, windowSeconds: 15 * 60 }),
   analyticsVisits: Object.freeze({ maxRequests: 20, windowSeconds: 60 }),
   promoRedemptions: Object.freeze({ maxRequests: 5, windowSeconds: 15 * 60 }),
@@ -1009,6 +1010,18 @@ async function diagnoseStripeConfig(env) {
   });
 }
 
+async function listAdminPromoRedemptions(env, url) {
+  const rawLimit = Number(url?.searchParams?.get("limit") || 100);
+  const limit = Number.isSafeInteger(rawLimit) ? Math.min(200, Math.max(1, rawLimit)) : 100;
+  const { results = [] } = await env.DB.prepare(`
+    SELECT r.id, r.promo_id, p.label, p.code_hint, r.user_id, r.tier, r.granted_at, r.expires_at, r.redeemed_at
+    FROM promo_redemptions r
+    JOIN promo_codes p ON p.id = r.promo_id
+    ORDER BY r.redeemed_at DESC LIMIT ?
+  `).bind(limit).all();
+  return json({ redemptions: results });
+}
+
 async function listAdminPromos(env) {
   const { results = [] } = await env.DB.prepare(`SELECT id, code_hint, label, tier, duration_days, max_redemptions, redemption_count, starts_at, expires_at, enabled, created_at
     FROM promo_codes ORDER BY created_at DESC LIMIT 100`).all();
@@ -1116,7 +1129,7 @@ async function trackVisit(request, env) {
       ).run();
   if (Math.random() < 0.01) {
     await env.DB.prepare("DELETE FROM app_visits WHERE visited_at < ?").bind(now - 90 * 86400).run().catch(() => {});
-    await env.DB.prepare("DELETE FROM promo_redemptions WHERE expires_at < ?").bind(now - 90 * 86400).run().catch(() => {});
+    await env.DB.prepare("DELETE FROM promo_redemptions WHERE redeemed_at < ?").bind(now - 365 * 86400).run().catch(() => {});
   }
   return json({ ok: true });
 }
@@ -1213,11 +1226,17 @@ async function photoDiagnosis(request, env, auth) {
   if (env.PHOTO_ANALYSIS_ENABLED !== "true") return err("Analiza zdjęć AI jest tymczasowo wyłączona.", 503);
   if (request.method !== "POST") return err("Method not allowed", 405);
   if (!env.OPENAI_API_KEY) return err("Analiza AI nie jest skonfigurowana na serwerze.", 503);
+  const modelName = typeof env.OPENAI_VISION_MODEL === "string" && /^[a-zA-Z0-9._-]{1,100}$/.test(env.OPENAI_VISION_MODEL)
+    ? env.OPENAI_VISION_MODEL
+    : "gpt-6-luna";
+  if (!PHOTO_MODEL_PRICING[modelName]) return err("Model analizy AI nie ma skonfigurowanej, zweryfikowanej stawki kosztowej; analiza pozostaje zablokowana.", 503);
   if (!(await userHasTier(env, auth.userId, "pro"))) {
     return err("Aktywny plan PRO lub WARSZTAT jest wymagany do analizy zdjęć AI.", 403);
   }
   const limited = await enforceRateLimit(request, env, "photo-diagnosis", auth.userId, RATE_LIMITS.photoDiagnosis);
   if (limited) return limited;
+  const dailyLimited = await enforceRateLimit(request, env, "photo-diagnosis-daily", auth.userId, RATE_LIMITS.photoDiagnosisDaily);
+  if (dailyLimited) return dailyLimited;
   const contentType = request.headers.get("content-type") || "";
   if (!/^multipart\/form-data\s*;/i.test(contentType)) return err("Wyślij zdjęcia w formularzu multipart/form-data.", 415);
 
@@ -1266,16 +1285,26 @@ async function photoDiagnosis(request, env, auth) {
     if (totalImageBytes > 3 * MAX_PHOTO_FILE_BYTES) return err("Zdjęcia przekraczają łączny limit 4,5 MB.", 413);
     const mime = String(file.type).toLowerCase();
     if (!supportedImageBytes(bytes, mime)) return err("Zawartość pliku nie zgadza się z formatem deklarowanego obrazu.", 415);
+    const dimensions = photoImageDimensions(bytes, mime);
+    if (!dimensions || !dimensions.width || !dimensions.height || dimensions.width > 8000 || dimensions.height > 8000 || dimensions.width * dimensions.height > 12_000_000) {
+      return err("Zdjęcie ma nieobsługiwane wymiary. Zmniejsz obraz do maksymalnie 12 megapikseli.", 413);
+    }
     imageContent.push({ type: "input_image", image_url: `data:${mime};base64,${bytesToBase64(bytes)}`, detail: "high" });
   }
 
+  const dimensionsTotal = imageContent.length; // The count is included in usage reporting; per-file pixels are capped above.
+  let budgetReservation;
+  try { budgetReservation = await reservePhotoBudget(env); }
+  catch (error) {
+    console.error(JSON.stringify({ event: "photo_budget_reserve_failed", code: error?.message || "unknown" }));
+    return err("Nie można potwierdzić dostępnego budżetu AI. Analiza została bezpiecznie zablokowana.", 503);
+  }
+  if (!budgetReservation) return err("Miesięczny budżet analizy zdjęć AI został wykorzystany. Spróbuj w kolejnym okresie.", 429);
   const vehicle = [
     ["Marka", make], ["Model", model], ["Rocznik", year], ["Silnik", engine],
     ["Kategoria usterki", category], ["Objawy", symptoms], ["Dodatkowe informacje", extra],
   ].filter(([, value]) => value).map(([label, value]) => `${label}: ${value}`).join("\n");
-  const modelName = typeof env.OPENAI_VISION_MODEL === "string" && /^[a-zA-Z0-9._-]{1,100}$/.test(env.OPENAI_VISION_MODEL)
-    ? env.OPENAI_VISION_MODEL
-    : "gpt-4.1-mini";
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45_000);
   let upstream;
@@ -1299,6 +1328,7 @@ async function photoDiagnosis(request, env, auth) {
       signal: controller.signal,
     });
   } catch (error) {
+    await settlePhotoBudget(env, budgetReservation, null).catch(() => {});
     console.error(JSON.stringify({ event: "photo_diagnosis_upstream_network_error", aborted: error?.name === "AbortError" }));
     return err(error?.name === "AbortError" ? "Analiza AI przekroczyła limit czasu. Spróbuj ponownie." : "Nie udało się połączyć z usługą analizy AI.", 502);
   } finally {
@@ -1306,6 +1336,9 @@ async function photoDiagnosis(request, env, auth) {
   }
   let data = null;
   try { data = await upstream.json(); } catch { /* Do not expose provider response bodies. */ }
+  const usage = data?.usage;
+  const actualCost = usage ? estimatePhotoCostMicrousd(modelName, Number(usage.input_tokens), Number(usage.output_tokens)) : null;
+  await settlePhotoBudget(env, budgetReservation, actualCost).catch(error => console.error(JSON.stringify({ event: "photo_budget_settlement_failed", code: error?.message || "unknown" })));
   if (!upstream.ok) {
     console.error(JSON.stringify({
       event: "photo_diagnosis_upstream_rejected",
@@ -1319,6 +1352,118 @@ async function photoDiagnosis(request, env, auth) {
   const analysis = responseOutputText(data);
   if (!analysis) return err("Usługa AI nie zwróciła tekstowego wyniku analizy.", 502);
   return json({ analysis, model: modelName }, 200);
+}
+
+
+const PHOTO_MODEL_PRICING = Object.freeze({
+  // USD / 1M tokens, verified against the provider's published model pricing. Values are stored as micro-USD.
+  "gpt-6-luna": Object.freeze({ inputMicrousdPerMillion: 100000, outputMicrousdPerMillion: 500000 }),
+  "gpt-4.1-mini": Object.freeze({ inputMicrousdPerMillion: 400000, outputMicrousdPerMillion: 1600000 }),
+});
+function photoBudgetConfig(env) {
+  const budget = env.PHOTO_MONTHLY_BUDGET_USD === undefined ? 5 : Number(env.PHOTO_MONTHLY_BUDGET_USD);
+  const reserve = env.PHOTO_REQUEST_RESERVE_USD === undefined ? 0.25 : Number(env.PHOTO_REQUEST_RESERVE_USD);
+  if (!Number.isFinite(budget) || budget <= 0 || budget > 100 || !Number.isFinite(reserve) || reserve <= 0 || reserve > budget) return null;
+  return { budgetMicrousd: Math.round(budget * 1_000_000), reserveMicrousd: Math.round(reserve * 1_000_000) };
+}
+function estimatePhotoCostMicrousd(model, inputTokens, outputTokens) {
+  const prices = PHOTO_MODEL_PRICING[model];
+  if (!prices || !Number.isSafeInteger(Number(inputTokens)) || Number(inputTokens) < 0 ||
+      !Number.isSafeInteger(Number(outputTokens)) || Number(outputTokens) < 0) return null;
+  return Math.ceil(Number(inputTokens) * prices.inputMicrousdPerMillion / 1_000_000) +
+    Math.ceil(Number(outputTokens) * prices.outputMicrousdPerMillion / 1_000_000);
+}
+function photoMonthStart(now = nowSeconds()) {
+  const date = new Date(now * 1000);
+  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1) / 1000);
+}
+async function reservePhotoBudget(env) {
+  const config = photoBudgetConfig(env);
+  if (!config) throw new Error("PHOTO_BUDGET_CONFIGURATION_INVALID");
+  const now = nowSeconds();
+  const periodStart = photoMonthStart(now);
+  const row = await env.DB.prepare(`
+    INSERT INTO photo_usage_budget (period_start, budget_microusd, reserved_microusd, actual_microusd, request_count, updated_at)
+    VALUES (?, ?, ?, 0, 1, ?)
+    ON CONFLICT(period_start) DO UPDATE SET
+      budget_microusd = excluded.budget_microusd,
+      reserved_microusd = photo_usage_budget.reserved_microusd + excluded.reserved_microusd,
+      request_count = photo_usage_budget.request_count + 1,
+      updated_at = excluded.updated_at
+    WHERE photo_usage_budget.actual_microusd + photo_usage_budget.reserved_microusd + excluded.reserved_microusd <= excluded.budget_microusd
+    RETURNING period_start, budget_microusd
+  `).bind(periodStart, config.budgetMicrousd, config.reserveMicrousd, now).first();
+  if (!row) return null;
+  if (Math.random() < 0.01) {
+    await env.DB.prepare("DELETE FROM photo_usage_budget WHERE period_start < ?").bind(periodStart - 13 * 31 * 86400).run().catch(() => {});
+  }
+  return { periodStart, reserveMicrousd: config.reserveMicrousd, budgetMicrousd: config.budgetMicrousd };
+}
+async function settlePhotoBudget(env, reservation, actualMicrousd = null) {
+  if (!reservation) return;
+  // If provider usage is missing or a network error leaves the outcome unknown, retain the conservative reservation as spend.
+  const actual = Number.isSafeInteger(actualMicrousd) && actualMicrousd >= 0 ? actualMicrousd : reservation.reserveMicrousd;
+  const result = await env.DB.prepare(`
+    UPDATE photo_usage_budget
+    SET reserved_microusd = MAX(0, reserved_microusd - ?),
+        actual_microusd = actual_microusd + ?,
+        updated_at = ?
+    WHERE period_start = ?
+  `).bind(reservation.reserveMicrousd, actual, nowSeconds(), reservation.periodStart).run();
+  if (!Number(result?.meta?.changes || 0)) throw new Error("PHOTO_BUDGET_SETTLEMENT_FAILED");
+}
+async function getAdminPhotoBudget(env) {
+  const config = photoBudgetConfig(env);
+  if (!config) return err("Konfiguracja budżetu AI jest nieprawidłowa.", 503);
+  const periodStart = photoMonthStart();
+  const row = await env.DB.prepare("SELECT budget_microusd, reserved_microusd, actual_microusd, request_count, updated_at FROM photo_usage_budget WHERE period_start = ? LIMIT 1").bind(periodStart).first();
+  const actual = Number(row?.actual_microusd || 0);
+  const reserved = Number(row?.reserved_microusd || 0);
+  const budget = Number(row?.budget_microusd || config.budgetMicrousd);
+  return json({
+    month: new Date(periodStart * 1000).toISOString().slice(0, 7),
+    budgetUsd: budget / 1_000_000,
+    actualEstimatedUsd: actual / 1_000_000,
+    reservedUsd: reserved / 1_000_000,
+    remainingReservedBudgetUsd: Math.max(0, budget - actual - reserved) / 1_000_000,
+    requests: Number(row?.request_count || 0),
+    updatedAt: row?.updated_at ? new Date(Number(row.updated_at) * 1000).toISOString() : null,
+    modelPricing: "Koszt szacowany z liczby tokenów w odpowiedzi API; brak usage obciąża rezerwacją. Limit blokuje nowe żądania, gdy budżet jest wykorzystany."
+  });
+}
+function photoImageDimensions(bytes, mime) {
+  const u32be = (i) => (((bytes[i] << 24) >>> 0) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]) >>> 0;
+  const u24le = (i) => bytes[i] + (bytes[i + 1] << 8) + (bytes[i + 2] << 16);
+  if (mime === "image/png" && bytes.length >= 24) return { width: u32be(16), height: u32be(20) };
+  if (mime === "image/jpeg" && bytes.length > 4) {
+    let i = 2;
+    while (i + 8 < bytes.length) {
+      if (bytes[i] !== 0xff) { i++; continue; }
+      while (bytes[i] === 0xff) i++;
+      const marker = bytes[i++];
+      if (marker === 0xd9 || marker === 0xda) break;
+      if (marker === 0xd8 || (marker >= 0xd0 && marker <= 0xd7) || marker === 0x01) continue;
+      if (i + 2 > bytes.length) break;
+      const length = (bytes[i] << 8) | bytes[i + 1];
+      if (length < 2 || i + length > bytes.length) break;
+      if ([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker) && length >= 7) {
+        return { width: (bytes[i + 5] << 8) | bytes[i + 6], height: (bytes[i + 3] << 8) | bytes[i + 4] };
+      }
+      i += length;
+    }
+  }
+  if (mime === "image/webp" && bytes.length >= 30) {
+    const chunk = String.fromCharCode(bytes[12], bytes[13], bytes[14], bytes[15]);
+    if (chunk === "VP8X") return { width: 1 + u24le(24), height: 1 + u24le(27) };
+    if (chunk === "VP8 " && bytes.length >= 30 && bytes[23] === 0x9d && bytes[24] === 0x01 && bytes[25] === 0x2a) {
+      return { width: ((bytes[26] | (bytes[27] << 8)) & 0x3fff), height: ((bytes[28] | (bytes[29] << 8)) & 0x3fff) };
+    }
+    if (chunk === "VP8L" && bytes.length >= 25 && bytes[20] === 0x2f) {
+      const b1=bytes[21],b2=bytes[22],b3=bytes[23],b4=bytes[24];
+      return { width: 1 + b1 + ((b2 & 0x3f) << 8), height: 1 + (b2 >> 6) + (b3 << 2) + ((b4 & 0x0f) << 10) };
+    }
+  }
+  return null;
 }
 
 function safeParse(value) { try { return JSON.parse(value); } catch { return null; } }
@@ -1453,6 +1598,13 @@ export default {
           const denied = await requireAdminResponse(env, auth);
           response = denied || await getAdminStats(env);
         }
+      } else if (url.pathname === "/api/admin/photo-budget" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const denied = await requireAdminResponse(env, auth);
+          response = denied || await getAdminPhotoBudget(env);
+        }
       } else if (url.pathname === "/api/admin/stripe-diagnostics" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -1466,6 +1618,13 @@ export default {
         else {
           const denied = await requireAdminResponse(env, auth);
           response = denied || await listAdminPromos(env);
+        }
+      } else if (url.pathname === "/api/admin/promo-redemptions" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const denied = await requireAdminResponse(env, auth);
+          response = denied || await listAdminPromoRedemptions(env, url);
         }
       } else if (url.pathname === "/api/admin/promos" && request.method === "POST") {
         const auth = await authenticate(request, env);
@@ -1511,6 +1670,6 @@ export default {
   },
 };
 
-export { authenticate, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig };
+export { authenticate, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget };
 
 
