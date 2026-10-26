@@ -6,7 +6,25 @@ on:
       - main
       - fix/mobile-admin-access-capacitor-apk-20261026
       - apk/admin-pairing-ui-20261026
+    paths:
+      - '.github/workflows/build-android-apk.yml'
+      - 'capacitor.config.json'
+      - 'index.html'
+      - 'billing.js'
+      - 'mobile-admin-pairing.js'
+      - 'katalog-techniczny.js'
+      - 'sw.js'
+      - 'manifest.webmanifest'
+      - 'assets/**'
+      - 'scripts/prepare-mobile.mjs'
+      - 'scripts/configure-android-build.mjs'
+      - 'scripts/verify-apk.py'
+      - 'package.json'
   workflow_dispatch:
+
+concurrency:
+  group: naprawnik-android-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
