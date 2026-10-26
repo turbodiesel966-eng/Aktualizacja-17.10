@@ -174,7 +174,7 @@ test("Worker atomowo blokuje drugi Checkout i ma migrację blokad", async () => 
 
 
 function makeCheckoutTestEnv() {
-  const state = { lock: null, sessions: new Map(), checkoutRequests: [], stripePosts: 0, priceLivemode: false, priceCurrency: "pln" };
+  const state = { lock: null, sessions: new Map(), checkoutRequests: [], stripePosts: 0, priceLivemode: false, priceCurrency: "pln", checkoutForm: null };
   const env = {
     STRIPE_SECRET_KEY: "sk_test_placeholder",
     STRIPE_EXPECT_LIVEMODE: "false",
@@ -257,6 +257,7 @@ function mockStripeCheckoutFetch(state) {
     }
     if (url === "https://api.stripe.com/v1/checkout/sessions" && method === "POST") {
       state.stripePosts += 1;
+      state.checkoutForm = new URLSearchParams(init.body);
       const id = "cs_test_" + state.stripePosts;
       const session = { id, url: "https://checkout.stripe.com/c/pay/" + id, status: "open", expires_at: Math.floor(Date.now() / 1000) + 3600 };
       state.sessions.set(id, session);
@@ -283,6 +284,7 @@ test("Checkout tworzy jedną sesję i ponowne kliknięcie tej samej taryfy używ
     assert.equal(first.status, 200);
     assert.match(firstBody.url, /^https:\/\/checkout\.stripe\.com\//);
     assert.equal(state.stripePosts, 1);
+    assert.equal(state.checkoutForm?.get("branding_settings[display_name]"), "NAPRAWNIK");
     assert.ok(state.lock && state.lock.session_id);
 
     const second = await checkout(checkoutRequest("test-checkout-key-002"), env, { userId: "user_test_1" });
