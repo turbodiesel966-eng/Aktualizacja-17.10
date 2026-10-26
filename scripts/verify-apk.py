@@ -20,6 +20,7 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/sw.js",
         "assets/public/manifest.webmanifest",
         "assets/public/native-bridge.js",
+        "assets/public/mobile-admin-pairing.js",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -33,6 +34,7 @@ with zipfile.ZipFile(apk) as bundle:
     catalog = bundle.read("assets/public/katalog-techniczny.js").decode("utf-8")
     service_worker = bundle.read("assets/public/sw.js").decode("utf-8")
     manifest = bundle.read("assets/public/manifest.webmanifest").decode("utf-8")
+    pairing = bundle.read("assets/public/mobile-admin-pairing.js").decode("utf-8")
 
     try:
         case_block = html.split("const knowledgeCases = [", 1)[1].split("const KNOW_LINKS={", 1)[0]
@@ -49,6 +51,8 @@ with zipfile.ZipFile(apk) as bundle:
         raise SystemExit("Technical catalogue module is present but not initialized.")
     if "naprawnik-subscriptions-live.turbodiesel966.workers.dev" not in billing:
         raise SystemExit("Production billing/API integration is missing from the packaged app.")
+    if "window.__naprawnikAdminCodePrompt" not in billing:
+        raise SystemExit("Android-only owner code input was not connected to the packaged billing flow.")
     for endpoint in ["/api/admin/device-link", "/api/admin/mobile-login", "/api/checkout", "/api/one-time-checkout", "/api/promo/redeem"]:
         if endpoint not in billing:
             raise SystemExit(f"Missing billing/admin endpoint in packaged billing bridge: {endpoint}")
@@ -56,8 +60,12 @@ with zipfile.ZipFile(apk) as bundle:
        "openHostedBillingUrl(data.url, 'one-time')" not in billing or \
        "openHostedBillingUrl(data.url, 'portal')" not in billing:
         raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
-    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "naprawnik-v5-38-native" not in service_worker or "NAPRAWNIK" not in manifest:
-        raise SystemExit("The packaged PWA/service-worker branding or billing version is inconsistent.")
+    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "naprawnik-v5-40-native-admin-pairing" not in service_worker or "NAPRAWNIK" not in manifest:
+        raise SystemExit("The packaged PWA/service-worker branding, owner pairing or billing version is inconsistent.")
+    for marker in ["window.npOpenAdminPanel", "window.__naprawnikAdminCodePrompt = () => code", "promptRequested", "if (promptRequested) renderPairingScreen()", "NP-MOB-", "location.hostname !== 'localhost'"]:
+        if marker not in pairing:
+            raise SystemExit(f"Android owner-pairing UI is missing required behavior: {marker}")
+
     native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
     for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
         if marker not in native_bridge:
@@ -85,6 +93,6 @@ with zipfile.ZipFile(apk) as bundle:
 
 print(
     f"OK: {apk.name}; {len(case_ids)} unique diagnostic cases; "
-    f"backup/import, assistant photo/history, billing/admin, catalogue, "
+    f"backup/import, assistant photo/history, admin owner-pairing, billing, catalogue, "
     f"{len(launcher_paths)} launcher densities and {len(splash_paths)} splash sizes verified."
 )

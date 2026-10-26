@@ -1,0 +1,21 @@
+# Local Android/Capacitor build output
+/android/
+/www/
+/node_modules/
+
+# Generated Capacitor artwork created by scripts/prepare-mobile.mjs
+/assets/icon-only.png
+/assets/icon-foreground.png
+/assets/icon-background.png
+/assets/splash.png
+/assets/splash-dark.png
+
+# Private Android signing material — never commit these files
+*.jks
+*.keystore
+key.properties
+signing.properties
+
+# Python cache
+__pycache__/
+*.py[cod]

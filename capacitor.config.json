@@ -1,6 +1,6 @@
 {
-  "appId": "pl.turbodiesel.naprawnik",
-  "appName": "NAPRAWNIK",
+  "appId": "pl.turbodiesel.naprawnik.mobile",
+  "appName": "NAPRAWNIK 5.18",
   "webDir": "www",
   "android": {}
 }
