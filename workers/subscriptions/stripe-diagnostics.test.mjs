@@ -66,6 +66,33 @@ test("Stripe diagnostics identifies a restricted LIVE key and sanitizes error de
   }
 });
 
+test("Stripe diagnostics explains the exact missing LIVE Prices read permission", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    error: {
+      type: "invalid_request_error",
+      code: "more_permissions_required",
+      message: "This key needs permission to read prices. This raw text must not be returned.",
+    },
+  }), {
+    status: 403,
+    headers: { "content-type": "application/json", "request-id": "req_more_permissions_test" },
+  });
+  try {
+    const response = await diagnoseStripeConfig(makeEnv("rk_live_example_restricted_key"));
+    const data = await response.json();
+    assert.equal(data.ready, false);
+    for (const price of data.prices) {
+      assert.equal(price.stripeHttpStatus, 403);
+      assert.equal(price.stripeErrorCode, "more_permissions_required");
+      assert.equal(price.stripeErrorHint, "Dla tego sprawdzenia brakuje uprawnienia Stripe: Prices → Read (GET /v1/prices/{id}).");
+    }
+    assert.equal(JSON.stringify(data).includes("This raw text must not be returned"), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("Stripe diagnostics validates prices and reports no upstream error data on success", async () => {
   const originalFetch = globalThis.fetch;
   const expected = {
