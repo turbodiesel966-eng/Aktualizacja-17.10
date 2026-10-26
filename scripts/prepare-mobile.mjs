@@ -69,10 +69,13 @@ mobileHtml = mobileHtml.replace(
   navMarker + '\n  window.__naprawnikView = String(view || "home");'
 );
 const closingBody = "</body>";
-if (mobileHtml.split(closingBody).length - 1 !== 1) {
-  throw new Error("Could not uniquely locate the document body close tag for the Android bridge.");
+const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
+if (closingBodyIndex < 0) {
+  throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
-mobileHtml = mobileHtml.replace(closingBody, '  <script src="./native-bridge.js"></script>\n' + closingBody);
+mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
+  '  <script src="./native-bridge.js"></script>\n' +
+  mobileHtml.slice(closingBodyIndex);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
 
 console.log("NAPRAWNIK Android web assets, branded native icon/splash and mobile-only bridge entry prepared.");
