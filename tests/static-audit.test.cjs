@@ -64,7 +64,7 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /Czy utworzyć NOWE konto\?/);
   assert.match(billing, /Nie utworzono nowego konta/);
   assert.match(billing, /const oneTimePackages =/);
-  assert.match(billing, /activation \\+ card\\('amator'\\) \\+ card\\('pro'\\) \\+ card\\('warsztat'\\) \\+ oneTimePackages \\+/);
+  assert.ok(billing.includes("activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +"));
   assert.match(billing, /PRO · 3 dni — 3,00 zł/);
   assert.match(billing, /PRO · 7 dni — 7,00 zł/);
   assert.match(billing, /WARSZTAT · 3 dni — 5,00 zł/);
