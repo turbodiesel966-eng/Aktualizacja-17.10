@@ -964,6 +964,7 @@ test("wygasły token bez aktywnego abonamentu lub promocji nadal jest odrzucany"
   assert.equal(state.tokenUpdates.length, 0);
 });
 
+
 test("native billing return requires the exact Capacitor Origin and never accepts lookalike hosts", () => {
   const requestFor = origin => new Request("https://api.example.test/api/checkout", {
     method: "POST",
@@ -980,29 +981,28 @@ test("native Stripe return page handles only known results and sends no-store, n
   for (const result of ["success", "cancelled", "portal"]) {
     const response = billingReturnPage(new URL("https://api.example.test/billing/return?result=" + result));
     assert.equal(response.status, 200);
-    assert.match(response.headers.get("content-type"), /text\\/html/i);
+    assert.ok(response.headers.get("content-type").includes("text/html"));
     assert.equal(response.headers.get("cache-control"), "no-store");
     assert.equal(response.headers.get("x-frame-options"), "DENY");
-    assert.match(response.headers.get("content-security-policy"), /default-src 'none'/);
+    assert.ok(response.headers.get("content-security-policy").includes("default-src 'none'"));
     const html = await response.text();
-    assert.match(html, /NAPRAWNIK/);
-    assert.doesNotMatch(html, /<script\\b/i);
-    if (result === "success") assert.match(html, /wróć do aplikacji NAPRAWNIK/i);
-    if (result === "cancelled") assert.match(html, /anulowany/i);
-    if (result === "portal") assert.match(html, /Panel abonamentu został zamknięty/i);
+    assert.ok(html.includes("NAPRAWNIK"));
+    assert.equal(html.toLowerCase().includes("<script"), false);
+    if (result === "success") assert.ok(html.toLowerCase().includes("wróć do aplikacji naprawnika"));
+    if (result === "cancelled") assert.ok(html.toLowerCase().includes("anulowany"));
+    if (result === "portal") assert.ok(html.includes("Panel abonamentu został zamknięty"));
   }
   const invalid = billingReturnPage(new URL("https://api.example.test/billing/return?result=https%3A%2F%2Fevil.example"));
   assert.equal(invalid.status, 400);
-  assert.match(invalid.headers.get("content-type"), /text\\/plain/i);
+  assert.ok(invalid.headers.get("content-type").includes("text/plain"));
 });
 
 test("native checkout return URL branch does not replace the web checkout URLs", async () => {
   const source = await readFile(new URL("./src/index.mjs", import.meta.url), "utf8");
-  assert.match(source, /const nativeReturn = isNativeAppRequest\\(request\\)/);
-  assert.match(source, /workerOrigin \\+ "\\/billing\\/return\\?result=success"/);
-  assert.match(source, /workerOrigin \\+ "\\/billing\\/return\\?result=cancelled"/);
-  assert.match(source, /workerOrigin \\+ "\\/billing\\/return\\?result=portal"/);
-  assert.match(source, /safeReturnUrl\\(env\\.CHECKOUT_SUCCESS_URL/);
-  assert.match(source, /safeReturnUrl\\(env\\.CHECKOUT_CANCEL_URL/);
+  assert.ok(source.includes("const nativeReturn = isNativeAppRequest(request)"));
+  assert.ok(source.includes('workerOrigin + "/billing/return?result=success"'));
+  assert.ok(source.includes('workerOrigin + "/billing/return?result=cancelled"'));
+  assert.ok(source.includes('workerOrigin + "/billing/return?result=portal"'));
+  assert.ok(source.includes("safeReturnUrl(env.CHECKOUT_SUCCESS_URL"));
+  assert.ok(source.includes("safeReturnUrl(env.CHECKOUT_CANCEL_URL"));
 });
-
