@@ -53,6 +53,18 @@ await mkdir(webDir, { recursive: true });
 for (const file of requiredFiles) {
   await cp(path.join(root, file), path.join(webDir, file));
 }
+const mobileBillingPath = path.join(webDir, "billing.js");
+let mobileBilling = await readFile(mobileBillingPath, "utf8");
+const adminPromptMarker = "const key = window.prompt('Aktywacja lub połączenie ADMINA.";
+if (mobileBilling.split(adminPromptMarker).length - 1 !== 1) {
+  throw new Error("Could not uniquely locate the admin activation prompt for the Android-only pairing screen.");
+}
+mobileBilling = mobileBilling.replace(
+  adminPromptMarker,
+  "const key = typeof window.__naprawnikAdminCodePrompt === 'function' ? window.__naprawnikAdminCodePrompt() : window.prompt('Aktywacja lub połączenie ADMINA."
+);
+await writeFile(mobileBillingPath, mobileBilling, "utf8");
+
 await mkdir(path.join(webDir, "assets"), { recursive: true });
 for (const file of ["naprawnik-icon.svg", "naprawnik-icon-192.svg", "naprawnik-icon-512.svg"]) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
@@ -87,7 +99,7 @@ let mobileSw = await readFile(mobileSwPath, "utf8");
 if (mobileSw.split("const CACHE='naprawnik-v5-37';").length - 1 !== 1) {
   throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
 }
-mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-39-native-admin-pairing';");
+mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-40-native-admin-pairing';");
 const precacheMarker = "const PRECACHE=['./index.html'";
 if (mobileSw.split(precacheMarker).length - 1 !== 1) {
   throw new Error("Could not locate the service-worker precache list for Android.");
