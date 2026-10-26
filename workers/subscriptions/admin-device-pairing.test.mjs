@@ -1,6 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createAdminDeviceLink, adminMobileLogin } from "./src/index.mjs";
+import { createAdminDeviceLink, adminMobileLogin, allowedOrigin } from "./src/index.mjs";
+
+test("CORS zezwala na dokładny origin natywnego Capacitor, ale odrzuca obce hosty localhost", () => {
+  const env = { ALLOWED_ORIGINS: "https://turbodiesel966-eng.github.io" };
+  assert.equal(
+    allowedOrigin(new Request("https://api.example/api/me", { headers: { Origin: "https://localhost" } }), env),
+    "https://localhost"
+  );
+  assert.equal(
+    allowedOrigin(new Request("https://api.example/api/me", { headers: { Origin: "https://127.0.0.1" } }), env),
+    null
+  );
+  assert.equal(
+    allowedOrigin(new Request("https://api.example/api/me", { headers: { Origin: "https://evil.example" } }), env),
+    null
+  );
+});
 
 function makeEnv() {
   const state = {
