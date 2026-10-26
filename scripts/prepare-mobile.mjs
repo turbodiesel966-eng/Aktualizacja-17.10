@@ -66,13 +66,13 @@ if (mobileHtml.split(navMarker).length - 1 !== 1) {
 }
 mobileHtml = mobileHtml.replace(
   navMarker,
-  navMarker + '\\n  window.__naprawnikView = String(view || "home");'
+  navMarker + '\n  window.__naprawnikView = String(view || "home");'
 );
 const closingBody = "</body>";
 if (mobileHtml.split(closingBody).length - 1 !== 1) {
   throw new Error("Could not uniquely locate the document body close tag for the Android bridge.");
 }
-mobileHtml = mobileHtml.replace(closingBody, '  <script src="./native-bridge.js"></script>\\n' + closingBody);
+mobileHtml = mobileHtml.replace(closingBody, '  <script src="./native-bridge.js"></script>\n' + closingBody);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
 
 console.log("NAPRAWNIK Android web assets, branded native icon/splash and mobile-only bridge entry prepared.");
