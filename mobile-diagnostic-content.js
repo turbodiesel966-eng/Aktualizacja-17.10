@@ -52,11 +52,8 @@
       String(pair[0]).length <= 120 && String(pair[1] || '').trim() && String(pair[1]).length <= MAX_TEXT);
   }
   function baseCases() {
-    try {
-      if (Array.isArray(window.knowledgeCases)) return window.knowledgeCases;
-    } catch (_) {}
-    // knowledgeCases is a top-level const in the existing app bundle; this script
-    // obtains a safe serialized snapshot through the APK-only bridge installed below.
+    if (Array.isArray(window.__npKnowledgeCasesBaseSnapshot)) return window.__npKnowledgeCasesBaseSnapshot;
+    if (Array.isArray(window.knowledgeCases)) return window.knowledgeCases;
     return Array.isArray(window.__npKnowledgeCasesSnapshot) ? window.__npKnowledgeCasesSnapshot : [];
   }
   function allCases() {
@@ -79,7 +76,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify({version: BACKUP_VERSION, updatedAt: new Date().toISOString(), cases: normalized, deletedIds: deleted}));
     window.__npOwnerDiagnosticOverrides = normalized;
     if (typeof window.__npApplyOwnerDiagnosticCases === 'function') window.__npApplyOwnerDiagnosticCases();
-    if (typeof window.renderKnowledge === 'function') window.renderKnowledge();
+    if (document.querySelector('#knowledgeCards') && typeof window.renderKnowledge === 'function') window.renderKnowledge();
   }
   function makeId(title) {
     const stem = String(title || 'usterka').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
