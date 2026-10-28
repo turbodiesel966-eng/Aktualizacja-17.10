@@ -2530,6 +2530,18 @@ function renderPartsFinder(){
     </div>`;
   filterPartsFinder();
 }
+function buildPartsSearchLinks(part){
+  // Wyszukiwanie ofert jest niezależne od potwierdzonego linku afiliacyjnego.
+  // Nie wysyłamy VIN ani danych użytkownika do zewnętrznych sklepów.
+  const query=[part.title,part.partNumber].filter(Boolean).join(' ').replace(/\\s+/g,' ').trim();
+  const q=encodeURIComponent(query);
+  return [
+    {label:'Allegro — oferty',url:'https://allegro.pl/listing?string='+q},
+    {label:'Google — porównaj oferty',url:'https://www.google.com/search?tbm=shop&q='+q},
+    {label:'OLX — ogłoszenia',url:'https://www.olx.pl/oferty/q-'+q.replace(/%20/g,'-')+'/'}
+  ];
+}
+
 function filterPartsFinder(){
   const q=(document.getElementById('partsQuery')?.value||'').trim().toLowerCase();
   const matches=PARTS_DATABASE.filter(p=>!q||[p.title,p.keywords,p.scope,p.partNumber,p.dimensions,p.confidence,p.caution].join(' ').toLowerCase().includes(q));
@@ -2544,6 +2556,7 @@ function filterPartsFinder(){
     <div class="entry"><b>Poziom pewności</b><small>${escapeHtml(p.confidence)}</small></div>
     <div class="entry"><b>Źródło zgodności / katalog OEM</b><small>${p.compatibility.map(x=>`<a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.label)} ↗</a>`).join('<br>')}</small></div>
     <div class="entry"><b>Zakup / wyszukiwanie u sprzedawcy</b><small>${p.purchase.map(x=>`<a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.label)} ↗</a>`).join('<br>')}</small></div>
+    <div class="entry"><b>🔎 Szybkie wyszukiwanie ofert</b><small>${buildPartsSearchLinks(p).map(x=>`<a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.label)} ↗</a>`).join('<br>')}</small><small style="display:block;color:var(--dim);margin-top:5px">To zwykłe linki do wyszukiwania, nie linki afiliacyjne. Zakup i zgodność części sprawdź u sprzedawcy.</small></div>
     <div class="alert" style="text-align:left;white-space:normal">⚠️ ${escapeHtml(p.caution)}</div>
   </div>`).join('');
 }
@@ -2976,6 +2989,6 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.
 if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
-<script src="./billing.js?v=16"></script>
+<script src="./billing.js?v=17"></script>
 </body>
 </html>
