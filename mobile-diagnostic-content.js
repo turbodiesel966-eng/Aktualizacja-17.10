@@ -21,7 +21,7 @@
   function readState() {
     try {
       const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"version":1,"cases":[],"deletedIds":[]}');
-      if (!value || value.version !== BACKUP_VERSION || !Array.isArray(value.cases)) return [];
+      if (!value || value.version !== BACKUP_VERSION || !Array.isArray(value.cases)) return { cases: [], deletedIds: [] };
       return { cases: value.cases.filter(validCase).map(normalizeCase).slice(0, MAX_CASES),
         deletedIds: Array.isArray(value.deletedIds) ? value.deletedIds.filter(x => idPattern.test(String(x))).slice(0, MAX_CASES) : [] };
     } catch (_) { return { cases: [], deletedIds: [] }; }
