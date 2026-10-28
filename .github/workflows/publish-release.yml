@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: package.json
 
       - name: Set up Java for Android
         uses: actions/setup-java@v4
