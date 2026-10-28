@@ -54,6 +54,9 @@
         const pending = originalOpenAdminPanel();
         window.__naprawnikAdminCodePrompt = previousProvider;
         await pending;
+        // Pairing invokes the original ADMIN function directly, so mount the APK editor here too.
+        // The existing ADMIN function has already validated the code with the server before rendering.
+        mountOwnerEditor();
         if (lastAlert) {
           status.textContent = lastAlert;
         } else {
