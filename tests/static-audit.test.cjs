@@ -64,6 +64,10 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   assert.ok(html.includes('<script src="./billing.js?v=17"></script>'));
   assert.ok(!html.includes("allegro.pl/listing"));
   assert.doesNotMatch(html, /helion\.pl\/viewc|ebookpoint\.pl\/viewc|Materiały i literatura techniczna/);
+  assert.ok(html.includes('https://webep1.com/go/37a852f559'), 'Brak aktywnego linku afiliacyjnego Motolak');
+  assert.ok(html.includes('Lakiery i zaprawki samochodowe'));
+  assert.ok(html.includes('Link afiliacyjny WebePartners'));
+  assert.ok(html.includes('rel="noopener noreferrer sponsored"'));
   assert.ok(!html.includes("allegro.pl/listing"));
   assert.match(html, /function licGet\(\)\{return getVerifiedLicense\(\);\}/);
   assert.match(html, /function hasPlan\(min\)\{return Object\.prototype\.hasOwnProperty\.call\(PLAN_ORDER,min\)&&PLAN_ORDER\[curPlan\(\)\]>=PLAN_ORDER\[min\];\}/);
