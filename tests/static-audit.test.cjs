@@ -438,3 +438,14 @@ test('analiza zdjęć używa endpointu Workera z tokenem Bearer, a nie starej fu
   assert.ok(worker.includes('userHasTier(env, auth.userId, "pro")'));
   assert.ok(worker.includes('if (!env.OPENAI_API_KEY)'));
 });
+
+
+test('strona pobierania linkuje właściwy raport VirusTotal i uczciwie opisuje statusy skanu', () => {
+  const script = read('scripts/prepare-download-release.py');
+  assert.ok(script.includes('1e41d72e135366db7f92d282e9f9be90194a1b30b7a267bb2a65fe1ffa1894dd'));
+  assert.ok(script.includes('https://www.virustotal.com/gui/file/'));
+  assert.ok(script.includes('Timeout'));
+  assert.ok(script.includes('Unable to process file type'));
+  assert.ok(script.includes('--require-existing-checksum'));
+  assert.ok(script.includes('NAPRAWNIK_VT_NOTE_START'));
+});
