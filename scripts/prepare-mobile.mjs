@@ -83,7 +83,7 @@ mobileHtml = mobileHtml.replace(
   navMarker + '\n  window.__naprawnikView = String(view || "home");'
 );
 const closingBody = "</body>";
-const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
+let closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
 if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
@@ -112,6 +112,11 @@ if (mobileHtml.split(ownerCaseRuntimeMarker).length - 1 !== 1) {
   throw new Error("Could not uniquely locate diagnostic knowledge cases for the Android-only owner editor.");
 }
 mobileHtml = mobileHtml.replace(ownerCaseRuntimeMarker, "\n" + ownerCaseRuntime + ownerCaseRuntimeMarker);
+// Earlier runtime injection changes the document length, so recompute the closing tag offset.
+closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
+if (closingBodyIndex < 0) {
+  throw new Error("Could not locate the document body close tag after Android runtime injection.");
+}
 mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
   '  <script src="./mobile-admin-pairing.js"></script>\n' +
   '  <script src="./mobile-diagnostic-content.js"></script>\n' +
