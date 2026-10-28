@@ -126,12 +126,12 @@ let mobileSw = await readFile(mobileSwPath, "utf8");
 if (mobileSw.split("const CACHE='naprawnik-v5-37';").length - 1 !== 1) {
   throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
 }
-mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-40-native-admin-pairing';");
+mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-41-owner-fault-editor';");
 const precacheMarker = "const PRECACHE=['./index.html'";
 if (mobileSw.split(precacheMarker).length - 1 !== 1) {
   throw new Error("Could not locate the service-worker precache list for Android.");
 }
-mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js','./mobile-admin-pairing.js'");
+mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js','./mobile-admin-pairing.js','./mobile-diagnostic-content.js'");
 await writeFile(mobileSwPath, mobileSw, "utf8");
 
 console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge, owner pairing screen and offline precache prepared.");
