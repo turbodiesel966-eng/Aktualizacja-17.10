@@ -21,6 +21,7 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/manifest.webmanifest",
         "assets/public/native-bridge.js",
         "assets/public/mobile-admin-pairing.js",
+        "assets/public/mobile-diagnostic-content.js",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -35,6 +36,7 @@ with zipfile.ZipFile(apk) as bundle:
     service_worker = bundle.read("assets/public/sw.js").decode("utf-8")
     manifest = bundle.read("assets/public/manifest.webmanifest").decode("utf-8")
     pairing = bundle.read("assets/public/mobile-admin-pairing.js").decode("utf-8")
+    content_editor = bundle.read("assets/public/mobile-diagnostic-content.js").decode("utf-8")
 
     try:
         case_block = html.split("const knowledgeCases = [", 1)[1].split("const KNOW_LINKS={", 1)[0]
@@ -65,6 +67,14 @@ with zipfile.ZipFile(apk) as bundle:
     for marker in ["window.npOpenAdminPanel", "window.__naprawnikAdminCodePrompt = () => code", "promptRequested", "if (promptRequested) renderPairingScreen()", "NP-MOB-", "location.hostname !== 'localhost'"]:
         if marker not in pairing:
             raise SystemExit(f"Android owner-pairing UI is missing required behavior: {marker}")
+
+    for marker in ["npOpenOwnerFaultEditor", "npReadOwnerFaultOverrides", "naprawnik_mobile_diagnostic_cases_v1", "naprawnik-diagnostic-cases", "npFaultSave", "__npApplyOwnerDiagnosticCases"]:
+        if marker not in content_editor:
+            raise SystemExit("Android owner diagnostic editor missing required behavior: " + marker)
+    if "mobile-diagnostic-content.js" not in html:
+        raise SystemExit("The Android HTML does not load the owner diagnostic editor bundle.")
+    if "__npKnowledgeCasesBaseSnapshot" not in html or "__npApplyOwnerDiagnosticCases" not in html:
+        raise SystemExit("The Android-only diagnostic override hook was not injected.")
 
     native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
     for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
