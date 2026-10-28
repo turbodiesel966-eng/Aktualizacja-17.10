@@ -1514,6 +1514,13 @@ function renderHome(){
     <div class="btn" onclick="nav('parts')">${lk('pro')}Otwórz katalog doboru części</div>
   </div>
 
+  <div class="diag-card" style="border-color:#ff8c1a">
+    <h2>🎨 Lakiery i zaprawki samochodowe</h2>
+    <div class="diag-sub">Motolak • lakiery samochodowe, zaprawki i produkty do prac lakierniczych. Otwórz katalog dostawcy i dobierz produkt do koloru oraz zakresu naprawy.</div>
+    <a class="btn" href="https://webep1.com/go/37a852f559" target="_blank" rel="noopener noreferrer sponsored">Sprawdź lakiery i zaprawki ↗</a>
+    <small style="display:block;color:var(--dim);font-size:10px;line-height:1.4">Link afiliacyjny WebePartners. Jeśli dokonasz zakupu po przejściu z tego linku, możemy otrzymać prowizję — bez dodatkowych kosztów dla Ciebie.</small>
+  </div>
+
   <div class="diag-card" style="border-color:var(--hero)"><h2>💎 Twój plan: ${PLAN_NAMES[curPlan()]}</h2><div class="diag-sub">${curPlan()==='amator'?'Bezpłatnie: pełna diagnostyka, katalog modeli, kalkulatory i checklisty. PRO i WARSZTAT: rozszerzona elektryka i dane wg rodziny silnika; analiza zdjęć AI jest chwilowo wyłączona.':curPlan()==='pro'?'PRO aktywne: pełna elektryka i dobór części. Analiza zdjęć AI jest chwilowo wyłączona; WARSZTAT dodaje klientów i karty serwisowe.':'WARSZTAT aktywny: wszystkie funkcje aplikacji.'}</div><div class="btn" onclick="nav('plans')">${curPlan()==='warsztat'?'Zarządzaj licencją':'Zobacz plany i funkcje'}</div></div>
 
   <div class="card" style="border-color:var(--cyan)"><h2>🔧 Garażowa prawda dnia</h2><p style="font-size:11px;line-height:1.5">Paliwo w baku i iskra na świecy to nie wszystko, jeśli pod kopułą wiatr. ⚡ Zanim wymienisz połowę skuterka lub motocykla metodą „na chybił trafił”, weź miernik do ręki i sprawdź masę. Fizyki nie oszukasz — zwłaszcza oporu elektrycznego i własnej leniwej diagnozy. 😎</p></div>

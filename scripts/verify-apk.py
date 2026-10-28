@@ -56,7 +56,7 @@ with zipfile.ZipFile(apk) as bundle:
        "openHostedBillingUrl(data.url, 'one-time')" not in billing or \
        "openHostedBillingUrl(data.url, 'portal')" not in billing:
         raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
-    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "naprawnik-v5-38-native" not in service_worker or "NAPRAWNIK" not in manifest:
+    if "./billing.js?v=17" not in service_worker or "./native-bridge.js" not in service_worker or "naprawnik-v5-38-native" not in service_worker or "NAPRAWNIK" not in manifest:
         raise SystemExit("The packaged PWA/service-worker branding or billing version is inconsistent.")
     native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
     for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
