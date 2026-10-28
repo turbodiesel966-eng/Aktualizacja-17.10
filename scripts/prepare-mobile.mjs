@@ -43,6 +43,7 @@ const requiredFiles = [
   "index.html",
   "billing.js",
   "mobile-admin-pairing.js",
+  "mobile-diagnostic-content.js",
   "katalog-techniczny.js",
   "sw.js",
   "manifest.webmanifest"
@@ -86,9 +87,35 @@ const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
 if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
+// Inject a runtime bridge into the generated APK copy only. The source website remains unchanged.
+const ownerCaseRuntimeMarker = "\\nconst KNOW_LINKS={";
+const ownerCaseRuntime = `
+window.__npKnowledgeCasesBaseSnapshot = knowledgeCases.map(function (c) {
+  return Object.assign({}, c, { areas: Array.isArray(c.areas) ? c.areas.map(function (p) { return p.slice(); }) : [] });
+});
+window.__npApplyOwnerDiagnosticCases = function () {
+  var base = window.__npKnowledgeCasesBaseSnapshot || [];
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem('naprawnik_mobile_diagnostic_cases_v1') || '{}'); } catch (_) {}
+  var overrides = data && Array.isArray(data.cases) ? data.cases : [];
+  var deleted = new Set(data && Array.isArray(data.deletedIds) ? data.deletedIds : []);
+  var byId = new Map(base.map(function (c) { return [c.id, c]; }));
+  overrides.forEach(function (item) { if (item && item.id) byId.set(item.id, item); });
+  var merged = Array.from(byId.values()).filter(function (item) { return !deleted.has(item.id); });
+  knowledgeCases.splice(0, knowledgeCases.length);
+  merged.forEach(function (item) { knowledgeCases.push(item); });
+  window.__npKnowledgeCasesSnapshot = knowledgeCases;
+};
+window.__npApplyOwnerDiagnosticCases();
+`;
+if (mobileHtml.split(ownerCaseRuntimeMarker).length - 1 !== 1) {
+  throw new Error("Could not uniquely locate diagnostic knowledge cases for the Android-only owner editor.");
+}
+mobileHtml = mobileHtml.replace(ownerCaseRuntimeMarker, "\\n" + ownerCaseRuntime + ownerCaseRuntimeMarker);
 mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
-  '  <script src="./mobile-admin-pairing.js"></script>\n' +
-  '  <script src="./native-bridge.js"></script>\n' +
+  '  <script src="./mobile-admin-pairing.js"></script>\\n' +
+  '  <script src="./mobile-diagnostic-content.js"></script>\\n' +
+  '  <script src="./native-bridge.js"></script>\\n' +
   mobileHtml.slice(closingBodyIndex);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
 
