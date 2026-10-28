@@ -6,6 +6,7 @@ on:
       - main
       - fix/mobile-admin-access-capacitor-apk-20261026
       - apk/admin-pairing-ui-20261026
+      - apk/owner-content-editor-20261028
     paths:
       - '.github/workflows/build-android-apk.yml'
       - 'capacitor.config.json'
