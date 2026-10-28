@@ -18,13 +18,15 @@
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-  function readSaved() {
+  function readState() {
     try {
-      const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"version":1,"cases":[]}');
+      const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"version":1,"cases":[],"deletedIds":[]}');
       if (!value || value.version !== BACKUP_VERSION || !Array.isArray(value.cases)) return [];
-      return value.cases.filter(validCase).map(normalizeCase).slice(0, MAX_CASES);
-    } catch (_) { return []; }
+      return { cases: value.cases.filter(validCase).map(normalizeCase).slice(0, MAX_CASES),
+        deletedIds: Array.isArray(value.deletedIds) ? value.deletedIds.filter(x => idPattern.test(String(x))).slice(0, MAX_CASES) : [] };
+    } catch (_) { return { cases: [], deletedIds: [] }; }
   }
+  function readSaved() { return readState().cases; }
   function normalizeCase(item) {
     return {
       id: String(item.id).trim(),
@@ -59,12 +61,12 @@
   }
   function allCases() {
     const base = baseCases().map(normalizeCase);
-    const saved = readSaved();
+    const state = readState();
     const byId = new Map(base.map(item => [item.id, item]));
-    saved.forEach(item => byId.set(item.id, item));
-    return [...byId.values()];
+    state.cases.forEach(item => byId.set(item.id, item));
+    return [...byId.values()].filter(item => !state.deletedIds.includes(item.id));
   }
-  function saveCases(cases) {
+  function saveCases(cases, deletedIds) {
     if (!Array.isArray(cases) || cases.length > MAX_CASES) throw new Error('Przekroczono limit liczby usterek.');
     const seen = new Set();
     const normalized = cases.map(normalizeCase);
@@ -73,8 +75,10 @@
       if (seen.has(item.id)) throw new Error('Identyfikatory usterek muszą być unikalne.');
       seen.add(item.id);
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({version: BACKUP_VERSION, updatedAt: new Date().toISOString(), cases: normalized}));
+    const deleted = Array.from(new Set((deletedIds || readState().deletedIds).filter(x => idPattern.test(String(x))))).slice(0, MAX_CASES);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({version: BACKUP_VERSION, updatedAt: new Date().toISOString(), cases: normalized, deletedIds: deleted}));
     window.__npOwnerDiagnosticOverrides = normalized;
+    if (typeof window.__npApplyOwnerDiagnosticCases === 'function') window.__npApplyOwnerDiagnosticCases();
     if (typeof window.renderKnowledge === 'function') window.renderKnowledge();
   }
   function makeId(title) {
@@ -162,7 +166,8 @@
     document.getElementById('npFaultSearch').addEventListener('input',renderManager);
     document.getElementById('npFaultAdd').addEventListener('click',()=>openEditor(null));
     document.getElementById('npFaultExport').addEventListener('click',()=>{
-      const data={format:'naprawnik-diagnostic-cases',version:BACKUP_VERSION,exportedAt:new Date().toISOString(),cases:readSaved()};
+      const state=readState();
+      const data={format:'naprawnik-diagnostic-cases',version:BACKUP_VERSION,exportedAt:new Date().toISOString(),cases:state.cases,deletedIds:state.deletedIds};
       const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
       const a=document.createElement('a');a.href=url;a.download='naprawnik-usterki-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);
       statusText('Eksportowano '+data.cases.length+' własnych zmian do JSON.');
@@ -174,9 +179,10 @@
         const data=JSON.parse(await file.text());
         if(!data||data.format!=='naprawnik-diagnostic-cases'||data.version!==BACKUP_VERSION||!Array.isArray(data.cases)||data.cases.length>MAX_CASES)throw new Error('Nieprawidłowy format kopii JSON.');
         const normalized=data.cases.map(normalizeCase);
-        if(!normalized.every(validCase)||new Set(normalized.map(c=>c.id)).size!==normalized.length)throw new Error('Dane nie przeszły walidacji lub identyfikatory się powtarzają.');
-        if(!confirm('Import zastąpi wszystkie własne zmiany zapisane na tym telefonie. Wykonać import?'))return;
-        saveCases(normalized);renderManager();statusText('Zaimportowano '+normalized.length+' wpisów. Zapisz kopię przed kolejnymi zmianami.');
+        const deleted=Array.isArray(data.deletedIds)?data.deletedIds.filter(x=>idPattern.test(String(x))):[];
+        if(!normalized.every(validCase)||new Set(normalized.map(c=>c.id)).size!==normalized.length||new Set(deleted).size!==deleted.length)throw new Error('Dane nie przeszły walidacji lub identyfikatory się powtarzają.');
+        if(!confirm('Import zastąpi wszystkie własne zmiany oraz listę ukrytych kart zapisane na tym telefonie. Wykonać import?'))return;
+        saveCases(normalized, deleted);renderManager();statusText('Zaimportowano '+normalized.length+' wpisów i '+deleted.length+' ukrytych kart.');
       } catch(e) { statusText('Import nieudany: '+(e.message||e),true); }
       finally { event.target.value=''; }
     });
