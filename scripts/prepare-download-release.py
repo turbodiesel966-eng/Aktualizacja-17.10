@@ -115,11 +115,11 @@ def main():
         existing = re.search(r"(?is)SHA-256.{0,700}?([a-f0-9]{64})", html)
         if not existing or existing.group(1) != digest:
             raise SystemExit("Downloaded APK does not match the checksum currently published on the page")
-    html = add_virustotal_note(html, digest)
     html, count = re.subn(r"(?is)(SHA-256.{0,700}?)([a-f0-9]{64})",
                           lambda m: m.group(1) + digest, html, count=1)
     if count != 1:
         raise SystemExit("Could not safely update exactly one SHA-256 checksum")
+    html = add_virustotal_note(html, digest)
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "index.html").write_text(html, encoding="utf-8")
     parser = Assets()

@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - ".github/workflows/**"
+      - "scripts/prepare-download-release.py"
+      - "tests/**"
+      - "docs/**"
   workflow_dispatch:
 
 permissions:
