@@ -61,7 +61,7 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   assert.ok(html.includes('<title>NAPRAWNIK v5.18 — diagnostyka i naprawy</title>'));
   assert.ok(html.includes('⚙️ NAPRAWNIK v5.18'));
   assert.ok(html.includes("const APP_VERSION = 'NAPRAWNIK v5.18';"));
-  assert.ok(html.includes('<script src="./billing.js?v=16"></script>'));
+  assert.ok(html.includes('<script src="./billing.js?v=17"></script>'));
   assert.match(html, /function licGet\(\)\{return getVerifiedLicense\(\);\}/);
   assert.match(html, /function hasPlan\(min\)\{return Object\.prototype\.hasOwnProperty\.call\(PLAN_ORDER,min\)&&PLAN_ORDER\[curPlan\(\)\]>=PLAN_ORDER\[min\];\}/);
 });
