@@ -131,6 +131,7 @@
       '<div class="grid2"><div><label for="npOwnerAccent">Kolor akcentu</label><input id="npOwnerAccent" type="color"></div><div><label for="npOwnerHighlight">Kolor wyróżnień</label><input id="npOwnerHighlight" type="color"></div></div>' +
       '<button class="btn" id="npOwnerSaveCustomization" type="button">💾 Zapisz zmiany</button>' +
       '<button class="btn" id="npOwnerResetCustomization" type="button">Przywróć wygląd domyślny</button>' +
+      '<button class="btn" id="npOwnerOpenFaultEditor" type="button">🧰 Edytuj / dodaj usterki</button>' +
       '<div id="npOwnerCustomizationStatus" role="status" style="font-size:12px;line-height:1.5;margin-top:8px"></div>';
     root.prepend(card);
     card.querySelector('#npOwnerAppTitle').value = value.title;
@@ -138,6 +139,10 @@
     card.querySelector('#npOwnerAccent').value = value.accent;
     card.querySelector('#npOwnerHighlight').value = value.highlight;
     const status = card.querySelector('#npOwnerCustomizationStatus');
+    card.querySelector('#npOwnerOpenFaultEditor').addEventListener('click', () => {
+      if (typeof window.npOpenOwnerFaultEditor === 'function') window.npOpenOwnerFaultEditor();
+      else status.textContent = 'Edytor bazy usterek nie został dołączony do tej wersji APK.';
+    });
     card.querySelector('#npOwnerSaveCustomization').addEventListener('click', () => {
       const next = {
         title: card.querySelector('#npOwnerAppTitle').value.trim() || DEFAULTS.title,
