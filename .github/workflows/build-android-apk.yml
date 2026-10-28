@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - fix/mobile-admin-access-capacitor-apk-20261026
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
