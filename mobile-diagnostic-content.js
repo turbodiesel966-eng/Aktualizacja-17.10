@@ -162,14 +162,12 @@
   ].map(item => Object.assign({tags:''}, item));
 
   function baseCases() {
-    if (Array.isArray(window.__npKnowledgeCasesBaseSnapshot)) return window.__npKnowledgeCasesBaseSnapshot;
-    if (Array.isArray(window.knowledgeCases)) return window.knowledgeCases;
-    if (Array.isArray(window.__npKnowledgeCasesSnapshot)) {
-      const snapshot = window.__npKnowledgeCasesSnapshot;
-      const known = new Set(snapshot.map(item => item.id));
-      return snapshot.concat(SERVICE_MANUAL_SUPPLEMENTS.filter(item => !known.has(item.id)));
-    }
-    return SERVICE_MANUAL_SUPPLEMENTS.slice();
+    let base = [];
+    if (Array.isArray(window.__npKnowledgeCasesBaseSnapshot)) base = window.__npKnowledgeCasesBaseSnapshot;
+    else if (Array.isArray(window.knowledgeCases)) base = window.knowledgeCases;
+    else if (Array.isArray(window.__npKnowledgeCasesSnapshot)) base = window.__npKnowledgeCasesSnapshot;
+    const known = new Set(base.map(item => item.id));
+    return base.concat(SERVICE_MANUAL_SUPPLEMENTS.filter(item => !known.has(item.id)));
   }
   function allCases() {
     const base = baseCases().map(normalizeCase);
@@ -301,10 +299,14 @@
     renderManager();
   }
 
+  // The Android HTML creates the base snapshot before this external script loads.
+  // Publish these source-linked supplements and re-apply so they enter the searchable knowledge catalogue.
+  window.__npServiceManualSupplements = SERVICE_MANUAL_SUPPLEMENTS;
   window.__npOwnerDiagnosticOverrides = readSaved();
   window.npOpenOwnerFaultEditor = openManager;
   window.npReadOwnerFaultOverrides = readSaved;
   window.npAllDiagnosticCases = allCases;
+  if (typeof window.__npApplyOwnerDiagnosticCases === 'function') window.__npApplyOwnerDiagnosticCases();
 
   // Wrap the existing knowledge browser so local owner edits are included. This is only
   // active when the APK's script is bundled; the web deployment never loads this file.
