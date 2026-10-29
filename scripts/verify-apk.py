@@ -22,6 +22,7 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/native-bridge.js",
         "assets/public/mobile-admin-pairing.js",
         "assets/public/mobile-diagnostic-content.js",
+        "assets/public/mobile-workshop-calculators.js",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -37,6 +38,7 @@ with zipfile.ZipFile(apk) as bundle:
     manifest = bundle.read("assets/public/manifest.webmanifest").decode("utf-8")
     pairing = bundle.read("assets/public/mobile-admin-pairing.js").decode("utf-8")
     content_editor = bundle.read("assets/public/mobile-diagnostic-content.js").decode("utf-8")
+    calculators = bundle.read("assets/public/mobile-workshop-calculators.js").decode("utf-8")
 
     try:
         case_block = html.split("const knowledgeCases = [", 1)[1].split("const KNOW_LINKS={", 1)[0]
@@ -92,6 +94,12 @@ with zipfile.ZipFile(apk) as bundle:
     if "__npKnowledgeCasesBaseSnapshot" not in html or "__npApplyOwnerDiagnosticCases" not in html or "__npServiceManualSupplements" not in html:
         raise SystemExit("The Android-only diagnostic override and supplement hooks were not injected.")
 
+    for marker in ["oilMlPerLiter", "oilAmountMl", "displacementCc", "ratioResult", "npWorkshopCalcLauncher", "aria-live"]:
+        if marker not in calculators:
+            raise SystemExit("Workshop calculator module missing required behavior: " + marker)
+    if "mobile-workshop-calculators.js" not in html or "./mobile-workshop-calculators.js" not in service_worker:
+        raise SystemExit("APK workshop calculators are not loaded and precached offline.")
+
     native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
     for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
         if marker not in native_bridge:
@@ -119,6 +127,6 @@ with zipfile.ZipFile(apk) as bundle:
 
 print(
     f"OK: {apk.name}; {len(case_ids)} unique diagnostic cases; "
-    f"backup/import, assistant photo/history, admin owner-pairing, billing, catalogue, "
+    f"backup/import, assistant photo/history, admin owner-pairing, workshop calculators, billing, catalogue, "
     f"{len(launcher_paths)} launcher densities and {len(splash_paths)} splash sizes verified."
 )
