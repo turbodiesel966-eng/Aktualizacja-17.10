@@ -15,6 +15,7 @@ on:
       - 'billing.js'
       - 'mobile-admin-pairing.js'
       - 'mobile-diagnostic-content.js'
+      - 'mobile-workshop-calculators.js'
       - 'katalog-techniczny.js'
       - 'sw.js'
       - 'manifest.webmanifest'
