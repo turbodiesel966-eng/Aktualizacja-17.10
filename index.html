@@ -1684,7 +1684,7 @@ function filterManualCards(){
  const q=(document.getElementById('manualSearch')?.value||'').toLowerCase();
  document.querySelectorAll('.manual-entry').forEach(el=>el.style.display=el.dataset.search.includes(q)?'block':'none');
 }
-function back(){ return `<div class="btn back" onclick="nav('home')">← Powrót</div>`; }
+function back(){ return `<div class="btn back" onclick="goBack()">← Powrót</div>`; }
 
 function crumbsHtml(){
   return `<div style="color:var(--dim);font-size:11px;margin-bottom:10px">${diagCrumbs.join(' › ')}</div>`;
@@ -2547,7 +2547,31 @@ function filterPartsFinder(){
   </div>`).join('');
 }
 
+let navHistory = [];
+let navHistoryCurrent = null;
+let navHistoryRestoring = false;
+
+function goBack(){
+  const previous = navHistory.pop();
+  if(!previous){
+    navHistoryCurrent = null;
+    nav('home');
+    return;
+  }
+  navHistoryRestoring = true;
+  try { nav(previous.view, previous.arg); }
+  finally { navHistoryRestoring = false; }
+}
+
 function nav(view, arg){
+  if(!navHistoryRestoring){
+    const previous = navHistoryCurrent;
+    if(previous && (previous.view !== view || previous.arg !== arg)){
+      navHistory.push(previous);
+      if(navHistory.length > 50) navHistory.shift();
+    }
+  }
+  navHistoryCurrent = { view, arg };
   currentNav = (view==='search'||view==='settings') ? view : 'home';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===currentNav));
   updatePlanBadge();
