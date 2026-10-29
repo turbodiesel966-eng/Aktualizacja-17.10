@@ -158,7 +158,7 @@
         ['Testy i potwierdzenie','Potwierdź paliwo, kompresję i szczelność według instrukcji silnika. W 4T sprawdź rozrząd i luz zaworowy zgodnie z DTR.'],
         ['Zalecane rozwiązanie','Nie wymieniaj modułu CDI wyłącznie dlatego, że silnik nie odpala. Przejdź kolejno przez zapłon, paliwo, dolot i testy mechaniczne.']
       ]
-    }
+    },
     {
       id:'manual-2t-no-start-checklist',
       title:'2T: nie odpala — paliwo, kompresja i membrany',
