@@ -1955,36 +1955,50 @@ function addShop(name,tier,price){
 }
 function clearShop(){ save('naprawnik_shop', []); renderShop(); }
 
+function searchNormalize(value){
+  return String(value == null ? '' : value)
+    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+    .toLocaleLowerCase('pl-PL').replace(/\\s+/g,' ').trim();
+}
 function renderSearch(){
-  screen.innerHTML = `<div class="card"><h2>Szukaj po VIN / słowie kluczowym</h2>
-    <input id="q" placeholder="Wpisz VIN lub frazę..." oninput="doSearch()">
-    <div id="results"></div></div>`;
+  screen.innerHTML = back()+`<div class="card"><h2>🔎 Szukaj po VIN / słowie kluczowym</h2>
+    <input id="q" autocomplete="off" placeholder="Wpisz VIN, markę, objaw, część..." oninput="doSearch()">
+    <small style="display:block;color:var(--dim);margin:6px 0 10px">Wyszukiwanie obejmuje zapisane lokalnie dane tej aplikacji. Nie przeszukuje internetu ani katalogu technicznego.</small>
+    <div id="searchStatus" aria-live="polite"></div><div id="results"></div></div>`;
+  const input=$('#q'); if(input) input.focus({preventScroll:true});
 }
 function doSearch(){
-  const q=$('#q').value.trim().toLowerCase(); const res=$('#results');
-  if(!q){ res.innerHTML=''; return; }
-  const has=(...a)=>a.some(x=>String(x==null?'':x).toLowerCase().includes(q));
-  const notes=load('naprawnik_notes').filter(n=>has(n.vin,n.text));
-  const logs=load('naprawnik_log').filter(l=>has(l.vin,l.desc));
-  const rems=load('naprawnik_reminders').filter(r=>has(r.vin,r.desc));
-  const vs=vehicles.filter(v=>has(v.vin,v.brand,v.model,v.year,v.engine,v.ownerName,v.ownerPhone,v.mods));
-  const rs=repairs.filter(r=>has(r.symptom,r.diagnosis,r.repair,r.parts));
-  Promise.resolve().then(()=>paDbRequest('readonly','all')).catch(()=>[]).then(rows=>{
-    const el=$('#results'); if(!el || $('#q').value.trim().toLowerCase()!==q) return;
-    const cs=(rows||[]).filter(r=>r&&has(r.make,r.model,r.symptoms,r.extra,r.analysis)&&/^pa_[a-z0-9_]+$/i.test(String(r.id)));
-    if(![notes,logs,rems,vs,rs,cs].some(a=>a.length)){ el.innerHTML='<div class="empty">Brak wyników</div>'; return; }
+  const input=$('#q'),res=$('#results'),status=$('#searchStatus');
+  if(!input||!res) return;
+  const q=searchNormalize(input.value);
+  if(!q){res.innerHTML='';if(status)status.textContent='';return;}
+  const fieldsMatch=(obj,keys)=>keys.some(key=>searchNormalize(obj&&obj[key]).includes(q));
+  const safeArray=(key)=>{const value=load(key);return Array.isArray(value)?value:[];};
+  const notes=safeArray('naprawnik_notes').filter(n=>fieldsMatch(n,['vin','text','date']));
+  const logs=safeArray('naprawnik_log').filter(l=>fieldsMatch(l,['vin','desc','date']));
+  const rems=safeArray('naprawnik_reminders').filter(r=>fieldsMatch(r,['vin','desc','date']));
+  const vs=(Array.isArray(vehicles)?vehicles:[]).filter(v=>fieldsMatch(v,['vin','brand','model','year','engine','ownerName','ownerPhone','mods']));
+  const rs=(Array.isArray(repairs)?repairs:[]).filter(r=>fieldsMatch(r,['symptom','diagnosis','repair','parts','date','vin']));
+  const render=(rows)=>{
+    const el=$('#results'); if(!el||searchNormalize($('#q')?.value)!==q)return;
+    const cs=(Array.isArray(rows)?rows:[]).filter(r=>r&&/^pa_[a-z0-9_]+$/i.test(String(r.id))&&fieldsMatch(r,['make','model','symptoms','extra','analysis','createdAt']));
+    const total=notes.length+logs.length+rems.length+vs.length+rs.length+cs.length;
+    if(status)status.textContent=total?'Znaleziono '+total+' wyników.':'';
+    if(!total){el.innerHTML='<div class="empty">Brak wyników dla „'+escapeHtml(input.value.trim())+'”. Sprawdź pisownię lub wpisz krótszy fragment.</div>';return;}
     el.innerHTML=
-      vs.map(v=>`<div class="entry srch-veh" data-id="${escapeHtml(v.id)}" style="cursor:pointer"><b>Pojazd · ${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'')}</b><small>${escapeHtml(v.vin||'—')}${v.ownerName?' · '+escapeHtml(v.ownerName):''}</small></div>`).join('')+
-      rs.map(r=>`<div class="entry srch-veh" data-id="${escapeHtml(r.vehicleId||'')}" style="cursor:pointer"><b>Naprawa · ${escapeHtml(r.repair||'')}</b><small>${escapeHtml(r.date||'')}</small><div>${escapeHtml(r.symptom||'')}</div></div>`).join('')+
-      cs.map(r=>`<div class="entry srch-case" data-id="${escapeHtml(r.id)}" style="cursor:pointer"><b>Asystent zdjęć · ${escapeHtml([r.make,r.model].filter(Boolean).join(' ')||'Pojazd niepodany')}</b><small>${escapeHtml(paDate(r.createdAt))}</small><div>${escapeHtml(r.symptoms||'')}</div></div>`).join('')+
-      rems.map(r=>`<div class="entry"><b>Przypomnienie · ${escapeHtml(r.vin||'—')}</b><small>${escapeHtml(r.date||'')}</small><div>${escapeHtml(r.desc||'')}</div></div>`).join('')+
-      notes.map(n=>`<div class="entry"><b>Notatka · ${escapeHtml(n.vin||'—')}</b><small>${escapeHtml(n.date||'')}</small><div>${escapeHtml(n.text||'')}</div></div>`).join('')+
-      logs.map(l=>`<div class="entry"><b>Log · ${escapeHtml(l.vin||'—')}</b><small>${escapeHtml(l.date||'')}</small><div>${escapeHtml(l.desc||'')}</div></div>`).join('');
-    el.querySelectorAll('.srch-veh').forEach(e=>e.addEventListener('click',()=>{ if(vehicles.some(v=>v.id===e.dataset.id)){ selectedVehicleId=e.dataset.id; nav('vehicleDetail'); } }));
-    el.querySelectorAll('.srch-case').forEach(e=>e.addEventListener('click',()=>renderPhotoAssistantCase(e.dataset.id)));
-  });
+      vs.map(v=>'<div class="entry srch-veh" data-id="'+escapeHtml(v.id)+'" style="cursor:pointer" role="button" tabindex="0"><b>Pojazd · '+escapeHtml((v.brand||'')+' '+(v.model||''))+'</b><small>'+escapeHtml(v.vin||'—')+(v.ownerName?' · '+escapeHtml(v.ownerName):'')+'</small></div>').join('')+
+      rs.map(r=>'<div class="entry srch-repair" data-id="'+escapeHtml(r.vehicleId||'')+'" style="cursor:pointer" role="button" tabindex="0"><b>Naprawa · '+escapeHtml(r.repair||r.diagnosis||r.symptom||'Wpis naprawy')+'</b><small>'+escapeHtml(r.date||'')+'</small><div>'+escapeHtml(r.symptom||r.diagnosis||'')+'</div></div>').join('')+
+      cs.map(r=>'<div class="entry srch-case" data-id="'+escapeHtml(r.id)+'" style="cursor:pointer" role="button" tabindex="0"><b>Asystent zdjęć · '+escapeHtml([r.make,r.model].filter(Boolean).join(' ')||'Pojazd niepodany')+'</b><small>'+escapeHtml(paDate(r.createdAt))+'</small><div>'+escapeHtml(r.symptoms||'')+'</div></div>').join('')+
+      rems.map(r=>'<div class="entry"><b>Przypomnienie · '+escapeHtml(r.vin||'—')+'</b><small>'+escapeHtml(r.date||'')+'</small><div>'+escapeHtml(r.desc||'')+'</div></div>').join('')+
+      notes.map(n=>'<div class="entry"><b>Notatka · '+escapeHtml(n.vin||'—')+'</b><small>'+escapeHtml(n.date||'')+'</small><div>'+escapeHtml(n.text||'')+'</div></div>').join('')+
+      logs.map(l=>'<div class="entry"><b>Log · '+escapeHtml(l.vin||'—')+'</b><small>'+escapeHtml(l.date||'')+'</small><div>'+escapeHtml(l.desc||'')+'</div></div>').join('');
+    const openVehicle=(e)=>{const id=e.currentTarget.dataset.id;if((Array.isArray(vehicles)?vehicles:[]).some(v=>String(v.id)===String(id))){selectedVehicleId=id;nav('vehicleDetail');}};
+    el.querySelectorAll('.srch-veh,.srch-repair').forEach(e=>{const action=e.classList.contains('srch-repair')?()=>{const id=e.dataset.id;if(id&&(Array.isArray(vehicles)?vehicles:[]).some(v=>String(v.id)===String(id))){selectedVehicleId=id;nav('vehicleDetail');}else{if(status)status.textContent='Ta naprawa nie ma powiązanego pojazdu do otwarcia.';}}:()=>openVehicle({currentTarget:e});e.addEventListener('click',action);e.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();action();}});});
+    el.querySelectorAll('.srch-case').forEach(e=>{const action=()=>renderPhotoAssistantCase(e.dataset.id);e.addEventListener('click',action);e.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();action();}});});
+  };
+  if(!q){return;}
+  Promise.resolve().then(()=>typeof paDbRequest==='function'?paDbRequest('readonly','all'):[]).catch(()=>[]).then(render);
 }
-
 function renderSettings(){
   screen.innerHTML = `<div class="card"><h2>Ustawienia</h2>
     <small style="color:var(--dim)">${APP_VERSION} — aplikacja działa lokalnie; dane nie są synchronizowane z serwerem.</small><br><br>
