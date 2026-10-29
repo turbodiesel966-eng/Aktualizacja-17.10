@@ -23,6 +23,12 @@ Workflow GitHub Actions w `.github/workflows/validate-html.yml` sprawdza składn
 - Przy zmianach zasobów zwiększ wersję cache w `sw.js` i numer `billing.js?v=...` w `index.html`, a potem uruchom testy regresyjne.
 
 
+## Testy akceptacyjne APK
+
+- Przed scaleniem przejdź checklistę [docs/APK_TEST_CHECKLIST.md](docs/APK_TEST_CHECKLIST.md) na fizycznym telefonie.
+- W tej gałęzi są dodane offline kalkulatory warsztatowe oraz ścieżki diagnostyczne 2T/4T. Nie traktuj ich jako zaakceptowanych do wydania, dopóki nowy APK nie przejdzie automatycznych i manualnych testów.
+- Test webowy wykonuj wyłącznie na osobnej kopii testowej po akceptacji APK; nie wdrażaj tej gałęzi na produkcyjną stronę.
+
 ## Funkcje natywne Androida
 
 - Mostek `scripts/native-bridge.js` jest wstrzykiwany wyłącznie do wygenerowanego katalogu `www`; nie jest dołączany do opublikowanej wersji webowej.
