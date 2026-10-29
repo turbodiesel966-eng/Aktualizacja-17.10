@@ -1983,7 +1983,7 @@ function doSearch(){
     const el=$('#results'); if(!el||searchNormalize($('#q')?.value)!==q)return;
     const cs=(Array.isArray(rows)?rows:[]).filter(r=>r&&/^pa_[a-z0-9_]+$/i.test(String(r.id))&&fieldsMatch(r,['make','model','symptoms','extra','analysis','createdAt']));
     const total=notes.length+logs.length+rems.length+vs.length+rs.length+cs.length;
-    if(status)status.textContent=total?'Znaleziono '+total+' wyników.':'';
+    if(status)status.textContent=total?('Znaleziono '+total+' wyników.'):'';
     if(!total){el.innerHTML='<div class="empty">Brak wyników dla „'+escapeHtml(input.value.trim())+'”. Sprawdź pisownię lub wpisz krótszy fragment.</div>';return;}
     el.innerHTML=
       vs.map(v=>'<div class="entry srch-veh" data-id="'+escapeHtml(v.id)+'" style="cursor:pointer" role="button" tabindex="0"><b>Pojazd · '+escapeHtml((v.brand||'')+' '+(v.model||''))+'</b><small>'+escapeHtml(v.vin||'—')+(v.ownerName?' · '+escapeHtml(v.ownerName):'')+'</small></div>').join('')+
