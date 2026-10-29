@@ -1957,8 +1957,8 @@ function clearShop(){ save('naprawnik_shop', []); renderShop(); }
 
 function searchNormalize(value){
   return String(value == null ? '' : value)
-    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
-    .toLocaleLowerCase('pl-PL').replace(/\\s+/g,' ').trim();
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pl-PL').replace(/\s+/g,' ').trim();
 }
 function renderSearch(){
   screen.innerHTML = back()+`<div class="card"><h2>🔎 Szukaj po VIN / słowie kluczowym</h2>
