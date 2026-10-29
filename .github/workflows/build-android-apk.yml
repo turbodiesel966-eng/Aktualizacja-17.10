@@ -81,6 +81,14 @@ jobs:
       - name: Verify packaged app features and branded icon
         run: python3 scripts/verify-apk.py android/app/build/outputs/apk/debug/app-debug.apk
 
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: naprawnik-android-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Check persistent release-signing secrets
         id: signing
         shell: bash
@@ -148,10 +156,3 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           "$AAPT" dump badging android/app/build/outputs/apk/debug/app-debug.apk | grep -F "package: name='pl.turbodiesel.naprawnik.mobile'"
 
-      - name: Upload installable APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: naprawnik-android-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 30
