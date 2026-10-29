@@ -83,12 +83,16 @@ with zipfile.ZipFile(apk) as bundle:
         "manual-engine-running-scooter-no-drive",
         "manual-runs-rough-after-long-storage",
         "manual-spark-no-start-compression-reeds",
+        "manual-2t-no-start-checklist",
+        "manual-2t-high-idle-air-leak",
+        "manual-4t-no-start-valve-timing",
+        "manual-4t-starts-stalls",
         "__npServiceManualSupplements",
     ]:
         if marker not in content_editor:
             raise SystemExit("Source-linked symptom pack is incomplete: " + marker)
-    if content_editor.count("id:'manual-") != 8:
-        raise SystemExit("Expected exactly 8 source-linked symptom supplements in the APK editor.")
+    if content_editor.count("id:'manual-") != 12:
+        raise SystemExit("Expected exactly 12 source-linked symptom supplements in the APK editor.")
     if "mobile-diagnostic-content.js" not in html:
         raise SystemExit("The Android HTML does not load the owner diagnostic editor bundle.")
     if "__npKnowledgeCasesBaseSnapshot" not in html or "__npApplyOwnerDiagnosticCases" not in html or "__npServiceManualSupplements" not in html:
