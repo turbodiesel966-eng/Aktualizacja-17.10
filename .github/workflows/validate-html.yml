@@ -5,6 +5,7 @@ on:
   pull_request:
     branches:
       - main
+      - apk/admin-pairing-ui-20261026
 
 permissions:
   contents: read
