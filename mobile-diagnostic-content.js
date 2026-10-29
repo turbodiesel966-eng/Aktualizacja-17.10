@@ -51,10 +51,125 @@
     return item.areas.every(pair => Array.isArray(pair) && String(pair[0] || '').trim() &&
       String(pair[0]).length <= 120 && String(pair[1] || '').trim() && String(pair[1]).length <= MAX_TEXT);
   }
+
+  // Additional symptom cards cross-checked against published scooter service manuals.
+  // These are diagnostic leads, not proof that any single component has failed.
+  const SERVICE_MANUAL_SUPPLEMENTS = [
+    {
+      id:'manual-fuel-starvation-after-minutes',
+      title:'Silnik gaśnie po kilku minutach, po postoju znów odpala',
+      tags:'gaśnie po czasie odpowietrznik baku przepływ paliwa kranik podciśnieniowy filtr',
+      category:'Paliwo i dolot', evidence:'partial',
+      source:{label:'Honda SA50 Service Manual — troubleshooting',url:'https://www.49ccscoot.com/manuals/Honda_SA50_Service_Manual.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Silnik uruchamia się normalnie, następnie traci moc lub gaśnie; po krótkim postoju może ponownie odpalać. Objaw nie przesądza o przyczynie.'],
+        ['Możliwe przyczyny','Ograniczone odpowietrzenie zbiornika, częściowo zatkany filtr lub przewód paliwowy, kranik podciśnieniowy albo pompa nie zapewnia stałego przepływu.'],
+        ['Testy i potwierdzenie','Po bezpiecznym zatrzymaniu porównaj objaw przy sprawnym odpowietrzeniu i sprawdź przepływ paliwa według instrukcji konkretnego modelu. Zapisz, czy w chwili awarii iskra jest nadal obecna.'],
+        ['Zalecane rozwiązanie','Usuń potwierdzone ograniczenie przepływu lub napraw element wskazany testem. Nie wymieniaj pompy ani kranika wyłącznie na podstawie tego objawu.']
+      ]
+    },
+    {
+      id:'manual-plug-wet-flooded-start',
+      title:'Świeca mokra po nieudanych próbach rozruchu',
+      tags:'mokra świeca zalany silnik ssanie automatyczne gaźnik rozruch',
+      category:'Paliwo i dolot', evidence:'partial',
+      source:{label:'Honda SA50 Service Manual — engine troubleshooting',url:'https://www.49ccscoot.com/manuals/Honda_SA50_Service_Manual.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Po kilku próbach rozruchu elektroda świecy jest mokra. Mokra świeca może wynikać zarówno z zalania, jak i z braku skutecznego spalania.'],
+        ['Możliwe przyczyny','Zalanie gaźnika, nadmierna dawka paliwa, ssanie automatyczne niedziałające prawidłowo, słaba iskra lub niska kompresja.'],
+        ['Testy i potwierdzenie','Sprawdź stan świecy, działanie ssania i poziom paliwa, a następnie potwierdź iskrę odpowiednim testerem oraz kompresję zgodnie z DTR.'],
+        ['Zalecane rozwiązanie','Osusz lub wymień świecę zgodnie z procedurą producenta i usuń potwierdzoną przyczynę zalewania. Nie zwiększaj liczby prób rozruchu bez diagnozy.']
+      ]
+    },
+    {
+      id:'manual-afterfire-deceleration',
+      title:'Strzały w wydech po zamknięciu gazu',
+      tags:'strzały wydech odpuszczenie gazu air cut zawór powietrze wtórne podciśnienie',
+      category:'Paliwo i dolot', evidence:'partial',
+      source:{label:'KYMCO Agility City 125 Service Manual — emission troubleshooting',url:'https://www.manualslib.com/manual/869243/Honda-Agility-City-125.html?page=182'},
+      areas:[
+        ['Objaw i rozpoznanie','Pojawiają się trzaski lub strzały w wydechu po odpuszczeniu przepustnicy. Drobny odgłos nie identyfikuje automatycznie uszkodzonego elementu.'],
+        ['Możliwe przyczyny','Nieszczelność wydechu lub dolotu, problem z przewodem podciśnienia, regulacją gaźnika albo zaworem odcinającym powietrze (air-cut), jeśli występuje w danym modelu.'],
+        ['Testy i potwierdzenie','Sprawdź szczelność układu wydechowego, przewody podciśnienia i regulację według instrukcji modelowej. Jeśli pojazd ma air-cut/układ powietrza wtórnego, sprawdź go według właściwej procedury.'],
+        ['Zalecane rozwiązanie','Napraw tylko znalezioną nieszczelność lub niesprawny element. Nie reguluj gaźnika według uniwersalnych wartości.']
+      ]
+    },
+    {
+      id:'manual-power-loss-wide-open-throttle',
+      title:'Silnik traci moc tylko przy dużym otwarciu gazu',
+      tags:'brak mocy pełny gaz wysokie obroty dysza główna odpowietrznik baku filtr paliwo',
+      category:'Paliwo i dolot', evidence:'partial',
+      source:{label:'Honda SA50 Service Manual — poor high-speed performance',url:'https://www.49ccscoot.com/manuals/Honda_SA50_Service_Manual.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Na małym gazie pojazd pracuje lepiej, a pod większym obciążeniem dławi się lub traci moc. Najpierw odróżnij przerwę pracy silnika od poślizgu CVT.'],
+        ['Możliwe przyczyny','Ograniczony dopływ paliwa, zatkany odpowietrznik zbiornika, filtr lub dysza główna, ograniczony dolot/wydech albo słaby zapłon pod obciążeniem.'],
+        ['Testy i potwierdzenie','Sprawdź przepływ paliwa i drożność elementów według DTR. Jeśli obroty rosną bez przyrostu prędkości, skontroluj pasek, wariator i sprzęgło CVT osobno. Nie wykonuj prób maksymalnej prędkości na drodze publicznej.'],
+        ['Zalecane rozwiązanie','Przywróć drożność lub napraw element potwierdzony testem. Nie zmieniaj dyszy ani masy rolek bez identyfikacji dokładnej konfiguracji.']
+      ]
+    },
+    {
+      id:'manual-scooter-creeps-at-idle',
+      title:'Skuter próbuje ruszać na biegu jałowym',
+      tags:'ciągnie na postoju rusza sam sprzęgło odśrodkowe szczęki sprężyna CVT',
+      category:'CVT / napęd', evidence:'partial',
+      source:{label:'Honda Common Service Manual — V-Matic drive troubleshooting',url:'https://scootertuub.nl/motoren/Honda/Honda%20Common%20Service%20Manual%20MOTORCYCLES%20.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Tylne koło jest napędzane mocniej niż oczekiwano przy wolnych obrotach albo pojazd próbuje ruszać bez dodania gazu.'],
+        ['Możliwe przyczyny','Sprzęgło odśrodkowe nie odłącza napędu prawidłowo, mechanizm szczęk lub sprężyny jest uszkodzony, albo prędkość biegu jałowego jest nieprawidłowa.'],
+        ['Testy i potwierdzenie','Zabezpiecz skuter stabilnie, sprawdź prędkość jałową oraz stan sprzęgła według DTR. Obejrzyj szczęki, sprężyny i elementy współpracujące po wyłączeniu silnika.'],
+        ['Zalecane rozwiązanie','Nie kontynuuj jazdy, jeśli skuter sam próbuje ruszać. Napraw układ po znalezieniu przyczyny; nie uruchamiaj napędu z otwartą osłoną CVT.']
+      ]
+    },
+    {
+      id:'manual-engine-running-scooter-no-drive',
+      title:'Silnik pracuje, lecz skuter nie przenosi napędu',
+      tags:'silnik pracuje nie jedzie pasek CVT sprzęgło wariator przekładnia',
+      category:'CVT / napęd', evidence:'partial',
+      source:{label:'Honda Common Service Manual — V-Matic drive troubleshooting',url:'https://scootertuub.nl/motoren/Honda/Honda%20Common%20Service%20Manual%20MOTORCYCLES%20.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Silnik daje się uruchomić, lecz tylne koło nie otrzymuje napędu lub prędkość nie rośnie w normalny sposób.'],
+        ['Możliwe przyczyny','Pęknięty/zużyty pasek napędowy, uszkodzenie wariatora, sprzęgła odśrodkowego lub przekładni końcowej.'],
+        ['Testy i potwierdzenie','Wyłącz silnik i sprawdź pasek, wariator, sprzęgło i widoczne elementy przekładni. Zmierz pasek i porównaj z limitem serwisowym dokładnego wariantu.'],
+        ['Zalecane rozwiązanie','Wymień jedynie część potwierdzoną oględzinami/pomiarem i użyj właściwej blokady oraz momentów dokręcania według instrukcji. Nie uruchamiaj silnika z odsłoniętym napędem.']
+      ]
+    },
+    {
+      id:'manual-runs-rough-after-long-storage',
+      title:'Nierówna praca po dłuższym postoju',
+      tags:'stare paliwo gaźnik dysze zaworek iglicowy ssanie automatyczne',
+      category:'Paliwo i dolot', evidence:'partial',
+      source:{label:'KYMCO Agility City 125 Service Manual — fuel system troubleshooting',url:'https://www.manualslib.com/manual/869243/Honda-Agility-City-125.html?page=57'},
+      areas:[
+        ['Objaw i rozpoznanie','Po dłuższym postoju silnik odpala, lecz pracuje nierówno, gaśnie albo słabo reaguje na gaz.'],
+        ['Możliwe przyczyny','Stare lub zanieczyszczone paliwo, zatkane kanały gaźnika/dysze, zacinający się zaworek iglicowy lub niedziałające automatyczne ssanie.'],
+        ['Testy i potwierdzenie','Zweryfikuj stan paliwa, filtr, napełnianie komory pływakowej i działanie ssania według instrukcji konkretnego gaźnika. Nie rozwiercaj dysz.'],
+        ['Zalecane rozwiązanie','Usuń zanieczyszczone paliwo w bezpieczny sposób i wyczyść/sprawdź element wskazany testem; ustawienia i poziom pływaka tylko według DTR.']
+      ]
+    },
+    {
+      id:'manual-spark-no-start-compression-reeds',
+      title:'Jest iskra, ale silnik nadal nie odpala',
+      tags:'jest iskra nie odpala kompresja zawór membranowy 2T zawory rozrząd 4T',
+      category:'Diagnostyka ogólna', evidence:'partial',
+      source:{label:'Honda SA50 Service Manual — engine troubleshooting',url:'https://www.49ccscoot.com/manuals/Honda_SA50_Service_Manual.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Widoczna iskra poza cylindrem nie potwierdza, że zapłon działa pod ciśnieniem ani że paliwo i kompresja są prawidłowe.'],
+        ['Możliwe przyczyny','Niska kompresja, niewłaściwa mieszanka lub brak dostarczania paliwa, nieszczelność dolotu/skrzy­ni korbowej albo uszkodzona membrana w 2T; w 4T także luz zaworowy lub fazy rozrządu.'],
+        ['Testy i potwierdzenie','Potwierdź paliwo, kompresję i szczelność według instrukcji silnika. W 4T sprawdź rozrząd i luz zaworowy zgodnie z DTR.'],
+        ['Zalecane rozwiązanie','Nie wymieniaj modułu CDI wyłącznie dlatego, że silnik nie odpala. Przejdź kolejno przez zapłon, paliwo, dolot i testy mechaniczne.']
+      ]
+    }
+  ].map(item => Object.assign({tags:''}, item));
+
   function baseCases() {
     if (Array.isArray(window.__npKnowledgeCasesBaseSnapshot)) return window.__npKnowledgeCasesBaseSnapshot;
     if (Array.isArray(window.knowledgeCases)) return window.knowledgeCases;
-    return Array.isArray(window.__npKnowledgeCasesSnapshot) ? window.__npKnowledgeCasesSnapshot : [];
+    if (Array.isArray(window.__npKnowledgeCasesSnapshot)) {
+      const snapshot = window.__npKnowledgeCasesSnapshot;
+      const known = new Set(snapshot.map(item => item.id));
+      return snapshot.concat(SERVICE_MANUAL_SUPPLEMENTS.filter(item => !known.has(item.id)));
+    }
+    return SERVICE_MANUAL_SUPPLEMENTS.slice();
   }
   function allCases() {
     const base = baseCases().map(normalizeCase);
