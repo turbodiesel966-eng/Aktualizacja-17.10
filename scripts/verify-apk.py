@@ -71,10 +71,26 @@ with zipfile.ZipFile(apk) as bundle:
     for marker in ["npOpenOwnerFaultEditor", "npReadOwnerFaultOverrides", "naprawnik_mobile_diagnostic_cases_v1", "naprawnik-diagnostic-cases", "npFaultSave", "__npApplyOwnerDiagnosticCases"]:
         if marker not in content_editor:
             raise SystemExit("Android owner diagnostic editor missing required behavior: " + marker)
+    for marker in [
+        "SERVICE_MANUAL_SUPPLEMENTS",
+        "manual-fuel-starvation-after-minutes",
+        "manual-plug-wet-flooded-start",
+        "manual-afterfire-deceleration",
+        "manual-power-loss-wide-open-throttle",
+        "manual-scooter-creeps-at-idle",
+        "manual-engine-running-scooter-no-drive",
+        "manual-runs-rough-after-long-storage",
+        "manual-spark-no-start-compression-reeds",
+        "__npServiceManualSupplements",
+    ]:
+        if marker not in content_editor:
+            raise SystemExit("Source-linked symptom pack is incomplete: " + marker)
+    if content_editor.count("id:'manual-") != 8:
+        raise SystemExit("Expected exactly 8 source-linked symptom supplements in the APK editor.")
     if "mobile-diagnostic-content.js" not in html:
         raise SystemExit("The Android HTML does not load the owner diagnostic editor bundle.")
-    if "__npKnowledgeCasesBaseSnapshot" not in html or "__npApplyOwnerDiagnosticCases" not in html:
-        raise SystemExit("The Android-only diagnostic override hook was not injected.")
+    if "__npKnowledgeCasesBaseSnapshot" not in html or "__npApplyOwnerDiagnosticCases" not in html or "__npServiceManualSupplements" not in html:
+        raise SystemExit("The Android-only diagnostic override and supplement hooks were not injected.")
 
     native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
     for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
