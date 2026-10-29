@@ -24,6 +24,26 @@ on:
       - 'scripts/configure-android-build.mjs'
       - 'scripts/verify-apk.py'
       - 'package.json'
+  pull_request:
+    branches:
+      - main
+      - apk/admin-pairing-ui-20261026
+    paths:
+      - '.github/workflows/build-android-apk.yml'
+      - 'capacitor.config.json'
+      - 'index.html'
+      - 'billing.js'
+      - 'mobile-admin-pairing.js'
+      - 'mobile-diagnostic-content.js'
+      - 'mobile-workshop-calculators.js'
+      - 'katalog-techniczny.js'
+      - 'sw.js'
+      - 'manifest.webmanifest'
+      - 'assets/**'
+      - 'scripts/prepare-mobile.mjs'
+      - 'scripts/configure-android-build.mjs'
+      - 'scripts/verify-apk.py'
+      - 'package.json'
   workflow_dispatch:
 
 concurrency:
