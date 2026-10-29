@@ -44,6 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check mobile-admin-pairing.js
+          node --check mobile-diagnostic-content.js
           node --check scripts/prepare-mobile.mjs
           node --check scripts/configure-android-build.mjs
           python3 -m py_compile scripts/verify-apk.py
