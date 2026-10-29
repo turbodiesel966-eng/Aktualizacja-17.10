@@ -86,7 +86,7 @@
       title:'Strzały w wydech po zamknięciu gazu',
       tags:'strzały wydech odpuszczenie gazu air cut zawór powietrze wtórne podciśnienie',
       category:'Paliwo i dolot', evidence:'partial',
-      source:{label:'KYMCO Agility City 125 Service Manual — emission troubleshooting',url:'https://www.manualslib.com/manual/869243/Honda-Agility-City-125.html?page=182'},
+      source:{label:'Honda Agility City 125 Service Manual — emission troubleshooting',url:'https://www.manualslib.com/manual/869243/Honda-Agility-City-125.html?page=182'},
       areas:[
         ['Objaw i rozpoznanie','Pojawiają się trzaski lub strzały w wydechu po odpuszczeniu przepustnicy. Drobny odgłos nie identyfikuje automatycznie uszkodzonego elementu.'],
         ['Możliwe przyczyny','Nieszczelność wydechu lub dolotu, problem z przewodem podciśnienia, regulacją gaźnika albo zaworem odcinającym powietrze (air-cut), jeśli występuje w danym modelu.'],
@@ -138,7 +138,7 @@
       title:'Nierówna praca po dłuższym postoju',
       tags:'stare paliwo gaźnik dysze zaworek iglicowy ssanie automatyczne',
       category:'Paliwo i dolot', evidence:'partial',
-      source:{label:'KYMCO Agility City 125 Service Manual — fuel system troubleshooting',url:'https://www.manualslib.com/manual/869243/Honda-Agility-City-125.html?page=57'},
+      source:{label:'Honda Agility City 125 Service Manual — fuel system troubleshooting',url:'https://www.manualslib.com/manual/869243/Honda-Agility-City-125.html?page=57'},
       areas:[
         ['Objaw i rozpoznanie','Po dłuższym postoju silnik odpala, lecz pracuje nierówno, gaśnie albo słabo reaguje na gaz.'],
         ['Możliwe przyczyny','Stare lub zanieczyszczone paliwo, zatkane kanały gaźnika/dysze, zacinający się zaworek iglicowy lub niedziałające automatyczne ssanie.'],
