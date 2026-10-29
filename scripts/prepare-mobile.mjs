@@ -43,6 +43,8 @@ const requiredFiles = [
   "index.html",
   "billing.js",
   "mobile-admin-pairing.js",
+  "mobile-diagnostic-content.js",
+  "mobile-workshop-calculators.js",
   "katalog-techniczny.js",
   "sw.js",
   "manifest.webmanifest"
@@ -82,12 +84,46 @@ mobileHtml = mobileHtml.replace(
   navMarker + '\n  window.__naprawnikView = String(view || "home");'
 );
 const closingBody = "</body>";
-const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
+let closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
 if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
+// Inject a runtime bridge into the generated APK copy only. The source website remains unchanged.
+const ownerCaseRuntimeMarker = "\nconst KNOW_LINKS={";
+const ownerCaseRuntime = `
+window.__npKnowledgeCasesBaseSnapshot = knowledgeCases.map(function (c) {
+  return Object.assign({}, c, { areas: Array.isArray(c.areas) ? c.areas.map(function (p) { return p.slice(); }) : [] });
+});
+window.__npApplyOwnerDiagnosticCases = function () {
+  var base = window.__npKnowledgeCasesBaseSnapshot || [];
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem('naprawnik_mobile_diagnostic_cases_v1') || '{}'); } catch (_) {}
+  var overrides = data && Array.isArray(data.cases) ? data.cases : [];
+  var deleted = new Set(data && Array.isArray(data.deletedIds) ? data.deletedIds : []);
+  var byId = new Map(base.map(function (c) { return [c.id, c]; }));
+  var supplements = Array.isArray(window.__npServiceManualSupplements) ? window.__npServiceManualSupplements : [];
+  supplements.forEach(function (item) { if (item && item.id && !byId.has(item.id)) byId.set(item.id, item); });
+  overrides.forEach(function (item) { if (item && item.id) byId.set(item.id, item); });
+  var merged = Array.from(byId.values()).filter(function (item) { return !deleted.has(item.id); });
+  knowledgeCases.splice(0, knowledgeCases.length);
+  merged.forEach(function (item) { knowledgeCases.push(item); });
+  window.__npKnowledgeCasesSnapshot = knowledgeCases;
+};
+window.__npApplyOwnerDiagnosticCases();
+`;
+if (mobileHtml.split(ownerCaseRuntimeMarker).length - 1 !== 1) {
+  throw new Error("Could not uniquely locate diagnostic knowledge cases for the Android-only owner editor.");
+}
+mobileHtml = mobileHtml.replace(ownerCaseRuntimeMarker, "\n" + ownerCaseRuntime + ownerCaseRuntimeMarker);
+// Earlier runtime injection changes the document length, so recompute the closing tag offset.
+closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
+if (closingBodyIndex < 0) {
+  throw new Error("Could not locate the document body close tag after Android runtime injection.");
+}
 mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
   '  <script src="./mobile-admin-pairing.js"></script>\n' +
+  '  <script src="./mobile-diagnostic-content.js"></script>\n' +
+  '  <script src="./mobile-workshop-calculators.js"></script>\n' +
   '  <script src="./native-bridge.js"></script>\n' +
   mobileHtml.slice(closingBodyIndex);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
@@ -99,12 +135,12 @@ let mobileSw = await readFile(mobileSwPath, "utf8");
 if (mobileSw.split("const CACHE='naprawnik-v5-37';").length - 1 !== 1) {
   throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
 }
-mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-40-native-admin-pairing';");
+mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-42-workshop-calculators';");
 const precacheMarker = "const PRECACHE=['./index.html'";
 if (mobileSw.split(precacheMarker).length - 1 !== 1) {
   throw new Error("Could not locate the service-worker precache list for Android.");
 }
-mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js','./mobile-admin-pairing.js'");
+mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js','./mobile-admin-pairing.js','./mobile-diagnostic-content.js','./mobile-workshop-calculators.js'");
 await writeFile(mobileSwPath, mobileSw, "utf8");
 
-console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge, owner pairing screen and offline precache prepared.");
+console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge, owner pairing screen, offline workshop calculators and precache prepared.");

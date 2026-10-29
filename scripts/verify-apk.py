@@ -21,6 +21,8 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/manifest.webmanifest",
         "assets/public/native-bridge.js",
         "assets/public/mobile-admin-pairing.js",
+        "assets/public/mobile-diagnostic-content.js",
+        "assets/public/mobile-workshop-calculators.js",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -35,6 +37,8 @@ with zipfile.ZipFile(apk) as bundle:
     service_worker = bundle.read("assets/public/sw.js").decode("utf-8")
     manifest = bundle.read("assets/public/manifest.webmanifest").decode("utf-8")
     pairing = bundle.read("assets/public/mobile-admin-pairing.js").decode("utf-8")
+    content_editor = bundle.read("assets/public/mobile-diagnostic-content.js").decode("utf-8")
+    calculators = bundle.read("assets/public/mobile-workshop-calculators.js").decode("utf-8")
 
     try:
         case_block = html.split("const knowledgeCases = [", 1)[1].split("const KNOW_LINKS={", 1)[0]
@@ -60,11 +64,45 @@ with zipfile.ZipFile(apk) as bundle:
        "openHostedBillingUrl(data.url, 'one-time')" not in billing or \
        "openHostedBillingUrl(data.url, 'portal')" not in billing:
         raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
-    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "naprawnik-v5-40-native-admin-pairing" not in service_worker or "NAPRAWNIK" not in manifest:
-        raise SystemExit("The packaged PWA/service-worker branding, owner pairing or billing version is inconsistent.")
+    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "naprawnik-v5-42-workshop-calculators" not in service_worker or "NAPRAWNIK" not in manifest:
+        raise SystemExit("The packaged PWA/service-worker branding, owner pairing or billing version is inconsistent. Check the APK-only cache version and required billing/service-worker markers.")
     for marker in ["window.npOpenAdminPanel", "window.__naprawnikAdminCodePrompt = () => code", "promptRequested", "if (promptRequested) renderPairingScreen()", "NP-MOB-", "location.hostname !== 'localhost'"]:
         if marker not in pairing:
             raise SystemExit(f"Android owner-pairing UI is missing required behavior: {marker}")
+
+    for marker in ["npOpenOwnerFaultEditor", "npReadOwnerFaultOverrides", "naprawnik_mobile_diagnostic_cases_v1", "naprawnik-diagnostic-cases", "npFaultSave", "__npApplyOwnerDiagnosticCases"]:
+        if marker not in content_editor:
+            raise SystemExit("Android owner diagnostic editor missing required behavior: " + marker)
+    for marker in [
+        "SERVICE_MANUAL_SUPPLEMENTS",
+        "manual-fuel-starvation-after-minutes",
+        "manual-plug-wet-flooded-start",
+        "manual-afterfire-deceleration",
+        "manual-power-loss-wide-open-throttle",
+        "manual-scooter-creeps-at-idle",
+        "manual-engine-running-scooter-no-drive",
+        "manual-runs-rough-after-long-storage",
+        "manual-spark-no-start-compression-reeds",
+        "manual-2t-no-start-checklist",
+        "manual-2t-high-idle-air-leak",
+        "manual-4t-no-start-valve-timing",
+        "manual-4t-starts-stalls",
+        "__npServiceManualSupplements",
+    ]:
+        if marker not in content_editor:
+            raise SystemExit("Source-linked symptom pack is incomplete: " + marker)
+    if content_editor.count("id:'manual-") != 12:
+        raise SystemExit("Expected exactly 12 source-linked symptom supplements in the APK editor.")
+    if "mobile-diagnostic-content.js" not in html:
+        raise SystemExit("The Android HTML does not load the owner diagnostic editor bundle.")
+    if "__npKnowledgeCasesBaseSnapshot" not in html or "__npApplyOwnerDiagnosticCases" not in html or "__npServiceManualSupplements" not in html:
+        raise SystemExit("The Android-only diagnostic override and supplement hooks were not injected.")
+
+    for marker in ["oilMlPerLiter", "oilAmountMl", "displacementCc", "ratioResult", "npWorkshopCalcLauncher", "aria-live"]:
+        if marker not in calculators:
+            raise SystemExit("Workshop calculator module missing required behavior: " + marker)
+    if "mobile-workshop-calculators.js" not in html or "./mobile-workshop-calculators.js" not in service_worker:
+        raise SystemExit("APK workshop calculators are not loaded and precached offline.")
 
     native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
     for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
@@ -93,6 +131,6 @@ with zipfile.ZipFile(apk) as bundle:
 
 print(
     f"OK: {apk.name}; {len(case_ids)} unique diagnostic cases; "
-    f"backup/import, assistant photo/history, admin owner-pairing, billing, catalogue, "
+    f"backup/import, assistant photo/history, admin owner-pairing, workshop calculators, billing, catalogue, "
     f"{len(launcher_paths)} launcher densities and {len(splash_paths)} splash sizes verified."
 )

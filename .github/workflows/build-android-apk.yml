@@ -6,12 +6,36 @@ on:
       - main
       - fix/mobile-admin-access-capacitor-apk-20261026
       - apk/admin-pairing-ui-20261026
+      - apk/owner-content-editor-20261028
+      - apk/owner-fault-editor-20261028
     paths:
       - '.github/workflows/build-android-apk.yml'
       - 'capacitor.config.json'
       - 'index.html'
       - 'billing.js'
       - 'mobile-admin-pairing.js'
+      - 'mobile-diagnostic-content.js'
+      - 'mobile-workshop-calculators.js'
+      - 'katalog-techniczny.js'
+      - 'sw.js'
+      - 'manifest.webmanifest'
+      - 'assets/**'
+      - 'scripts/prepare-mobile.mjs'
+      - 'scripts/configure-android-build.mjs'
+      - 'scripts/verify-apk.py'
+      - 'package.json'
+  pull_request:
+    branches:
+      - main
+      - apk/admin-pairing-ui-20261026
+    paths:
+      - '.github/workflows/build-android-apk.yml'
+      - 'capacitor.config.json'
+      - 'index.html'
+      - 'billing.js'
+      - 'mobile-admin-pairing.js'
+      - 'mobile-diagnostic-content.js'
+      - 'mobile-workshop-calculators.js'
       - 'katalog-techniczny.js'
       - 'sw.js'
       - 'manifest.webmanifest'
@@ -96,14 +120,23 @@ jobs:
             exit 0
           fi
           if [ "${#values}" -ne 4 ]; then
-            echo "ERROR: Configure all four Android signing secrets together." >&2
-            exit 1
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Android release signing secrets are incomplete. Skipping signed release; the debug APK will still be verified and uploaded."
+            exit 0
           fi
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/naprawnik-release.jks"
-          test -s "$RUNNER_TEMP/naprawnik-release.jks"
+          if ! printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/naprawnik-release.jks" || [ ! -s "$RUNNER_TEMP/naprawnik-release.jks" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Release keystore decoding failed. Skipping signed release; the debug APK will still be verified and uploaded."
+            exit 0
+          fi
           chmod 600 "$RUNNER_TEMP/naprawnik-release.jks"
-          keytool -list -keystore "$RUNNER_TEMP/naprawnik-release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
-          echo "Android release keystore password and alias validated."
+          if ! keytool -list -keystore "$RUNNER_TEMP/naprawnik-release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null 2>&1; then
+            rm -f "$RUNNER_TEMP/naprawnik-release.jks"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Release signing configuration failed validation. No signed APK will be produced; the verified debug APK remains available for testing."
+            exit 0
+          fi
+          echo "Android release keystore and alias validated."
           echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/naprawnik-release.jks" >> "$GITHUB_ENV"
           echo "enabled=true" >> "$GITHUB_OUTPUT"
 

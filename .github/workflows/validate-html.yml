@@ -5,6 +5,7 @@ on:
   pull_request:
     branches:
       - main
+      - apk/admin-pairing-ui-20261026
 
 permissions:
   contents: read
@@ -44,6 +45,8 @@ jobs:
         run: |
           set -euo pipefail
           node --check mobile-admin-pairing.js
+          node --check mobile-diagnostic-content.js
+          node --check mobile-workshop-calculators.js
           node --check scripts/prepare-mobile.mjs
           node --check scripts/configure-android-build.mjs
           python3 -m py_compile scripts/verify-apk.py
