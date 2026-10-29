@@ -159,6 +159,58 @@
         ['Zalecane rozwiązanie','Nie wymieniaj modułu CDI wyłącznie dlatego, że silnik nie odpala. Przejdź kolejno przez zapłon, paliwo, dolot i testy mechaniczne.']
       ]
     }
+    {
+      id:'manual-2t-no-start-checklist',
+      title:'2T: nie odpala — paliwo, kompresja i membrany',
+      tags:'2T dwusuw brak rozruchu paliwo kompresja membrany',
+      category:'Diagnostyka 2T', evidence:'partial',
+      source:{label:'Honda SA50 Service Manual — reference only; verify exact model',url:'https://www.49ccscoot.com/manuals/Honda_SA50_Service_Manual.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Dwusuw nie uruchamia się. Sama widoczna iskra nie potwierdza poprawnego zapłonu pod ciśnieniem ani szczelności silnika.'],
+        ['Możliwe przyczyny','Brak dopływu paliwa, zalanie, niska kompresja, nieszczelny dolot lub uszkodzone płytki zaworu membranowego, jeśli występuje.'],
+        ['Testy i potwierdzenie','Sprawdź paliwo i zasilanie, zmierz kompresję oraz obejrzyj membrany i króciec według instrukcji dokładnego modelu.'],
+        ['Zalecane rozwiązanie','Usuń usterkę potwierdzoną testem. Nie wymieniaj CDI tylko dlatego, że silnik nie odpala.']
+      ]
+    },
+    {
+      id:'manual-2t-high-idle-air-leak',
+      title:'2T: wysokie lub falujące obroty — kontrola nieszczelności',
+      tags:'2T dwusuw wysokie obroty jałowe lewe powietrze dolot',
+      category:'Diagnostyka 2T', evidence:'partial',
+      source:{label:'Yamaha Aerox YQ50 Service Manual — verify exact model year',url:'https://scootergrisen.org/scooterhjemmeside/download/yamaha_aerox_servicemanual.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Obroty pozostają wysokie, falują lub silnik wolno z nich schodzi. Objaw nie wskazuje samodzielnie konkretnej części.'],
+        ['Możliwe przyczyny','Zacięta linka/przepustnica, nieszczelny króciec lub przewód podciśnienia, uszczelniacze wału albo błędna regulacja gaźnika.'],
+        ['Testy i potwierdzenie','Sprawdź powrót przepustnicy i przewody. Szczelność dolotu sprawdź metodą producenta; nie używaj łatwopalnych aerozoli na gorącym silniku.'],
+        ['Zalecane rozwiązanie','Nie maskuj nieszczelności regulacją gaźnika. Napraw potwierdzony problem i ustaw obroty według DTR.']
+      ]
+    },
+    {
+      id:'manual-4t-no-start-valve-timing',
+      title:'4T: nie odpala — kompresja, zawory i rozrząd',
+      tags:'4T czterosuw brak rozruchu luz zaworowy kompresja rozrząd',
+      category:'Diagnostyka 4T', evidence:'partial',
+      source:{label:'Honda Common Service Manual — general reference; verify exact model',url:'https://scootertuub.nl/motoren/Honda/Honda%20Common%20Service%20Manual%20MOTORCYCLES%20.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Czterosuw obraca się rozrusznikiem, ale nie podejmuje pracy. Najpierw odróżnij problem z paliwem i zapłonem od usterki mechanicznej.'],
+        ['Możliwe przyczyny','Niewłaściwy luz zaworowy, niska kompresja, błędne fazy rozrządu, brak paliwa lub niesprawny zapłon.'],
+        ['Testy i potwierdzenie','Zmierz kompresję i sprawdź luz zaworowy oraz znaki rozrządu zgodnie z DTR i właściwą pozycją wału.'],
+        ['Zalecane rozwiązanie','Wartości luzu, momenty i ustawienie rozrządu dobierz do kodu silnika. Nie stosuj uniwersalnych wartości.']
+      ]
+    },
+    {
+      id:'manual-4t-starts-stalls',
+      title:'4T: odpala, ale gaśnie — paliwo, dolot i zawory',
+      tags:'4T czterosuw odpala gaśnie ssanie paliwo dolot luz zaworowy',
+      category:'Diagnostyka 4T', evidence:'partial',
+      source:{label:'Honda Common Service Manual — general reference; verify exact model',url:'https://scootertuub.nl/motoren/Honda/Honda%20Common%20Service%20Manual%20MOTORCYCLES%20.pdf'},
+      areas:[
+        ['Objaw i rozpoznanie','Silnik uruchamia się, ale gaśnie na jałowym lub po dodaniu gazu. Zapisz, czy dzieje się to na zimno, po rozgrzaniu czy zawsze.'],
+        ['Możliwe przyczyny','Zanieczyszczone paliwo, ograniczony przepływ, nieszczelny dolot, niesprawne ssanie lub zbyt mały luz zaworowy.'],
+        ['Testy i potwierdzenie','Sprawdź paliwo, filtr, dolot i obroty według instrukcji. Jeśli problem nasila się po rozgrzaniu, skontroluj luz zaworowy zgodnie z DTR.'],
+        ['Zalecane rozwiązanie','Napraw przyczynę potwierdzoną testem. Nie zmieniaj ustawień bez pomiarów i specyfikacji modelu.']
+      ]
+    },
   ].map(item => Object.assign({tags:''}, item));
 
   function baseCases() {
