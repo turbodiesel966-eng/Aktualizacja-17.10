@@ -100,6 +100,8 @@ window.__npApplyOwnerDiagnosticCases = function () {
   var overrides = data && Array.isArray(data.cases) ? data.cases : [];
   var deleted = new Set(data && Array.isArray(data.deletedIds) ? data.deletedIds : []);
   var byId = new Map(base.map(function (c) { return [c.id, c]; }));
+  var supplements = Array.isArray(window.__npServiceManualSupplements) ? window.__npServiceManualSupplements : [];
+  supplements.forEach(function (item) { if (item && item.id && !byId.has(item.id)) byId.set(item.id, item); });
   overrides.forEach(function (item) { if (item && item.id) byId.set(item.id, item); });
   var merged = Array.from(byId.values()).filter(function (item) { return !deleted.has(item.id); });
   knowledgeCases.splice(0, knowledgeCases.length);
