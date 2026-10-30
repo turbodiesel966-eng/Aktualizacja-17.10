@@ -321,9 +321,14 @@
         ? '<p style="font-size:12px;line-height:1.5">Dostęp na określony czas. Jednorazowa płatność — bez automatycznego odnowienia.</p>' +
           oneTimeOffers.map(offer => '<div class="entry"><b>' + esc(offer.title) + ' · ' + esc(String(offer.days)) + ' dni — ' + esc(offer.price) + '</b><button class="btn" type="button" data-one-time-tier="' + esc(offer.tier) + '" data-one-time-days="' + esc(String(offer.days)) + '">Kup ' + esc(offer.title) + ' na ' + esc(String(offer.days)) + ' dni</button></div>').join('')
         : '<p style="font-size:12px;line-height:1.5">Masz już aktywny plan WARSZTAT. Pakiety równe lub niższe od aktywnego planu są ukryte, aby nie proponować zbędnego zakupu.</p>') + '</div>';
+    const devicesCard = '<div class="card"><h2>📱 Urządzenia konta</h2>' +
+      '<p style="font-size:12px;line-height:1.5;color:var(--dim)">Możesz przypisać to urządzenie do konta i sprawdzić zapisane urządzenia. Odłączenie unieważnia klucze przypisane do danego urządzenia. Stare, nieprzypisane klucze pozostają bez zmian.</p>' +
+      '<button class="btn" type="button" onclick="window.npRegisterCurrentDevice()">＋ Zarejestruj to urządzenie</button>' +
+      '<button class="btn" type="button" onclick="window.npLoadAccountDevices()">↻ Pokaż urządzenia konta</button>' +
+      '<div id="npAccountDevices" style="font-size:12px;line-height:1.5"></div></div>';
     root.innerHTML = (typeof back === 'function' ? back() : '') +
       '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka. PRO rozszerza bazę elektryki i funkcje diagnostyczne; analiza zdjęć AI jest chwilowo wyłączona. WARSZTAT zawiera funkcje PRO oraz narzędzia obsługi klientów i dokumentacji. Abonamentem zarządzasz w panelu Stripe.</p></div>' +
-      activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
+      activation + devicesCard + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
       '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small></div>';
   }
   window.renderPlans = renderPlansBridge;
@@ -340,6 +345,58 @@
     } catch (error) {
       alert(friendlyError(error, 'aktywować 24-godzinnego okresu próbnego') + (error.message ? '\\n' + error.message : ''));
       return null;
+    }
+  };
+  window.npRegisterCurrentDevice = async function() {
+    const root = document.getElementById('npAccountDevices');
+    if (root) root.textContent = 'Rejestruję urządzenie…';
+    try {
+      const token = await accountEnsure();
+      let deviceId = localStorage.getItem('naprawnik_device_id') || '';
+      if (!/^[a-f0-9]{32}$/.test(deviceId)) {
+        deviceId = secureRandomId();
+        if (!deviceId) throw new Error('Ta przeglądarka nie udostępnia bezpiecznego generatora identyfikatorów.');
+        localStorage.setItem('naprawnik_device_id', deviceId);
+      }
+      const ua = String(navigator.userAgent || '');
+      const label = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iPhone / iPad' : /Windows/i.test(ua) ? 'Windows' : 'Urządzenie';
+      await api('/api/devices/register', { deviceId, label }, 'POST', token);
+      await window.npLoadAccountDevices();
+    } catch (error) {
+      if (root) root.textContent = friendlyError(error, 'zarejestrować urządzenia') + (error.message ? ' ' + error.message : '');
+    }
+  };
+  window.npLoadAccountDevices = async function() {
+    const root = document.getElementById('npAccountDevices');
+    if (!root) return;
+    root.textContent = 'Pobieram listę urządzeń…';
+    try {
+      const token = await accountEnsure();
+      const data = await api('/api/devices', undefined, 'GET', token);
+      const devices = Array.isArray(data.devices) ? data.devices : [];
+      root.innerHTML = devices.length ? devices.map(device =>
+        '<div class="entry"><b>' + esc(device.label || 'Urządzenie') + '</b><small>Pierwsze połączenie: ' +
+        esc(new Date(Number(device.firstSeenAt) * 1000).toLocaleString('pl-PL')) + '<br>Ostatnia aktywność: ' +
+        esc(new Date(Number(device.lastSeenAt) * 1000).toLocaleString('pl-PL')) + '<br>' +
+        (device.revoked ? 'Odłączone' : 'Aktywne') + '</small>' +
+        (!device.revoked ? '<button class="btn" type="button" onclick="window.npRevokeAccountDevice(\'' + esc(device.deviceRef) + '\')">Odłącz urządzenie</button>' : '') +
+        '</div>'
+      ).join('') : '<div class="empty">Nie zarejestrowano jeszcze urządzeń.</div>';
+    } catch (error) {
+      root.textContent = friendlyError(error, 'pobrać listy urządzeń') + (error.message ? ' ' + error.message : '');
+    }
+  };
+  window.npRevokeAccountDevice = async function(deviceRef) {
+    if (!/^[a-f0-9]{64}$/.test(String(deviceRef || ''))) return;
+    if (!confirm('Odłączyć to urządzenie? Klucze dostępu przypisane do niego zostaną unieważnione.')) return;
+    const root = document.getElementById('npAccountDevices');
+    if (root) root.textContent = 'Odłączam urządzenie…';
+    try {
+      const token = await accountEnsure();
+      await api('/api/devices/revoke', { deviceRef }, 'POST', token);
+      await window.npLoadAccountDevices();
+    } catch (error) {
+      if (root) root.textContent = friendlyError(error, 'odłączyć urządzenia') + (error.message ? ' ' + error.message : '');
     }
   };
   window.licRefresh = refresh;
