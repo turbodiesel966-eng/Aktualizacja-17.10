@@ -922,7 +922,7 @@ test("wygasły token aktywnego abonamentu rocznego jest odnawiany bez Checkoutu"
     headers: { Authorization: "Bearer " + token }
   });
   const auth = await authenticate(request, env);
-  assert.deepEqual(auth, { userId: "annual-user" });
+  assert.deepEqual(auth, { userId: "annual-user", tokenHash, deviceIdHash: null });
   assert.equal(state.entitlementChecks, 1);
   assert.equal(state.tokenUpdates.length, 1);
   assert.equal(state.tokenUpdates[0][2], tokenHash);
