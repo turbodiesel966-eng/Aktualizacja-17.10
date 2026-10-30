@@ -239,8 +239,10 @@ async function authenticate(request, env) {
       SELECT 1 AS active FROM promo_redemptions WHERE user_id = ? AND expires_at > ?
       UNION ALL
       SELECT 1 AS active FROM one_time_purchases WHERE user_id = ? AND expires_at > ?
+      UNION ALL
+      SELECT 1 AS active FROM admin_users WHERE user_id = ?
       LIMIT 1
-    `).bind(row.user_id, now, now, row.user_id, now, row.user_id, now).first();
+    `).bind(row.user_id, now, now, row.user_id, now, row.user_id, now, row.user_id).first();
     if (!entitlement) return null;
   }
 
