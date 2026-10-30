@@ -82,7 +82,7 @@ This endpoint has **not** been deployed or tested with a real OpenAI key by this
 - Registering a device binds the current bearer token to that device. Subsequent authentication checks that the device belongs to the same account and is not revoked. Revoking a device marks its row and revokes all bearer tokens assigned to it.
 - This is account session/device management, **not hardware attestation or anti-cloning**: a client-controlled identifier can be copied by a determined user. Do not use it as proof of physical device identity or as a replacement for stronger account authentication.
 - The APK plans screen now provides opt-in registration, inventory, and revocation controls. Existing tokens are not automatically bound, and users are not silently logged out.
-- Migration 0008 and these endpoints have not been deployed to Cloudflare. Apply only after reviewing the exact target D1 and verifying it is staging, never Live as part of this change.
+- Migration 0008 and the device endpoints are deployed to the isolated staging Worker and staging D1 only. The Live Worker and Live D1 remain untouched.
 
 ## Server-side protection
 
