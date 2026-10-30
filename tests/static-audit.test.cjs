@@ -85,7 +85,9 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /Czy utworzyć NOWE konto\?/);
   assert.match(billing, /Nie utworzono nowego konta/);
   assert.match(billing, /const oneTimePackages =/);
-  assert.ok(billing.includes("activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +"));
+  assert.ok(billing.includes("activation + devicesCard + card('amator') + card('pro') + card('warsztat') + oneTimePackages +"));
+  assert.match(billing, /npRegisterCurrentDevice/);
+  assert.match(billing, /npRevokeAccountDevice/);
   assert.match(billing, /tier: 'pro', days: 3, price: '3,00 zł'/);
   assert.match(billing, /tier: 'pro', days: 7, price: '7,00 zł'/);
   assert.match(billing, /tier: 'warsztat', days: 3, price: '5,00 zł'/);
