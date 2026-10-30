@@ -61,8 +61,8 @@ jobs:
       - name: Install Capacitor dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Run regression tests
-        run: node --test tests/*.test.cjs
+      - name: Run app and backend regression tests
+        run: node --test tests/*.test.cjs workers/subscriptions/*.test.mjs
 
       - name: Check Android-only JavaScript syntax
         run: node --check mobile-admin-pairing.js && node --check mobile-diagnostic-content.js && node --check mobile-workshop-calculators.js && node --check scripts/prepare-mobile.mjs
