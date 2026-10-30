@@ -72,8 +72,19 @@ with zipfile.ZipFile(apk) as bundle:
        "openHostedBillingUrl(data.url, 'one-time')" not in billing or \
        "openHostedBillingUrl(data.url, 'portal')" not in billing:
         raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
-    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "./mobile-diagnostic-content.js" not in service_worker or "./mobile-workshop-calculators.js" not in service_worker or "naprawnik-v5-43-owner-editor-calculators" not in service_worker or "NAPRAWNIK" not in manifest:
-        raise SystemExit("The packaged PWA/service-worker branding, owner pairing or billing version is inconsistent.")
+    service_worker_markers = [
+        "./billing.js?v=16",
+        "./native-bridge.js",
+        "./mobile-admin-pairing.js",
+        "./mobile-diagnostic-content.js",
+        "./mobile-workshop-calculators.js",
+        "naprawnik-v5-43-owner-editor-calculators",
+    ]
+    missing_sw_markers = [marker for marker in service_worker_markers if marker not in service_worker]
+    if missing_sw_markers:
+        raise SystemExit("Packaged Android service worker is missing: " + ", ".join(missing_sw_markers))
+    if "NAPRAWNIK" not in manifest:
+        raise SystemExit("Packaged Android manifest is missing NAPRAWNIK branding.")
     for marker in ["window.npOpenAdminPanel", "window.__naprawnikAdminCodePrompt = () => code", "promptRequested", "if (promptRequested) renderPairingScreen()", "NP-MOB-", "location.hostname !== 'localhost'"]:
         if marker not in pairing:
             raise SystemExit(f"Android owner-pairing UI is missing required behavior: {marker}")
