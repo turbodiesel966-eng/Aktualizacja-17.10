@@ -146,6 +146,37 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .knowledge-rel{display:inline-block;max-width:100%;font-size:10px;line-height:1.4;border:1px solid var(--border);border-radius:7px;padding:5px 7px;color:var(--cyan);cursor:pointer;overflow-wrap:anywhere}
 .knowledge-rel:active{border-color:var(--accent);background:rgba(255,140,26,.08)}
 
+/* NAPRAWNIK APK — visual refinement: hierarchy, readability and touch targets */
+:root{
+  --bg:#090d18;--panel:#111a2b;--border:#26364d;--accent:#ff9b3d;
+  --cyan:#58d7e8;--hero:#ffd166;--text:#edf3fb;--dim:#9aabc2;
+  --surface-raised:#18253a;--surface-soft:#101d30;
+}
+*{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+body{background:radial-gradient(ellipse at 50% -18%,rgba(45,91,140,.26),transparent 55%),var(--bg);letter-spacing:.01em}
+.frame{max-width:480px;padding:12px 12px calc(14px + env(safe-area-inset-bottom,0px))}
+.topbar{background:linear-gradient(135deg,#18283d,#111a2b);border:1px solid rgba(255,155,61,.55);border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px #0005;text-shadow:none;letter-spacing:.08em}
+.screen{padding:14px 2px 20px;scrollbar-width:thin;scrollbar-color:#405675 transparent}
+.card,.diag-card{background:linear-gradient(155deg,rgba(26,40,62,.98),rgba(15,24,40,.98));border:1px solid #2b3c56;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 10px 28px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.035)}
+h2{font-size:14px;letter-spacing:.07em;line-height:1.4;border-bottom:1px solid rgba(125,163,201,.2);padding-bottom:10px;margin-bottom:12px;text-shadow:none}
+p,.diag-sub,.tile-desc{line-height:1.55}
+.grid2{gap:11px}
+.tile{min-height:116px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(155deg,#1a2940,#121d30);border:1px solid #344a67;border-radius:16px;padding:15px 10px;box-shadow:0 6px 16px #0003;transition:transform .15s ease,border-color .15s ease,background .15s ease}
+.tile:active{transform:scale(.985);background:#20334d;border-color:var(--cyan)}
+.tile-icon{font-size:27px;margin-bottom:5px}
+.tile-label{font-size:12px;line-height:1.35;letter-spacing:.045em;color:#f1f6ff}
+.tile-desc{font-size:10px;color:#a8bad1}
+.btn,button,.support-cta{border-radius:13px;min-height:44px}
+.btn{background:linear-gradient(135deg,#20334d,#17263b);border:1px solid #3a5878;padding:12px 14px;box-shadow:0 4px 12px #0002;line-height:1.35}
+.btn:active{transform:translateY(1px);filter:brightness(1.15)}
+input,select,textarea{background:#0d1727!important;color:#f0f5fc!important;border:1px solid #344b67!important;border-radius:11px!important;padding:12px!important;min-height:44px}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(88,215,232,.45);outline-offset:1px}
+.section-label{font-size:11px;font-weight:800;letter-spacing:.14em;color:#8fb6d7;text-transform:uppercase;margin:20px 4px 10px}
+.brand-hero{padding:20px 14px;border-radius:20px;background:linear-gradient(130deg,rgba(29,55,83,.9),rgba(21,28,48,.88));border:1px solid rgba(88,215,232,.28);box-shadow:0 12px 30px #0003}
+.app-title{letter-spacing:.12em;text-shadow:0 4px 20px rgba(88,215,232,.22)}
+.support-cta{border-radius:16px;padding:12px 14px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -1471,39 +1502,7 @@ function vehicleReport(){
   const v=vehicles.find(x=>x.id===selectedVehicleId);if(!v)return;
   const w=workshopInfo();const rs=repairs.filter(r=>r.vehicleId===v.id);
   const e=escapeHtml;
-  const html='<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Karta serwisowa</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:20px auto;padding:0 12px;color:#111}h1{margin:0}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:6px;text-align:left;font-size:13px}.n{color:#555;font-size:12px}button{padding:10px 16px;margin:10px 0}@media print{button{display:none}}
-/* NAPRAWNIK APK — visual refinement: hierarchy, readability and touch targets */
-:root{
-  --bg:#090d18;--panel:#111a2b;--border:#26364d;--accent:#ff9b3d;
-  --cyan:#58d7e8;--hero:#ffd166;--text:#edf3fb;--dim:#9aabc2;
-  --surface-raised:#18253a;--surface-soft:#101d30;
-}
-*{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-body{background:radial-gradient(ellipse at 50% -18%,rgba(45,91,140,.26),transparent 55%),var(--bg);letter-spacing:.01em}
-.frame{max-width:480px;padding:12px 12px calc(14px + env(safe-area-inset-bottom,0px))}
-.topbar{background:linear-gradient(135deg,#18283d,#111a2b);border:1px solid rgba(255,155,61,.55);border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px #0005;text-shadow:none;letter-spacing:.08em}
-.screen{padding:14px 2px 20px;scrollbar-width:thin;scrollbar-color:#405675 transparent}
-.card,.diag-card{background:linear-gradient(155deg,rgba(26,40,62,.98),rgba(15,24,40,.98));border:1px solid #2b3c56;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 10px 28px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.035)}
-h2{font-size:14px;letter-spacing:.07em;line-height:1.4;border-bottom:1px solid rgba(125,163,201,.2);padding-bottom:10px;margin-bottom:12px;text-shadow:none}
-p,.diag-sub,.tile-desc{line-height:1.55}
-.grid2{gap:11px}
-.tile{min-height:116px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(155deg,#1a2940,#121d30);border:1px solid #344a67;border-radius:16px;padding:15px 10px;box-shadow:0 6px 16px #0003;transition:transform .15s ease,border-color .15s ease,background .15s ease}
-.tile:active{transform:scale(.985);background:#20334d;border-color:var(--cyan)}
-.tile-icon{font-size:27px;margin-bottom:5px}
-.tile-label{font-size:12px;line-height:1.35;letter-spacing:.045em;color:#f1f6ff}
-.tile-desc{font-size:10px;color:#a8bad1}
-.btn,button,.support-cta{border-radius:13px;min-height:44px}
-.btn{background:linear-gradient(135deg,#20334d,#17263b);border:1px solid #3a5878;padding:12px 14px;box-shadow:0 4px 12px #0002;line-height:1.35}
-.btn:active{transform:translateY(1px);filter:brightness(1.15)}
-input,select,textarea{background:#0d1727!important;color:#f0f5fc!important;border:1px solid #344b67!important;border-radius:11px!important;padding:12px!important;min-height:44px}
-input:focus,select:focus,textarea:focus{outline:2px solid rgba(88,215,232,.45);outline-offset:1px}
-.section-label{font-size:11px;font-weight:800;letter-spacing:.14em;color:#8fb6d7;text-transform:uppercase;margin:20px 4px 10px}
-.brand-hero{padding:20px 14px;border-radius:20px;background:linear-gradient(130deg,rgba(29,55,83,.9),rgba(21,28,48,.88));border:1px solid rgba(88,215,232,.28);box-shadow:0 12px 30px #0003}
-.app-title{letter-spacing:.12em;text-shadow:0 4px 20px rgba(88,215,232,.22)}
-.support-cta{border-radius:16px;padding:12px 14px}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
-
-</style></head><body>'+
+  const html='<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Karta serwisowa</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:20px auto;padding:0 12px;color:#111}h1{margin:0}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:6px;text-align:left;font-size:13px}.n{color:#555;font-size:12px}button{padding:10px 16px;margin:10px 0}@media print{button{display:none}}</style></head><body>'+
    '<button onclick="window.print()">🖨️ Drukuj / zapisz jako PDF</button><h1>'+e(w.name||'Karta serwisowa')+'</h1><div class="n">'+e(w.phone||'')+'</div><h2>Pojazd</h2>'+
    '<table><tr><th>Pojazd</th><td>'+e((v.brand||'')+' '+(v.model||''))+'</td><th>Rok</th><td>'+e(v.year||'')+'</td></tr><tr><th>VIN</th><td>'+e(v.vin||'')+'</td><th>Silnik</th><td>'+e(v.engine||'')+'</td></tr><tr><th>Przebieg</th><td>'+e(v.mileage||'')+'</td><th>Klient</th><td>'+e(((v.ownerName||'')+' '+(v.ownerPhone||'')).trim())+'</td></tr></table>'+
    '<h2>Historia napraw</h2>'+(rs.length?'<table><tr><th>Data</th><th>Objaw</th><th>Diagnoza</th><th>Naprawa</th><th>Części</th><th>Koszt</th></tr>'+rs.map(r=>'<tr><td>'+e(r.date||'')+'</td><td>'+e(r.symptom||'')+'</td><td>'+e(r.diagnosis||'')+'</td><td>'+e(r.repair||'')+'</td><td>'+e(r.parts||'')+'</td><td>'+e(r.cost||'')+'</td></tr>').join('')+'</table>':'<p>Brak wpisów.</p>')+
