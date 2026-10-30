@@ -165,6 +165,7 @@ function makeGrantEnv() {
                 if (sql.includes("SELECT tier, status, current_period_end, grace_until FROM subscriptions WHERE user_id")) return {results:[]};
                 if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) return {results:[]};
                 if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return {results:state.purchase && state.purchase.expires_at > params[1] ? [{tier:state.purchase.tier,expires_at:state.purchase.expires_at}] : []};
+                if (sql.includes("FROM trial_entitlements WHERE user_id")) return { results: [] };
                 throw new Error("Unexpected grant all SQL: " + sql);
               },
               async run() {
