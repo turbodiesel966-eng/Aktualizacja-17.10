@@ -894,9 +894,9 @@ test("wygasły token aktywnego abonamentu rocznego jest odnawiany bez Checkoutu"
           bind(...params) {
             return {
               async first() {
-                if (sql.includes("SELECT user_id, expires_at, revoked_at FROM api_tokens")) {
+                if (sql.includes("SELECT user_id, expires_at, revoked_at, device_id_hash FROM api_tokens")) {
                   assert.equal(params[0], tokenHash);
-                  return { user_id: "annual-user", expires_at: now - 60, revoked_at: null };
+                  return { user_id: "annual-user", expires_at: now - 60, revoked_at: null, device_id_hash: null };
                 }
                 if (sql.includes("SELECT 1 AS active FROM subscriptions")) {
                   state.entitlementChecks += 1;
@@ -942,9 +942,9 @@ test("wygasły token bez aktywnego abonamentu lub promocji nadal jest odrzucany"
           bind(...params) {
             return {
               async first() {
-                if (sql.includes("SELECT user_id, expires_at, revoked_at FROM api_tokens")) {
+                if (sql.includes("SELECT user_id, expires_at, revoked_at, device_id_hash FROM api_tokens")) {
                   assert.equal(params[0], tokenHash);
-                  return { user_id: "free-user", expires_at: now - 60, revoked_at: null };
+                  return { user_id: "free-user", expires_at: now - 60, revoked_at: null, device_id_hash: null };
                 }
                 if (sql.includes("SELECT 1 AS active FROM subscriptions")) return null;
                 throw new Error("Unexpected auth first() SQL: " + sql);
