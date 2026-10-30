@@ -225,10 +225,10 @@ await writeFile(mobileIndexPath, mobileHtml, "utf8");
 // Use a native-only cache name so old local WebView caches cannot shadow this bundle.
 const mobileSwPath = path.join(webDir, "sw.js");
 let mobileSw = await readFile(mobileSwPath, "utf8");
-if (mobileSw.split("const CACHE='naprawnik-v5-37';").length - 1 !== 1) {
+if (mobileSw.split("const CACHE='naprawnik-v5-38';").length - 1 !== 1) {
   throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
 }
-mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-37';", "const CACHE='naprawnik-v5-43-owner-editor-calculators';");
+mobileSw = mobileSw.replace("const CACHE='naprawnik-v5-38';", "const CACHE='naprawnik-v5-43-owner-editor-calculators';");
 const precacheMarker = "const PRECACHE=['./index.html'";
 if (mobileSw.split(precacheMarker).length - 1 !== 1) {
   throw new Error("Could not locate the service-worker precache list for Android.");
