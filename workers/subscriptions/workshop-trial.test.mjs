@@ -23,7 +23,7 @@ function makeTrialEnv() {
               throw new Error("Unexpected run SQL: " + sql);
             },
             async first() {
-              if (sql.includes("SELECT tier, granted_at, expires_at, revoked_at FROM trial_entitlements")) return state.trial;
+              if (sql.includes("FROM trial_entitlements WHERE user_id")) return state.trial;
               if (sql.includes("SELECT role FROM admin_users")) return state.admins.has(args[0]) ? { role: "admin" } : null;
               throw new Error("Unexpected first SQL: " + sql);
             },
