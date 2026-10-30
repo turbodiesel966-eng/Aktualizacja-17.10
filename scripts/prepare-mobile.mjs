@@ -75,7 +75,7 @@ const mobileIndexPath = path.join(webDir, "index.html");
 let mobileHtml = await readFile(mobileIndexPath, "utf8");
 
 /* NAPRAWNIK_ANDROID_NEON_REDESIGN_V1 — Android-only; injected into www/index.html at build time. */
-const androidWorkshopDesign = String.raw\`
+const androidWorkshopDesign = String.raw`
 <style id="naprawnik-android-neon-redesign-v1">
   :root{
     --android-ink:#080817;
@@ -180,14 +180,14 @@ const androidWorkshopDesign = String.raw\`
     .tile-desc{font-size:10.5px}
     .grid2{gap:8px}
   }
-</style>\`;
+</style>`;
 if (mobileHtml.includes("naprawnik-android-neon-redesign-v1")) {
   throw new Error("Android neon redesign already injected into the generated mobile HTML.");
 }
 if (!mobileHtml.includes("</head>")) {
   throw new Error("Could not find </head> to inject Android-only neon styles.");
 }
-mobileHtml = mobileHtml.replace("</head>", androidWorkshopDesign + "\\n</head>");
+mobileHtml = mobileHtml.replace("</head>", androidWorkshopDesign + "\n</head>");
 const navMarker = "function nav(view, arg){";
 if (mobileHtml.split(navMarker).length - 1 !== 1) {
   throw new Error("Could not uniquely locate NAPRAWNIK navigation function for the Android back button.");
