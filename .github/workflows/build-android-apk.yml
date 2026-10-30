@@ -9,6 +9,7 @@ on:
       - apk/owner-content-editor-20261028
       - fix/apk-back-navigation-20261030
       - fix/restore-apk-fault-editor-calculators-20261030
+      - work/naprawnik-admin-trial-hardening-20261030
     paths:
       - '.github/workflows/build-android-apk.yml'
       - 'capacitor.config.json'
