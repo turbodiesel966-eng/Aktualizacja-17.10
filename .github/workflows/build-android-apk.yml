@@ -8,12 +8,16 @@ on:
       - apk/admin-pairing-ui-20261026
       - apk/owner-content-editor-20261028
       - fix/apk-back-navigation-20261030
+      - fix/restore-apk-fault-editor-calculators-20261030
     paths:
       - '.github/workflows/build-android-apk.yml'
       - 'capacitor.config.json'
       - 'index.html'
       - 'billing.js'
       - 'mobile-admin-pairing.js'
+      - 'mobile-diagnostic-content.js'
+      - 'mobile-workshop-calculators.js'
+      - 'tests/**'
       - 'katalog-techniczny.js'
       - 'sw.js'
       - 'manifest.webmanifest'
@@ -55,6 +59,12 @@ jobs:
 
       - name: Install Capacitor dependencies
         run: npm install --no-audit --no-fund
+
+      - name: Run regression tests
+        run: node --test tests/*.test.cjs
+
+      - name: Check Android-only JavaScript syntax
+        run: node --check mobile-admin-pairing.js && node --check mobile-diagnostic-content.js && node --check mobile-workshop-calculators.js && node --check scripts/prepare-mobile.mjs
 
       - name: Prepare bundled web app
         run: npm run mobile:prepare
