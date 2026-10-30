@@ -27,7 +27,7 @@ h2{color:var(--cyan);font-size:13px;text-transform:uppercase;letter-spacing:1px;
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tile{background:var(--panel);border:2px solid var(--accent);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 2px 6px rgba(255,140,26,0.3)}
 .tile:active{background:#1c2a30}
-.tile-icon{font-size:22px;display:block;margin-bottom:5px}
+.tile-icon{font-size:22px;display:block;margin-bottom:5px}.tile-icon-art{display:block;width:44px;height:44px;margin:0 auto 5px;color:var(--accent);filter:drop-shadow(0 2px 5px rgba(255,140,26,.28))}.tile-icon-art use{color:var(--accent)}
 .tile-label{font-size:11px;font-weight:bold;color:var(--accent);text-transform:uppercase;display:block;line-height:1.25}.tile-desc{display:block;margin-top:6px;font-size:10px;line-height:1.35;color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0}
 table{width:100%;border-collapse:collapse;font-size:12px}
 td,th{border-bottom:1px solid var(--border);padding:5px 3px;text-align:left}
@@ -1597,9 +1597,31 @@ function renderHome(){
   </div>
   `;
 }
+const WORKSHOP_TILE_ICONS={
+  'Dwusuw 2T':'diagnostyka',
+  'Czterosuw 4T':'logi-czas',
+  'CVT (Skutery)':'kartoteka',
+  'Kalkulator 2T':'cennik',
+  'Diagnoza łączona':'logi',
+  'CVT — diagnostyka mechaniczna':'checklista-serwis',
+  'Elektryka — checklista':'elektryka',
+  'Schematy elektryczne':'schematy',
+  'Kartoteka pojazdów':'pojazdy',
+  'Przeglądy':'przeglady',
+  'Notatnik':'notatnik',
+  'Klienci':'klienci',
+  'Czarna Skrzynka':'czarna-skrzynka',
+  'Checklisty warsztatowe':'checklista-warsztat',
+  'Cennik części':'czesci',
+  'Kontakt i społeczność':'kontakt',
+  'Multimetr — procedury':'multimetr',
+  'Baza instalacji elektrycznych':'baza-elektryczna'
+};
 function tile(icon,label,view,arg,description='',min=''){
   const lock=min&&!hasPlan(min)?`<span class="tile-desc" style="color:var(--hero)">🔒 ${PLAN_NAMES[min]}</span>`:'';
-  return `<div class="tile" role="button" tabindex="0" onclick="nav('${view}'${arg?`,'${arg}'`:''})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>${lock}${description?`<span class="tile-desc">${description}</span>`:''}</div>`;
+  const asset=WORKSHOP_TILE_ICONS[label];
+  const iconMarkup=asset?`<svg class="tile-icon-art" aria-hidden="true" focusable="false"><use href="assets/workshop-icons.svg#${asset}"></use></svg>`:icon;
+  return `<div class="tile" role="button" tabindex="0" onclick="nav('${view}'${arg?`, '${arg}'`:''})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><span class="tile-icon">${iconMarkup}</span><span class="tile-label">${label}</span>${lock}${description?`<span class="tile-desc">${description}</span>`:''}</div>`;
 }
 
 const SCOOTER_MANUALS = [
