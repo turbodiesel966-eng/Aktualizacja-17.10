@@ -46,6 +46,7 @@ function createDb({ userIds = ["owner-1", "friend-1"], accountCount = 2 } = {}) 
       async all() {
         if (sql.includes("SELECT tier, status, current_period_end, grace_until FROM subscriptions WHERE user_id")) return { results: [] };
         if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
+        if (sql.includes("FROM trial_entitlements WHERE user_id")) return { results: [] };
         if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) {
           return { results: state.redemptions.filter(r => r.user_id === params[0] && r.expires_at > params[1]).map(r => ({ tier: r.tier, expires_at: r.expires_at })) };
         }
