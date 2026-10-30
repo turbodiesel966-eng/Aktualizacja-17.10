@@ -2,6 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { authenticate, registerUserDevice, listUserDevices, revokeUserDevice } from "./src/index.mjs";
 
+async function sha256Hex(value) {
+  const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
 function makeEnv() {
   const state = { devices: new Map(), token: null, revokedTokens: 0 };
   const DB = {
@@ -62,8 +67,8 @@ function makeEnv() {
 
 test("device registration binds current bearer token to account device hash", async () => {
   const env=makeEnv();
-  env.state.token={token_hash:"token-hash",user_id:"user-1",expires_at:Math.floor(Date.now()/1000)+3600,revoked_at:null,device_id_hash:null};
-  const response=await registerUserDevice(new Request("https://api.example/api/devices/register",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({deviceId:"0123456789abcdef0123456789abcdef",label:"Android"})}),env,{userId:"user-1",tokenHash:"token-hash"});
+  env.state.token={token_hash:await sha256Hex("a".repeat(64)),user_id:"user-1",expires_at:Math.floor(Date.now()/1000)+3600,revoked_at:null,device_id_hash:null};
+  const response=await registerUserDevice(new Request("https://api.example/api/devices/register",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({deviceId:"0123456789abcdef0123456789abcdef",label:"Android"})}),env,{userId:"user-1",tokenHash:env.state.token.token_hash});
   assert.equal(response.status,200);
   const data=await response.json();
   assert.equal(data.ok,true);
@@ -75,7 +80,7 @@ test("revoked device invalidates its bound bearer token", async () => {
   const env=makeEnv();
   const hash="a".repeat(64);
   env.state.devices.set(hash,{device_id_hash:hash,user_id:"user-1",label:"Android",first_seen_at:1,last_seen_at:1,revoked_at:null});
-  env.state.token={token_hash:"token-hash",user_id:"user-1",expires_at:Math.floor(Date.now()/1000)+3600,revoked_at:null,device_id_hash:hash};
+  env.state.token={token_hash:await sha256Hex("a".repeat(64)),user_id:"user-1",expires_at:Math.floor(Date.now()/1000)+3600,revoked_at:null,device_id_hash:hash};
   const response=await revokeUserDevice(new Request("https://api.example/api/devices/revoke",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({deviceRef:hash})}),env,{userId:"user-1"});
   assert.equal(response.status,200);
   assert.ok(env.state.devices.get(hash).revoked_at);
