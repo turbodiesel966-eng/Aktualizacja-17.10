@@ -212,9 +212,16 @@ async function authenticate(request, env) {
   if (!match) return null;
   const tokenHash = await sha256Hex(match[1]);
   const row = await env.DB.prepare(
-    "SELECT user_id, expires_at, revoked_at FROM api_tokens WHERE token_hash = ? LIMIT 1"
+    "SELECT user_id, expires_at, revoked_at, device_id_hash FROM api_tokens WHERE token_hash = ? LIMIT 1"
   ).bind(tokenHash).first();
   if (!row || row.revoked_at) return null;
+  // Legacy tokens remain valid until the user explicitly binds a device. Once bound,
+  // the device must exist for the same account and must not be revoked.
+  if (row.device_id_hash) {
+    const device = await env.DB.prepare(`SELECT user_id, revoked_at FROM user_devices
+      WHERE device_id_hash = ? LIMIT 1`).bind(row.device_id_hash).first();
+    if (!device || device.user_id !== row.user_id || device.revoked_at) return null;
+  }
 
   const now = nowSeconds();
   const expiresAt = row.expires_at === null || row.expires_at === undefined
@@ -243,7 +250,7 @@ async function authenticate(request, env) {
     SET last_used_at = ?, expires_at = CASE WHEN expires_at IS NULL THEN NULL ELSE ? END
     WHERE token_hash = ?`)
     .bind(now, expiresAt === null ? null : now + TOKEN_LIFETIME_SECONDS, tokenHash).run();
-  return { userId: row.user_id };
+  return { userId: row.user_id, tokenHash, deviceIdHash: row.device_id_hash || null };
 }
 async function enforceRateLimit(request, env, scope, subject, policy) {
   const now = nowSeconds();
@@ -1115,6 +1122,57 @@ async function createBillingPortalSession(request, env, auth) {
     return err("Could not create billing portal session", 502);
   }
   return json({ url: portalUrl }, 200);
+}
+
+async function registerUserDevice(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const limited = await enforceRateLimit(request, env, "device-register", auth.userId, { maxRequests: 10, windowSeconds: 60 * 60 });
+  if (limited) return limited;
+  const body = await readJson(request, 4096);
+  const deviceId = typeof body?.deviceId === "string" ? body.deviceId.trim().toLowerCase() : "";
+  const label = typeof body?.label === "string" ? body.label.trim().slice(0, 60) : "Urządzenie";
+  if (!/^[a-f0-9-]{32,36}$/.test(deviceId)) return err("Nieprawidłowy identyfikator urządzenia.", 400);
+  const now = nowSeconds();
+  const deviceIdHash = await sha256Hex("naprawnik-device:" + auth.userId + ":" + deviceId);
+  const existing = await env.DB.prepare("SELECT user_id, revoked_at FROM user_devices WHERE device_id_hash = ? LIMIT 1").bind(deviceIdHash).first();
+  if (existing && (existing.user_id !== auth.userId || existing.revoked_at)) {
+    return err("To urządzenie zostało odłączone. Wygeneruj nowy identyfikator urządzenia.", 409);
+  }
+  await env.DB.prepare(`INSERT INTO user_devices
+    (device_id_hash, user_id, label, first_seen_at, last_seen_at, revoked_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, NULL, ?, ?)
+    ON CONFLICT(device_id_hash) DO UPDATE SET
+      label = excluded.label, last_seen_at = excluded.last_seen_at, updated_at = excluded.updated_at
+    WHERE user_devices.user_id = excluded.user_id AND user_devices.revoked_at IS NULL`)
+    .bind(deviceIdHash, auth.userId, label || "Urządzenie", now, now, now, now).run();
+  await env.DB.prepare("UPDATE api_tokens SET device_id_hash = ? WHERE token_hash = ? AND user_id = ? AND revoked_at IS NULL")
+    .bind(deviceIdHash, auth.tokenHash, auth.userId).run();
+  return json({ ok: true, device: { label: label || "Urządzenie", lastSeenAt: now }, message: "Urządzenie przypisano do konta." });
+}
+
+async function listUserDevices(env, auth) {
+  const { results = [] } = await env.DB.prepare(`SELECT label, first_seen_at, last_seen_at, revoked_at
+    FROM user_devices WHERE user_id = ? ORDER BY last_seen_at DESC LIMIT 50`).bind(auth.userId).all();
+  return json({ devices: results.map(row => ({
+    label: row.label, firstSeenAt: Number(row.first_seen_at), lastSeenAt: Number(row.last_seen_at),
+    revoked: row.revoked_at !== null && row.revoked_at !== undefined
+  })) });
+}
+
+async function revokeUserDevice(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const limited = await enforceRateLimit(request, env, "device-revoke", auth.userId, { maxRequests: 10, windowSeconds: 60 * 60 });
+  if (limited) return limited;
+  const body = await readJson(request, 4096);
+  const deviceId = typeof body?.deviceId === "string" ? body.deviceId.trim().toLowerCase() : "";
+  if (!/^[a-f0-9-]{32,36}$/.test(deviceId)) return err("Nieprawidłowy identyfikator urządzenia.", 400);
+  const hash = await sha256Hex("naprawnik-device:" + auth.userId + ":" + deviceId);
+  const result = await env.DB.prepare(`UPDATE user_devices SET revoked_at = ?, updated_at = ?
+    WHERE device_id_hash = ? AND user_id = ? AND revoked_at IS NULL`).bind(nowSeconds(), nowSeconds(), hash, auth.userId).run();
+  if (Number(result.meta?.changes || 0) !== 1) return err("Nie znaleziono aktywnego urządzenia.", 404);
+  await env.DB.prepare("UPDATE api_tokens SET revoked_at = ? WHERE user_id = ? AND device_id_hash = ? AND revoked_at IS NULL")
+    .bind(nowSeconds(), auth.userId, hash).run();
+  return json({ ok: true, message: "Urządzenie odłączono. Jego przypisane klucze dostępu zostały unieważnione." });
 }
 
 async function getMe(env, auth) {
@@ -2006,6 +2064,18 @@ export default {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
         else response = await redeemPromo(request, env, auth);
+      } else if (url.pathname === "/api/devices/register" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await registerUserDevice(request, env, auth);
+      } else if (url.pathname === "/api/devices" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await listUserDevices(env, auth);
+      } else if (url.pathname === "/api/devices/revoke" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await revokeUserDevice(request, env, auth);
       } else if (url.pathname === "/api/me" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -2099,6 +2169,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, activateWorkshopTrial, userHasTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, registerUserDevice, listUserDevices, revokeUserDevice, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, activateWorkshopTrial, userHasTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
 
 
