@@ -19,6 +19,7 @@ on:
       - 'mobile-diagnostic-content.js'
       - 'mobile-workshop-calculators.js'
       - 'tests/**'
+      - 'workers/subscriptions/**'
       - 'katalog-techniczny.js'
       - 'sw.js'
       - 'manifest.webmanifest'
