@@ -445,11 +445,14 @@ async function recalcUserTier(env, userId) {
   const { results: oneTimePurchases = [] } = await env.DB.prepare(
     "SELECT tier, expires_at FROM one_time_purchases WHERE user_id = ? AND expires_at > ?"
   ).bind(userId, now).all();
+  const { results: trials = [] } = await env.DB.prepare(
+    "SELECT tier, expires_at FROM trial_entitlements WHERE user_id = ? AND revoked_at IS NULL AND expires_at > ?"
+  ).bind(userId, now).all();
   const activeSubscriptions = subscriptions.filter(s => (
     (ACTIVE_SUB_STATUSES.has(s.status) && Number(s.current_period_end) > now) ||
     (s.status === "past_due" && Number(s.grace_until || 0) > now)
   ));
-  const candidates = [...activeSubscriptions, ...promotions, ...oneTimePurchases];
+  const candidates = [...activeSubscriptions, ...promotions, ...oneTimePurchases, ...trials];
   const tier = candidates.reduce((best, s) => tierRank(s.tier) > tierRank(best) ? s.tier : best, "amator");
   await env.DB.prepare("UPDATE users SET tier = ?, updated_at = ? WHERE id = ?")
     .bind(tier, now, userId).run();
@@ -466,6 +469,8 @@ function isReservedDataKey(key) {
   return /(?:^|[:/._-])(?:license|licence|subscription|billing|entitlement|api[_-]?token|tier|plan)(?:$|[:/._-])/i.test(String(key || ""));
 }
 async function userHasTier(env, userId, minimumTier) {
+  // ADMIN is a separate server-side role, never a client-controlled plan value.
+  if (await isAdminUser(env, userId)) return true;
   const currentTier = await recalcUserTier(env, userId);
   return tierRank(currentTier) >= tierRank(minimumTier);
 }
@@ -1130,9 +1135,15 @@ async function getMe(env, auth) {
     tier: p.tier, status: "active", billing_interval: "one_time", current_period_end: Number(p.expires_at),
     cancel_at_period_end: 0, grace_until: null, granted_at: Number(p.granted_at)
   }));
+  const { results: trials = [] } = await env.DB.prepare(`SELECT tier, granted_at, expires_at
+    FROM trial_entitlements WHERE user_id = ? AND revoked_at IS NULL AND expires_at > ? ORDER BY expires_at DESC`).bind(auth.userId, now).all();
+  const trialEntitlements = trials.map(p => ({
+    tier: p.tier, status: "active", billing_interval: "trial", current_period_end: Number(p.expires_at),
+    cancel_at_period_end: 0, grace_until: null, granted_at: Number(p.granted_at)
+  }));
   const currentTier = await recalcUserTier(env, auth.userId);
   const admin = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
-  return json({ user: { ...user, tier: currentTier, role: admin?.role || "user" }, subscriptions: [...subscriptions, ...promoEntitlements, ...oneTimeEntitlements] });
+  return json({ user: { ...user, tier: currentTier, role: admin?.role || "user", isOwner: admin?.role === "admin" }, subscriptions: [...subscriptions, ...promoEntitlements, ...oneTimeEntitlements, ...trialEntitlements] });
 }
 
 async function isAdminUser(env, userId) {
@@ -1905,6 +1916,22 @@ document.getElementById('goCheckout').addEventListener('click', async () => {
 </script></body></html>`;
 }
 
+async function activateWorkshopTrial(env, auth) {
+  const now = nowSeconds();
+  const expiresAt = now + 24 * 60 * 60;
+  // UNIQUE(user_id) plus INSERT OR IGNORE makes the grant single-use, including concurrent requests.
+  await env.DB.prepare(`INSERT OR IGNORE INTO trial_entitlements
+    (user_id, tier, granted_at, expires_at, revoked_at)
+    VALUES (?, 'warsztat', ?, ?, NULL)`).bind(auth.userId, now, expiresAt).run();
+  const trial = await env.DB.prepare(`SELECT tier, granted_at, expires_at, revoked_at
+    FROM trial_entitlements WHERE user_id = ? LIMIT 1`).bind(auth.userId).first();
+  if (!trial) return err("Nie udało się odczytać statusu okresu próbnego.", 503);
+  if (trial.revoked_at !== null && trial.revoked_at !== undefined) return err("Okres próbny został już wykorzystany.", 409);
+  if (Number(trial.expires_at) <= now) return err("Okres próbny WARSZTAT został już wykorzystany i wygasł.", 409);
+  await recalcUserTier(env, auth.userId);
+  return json({ ok: true, tier: "warsztat", grantedAt: Number(trial.granted_at), expiresAt: Number(trial.expires_at), remainingSeconds: Math.max(0, Number(trial.expires_at) - now) }, 200);
+}
+
 async function registerAnonymousUser(request, env) {
   if (request.method !== 'POST') return err('Method not allowed', 405);
   const body = await readJson(request);
@@ -1950,6 +1977,13 @@ export default {
       } else if (env.PRODUCTION_ENABLED !== "true") { response = err("Production service is not enabled", 503);      } else if (url.pathname === "/api/register" && request.method === "POST") {
         const limited = await enforceRateLimit(request, env, "registration", request.headers.get("CF-Connecting-IP") || "unknown", RATE_LIMITS.registration);
         response = limited || await registerAnonymousUser(request, env);
+      } else if (url.pathname === "/api/trial/activate" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const limited = await enforceRateLimit(request, env, "trial-activation", auth.userId, { maxRequests: 3, windowSeconds: 24 * 60 * 60 });
+          response = limited || await activateWorkshopTrial(env, auth);
+        }
       } else if (url.pathname === "/api/checkout" && request.method === "POST") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -2064,6 +2098,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, activateWorkshopTrial, userHasTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
 
 
