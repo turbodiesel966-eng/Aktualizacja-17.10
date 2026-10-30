@@ -68,8 +68,14 @@ mobileBilling = mobileBilling.replace(
 await writeFile(mobileBillingPath, mobileBilling, "utf8");
 
 await mkdir(path.join(webDir, "assets"), { recursive: true });
-for (const file of ["naprawnik-icon.svg", "naprawnik-icon-192.svg", "naprawnik-icon-512.svg"]) {
+for (const file of ["naprawnik-icon.svg", "naprawnik-icon-192.svg", "naprawnik-icon-512.svg", "workshop-icons.svg"]) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
+}
+
+const workshopSpritePath = path.join(webDir, "assets", "workshop-icons.svg");
+const workshopSprite = await readFile(workshopSpritePath, "utf8");
+if (!workshopSprite.includes('<symbol id="diagnostyka"') || !workshopSprite.includes('<symbol id="baza-elektryczna"')) {
+  throw new Error("Workshop SVG sprite is missing or incomplete in the generated Android bundle.");
 }
 
 // Instrument only the generated Android copy. The published web/PWA source is unchanged.
