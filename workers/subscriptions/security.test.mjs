@@ -900,7 +900,7 @@ test("wygasły token aktywnego abonamentu rocznego jest odnawiany bez Checkoutu"
                 }
                 if (sql.includes("SELECT 1 AS active FROM subscriptions")) {
                   state.entitlementChecks += 1;
-                  assert.deepEqual(params, ["annual-user", now, now, "annual-user", now, "annual-user", now]);
+                  assert.deepEqual(params, ["annual-user", now, now, "annual-user", now, "annual-user", now, "annual-user"]);
                   return { active: 1 };
                 }
                 throw new Error("Unexpected auth first() SQL: " + sql);
