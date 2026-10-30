@@ -21,6 +21,8 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/manifest.webmanifest",
         "assets/public/native-bridge.js",
         "assets/public/mobile-admin-pairing.js",
+        "assets/public/mobile-diagnostic-content.js",
+        "assets/public/mobile-workshop-calculators.js",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -35,6 +37,8 @@ with zipfile.ZipFile(apk) as bundle:
     service_worker = bundle.read("assets/public/sw.js").decode("utf-8")
     manifest = bundle.read("assets/public/manifest.webmanifest").decode("utf-8")
     pairing = bundle.read("assets/public/mobile-admin-pairing.js").decode("utf-8")
+    owner_editor = bundle.read("assets/public/mobile-diagnostic-content.js").decode("utf-8")
+    calculators = bundle.read("assets/public/mobile-workshop-calculators.js").decode("utf-8")
 
     try:
         case_block = html.split("const knowledgeCases = [", 1)[1].split("const KNOW_LINKS={", 1)[0]
@@ -47,6 +51,14 @@ with zipfile.ZipFile(apk) as bundle:
     for marker in ["exportBackup()", "importBackup(event)", "paExportCases()", "paImportCases(event)", "paCamera", "paGallery"]:
         if marker not in html:
             raise SystemExit(f"Missing app capability in APK HTML: {marker}")
+    for marker in ["npOpenOwnerFaultEditor", "Edytor bazy usterek", "Zapisz usterkę", "Eksportuj kopię JSON", "Importuj kopię JSON"]:
+        if marker not in owner_editor:
+            raise SystemExit(f"Missing owner diagnostic editor capability: {marker}")
+    for marker in ["oilAmountMl", "displacementCc", "ratioResult", "KALKULATORY"]:
+        if marker not in calculators:
+            raise SystemExit(f"Missing workshop calculator capability: {marker}")
+    if "mobile-diagnostic-content.js" not in html or "mobile-workshop-calculators.js" not in html:
+        raise SystemExit("Owner editor or workshop calculators are not loaded by the packaged app.")
     if "NAPRAWNIK_KATALOG" not in catalog:
         raise SystemExit("Technical catalogue module is present but not initialized.")
     if "naprawnik-subscriptions-live.turbodiesel966.workers.dev" not in billing:
@@ -60,7 +72,7 @@ with zipfile.ZipFile(apk) as bundle:
        "openHostedBillingUrl(data.url, 'one-time')" not in billing or \
        "openHostedBillingUrl(data.url, 'portal')" not in billing:
         raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
-    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "naprawnik-v5-40-native-admin-pairing" not in service_worker or "NAPRAWNIK" not in manifest:
+    if "./billing.js?v=16" not in service_worker or "./native-bridge.js" not in service_worker or "./mobile-admin-pairing.js" not in service_worker or "./mobile-diagnostic-content.js" not in service_worker or "./mobile-workshop-calculators.js" not in service_worker or "naprawnik-v5-43-owner-editor-calculators" not in service_worker or "NAPRAWNIK" not in manifest:
         raise SystemExit("The packaged PWA/service-worker branding, owner pairing or billing version is inconsistent.")
     for marker in ["window.npOpenAdminPanel", "window.__naprawnikAdminCodePrompt = () => code", "promptRequested", "if (promptRequested) renderPairingScreen()", "NP-MOB-", "location.hostname !== 'localhost'"]:
         if marker not in pairing:
@@ -94,5 +106,5 @@ with zipfile.ZipFile(apk) as bundle:
 print(
     f"OK: {apk.name}; {len(case_ids)} unique diagnostic cases; "
     f"backup/import, assistant photo/history, admin owner-pairing, billing, catalogue, "
-    f"{len(launcher_paths)} launcher densities and {len(splash_paths)} splash sizes verified."
+    f"owner fault editor, workshop calculators, {len(launcher_paths)} launcher densities and {len(splash_paths)} splash sizes verified."
 )
