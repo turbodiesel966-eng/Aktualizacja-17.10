@@ -66,6 +66,15 @@ Limits in the branch:
 
 This endpoint has **not** been deployed or tested with a real OpenAI key by this branch. It intentionally fails closed if the key, current D1 rate-limit table, active subscription, or other required configuration is missing. The static frontend only sends images through `billing.js` and the Cloudflare API; the obsolete Netlify endpoint `/.netlify/functions/photo-diagnosis` is no longer used by this branch.
 
+## One-time WARSZTAT trial and ADMIN entitlement
+
+- Migration `0007_workshop_trial.sql` adds a single-row-per-account trial table. It is additive and does not alter existing users, subscriptions, tokens, or workshop data.
+- An authenticated account can request `POST /api/trial/activate`. The Worker stores the grant in D1 and fixes its expiry at 24 hours from the first activation. The unique `user_id` key and `INSERT OR IGNORE` prevent re-claiming after expiry, including concurrent activation attempts.
+- The trial is included in the server-calculated entitlement and `GET /api/me`; the app displays the activation control in the WARSZTAT plan card. Clearing local app storage does not reset the trial.
+- ADMIN remains a separate role in `admin_users`, not a paid plan. Server-side plan checks grant ADMIN access to PRO/WARSZTAT protected data, and the account response identifies the role so the APK can unlock the corresponding interface. The local role marker is presentation-only; every protected API still verifies the bearer token and database role.
+- Migration 0007 has **not** been applied to any Cloudflare D1 database and this branch has **not** been deployed. Apply only to a verified staging database after review; never run it against Live as part of this change.
+- Standard email/password signup, email verification, password reset and account linking are not implemented by this Worker. Anonymous bearer-token accounts remain the current identity model. Do not add a password flow without a configured transactional email/verification provider and a reviewed account-linking migration; otherwise it could expose accounts or orphan paid subscriptions.
+
 ## Server-side protection
 
 - Anonymous registration: maximum 10 requests per client IP per 15-minute fixed window.
