@@ -321,6 +321,19 @@
   window.renderPlans = renderPlansBridge;
   window.npStartCheckout = checkout;
   window.npStartOneTimeCheckout = checkoutOneTime;
+  window.npActivateWorkshopTrial = async function() {
+    try {
+      const token = await accountEnsure();
+      const result = await api('/api/trial/activate', {}, 'POST', token);
+      await refresh(true);
+      alert('Darmowy dostęp WARSZTAT aktywny przez 24 godziny. Zapisz klucz dostępu, aby zachować dostęp do konta.');
+      renderPlansBridge();
+      return result;
+    } catch (error) {
+      alert(friendlyError(error, 'aktywować 24-godzinnego okresu próbnego') + (error.message ? '\\n' + error.message : ''));
+      return null;
+    }
+  };
   window.licRefresh = refresh;
   window.licActivateInput = async function() {
     const input = document.querySelector('#licKeyIn');
@@ -632,7 +645,7 @@
     return data;
   };
   document.addEventListener('click', async event => {
-    const button = event.target.closest('[data-one-time-tier][data-one-time-days], [data-plan][data-interval], .np-buy, [data-np-copy], [data-np-refresh], [data-np-portal], [data-np-logout], [data-np-activate], [data-billing-nav]');
+    const button = event.target.closest('[data-one-time-tier][data-one-time-days], [data-plan][data-interval], .np-buy, [data-np-copy], [data-np-refresh], [data-np-portal], [data-np-logout], [data-np-activate], [data-np-trial], [data-billing-nav]');
     if (!button) return;
     if (button.hasAttribute('data-one-time-tier')) { await checkoutOneTime(button.dataset.oneTimeTier, Number(button.dataset.oneTimeDays)); return; }
     if (button.hasAttribute('data-billing-nav')) { if (typeof nav === 'function') nav('plans'); return; }
@@ -641,7 +654,8 @@
     if (button.hasAttribute('data-np-refresh')) { await refresh(false); renderPlansBridge(); return; }
     if (button.hasAttribute('data-np-portal')) { await window.openBillingPortal(); return; }
     if (button.hasAttribute('data-np-logout')) { window.licDeactivate(); return; }
-    if (button.hasAttribute('data-np-activate')) { await window.licActivateInput(); }
+    if (button.hasAttribute('data-np-activate')) { await window.licActivateInput(); return; }
+    if (button.hasAttribute('data-np-trial')) { await window.npActivateWorkshopTrial(); }
   });
   window.npBillingBoot = async function() {
     const query = new URLSearchParams(location.search);
