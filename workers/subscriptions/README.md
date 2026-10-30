@@ -83,6 +83,7 @@ This endpoint has **not** been deployed or tested with a real OpenAI key by this
 - This is account session/device management, **not hardware attestation or anti-cloning**: a client-controlled identifier can be copied by a determined user. Do not use it as proof of physical device identity or as a replacement for stronger account authentication.
 - The APK plans screen now provides opt-in registration, inventory, and revocation controls. Existing tokens are not automatically bound, and users are not silently logged out.
 - Migration 0008 and the device endpoints are deployed to the isolated staging Worker and staging D1 only. The Live Worker and Live D1 remain untouched.
+- The staging `/health` endpoint returned `ok: true` and `enabled: true` after upload. A post-migration D1 inventory returned 6 users, 6 tokens, 5 subscriptions, 0 user-data rows, 0 trials, and 0 device registrations. No test account, token, subscription, payment, or trial was created by the migration rollout.
 
 ## Server-side protection
 
