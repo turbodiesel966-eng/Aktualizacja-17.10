@@ -290,11 +290,14 @@
           const prices = DISPLAY_PRICES[tier];
           const monthly = prices ? prices.month : 'Cena miesięczna';
           const yearly = prices ? prices.year : 'Cena roczna';
-          buttons = '<div class="btn np-buy" data-plan="' + tier + '" data-interval="month">Wybieram ' + titles[tier].replace(/^\S+ /, '') + ' — ' + monthly + '</div>' +
+          buttons = (tier === 'warsztat' && current === 'amator'
+            ? '<button class="btn" type="button" data-np-trial="1">🎁 Wypróbuj WARSZTAT za darmo przez 24 godziny</button>'
+            : '') +
+            '<div class="btn np-buy" data-plan="' + tier + '" data-interval="month">Wybieram ' + titles[tier].replace(/^\S+ /, '') + ' — ' + monthly + '</div>' +
             '<div class="btn np-buy" data-plan="' + tier + '" data-interval="year">Wybieram ' + titles[tier].replace(/^\S+ /, '') + ' — ' + yearly + '</div>';
         }
       }
-      return '<div class="card" style="' + (own ? 'border-color:var(--hero)' : '') + '"><h2>' + titles[tier] + (own ? ' — Twój plan' : '') + '</h2><small style="color:var(--dim)">' + (tier === 'amator' ? 'Bezpłatny, bez konta' : 'Abonament przez Stripe; anulowanie w panelu subskrypcji') + '</small>' + listHtml(tier) + buttons + '</div>';
+      return '<div class="card" style="' + (own ? 'border-color:var(--hero)' : '') + '"><h2>' + titles[tier] + (own ? ' — Twój plan' : '') + '</h2><small style="color:var(--dim)">' + (tier === 'amator' ? 'Bezpłatny plan podstawowy' : '24h bezpłatnego testu (WARSZTAT) lub abonament Stripe') + '</small>' + listHtml(tier) + buttons + '</div>';
     };
     let activation;
     if (license && license.token && license.tier !== 'amator' && license.exp > Date.now()) {
