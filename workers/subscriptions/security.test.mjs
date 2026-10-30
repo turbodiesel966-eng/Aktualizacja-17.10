@@ -671,6 +671,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
               async first() {
                 if (sql.includes("INSERT INTO request_limits")) return { request_count: 1 };
                 if (sql.includes("INSERT INTO photo_usage_budget")) return { period_start: params[0], budget_microusd: params[1] };
+                if (sql.includes("SELECT role FROM admin_users")) return null;
                 throw new Error("Unexpected photo first() SQL: " + sql);
               },
               async all() {
