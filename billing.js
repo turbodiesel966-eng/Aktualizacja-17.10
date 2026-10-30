@@ -6,9 +6,10 @@
   const isProductionHost = host === 'turbodiesel966-eng.github.io';
   // The Capacitor Android build serves the bundled web app from https://localhost.
   const isNativeAppHost = host === 'localhost' || host === '127.0.0.1';
-  const API = isStagingHost
+  // APK builds from this isolated branch must use staging, never the production billing Worker.
+  const API = (isStagingHost || isNativeAppHost)
     ? 'https://naprawnik-subscriptions-v2-staging.turbodiesel966.workers.dev'
-    : (isProductionHost || isNativeAppHost)
+    : isProductionHost
       ? 'https://naprawnik-subscriptions-live.turbodiesel966.workers.dev'
       : null;
   const TOKEN_KEY = 'naprawnik_api_token';
