@@ -106,8 +106,9 @@ jobs:
             exit 0
           fi
           if [ "${#values}" -ne 4 ]; then
-            echo "ERROR: Configure all four Android signing secrets together." >&2
-            exit 1
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Android release signing is incomplete; skipping RELEASE and keeping the DEBUG APK available for testing."
+            exit 0
           fi
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/naprawnik-release.jks"
           test -s "$RUNNER_TEMP/naprawnik-release.jks"
