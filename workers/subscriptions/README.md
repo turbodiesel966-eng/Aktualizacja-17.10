@@ -75,6 +75,15 @@ This endpoint has **not** been deployed or tested with a real OpenAI key by this
 - Migration 0007 has **not** been applied to any Cloudflare D1 database and this branch has **not** been deployed. Apply only to a verified staging database after review; never run it against Live as part of this change.
 - Standard email/password signup, email verification, password reset and account linking are not implemented by this Worker. Anonymous bearer-token accounts remain the current identity model. Do not add a password flow without a configured transactional email/verification provider and a reviewed account-linking migration; otherwise it could expose accounts or orphan paid subscriptions.
 
+## Account device inventory (migration 0008)
+
+- Migration `0008_account_devices.sql` adds an optional `device_id_hash` column to `api_tokens` and a per-account `user_devices` inventory. It is additive; existing tokens remain unbound and continue to work.
+- Authenticated endpoints: `POST /api/devices/register`, `GET /api/devices`, and `POST /api/devices/revoke`. Device identifiers are random client-generated IDs; only a salted SHA-256 hash is stored. The inventory exposes opaque hash references, not the raw client ID.
+- Registering a device binds the current bearer token to that device. Subsequent authentication checks that the device belongs to the same account and is not revoked. Revoking a device marks its row and revokes all bearer tokens assigned to it.
+- This is account session/device management, **not hardware attestation or anti-cloning**: a client-controlled identifier can be copied by a determined user. Do not use it as proof of physical device identity or as a replacement for stronger account authentication.
+- The APK plans screen now provides opt-in registration, inventory, and revocation controls. Existing tokens are not automatically bound, and users are not silently logged out.
+- Migration 0008 and these endpoints have not been deployed to Cloudflare. Apply only after reviewing the exact target D1 and verifying it is staging, never Live as part of this change.
+
 ## Server-side protection
 
 - Anonymous registration: maximum 10 requests per client IP per 15-minute fixed window.
