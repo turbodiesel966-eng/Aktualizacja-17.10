@@ -1149,7 +1149,7 @@ async function registerUserDevice(request, env, auth) {
     .bind(deviceIdHash, auth.userId, label || "Urządzenie", now, now, now, now).run();
   await env.DB.prepare("UPDATE api_tokens SET device_id_hash = ? WHERE token_hash = ? AND user_id = ? AND revoked_at IS NULL")
     .bind(deviceIdHash, auth.tokenHash, auth.userId).run();
-  return json({ ok: true, device: { label: label || "Urządzenie", lastSeenAt: now }, message: "Urządzenie przypisano do konta." });
+  return json({ ok: true, device: { deviceRef: deviceIdHash, label: label || "Urządzenie", lastSeenAt: now }, message: "Urządzenie przypisano do konta." });
 }
 
 async function listUserDevices(env, auth) {
