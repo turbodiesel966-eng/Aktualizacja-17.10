@@ -1539,9 +1539,10 @@ async function readUserData(env, auth, url) {
     return json({ item: row || null });
   }
   const currentTier = await recalcUserTier(env, auth.userId);
+  const admin = await isAdminUser(env, auth.userId);
   const { results = [] } = await env.DB.prepare("SELECT data_key, json_value, revision, updated_at FROM user_data WHERE user_id = ? ORDER BY updated_at DESC LIMIT 500")
     .bind(auth.userId).all();
-  return json({ items: results.filter(row => tierRank(requiredTierForDataKey(row.data_key)) <= tierRank(currentTier)) });
+  return json({ items: results.filter(row => admin || tierRank(requiredTierForDataKey(row.data_key)) <= tierRank(currentTier)) });
 }
 async function writeUserData(request, env, auth) {
   if (request.method !== "PUT" && request.method !== "POST") return err("Method not allowed", 405);
