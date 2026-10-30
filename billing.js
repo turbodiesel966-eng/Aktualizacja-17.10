@@ -137,7 +137,8 @@
   }
   function savePlan(data, token) {
     const user = data && data.user || {};
-    const requestedTier = Object.prototype.hasOwnProperty.call(ORDER, user.tier) ? user.tier : 'amator';
+    const isAdmin = user.role === 'admin' || user.isOwner === true;
+    const requestedTier = isAdmin ? 'warsztat' : (Object.prototype.hasOwnProperty.call(ORDER, user.tier) ? user.tier : 'amator');
     const now = Date.now();
     const nowSeconds = now / 1000;
     const subscriptions = Array.isArray(data && data.subscriptions) ? data.subscriptions : [];
@@ -152,13 +153,17 @@
     const matchingPeriods = active.filter(item => item.tier === requestedTier).map(item =>
       Number(item.status === 'past_due' ? item.grace_until : item.current_period_end)
     ).filter(value => Number.isFinite(value) && value > nowSeconds);
-    const expires = requestedTier === activeTier && matchingPeriods.length ? Math.max(...matchingPeriods) * 1000 : 0;
-    // The server's calculated tier and the current subscription tier must agree; mismatches fail closed.
-    const tier = requestedTier !== 'amator' && requestedTier === activeTier && expires > now ? requestedTier : 'amator';
+    const expires = isAdmin ? now + (10 * 365 * 24 * 60 * 60 * 1000)
+      : (requestedTier === activeTier && matchingPeriods.length ? Math.max(...matchingPeriods) * 1000 : 0);
+    // ADMIN is an independent server role; the local WARSZTAT presentation is only a UI unlock.
+    const tier = isAdmin ? 'warsztat'
+      : (requestedTier !== 'amator' && requestedTier === activeTier && expires > now ? requestedTier : 'amator');
+    if (isAdmin) localStorage.setItem('naprawnik_admin_role', 'admin');
+    else localStorage.removeItem('naprawnik_admin_role');
     if (tier === 'amator') {
       localStorage.removeItem('naprawnik_license');
     } else {
-      localStorage.setItem('naprawnik_license', JSON.stringify({ token, tier, exp: expires, checkedAt: Date.now() }));
+      localStorage.setItem('naprawnik_license', JSON.stringify({ token, tier, exp: expires, checkedAt: Date.now(), role: isAdmin ? 'admin' : 'user' }));
     }
     if (token) localStorage.setItem(TOKEN_KEY, token);
     applyVerifiedPlan({ verified: true, tier, exp: expires, token });
@@ -355,6 +360,7 @@
     if (!confirm('Wylogować dostęp z tego urządzenia? Abonament w Stripe nie zostanie anulowany.')) return;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('naprawnik_license');
+    localStorage.removeItem('naprawnik_admin_role');
     clearVerifiedPlan();
     renderPlansBridge();
   };
