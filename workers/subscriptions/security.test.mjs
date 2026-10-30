@@ -687,6 +687,7 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
                 }
                 if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) return { results: [] };
                 if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
+                if (sql.includes("FROM trial_entitlements WHERE user_id")) return { results: [] };
                 throw new Error("Unexpected photo all() SQL: " + sql);
               },
               async run() {
