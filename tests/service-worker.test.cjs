@@ -7,7 +7,7 @@ const read = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 
 test('Service Worker clears only its own old caches and bumps its version', () => {
   const source = read('sw.js');
-  assert.match(source, /const CACHE='naprawnik-v5-37'/);
+  assert.match(source, /const CACHE='naprawnik-v5-38'/);
   assert.match(source, /ks\.filter\(k=>k\.startsWith\('naprawnik-'\)&&k!==CACHE\)/);
 });
 
@@ -27,6 +27,7 @@ test('PWA manifest has valid relative scope, start URL and matching app icon', (
   assert.ok(sw.includes("'./assets/naprawnik-icon.svg'"));
   assert.ok(sw.includes("'./assets/naprawnik-icon-192.svg'"));
   assert.ok(sw.includes("'./assets/naprawnik-icon-512.svg'"));
+  assert.ok(sw.includes("'./assets/workshop-icons.svg'"));
   const icon = read('assets/naprawnik-icon.svg');
   assert.match(icon, /<svg\b/);
   assert.match(icon, /viewBox="0 0 512 512"/);
