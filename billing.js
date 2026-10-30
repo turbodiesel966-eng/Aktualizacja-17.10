@@ -360,7 +360,10 @@
       }
       const ua = String(navigator.userAgent || '');
       const label = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iPhone / iPad' : /Windows/i.test(ua) ? 'Windows' : 'Urządzenie';
-      await api('/api/devices/register', { deviceId, label }, 'POST', token);
+      const registered = await api('/api/devices/register', { deviceId, label }, 'POST', token);
+      if (registered.device && /^[a-f0-9]{64}$/.test(registered.device.deviceRef || '')) {
+        localStorage.setItem('naprawnik_device_ref', registered.device.deviceRef);
+      }
       await window.npLoadAccountDevices();
     } catch (error) {
       if (root) root.textContent = friendlyError(error, 'zarejestrować urządzenia') + (error.message ? ' ' + error.message : '');
