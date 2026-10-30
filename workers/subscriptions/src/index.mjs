@@ -1151,10 +1151,10 @@ async function registerUserDevice(request, env, auth) {
 }
 
 async function listUserDevices(env, auth) {
-  const { results = [] } = await env.DB.prepare(`SELECT label, first_seen_at, last_seen_at, revoked_at
+  const { results = [] } = await env.DB.prepare(`SELECT device_id_hash, label, first_seen_at, last_seen_at, revoked_at
     FROM user_devices WHERE user_id = ? ORDER BY last_seen_at DESC LIMIT 50`).bind(auth.userId).all();
   return json({ devices: results.map(row => ({
-    label: row.label, firstSeenAt: Number(row.first_seen_at), lastSeenAt: Number(row.last_seen_at),
+    deviceRef: row.device_id_hash, label: row.label, firstSeenAt: Number(row.first_seen_at), lastSeenAt: Number(row.last_seen_at),
     revoked: row.revoked_at !== null && row.revoked_at !== undefined
   })) });
 }
@@ -1164,14 +1164,14 @@ async function revokeUserDevice(request, env, auth) {
   const limited = await enforceRateLimit(request, env, "device-revoke", auth.userId, { maxRequests: 10, windowSeconds: 60 * 60 });
   if (limited) return limited;
   const body = await readJson(request, 4096);
-  const deviceId = typeof body?.deviceId === "string" ? body.deviceId.trim().toLowerCase() : "";
-  if (!/^[a-f0-9-]{32,36}$/.test(deviceId)) return err("Nieprawidłowy identyfikator urządzenia.", 400);
-  const hash = await sha256Hex("naprawnik-device:" + auth.userId + ":" + deviceId);
+  const hash = typeof body?.deviceRef === "string" ? body.deviceRef.trim().toLowerCase() : "";
+  if (!/^[a-f0-9]{64}$/.test(hash)) return err("Nieprawidłowy identyfikator urządzenia.", 400);
+  const now = nowSeconds();
   const result = await env.DB.prepare(`UPDATE user_devices SET revoked_at = ?, updated_at = ?
-    WHERE device_id_hash = ? AND user_id = ? AND revoked_at IS NULL`).bind(nowSeconds(), nowSeconds(), hash, auth.userId).run();
+    WHERE device_id_hash = ? AND user_id = ? AND revoked_at IS NULL`).bind(now, now, hash, auth.userId).run();
   if (Number(result.meta?.changes || 0) !== 1) return err("Nie znaleziono aktywnego urządzenia.", 404);
   await env.DB.prepare("UPDATE api_tokens SET revoked_at = ? WHERE user_id = ? AND device_id_hash = ? AND revoked_at IS NULL")
-    .bind(nowSeconds(), auth.userId, hash).run();
+    .bind(now, auth.userId, hash).run();
   return json({ ok: true, message: "Urządzenie odłączono. Jego przypisane klucze dostępu zostały unieważnione." });
 }
 
