@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { authenticate, enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isNativeAppRequest, billingReturnPage, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
+import { authenticate, applyPlanUsageDelta, enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isNativeAppRequest, billingReturnPage, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -1005,4 +1005,12 @@ test("native checkout return URL branch does not replace the web checkout URLs",
   assert.ok(source.includes('workerOrigin + "/billing/return?result=portal"'));
   assert.ok(source.includes("safeReturnUrl(env.CHECKOUT_SUCCESS_URL"));
   assert.ok(source.includes("safeReturnUrl(env.CHECKOUT_CANCEL_URL"));
+});
+
+
+test("customer browser cannot refund monthly or lifetime plan usage", async () => {
+  const result = await applyPlanUsageDelta({}, "user-1", "warsztat", "work_orders", -1, "refund_event_123");
+  assert.equal(result.ok, false);
+  assert.equal(result.status, 403);
+  assert.match(result.error, /cannot be decremented/i);
 });
