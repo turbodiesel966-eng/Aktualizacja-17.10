@@ -397,7 +397,19 @@
     if (root) root.textContent = 'Odłączam urządzenie…';
     try {
       const token = await accountEnsure();
-      await api('/api/devices/revoke', { deviceRef }, 'POST', token);
+      const result = await api('/api/devices/revoke', { deviceRef }, 'POST', token);
+      const currentDeviceRef = localStorage.getItem('naprawnik_device_ref') || '';
+      if (result.sessionRevoked === true || currentDeviceRef === deviceRef) {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem('naprawnik_license');
+        localStorage.removeItem('naprawnik_admin_role');
+        localStorage.removeItem('naprawnik_device_ref');
+        localStorage.removeItem('naprawnik_device_id');
+        clearVerifiedPlan();
+        if (root) root.textContent = 'To urządzenie zostało odłączone i wylogowane z konta. Zaloguj się ponownie, aby korzystać z NAPRAWNIKA.';
+        renderPlansBridge();
+        return;
+      }
       await window.npLoadAccountDevices();
     } catch (error) {
       if (root) root.textContent = friendlyError(error, 'odłączyć urządzenia') + (error.message ? ' ' + error.message : '');
