@@ -2129,6 +2129,8 @@ function renderHome(){
     <span class="support-cta-arrow" aria-hidden="true">↗</span>
   </a>
 
+  ${renderAndroidApkCard()}
+
   <div class="diag-card catalog-entry-card">
     <h2>📚 Katalog modeli i danych serwisowych</h2>
     <div class="diag-sub">${SCOOTER_CATALOG.length} wpisów rodzin pojazdów • profile jednostek • źródła i status weryfikacji</div>
@@ -2778,6 +2780,8 @@ function renderSettings(){
     <div class="card"><h2>🛡️ Właściciel aplikacji</h2><small style="color:var(--dim)">Panel statystyk i zarządzania promocjami jest dostępny tylko po potwierdzeniu uprawnień przez serwer.</small><div class="btn" onclick="window.npOpenAdminPanel()">Otwórz panel właściciela / ADMINA</div></div>
     <div class="card"><h2>🔐 Prywatność i statystyki</h2><small style="color:var(--dim)">Anonimowe statystyki są opcjonalne i domyślnie wyłączone. Po włączeniu zapisujemy losowe identyfikatory jako skróty i daty sesji, bez surowych adresów IP. Możesz wyłączyć zbieranie w dowolnym momencie.</small><div class="btn" onclick="window.npSetAnalyticsConsent(true)">Włącz anonimowe statystyki</div><div class="btn" onclick="window.npSetAnalyticsConsent(false)">Wyłącz anonimowe statystyki</div></div>
 
+    ${renderAndroidApkCard()}
+
     <div class="card" style="border-color:#00e5ff">
       <h2>☁️ Synchronizacja kopii w chmurze (PRO / WARSZTAT)</h2>
       <small style="color:var(--dim);display:block;margin-bottom:8px">Zapisz lub pobierz bazę pojazdów, klientów, napraw, przeglądów i notatek bezpośrednio na swoim koncie w chmurze Cloudflare D1 — dostępna po zalogowaniu kluczem na telefonie i komputerze.</small>
@@ -2795,6 +2799,25 @@ function renderSettings(){
       ? `<div class="btn" onclick="startPinSetup()">🔒 Zmień PIN</div><div class="btn" onclick="disablePin()">🔓 Wyłącz PIN</div>`
       : `<div class="btn" onclick="startPinSetup()">🔒 Ustaw PIN (blokada ekranu)</div>`}
     </div>`;
+}
+function renderAndroidApkCard(){
+  if (typeof window !== 'undefined' && window.__naprawnikNative) {
+    return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (połączona z wersją Web)</h2><div class="diag-sub">Zainstalowane APK automatycznie pobiera nowości z wersji Web. Możesz też wymusić synchronizację jednym kliknięciem.</div><div class="btn" style="border-color:#00f57a;color:#00f57a" onclick="syncApkWithWebNow()">🔄 Synchronizuj z wersją Web teraz</div></div>`;
+  }
+  return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa offline w warsztacie i automatycznie synchronizuje aktualizacje z wersją Web.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>`;
+}
+async function syncApkWithWebNow(){
+  if (typeof window !== 'undefined' && typeof window.__naprawnikWebSync === 'function') {
+    const ok = await window.__naprawnikWebSync();
+    if (ok) {
+      alert('✅ Pobrano najnowszą wersję z serwera Web. Aplikacja zostanie odświeżona.');
+      location.reload();
+    } else {
+      alert('⚠️ Nie udało się połączyć z serwerem Web (sprawdź internet). Korzystasz z zapisanej wersji offline.');
+    }
+    return;
+  }
+  location.reload();
 }
 async function saveCloudBackup(){
   if(!hasPlan('pro')){ renderLocked('pro','Kopia zapasowa w chmurze','renderSettings()'); return; }
