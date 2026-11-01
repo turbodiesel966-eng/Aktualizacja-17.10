@@ -54,7 +54,7 @@ The branch adds `POST /api/photo-diagnosis`. It requires the same valid Bearer t
 
 Required staging-only secret:
 - `OPENAI_API_KEY` — provision with Cloudflare secret management / Wrangler in the staging environment. Never put it in HTML, source control, chat, or `[vars]`.
-- `OPENAI_VISION_MODEL` is a non-secret variable and defaults to `gpt-4.1-mini`.
+- `OPENAI_VISION_MODEL` is a non-secret variable and defaults to `gpt-6-luna`.
 
 Limits in the branch:
 - up to 3 JPEG/PNG/WebP images;

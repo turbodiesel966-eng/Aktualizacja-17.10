@@ -1159,6 +1159,7 @@
     return String(value == null ? "" : value)
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[łŁ]/g, "l")
       .toLocaleLowerCase("pl-PL")
       .trim();
   }

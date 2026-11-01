@@ -449,3 +449,105 @@ test('strona pobierania linkuje właściwy raport VirusTotal i uczciwie opisuje 
   assert.ok(script.includes('--require-existing-checksum'));
   assert.ok(script.includes('NAPRAWNIK_VT_NOTE_START'));
 });
+
+test('siatka kafelków neonowych i filtrowanie kart diagnostycznych obsługują wielkość liter, polskie znaki oraz czyszczenie pola', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('class="neon-grid"'));
+  assert.ok(html.includes('class="tile-visual"'));
+  assert.ok(html.includes('class="tile-tier-pill"'));
+  assert.ok(html.includes('function normalizeSearchText(str)'));
+  assert.ok(html.includes('function filterDiagnosticCards(query, containerSelector)'));
+
+  const inlineScript = html.split('<script>')[1].split('</script>')[0];
+  const mockCards = [
+    {
+      title: 'Gaśnie po rozgrzaniu / traci moc na ciepło',
+      desc: 'Cewka WN, fajka lub świeca przerywa po nagrzaniu; sprawdź luz zaworowy i układ paliwowy.',
+      dataset: { category: 'Rozruch i zapłon', evidence: 'unlinked', search: '' },
+      style: { display: '' }
+    },
+    {
+      title: 'Akumulator się rozładowuje / brak ładowania',
+      desc: 'Sprawdź regulator napięcia, uzwojenia statora oraz przewód masowy.',
+      dataset: { category: 'Elektryka i ładowanie', evidence: 'confirmed', search: '' },
+      style: { display: '' }
+    },
+    {
+      title: 'Drgania, hałas lub szarpanie przy ruszaniu',
+      desc: 'Zeszkliwione okładziny sprzęgła, zużyty pasek CVT lub łożyska wału.',
+      dataset: { category: 'CVT i napęd', evidence: 'partial', search: '' },
+      style: { display: '' }
+    }
+  ].map(c => ({
+    ...c,
+    textContent: c.title + ' ' + c.desc,
+    innerText: c.title + ' ' + c.desc,
+    querySelector(sel) {
+      if (sel.includes('h2') || sel.includes('.tile-label')) return { textContent: c.title };
+      return { textContent: c.desc };
+    }
+  }));
+
+  const filterInput = { value: '' };
+  const categorySelect = { value: '' };
+  const evidenceSelect = { value: '' };
+  const countEl = { textContent: '' };
+  const domContext = {
+    window: {},
+    navigator: {},
+    location: { protocol: 'https:', hostname: 'localhost', search: '', pathname: '/' },
+    localStorage: { getItem() { return null; }, setItem() {}, removeItem() {} },
+    document: {
+      querySelector(sel) {
+        if (sel === '#screen' || sel === '.frame' || sel === '#lockScreen' || sel === '#clock') return { style: {}, innerHTML: '', textContent: '', querySelectorAll() { return []; } };
+        if (sel === '#symptomQuery') return filterInput;
+        return null;
+      },
+      querySelectorAll(sel) {
+        if (sel.includes('#knowledgeCards')) return mockCards;
+        if (sel.includes('.knowledge-case-card')) return mockCards;
+        return [];
+      },
+      getElementById(id) {
+        if (id === 'knowledgeFilter') return filterInput;
+        if (id === 'knowledgeCategory') return categorySelect;
+        if (id === 'knowledgeEvidence') return evidenceSelect;
+        if (id === 'knowledgeCount') return countEl;
+        return null;
+      },
+      addEventListener() {}
+    },
+    console, Date, Math, JSON, Set, Map, Array, Object, String, Number, RegExp, Promise,
+    encodeURIComponent, setTimeout() {}, clearTimeout() {}
+  };
+  domContext.window = domContext;
+  vm.runInNewContext(inlineScript, domContext, { filename: 'index-inline.js' });
+
+  filterInput.value = 'GASNIE';
+  domContext.filterKnowledge();
+  assert.equal(mockCards[0].style.display, '');
+  assert.equal(mockCards[1].style.display, 'none');
+  assert.equal(mockCards[2].style.display, 'none');
+
+  filterInput.value = 'Ladowania';
+  domContext.filterKnowledge();
+  assert.equal(mockCards[0].style.display, 'none');
+  assert.equal(mockCards[1].style.display, '');
+  assert.equal(mockCards[2].style.display, 'none');
+
+  filterInput.value = 'sprzegla';
+  domContext.filterKnowledge();
+  assert.equal(mockCards[0].style.display, 'none');
+  assert.equal(mockCards[1].style.display, 'none');
+  assert.equal(mockCards[2].style.display, '');
+
+  filterInput.value = 'WAŁU';
+  domContext.filterKnowledge();
+  assert.equal(mockCards[2].style.display, '');
+
+  filterInput.value = '';
+  domContext.filterKnowledge();
+  assert.equal(mockCards[0].style.display, '');
+  assert.equal(mockCards[1].style.display, '');
+  assert.equal(mockCards[2].style.display, '');
+});

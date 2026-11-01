@@ -1,13 +1,13 @@
 # Copy this file to a local wrangler.toml and replace placeholders only for staging.
 # Do not commit secret values or live identifiers.
-name = "naprawnik-subscriptions-staging"
+name = "naprawnik-subscriptions-v2-staging"
 main = "src/index.mjs"
 compatibility_date = "2026-10-18"
 workers_dev = true
 
 [[d1_databases]]
 binding = "DB"
-database_name = "naprawnik-subscriptions-staging"
+database_name = "naprawnik-subscriptions-v2-staging"
 database_id = "REPLACE_WITH_STAGING_D1_DATABASE_ID"
 migrations_dir = "migrations"
 
@@ -17,16 +17,24 @@ PRODUCTION_ENABLED = "false"
 STRIPE_EXPECT_LIVEMODE = "false"
 ALLOWED_ORIGINS = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev"
 APP_BASE_URL = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev/"
-CHECKOUT_SUCCESS_URL = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev/?checkout=success"
+CHECKOUT_SUCCESS_URL = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev/?checkout=success&session_id={CHECKOUT_SESSION_ID}"
 CHECKOUT_CANCEL_URL = "https://naprawnik-pwa-staging.turbodiesel966.workers.dev/?checkout=cancelled"
 STRIPE_PRICE_PRO_MONTHLY = "price_REPLACE_WITH_TEST_PRICE"
 STRIPE_PRICE_PRO_YEARLY = "price_REPLACE_WITH_TEST_PRICE"
 STRIPE_PRICE_WARSZTAT_MONTHLY = "price_REPLACE_WITH_TEST_PRICE"
 STRIPE_PRICE_WARSZTAT_YEARLY = "price_REPLACE_WITH_TEST_PRICE"
-OPENAI_VISION_MODEL = "gpt-4.1-mini"
+STRIPE_PRICE_PRO_3D = "price_REPLACE_WITH_TEST_ONE_TIME_PRICE"
+STRIPE_PRICE_PRO_7D = "price_REPLACE_WITH_TEST_ONE_TIME_PRICE"
+STRIPE_PRICE_WARSZTAT_3D = "price_REPLACE_WITH_TEST_ONE_TIME_PRICE"
+STRIPE_PRICE_WARSZTAT_7D = "price_REPLACE_WITH_TEST_ONE_TIME_PRICE"
+PHOTO_ANALYSIS_ENABLED = "false"
+PHOTO_MONTHLY_BUDGET_USD = "5"
+PHOTO_REQUEST_RESERVE_USD = "0.25"
+OPENAI_VISION_MODEL = "gpt-6-luna"
 
 # Do not enable the staging API until the D1 migrations, origin, Stripe test prices and webhook are verified.
 # Add secrets separately with `wrangler secret put` from this staging environment only:
+# ADMIN_BOOTSTRAP_KEY
 # STRIPE_SECRET_KEY
 # STRIPE_WEBHOOK_SECRET
 # OPENAI_API_KEY (needed only for the photo-diagnosis endpoint)

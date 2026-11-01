@@ -527,7 +527,7 @@
         price_inactive_or_mismatch: 'Cena nieaktywna lub inny identyfikator',
         livemode_mismatch: 'Niezgodny tryb LIVE/TEST',
         currency_mismatch: 'Niezgodna waluta (wymagane PLN)',
-        interval_mismatch: 'Niezgodny okres rozliczenia',
+        interval_mismatch: 'Niezgodny okres rozliczenia', one_time_type_or_amount_mismatch: 'Niezgodny typ pakietu jednorazowego lub kwota',
         invalid_amount: 'Nieprawidłowa kwota'
       };
       const row = (label, ok, detail) => '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>' + (ok ? '✅ ' : '❌ ') + esc(label) + '</b><div style="color:var(--dim)">' + esc(detail) + '</div></div>';
@@ -550,7 +550,7 @@
         if (price.stripeErrorType) detail += ' · typ: ' + price.stripeErrorType;
         if (price.stripeErrorHint) detail += ' · ' + price.stripeErrorHint;
         if (price.stripeRequestId) detail += ' · Request ID: ' + price.stripeRequestId;
-        if (price.currency && price.interval) detail += ' · ' + price.currency.toUpperCase() + ' · ' + price.interval + (price.intervalCount > 1 ? ' × ' + price.intervalCount : '');
+        if (price.currency && price.interval) detail += ' · ' + price.currency.toUpperCase() + ' · ' + price.interval + (price.intervalCount > 1 ? ' × ' + price.intervalCount : ''); else if (price.currency && price.type === 'one_time') detail += ' · ' + price.currency.toUpperCase() + ' · one_time' + (Number.isFinite(Number(price.amount)) ? ' · ' + (Number(price.amount) / 100).toFixed(2).replace('.', ',') + ' zł' : '');
         output += row(price.label || price.key, good, detail);
       });
       output = row('Wynik całościowy', result.ready === true, result.ready ? 'Konfiguracja jest gotowa do uruchomienia płatności.' : 'Konfiguracja wymaga poprawki; niżej widać konkretny powód.') + output;
@@ -599,6 +599,48 @@
       renderPlansBridge();
     } catch (error) {
       alert(friendlyError(error, 'aktywować kodu promocyjnego') + (error.message ? '\n' + error.message : ''));
+    }
+  };
+
+  window.npCloudBackupSave = async function(payloadData) {
+    try {
+      const license = typeof window.naprawnikGetVerifiedLicense === 'function' ? window.naprawnikGetVerifiedLicense() : null;
+      if (!license || license.verified !== true || !['pro', 'warsztat'].includes(license.tier) || !license.token) {
+        alert('Synchronizacja kopii zapasowej w chmurze wymaga aktywnego planu PRO lub WARSZTAT.');
+        return false;
+      }
+      const key = 'pro:workshop_backup';
+      const currentRes = await api('/api/data?key=' + encodeURIComponent(key), undefined, 'GET', license.token);
+      const currentItem = currentRes && currentRes.item ? currentRes.item : null;
+      const revision = currentItem ? Number(currentItem.revision || 0) : 0;
+      const updatedAt = Math.max(Date.now(), currentItem ? Number(currentItem.updated_at || 0) + 1 : 0);
+      await api('/api/data', { key, value: payloadData, revision, updatedAt }, 'PUT', license.token);
+      alert('☁️ Kopia zapasowa warsztatu została bezpiecznie zapisana na Twoim koncie w chmurze.');
+      return true;
+    } catch (error) {
+      alert(friendlyError(error, 'zapisać kopii w chmurze') + (error.message ? '\n' + error.message : ''));
+      return false;
+    }
+  };
+
+  window.npCloudBackupRestore = async function() {
+    try {
+      const license = typeof window.naprawnikGetVerifiedLicense === 'function' ? window.naprawnikGetVerifiedLicense() : null;
+      if (!license || license.verified !== true || !['pro', 'warsztat'].includes(license.tier) || !license.token) {
+        alert('Pobranie kopii zapasowej z chmury wymaga aktywnego planu PRO lub WARSZTAT.');
+        return null;
+      }
+      const key = 'pro:workshop_backup';
+      const res = await api('/api/data?key=' + encodeURIComponent(key), undefined, 'GET', license.token);
+      if (!res || !res.item || !res.item.json_value) {
+        alert('Brak zapisanej kopii zapasowej w chmurze dla tego konta.');
+        return null;
+      }
+      const parsed = typeof res.item.json_value === 'string' ? JSON.parse(res.item.json_value) : res.item.json_value;
+      return { payload: parsed, updatedAt: res.item.updated_at, revision: res.item.revision };
+    } catch (error) {
+      alert(friendlyError(error, 'pobrać kopii z chmury') + (error.message ? '\n' + error.message : ''));
+      return null;
     }
   };
 
