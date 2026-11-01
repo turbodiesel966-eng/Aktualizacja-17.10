@@ -178,3 +178,51 @@ test('NAPRAWNIK MASTER — IndexedDB oraz rozszerzenie bazy danych D1 (katalog t
   assert.ok(workerSrc.includes('/api/tuning-specs'), 'Brak endpointu /api/tuning-specs w Workerze');
 });
 
+test('NAPRAWNIK MASTER — Nowe Moduły Warsztatowe: WhatsApp/SMS, Etykiety PDF, Eksport CSV i Voice Dictation', () => {
+  const html = read('index.html');
+
+  // WhatsApp & SMS
+  assert.ok(html.includes('sendCustomerNotification'), 'Brak funkcji sendCustomerNotification');
+  assert.ok(html.includes('https://wa.me/'), 'Brak obsługi linku WhatsApp wa.me');
+  assert.ok(html.includes('sms:'), 'Brak obsługi protokołu SMS');
+
+  // Service Tag PDF
+  assert.ok(html.includes('printServiceTagPdf'), 'Brak funkcji printServiceTagPdf');
+  assert.ok(html.includes('NASTĘPNY PRZEGLĄD'), 'Brak pola następnego przeglądu w zawieszce');
+
+  // CSV Export
+  assert.ok(html.includes('exportOrdersCsv'), 'Brak funkcji exportOrdersCsv');
+  assert.ok(html.includes('\\uFEFF'), 'Eksport CSV musi posiadać UTF-8 BOM dla Excela');
+
+  // Voice Dictation
+  assert.ok(html.includes('initVoiceDictation'), 'Brak funkcji initVoiceDictation');
+  assert.ok(html.includes('pl-PL'), 'Dyktowanie musi być w języku pl-PL');
+});
+
+test('NAPRAWNIK MASTER — Narzędzia Tuningowe: Pinouty CDI, Stroiciel Gaźnika, Tuning CVT i HUD Warsztatowy', () => {
+  const html = read('index.html');
+
+  // Pinouts
+  assert.ok(html.includes('renderPinouts'), 'Brak widoku renderPinouts');
+  assert.ok(html.includes('PINOUT_DEVICES'), 'Brak bazy modułów PINOUT_DEVICES');
+  assert.ok(html.includes('ac_cdi_5pin'), 'Brak modułu AC-CDI');
+  assert.ok(html.includes('ducati_am6'), 'Brak modułu Ducati AM6');
+
+  // Jetting Wizard
+  assert.ok(html.includes('renderJettingWizard'), 'Brak widoku renderJettingWizard');
+  assert.ok(html.includes('calcJettingUI'), 'Brak funkcji calcJettingUI');
+  assert.ok(html.includes('Plug Chop'), 'Brak instrukcji testu świecy Plug Chop');
+
+  // CVT Tuning
+  assert.ok(html.includes('renderCvtTuning'), 'Brak widoku renderCvtTuning');
+  assert.ok(html.includes('calcCvtUI'), 'Brak funkcji calcCvtUI');
+
+  // Workshop HUD
+  assert.ok(html.includes('renderWorkshopHud'), 'Brak widoku renderWorkshopHud');
+  assert.ok(html.includes('TRYB WARSZTATOWY (HUD)'), 'Brak nagłówka trybu HUD');
+
+  // Navigation & Tier lock
+  assert.ok(html.includes("pinouts:'pro'"), 'Pinouty muszą wymagać planu PRO w NAV_MIN');
+});
+
+

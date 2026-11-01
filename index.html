@@ -2428,7 +2428,7 @@ function renderLocked(min,label,backJs){
    '<div class="btn" data-billing-nav="plans">💎 Zobacz abonamenty</div>'+
    '<div class="btn" onclick="nav(\'plans\')">Porównaj plany / aktywuj licencję</div></div>';
 }
-const NAV_MIN={orders:'warsztat',orderDetail:'warsztat',clients:'warsztat',log:'warsztat',checklist:'warsztat',obd:'pro',models:'pro'};
+const NAV_MIN={orders:'warsztat',orderDetail:'warsztat',clients:'warsztat',log:'warsztat',checklist:'warsztat',obd:'pro',models:'pro',pinouts:'pro'};
 const NAV_LABEL={orders:'Karta Zlecenia Serwisowego',orderDetail:'Szczegóły Zlecenia',lab:'Elektroniczne Laboratorium',servicePlan:'Automatyczny Plan Serwisowy',parts:'Inteligentny dobór części',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe',obd:'Baza kodów OBD',models:'Profile konkretnych silników'};
 /* ===== Funkcje warsztatu ===== */
 function workshopInfo(){const w=load('naprawnik_workshop');return (Array.isArray(w)&&w[0])||{};}
@@ -2498,6 +2498,10 @@ function renderHome(){
     ${tile('🔋','ELEKTRYKA','electric',null,'Schematy • Diagnostyka<br>Pomiary • Porady','',{theme:'orange',subIcon:'⚡',spriteIdx:5})}
     ${tile('🔩','SILNIK','engine','2T','Budowa • Regulacja<br>Remonty • Modyfikacje','',{theme:'red',subIcon:'⚙️',spriteIdx:6})}
     ${tile('🛠️','NARZĘDZIA','mix',null,'Kalkulatory • Tabele<br>Ustawienia','',{theme:'cyan',subIcon:'🧪',spriteIdx:7})}
+    ${tile('👓','TRYB WARSZTATOWY','hud',null,'Duży ekran HUD<br>Momenty • Squish • Luzy','',{theme:'green',goldTitle:true,subIcon:'👓',spriteIdx:17})}
+    ${tile('🫁','STROICIEL GAŹNIKA','jetting',null,'Dobór dysz • Iglica<br>50cc / 70cc / Stożek','',{theme:'orange',subIcon:'⛽',spriteIdx:6})}
+    ${tile('⚙️','TUNING CVT','cvt',null,'Rolki • Sprężyna centralna<br>Sprzęgło • Obroty mocy','',{theme:'red',subIcon:'🏁',spriteIdx:7})}
+    ${tile('🔌','PINOUTY CDI & REGULATORÓW','pinouts',null,'Interaktywne złącza<br>Pomiary multimetrem','pro',{theme:'purple',goldTitle:true,badgeLabel:'PRO',subIcon:'⚡',spriteIdx:15})}
     ${tile('📓','LOGI / NOTATKI','photoAssistant',null,'Historia napraw<br>Zdjęcia • Wpisy','',{theme:'purple',subIcon:'✒️',spriteIdx:8})}
     ${tile('🛵','MOJE POJAZDY','vehicles',null,'Garaż • Profil<br>Przypomnienia','',{theme:'cyan',subIcon:'🏠',spriteIdx:9})}
     ${tile('📋','ZLECENIA SERWISOWE','orders',null,'Przyjęcie • Diagnoza • Kosztorys<br>Wydruk PDF • Podpis','warsztat',{theme:'orange',badgeLabel:'WARSZTAT',goldTitle:true,subIcon:'📋',spriteIdx:17})}
@@ -4245,6 +4249,10 @@ function nav(view, arg, restoreState){
   else if(view==='photoCase') renderPhotoAssistantCase(arg);
   else if(view==='manuals') renderManuals();
   else if(view==='legal') renderLegal();
+  else if(view==='pinouts') renderPinouts();
+  else if(view==='jetting') renderJettingWizard();
+  else if(view==='cvt') renderCvtTuning();
+  else if(view==='hud') renderWorkshopHud();
 
   // 4. Przywróć pozycję przewijania po wyrenderowaniu widoku
   if(isBack && restoreState){
@@ -4900,6 +4908,528 @@ function closeVinScanModal(){
   if(modal) modal.style.display = 'none';
 }
 
+
+/* ==========================================================================
+   NOWE KOMPLEKSOWE MODUŁY WARSZTATOWE, TUNINGOWE I HUD (ZERO-COST)
+   ========================================================================== */
+
+// --- MODUŁ A: WIZUALNE PINOUTY CDI, CEWKOMODUŁÓW I REGULATORÓW (PRO / WARSZTAT) ---
+const PINOUT_DEVICES = {
+  ac_cdi_5pin: {
+    title: 'Chiński 5-pin AC-CDI (139QMB 4T / 2T Minarelli / CPI / Keeway)',
+    desc: 'Najpopularniejszy moduł zasilany prądem przemiennym bezpośrednio ze statora (działa bez akumulatora).',
+    pins: [
+      { name: 'Cewka WN (Ignition Coil)', color: 'Czarno-żółty (Black/Yellow)', desc: 'Wyjście impulsu wysokiego napięcia do pierwotnego uzwojenia cewki butelkowej WN. Pomiar: 0.3–1.0 Ω do masy.' },
+      { name: 'Masa (Ground)', color: 'Zielony (Green)', desc: 'Główna masa instalacji i silnika. Pomiar multimetrem: < 0.3 Ω (ciągłość obwodu do ramy i karteru silnika).' },
+      { name: 'Impulsator (Pickup Coil)', color: 'Niebiesko-biały (Blue/White)', desc: 'Czujnik położenia wału. Pomiar: 100–160 Ω do masy. Napięcie AC przy kręceniu rozrusznikiem: min. 1.2–2.5 V AC.' },
+      { name: 'Gaszenie (Kill-switch)', color: 'Czarno-biały (Black/White)', desc: 'Stacyjka / wyłącznik zapłonu. Stacyjka ON: obwód otwarty (brak masy). Stacyjka OFF / stopka: zwarty do masy (0 Ω) = brak iskry.' },
+      { name: 'Zasilanie ze statora (AC Source)', color: 'Czarno-czerwony (Black/Red)', desc: 'Uzwojenie zasilające modułu. Pomiar: 350–550 Ω do masy. Napięcie przy kręceniu: 40–90 V AC.' }
+    ]
+  },
+  dc_cdi_4pin: {
+    title: '4-pin GY6 DC-CDI (Zasilany prądem stałym +12V)',
+    desc: 'Moduł zasilany ze stałego +12V z akumulatora po stacyjce. Większa obudowa niż AC-CDI.',
+    pins: [
+      { name: '+12V DC po stacyjce (Power IN)', color: 'Czarny (Black) lub Czerwony', desc: 'Napięcie stałe akumulatora. Pomiar: 12.0–12.8 V DC przy przekręconym kluczyku na ON.' },
+      { name: 'Masa (Ground)', color: 'Zielony (Green)', desc: 'Masa zasilania i sygnałowa. Ciągłość do ramy: 0 Ω.' },
+      { name: 'Impulsator (Pickup)', color: 'Niebiesko-biały (Blue/White)', desc: 'Sygnał wyzwalający iskrę. Pomiar: 110–150 Ω do masy.' },
+      { name: 'Cewka WN (Ignition Coil)', color: 'Czarno-żółty (Black/Yellow)', desc: 'Wyjście na cewkę zapłonową WN.' }
+    ]
+  },
+  ducati_am6: {
+    title: 'Ducati Energia / Cewkomoduł (Minarelli AM6 / Derbi Senda D50B0)',
+    desc: 'Zintegrowany cewkomoduł zapłonowy popularny w motorowerach biegowych 2T.',
+    pins: [
+      { name: 'STOP (Gaszenie)', color: 'Biało-czerwony (White/Red)', desc: 'Przewód gaszenia ze stacyjki. Zwierany do masy przy wyłączeniu zapłonu.' },
+      { name: 'BIANCO (Masa / Powrót)', color: 'Biały (White)', desc: 'Wspólna masa statora i impulsatora. 0 Ω do karteru.' },
+      { name: 'ROSSO (Impulsator)', color: 'Czerwony (Red)', desc: 'Sygnał impulsatora. Rezystancja między Rosso a Bianco: 110–130 Ω.' },
+      { name: 'VERDE (Zasilanie statora)', color: 'Zielony (Green)', desc: 'Cewka ładująca statora. Rezystancja między Verde a Bianco: 650–780 Ω.' }
+    ]
+  },
+  regulator_4pin: {
+    title: 'Regulator Napięcia / Prostownik 4-pin (Uniwersalny 12V AC/DC)',
+    desc: 'Odpowiada za stabilizację świateł AC oraz ładowanie akumulatora prądem stałym DC.',
+    pins: [
+      { name: 'Oświetlenie AC (Yellow)', color: 'Żółty (Yellow)', desc: 'Stabilizacja napięcia zmiennego świateł przednich/tylnych. Napięcie max: 13.0–14.2 V AC przy wysokich obrotach.' },
+      { name: 'Ładowanie AC (White)', color: 'Biały (White)', desc: 'Wejście cewki ładowania ze statora do prostownika wewnętrznego.' },
+      { name: 'Ładowanie DC (Red)', color: 'Czerwony (Red)', desc: 'Wyjście prądu stałego do akumulatora (+12V po bezpieczniku). Prawidłowe ładowanie: 13.8–14.5 V DC przy 4000 RPM.' },
+      { name: 'Masa regulatora (Green)', color: 'Zielony (Green)', desc: 'Masa obudowy i układu. Uszkodzenie lub korozja tej masy powoduje natychmiastowe spalenie wszystkich żarówek!' }
+    ]
+  }
+};
+
+let selectedPinoutKey = 'ac_cdi_5pin';
+let selectedPinIdx = 0;
+
+function renderPinouts(){
+  if(!hasPlan('pro')){ renderLocked('pro', 'Wizualne Pinouty CDI i Regulatorów', 'nav(\'electric\')'); return; }
+  const dev = PINOUT_DEVICES[selectedPinoutKey] || PINOUT_DEVICES.ac_cdi_5pin;
+  const pin = dev.pins[selectedPinIdx] || dev.pins[0];
+
+  screen.innerHTML = back() + `
+  <div class="card" style="border-color:#a78bfa">
+    <h2 style="color:#c4b5fd">🔌 Wizualny Asystent Pinoutów CDI i Regulatorów</h2>
+    <p style="font-size:12px;color:var(--dim);line-height:1.5">Wybierz moduł z listy, aby zobaczyć fizyczny układ styków, kolory przewodów oraz dokładne pomiary multimetrem.</p>
+    
+    <label>Wybierz typ modułu:</label>
+    <select id="pinoutDevSel" onchange="selectedPinoutKey=this.value;selectedPinIdx=0;renderPinouts()" style="width:100%;padding:10px;border-radius:8px;background:var(--panel);color:var(--text);border:1px solid var(--border);margin-bottom:12px">
+      ${Object.entries(PINOUT_DEVICES).map(([k, d]) => `<option value="${k}" ${k===selectedPinoutKey?'selected':''}>${escapeHtml(d.title)}</option>`).join('')}
+    </select>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:12px">${escapeHtml(dev.desc)}</div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:16px 0;background:#0d0d1a;padding:16px;border-radius:10px;border:1px dashed var(--accent)">
+      ${dev.pins.map((p, idx) => `
+        <div onclick="selectedPinIdx=${idx};renderPinouts()" style="cursor:pointer;padding:10px 14px;border-radius:8px;text-align:center;min-width:110px;transition:0.2s;background:${idx===selectedPinIdx?'var(--accent)':'#1a1a2e'};color:${idx===selectedPinIdx?'#000':'var(--text)'};border:1px solid ${idx===selectedPinIdx?'#fff':'rgba(255,255,255,0.1)'};font-weight:700">
+          <div style="font-size:10px;opacity:0.8">PIN ${idx+1}</div>
+          <div style="font-size:12px;margin-top:2px">${escapeHtml(p.name.split(' ')[0])}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="entry" style="border-left:4px solid var(--accent);background:rgba(0,229,255,0.06)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b style="color:var(--cyan);font-size:15px">PIN ${selectedPinIdx+1}: ${escapeHtml(pin.name)}</b>
+        <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:#222;border:1px solid var(--border)">${escapeHtml(pin.color)}</span>
+      </div>
+      <div style="margin-top:8px;font-size:13px;line-height:1.5">${escapeHtml(pin.desc)}</div>
+    </div>
+
+    <div class="btn" style="border-color:#ffe066;color:#ffe066;margin-top:12px" onclick="nav('multimeter')">📏 Przejdź do procedur pomiarów multimetrem</div>
+  </div>`;
+}
+
+// --- MODUŁ B: INTERAKTYWNY STROICIEL DYSZ GAŹNIKA (AMATOR: basic, PRO/WARSZTAT: full) ---
+function renderJettingWizard(){
+  screen.innerHTML = back() + `
+  <div class="card" style="border-color:#ff991f">
+    <h2 style="color:#ff991f">🫁 Stroiciel Dyszy Gaźnika & Śruby Mieszanki</h2>
+    <p style="font-size:12px;color:var(--dim);line-height:1.5">Kalkulator bezpiecznej bazy gaźnikowej. Pomaga uniknąć zatarcia tłoka po zmianie wydechu, cylindra lub filtra powietrza.</p>
+    
+    <label>Pojemność i setup cylindra:</label>
+    <select id="jetDisp" onchange="calcJettingUI()" style="width:100%;padding:10px;border-radius:8px;background:var(--panel);color:var(--text);border:1px solid var(--border);margin-bottom:8px">
+      <option value="50_oem">50cc Seria OEM (AMATOR / Free)</option>
+      <option value="50_sport">50cc Sport / Lekki porting (PRO)</option>
+      <option value="70_street">70cc Street / Sport (Malossi/Polini/Airsal) (PRO)</option>
+      <option value="70_racing">70cc Mid-Race / Racing (Stage6 Pro / MHR) (PRO)</option>
+      <option value="gy6_4t">GY6 50cc / 80cc 4T (PRO)</option>
+    </select>
+
+    <div class="grid2">
+      <div>
+        <label>Średnica gaźnika:</label>
+        <select id="jetCarbSize" onchange="calcJettingUI()">
+          <option value="12">12 mm (Seria Dell'Orto/Gurtner)</option>
+          <option value="16">16 mm</option>
+          <option value="17.5" selected>17.5 mm (Standard Sport)</option>
+          <option value="19">19 mm (Dell'Orto PHBG / Black)</option>
+          <option value="21">21 mm (Racing)</option>
+        </select>
+      </div>
+      <div>
+        <label>Układ dolotowy / Filtr:</label>
+        <select id="jetAirFilter" onchange="calcJettingUI()">
+          <option value="box_oem">Seryjny Airbox (OEM)</option>
+          <option value="box_mod" selected>Airbox odblokowany / wkładka sportowa</option>
+          <option value="cone">Stożek gąbkowy / siatkowy otwarty</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <label>Układ wydechowy:</label>
+        <select id="jetExhaust" onchange="calcJettingUI()">
+          <option value="oem">Seryjny OEM / Touring (cichy)</option>
+          <option value="sport" selected>Sport (Yasuni Z, Stage6 Pro Rep, LeoV TT)</option>
+          <option value="racing">Wyścigowy rezonans (Yasuni C16/C21, Roost)</option>
+        </select>
+      </div>
+      <div>
+        <label>Temperatura otoczenia:</label>
+        <select id="jetTemp" onchange="calcJettingUI()">
+          <option value="cold">Zima / Chłód (< 8°C — gęste powietrze)</option>
+          <option value="normal" selected>Umiarkowana (15–22°C)</option>
+          <option value="hot">Upał (> 28°C — rzadsze powietrze)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="jettingResultBox" style="margin-top:14px;padding:12px;border-radius:10px;background:#141424;border:1px solid var(--accent)">
+      <div id="jettingLockedNotice" style="display:none;color:#ffe066;font-size:12px;margin-bottom:8px">ℹ️ Konfiguracje 70cc, gaźniki >17.5mm oraz stożki wymagają planu <b>PRO</b> lub <b>WARSZTAT</b>. Poniżej podgląd orientacyjny.</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--dim)">Sugerowana dysza główna (Main Jet):</span>
+        <b id="jetMainDisplay" style="font-size:20px;color:#00f57a">#86 – #90</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--dim)">Dysza wolnych obrotów (Pilot Jet):</span>
+        <b id="jetPilotDisplay" style="font-size:14px;color:var(--cyan)">#34 – #38</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--dim)">Pozycja iglicy:</span>
+        <b id="jetNeedleDisplay" style="font-size:14px;color:var(--hero)">Środkowy rowek (3. od góry)</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--dim)">Śruba składu mieszanki:</span>
+        <b id="jetAirScrewDisplay" style="font-size:14px;color:#fff">1.5 obrotu od zera</b>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--dim);line-height:1.4">
+        ⚠️ <b>Złota zasada bezpieczeństwa:</b> Zawsze montuj dyszę główną o 5–8 numerów większą na pierwsze odpalenie. Zrób test na pełnym gazie, odetnij zapłon w trakcie jazdy (Plug Chop) i oceń kolor świecy!
+      </div>
+    </div>
+  </div>`;
+  calcJettingUI();
+}
+
+function calcJettingUI(){
+  const disp = document.getElementById('jetDisp')?.value || '50_oem';
+  const size = parseFloat(document.getElementById('jetCarbSize')?.value) || 17.5;
+  const filter = document.getElementById('jetAirFilter')?.value || 'box_mod';
+  const exh = document.getElementById('jetExhaust')?.value || 'sport';
+  const temp = document.getElementById('jetTemp')?.value || 'normal';
+
+  const isProFeature = disp !== '50_oem' || size > 17.5 || filter === 'cone' || exh === 'racing';
+  const lockNotice = document.getElementById('jettingLockedNotice');
+  if(lockNotice) lockNotice.style.display = (isProFeature && !hasPlan('pro')) ? 'block' : 'none';
+
+  let baseJet = 68;
+  if(disp === '50_sport') baseJet = 76;
+  else if(disp === '70_street') baseJet = 86;
+  else if(disp === '70_racing') baseJet = 94;
+  else if(disp === 'gy6_4t') baseJet = 82;
+
+  if(size >= 19) baseJet += 4;
+  if(size >= 21) baseJet += 6;
+  if(filter === 'box_mod') baseJet += 4;
+  if(filter === 'cone') baseJet += 12;
+  if(exh === 'sport') baseJet += 6;
+  if(exh === 'racing') baseJet += 10;
+  if(temp === 'cold') baseJet += 4;
+  if(temp === 'hot') baseJet -= 3;
+
+  const minJet = Math.round(baseJet - 2);
+  const maxJet = Math.round(baseJet + 2);
+
+  const mainEl = document.getElementById('jetMainDisplay');
+  const pilotEl = document.getElementById('jetPilotDisplay');
+  const needleEl = document.getElementById('jetNeedleDisplay');
+  const screwEl = document.getElementById('jetAirScrewDisplay');
+
+  if(mainEl) mainEl.textContent = `#${minJet} – #${maxJet}`;
+  if(pilotEl) pilotEl.textContent = (size >= 19 || filter === 'cone') ? '#38 – #42' : '#32 – #36';
+  if(needleEl) needleEl.textContent = filter === 'cone' ? '2. rowek od dołu (bogatszy dół)' : 'Środkowy rowek (3. od góry)';
+  if(screwEl) screwEl.textContent = '1.5 – 1.75 obrotu od pełnego wkręcenia';
+}
+
+// --- MODUŁ C: KALKULATOR I STROICIEL NAPĘDU CVT (WARIATOR / ROLKI / SPRĘŻYNY) ---
+function renderCvtTuning(){
+  screen.innerHTML = back() + `
+  <div class="card" style="border-color:#ff4d4d">
+    <h2 style="color:#ff6b6b">⚙️ Kalkulator i Stroiciel Napędu CVT</h2>
+    <p style="font-size:12px;color:var(--dim);line-height:1.5">Dobierz optymalną wagę rolek wariatora oraz twardość sprężyny centralnej i sprężynek sprzęgła pod charakterystykę wydechu i silnika.</p>
+    
+    <label>Typ silnika i rozmiar rolek:</label>
+    <select id="cvtEngine" onchange="calcCvtUI()" style="width:100%;padding:10px;border-radius:8px;background:var(--panel);color:var(--text);border:1px solid var(--border);margin-bottom:8px">
+      <option value="minarelli">Minarelli 2T (Rolki 15×12 mm — np. Aerox, Neos, Jog)</option>
+      <option value="piaggio">Piaggio / Gilera 2T/4T (Rolki 19×15.5 mm — Runner, Zip)</option>
+      <option value="peugeot">Peugeot 2T (Rolki 16×13 mm — Speedfight, Vivacity)</option>
+      <option value="gy6_50">GY6 50cc 4T (Rolki 16×13 mm — 139QMB chińskie)</option>
+    </select>
+
+    <div class="grid2">
+      <div>
+        <label>Układ wydechowy:</label>
+        <select id="cvtExhaust" onchange="calcCvtUI()">
+          <option value="oem">Seryjny OEM (moc przy 6500–7200 RPM)</option>
+          <option value="sport" selected>Sport 70cc (moc przy 8500–9500 RPM)</option>
+          <option value="racing">Racing rezonans (moc przy 10500–12000 RPM)</option>
+        </select>
+      </div>
+      <div>
+        <label>Waga kierowcy:</label>
+        <select id="cvtRider" onchange="calcCvtUI()">
+          <option value="light">Lekki (< 70 kg)</option>
+          <option value="medium" selected>Średni (70–90 kg)</option>
+          <option value="heavy">Ciężki (> 90 kg)</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;padding:12px;border-radius:10px;background:#141424;border:1px solid var(--accent)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--dim)">Zalecana waga rolek:</span>
+        <b id="cvtRollersDisplay" style="font-size:18px;color:#00f57a">4.5g – 5.0g</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--dim)">Sprężyna centralna:</span>
+        <b id="cvtSpringDisplay" style="font-size:14px;color:var(--hero)">Średnia (np. żółta Malossi / +15%)</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--dim)">Sprężynki sprzęgła:</span>
+        <b id="cvtClutchDisplay" style="font-size:14px;color:var(--cyan)">Średnie (start przy ~5000 RPM)</b>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--dim);line-height:1.4">
+        💡 <b>Wskazówka warsztatowa:</b> Jeśli skuter ma „dziurę” w przyspieszeniu przy 30–40 km/h, sprawdź stan rowków w korektorze momentu obrotowego i zamontuj twardszą sprężynę centralną, aby zapobiec zbyt szybkiemu zapadaniu się paska.
+      </div>
+    </div>
+  </div>`;
+  calcCvtUI();
+}
+
+function calcCvtUI(){
+  const eng = document.getElementById('cvtEngine')?.value || 'minarelli';
+  const exh = document.getElementById('cvtExhaust')?.value || 'sport';
+  const rider = document.getElementById('cvtRider')?.value || 'medium';
+
+  let baseWeight = 6.0;
+  if(eng === 'piaggio') baseWeight = 6.8;
+  else if(eng === 'gy6_50') baseWeight = 5.5;
+
+  if(exh === 'sport') baseWeight -= 1.3;
+  else if(exh === 'racing') baseWeight -= 2.2;
+  if(rider === 'heavy') baseWeight -= 0.4;
+  else if(rider === 'light') baseWeight += 0.3;
+
+  const minW = (Math.round((baseWeight - 0.3) * 10) / 10).toFixed(1);
+  const maxW = (Math.round((baseWeight + 0.3) * 10) / 10).toFixed(1);
+
+  const rollEl = document.getElementById('cvtRollersDisplay');
+  const sprEl = document.getElementById('cvtSpringDisplay');
+  const cluEl = document.getElementById('cvtClutchDisplay');
+
+  if(rollEl) rollEl.textContent = `${minW}g – ${maxW}g`;
+  if(sprEl) sprEl.textContent = exh === 'racing' ? 'Twarda (np. czerwona Malossi / +30%)' : (exh === 'sport' ? 'Średnia (żółta / +15%)' : 'Miękka OEM (biała / seria)');
+  if(cluEl) cluEl.textContent = exh === 'racing' ? 'Twarde (start przy 6500+ RPM)' : (exh === 'sport' ? 'Średnie (start przy ~5000 RPM)' : 'Miękkie seryjne (start przy ~3500 RPM)');
+}
+
+// --- MODUŁ D: TRYB WARSZTATOWY HUD (BARDZO DUŻY KONTRAST / DARMOWY DLA KAŻDEGO) ---
+function renderWorkshopHud(){
+  screen.innerHTML = `
+  <div style="background:#000;color:#fff;min-height:90vh;padding:12px;font-family:-apple-system,sans-serif">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <button class="btn" style="width:auto;margin:0;padding:6px 14px;font-size:14px;font-weight:700;background:#222;border-color:#555" onclick="navBack()">← Wróć</button>
+      <span style="color:#00f57a;font-weight:900;letter-spacing:1px">👓 TRYB WARSZTATOWY (HUD)</span>
+    </div>
+
+    <div style="background:#111;border:2px solid #ffe066;border-radius:12px;padding:16px;margin-bottom:12px;text-align:center">
+      <div style="font-size:13px;color:#aaa;text-transform:uppercase">MOMENT DOKRĘCANIA GŁOWICY</div>
+      <div style="font-size:38px;font-weight:900;color:#ffe066;margin:4px 0">10 – 12 Nm</div>
+      <small style="color:#888;font-size:13px">Szpilki M6 (2T 50/70cc) • Dokręcanie na krzyż</small>
+    </div>
+
+    <div class="grid2" style="margin-bottom:12px">
+      <div style="background:#111;border:2px solid #00e5ff;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:#aaa">ŚWIECA ZAPŁONOWA</div>
+        <div style="font-size:30px;font-weight:900;color:#00e5ff">18 – 20 Nm</div>
+        <small style="color:#888">Gwint M14 w głowicy alu</small>
+      </div>
+      <div style="background:#111;border:2px solid #ff4d4d;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:#aaa">NAKRĘTKA WARIATORA</div>
+        <div style="font-size:30px;font-weight:900;color:#ff4d4d">38 – 42 Nm</div>
+        <small style="color:#888">Zawsze na klej średni (niebieski)</small>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-bottom:12px">
+      <div style="background:#111;border:2px solid #00f57a;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:#aaa">LUZY ZAWOROWE 4T (ZIMNY)</div>
+        <div style="font-size:24px;font-weight:900;color:#00f57a">IN: 0.05 / EX: 0.08</div>
+        <small style="color:#888">Szczelinomierz w GMP suwu sprężania</small>
+      </div>
+      <div style="background:#111;border:2px solid #ff991f;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:#aaa">BEZPIECZNY SQUISH 2T</div>
+        <div style="font-size:24px;font-weight:900;color:#ff991f">0.80 – 0.95 mm</div>
+        <small style="color:#888">Min. 0.60 mm wyłącznie setup racing</small>
+      </div>
+    </div>
+
+    <div style="background:#111;border:1px solid #333;border-radius:10px;padding:12px;text-align:center;color:#777;font-size:12px">
+      Ekran ma wysoki kontrast zaprojektowany z myślą o czytelności z 2 metrów od wózka narzędziowego.
+    </div>
+  </div>`;
+}
+
+// --- MODUŁ E: POWIADOMIENIA KLIENTA WHATSAPP / SMS (WARSZTAT) ---
+function sendCustomerNotification(orderId, channel, type){
+  if(!hasPlan('warsztat')){ renderLocked('warsztat', 'Powiadomienia klienta WhatsApp / SMS', 'renderOrderDetail(\"' + orderId + '\")'); return; }
+  const o = orders.find(x => x.id === orderId);
+  if(!o) return;
+  const rawPhone = (o.customerPhone || '').replace(/[^0-9+]/g, '');
+  if(!rawPhone){
+    alert('Podaj numer telefonu w zleceniu, aby wysłać powiadomienie.');
+    return;
+  }
+  let cleanPhone = rawPhone.replace(/^0+/, '');
+  if(!cleanPhone.startsWith('+') && !cleanPhone.startsWith('48') && cleanPhone.length === 9){
+    cleanPhone = '48' + cleanPhone;
+  }
+  cleanPhone = cleanPhone.replace('+', '');
+
+  const w = workshopInfo();
+  const wName = w.name || 'Nasz Warsztat';
+  const wPhone = w.phone || '';
+  const total = o.totalCost || 0;
+  const veh = (o.vehicleMake ? o.vehicleMake + ' ' : '') + (o.vehicleModel || 'Pojazd');
+
+  let text = '';
+  if(type === 'ready'){
+    text = `Dzień dobry! Zlecenie nr ${o.number} dotyczące pojazdu ${veh} zostało zakończone i pojazd jest gotowy do odbioru w warsztacie ${wName}. Łączna kwota do zapłaty: ${total} zł. ${wPhone ? 'Tel: ' + wPhone : ''} Zapraszamy!`;
+  } else if(type === 'quote'){
+    text = `Dzień dobry! Przygotowaliśmy wycenę dla zlecenia ${o.number} (${veh}). Szacowany łączny koszt naprawy i części wynosi ${total} zł. Zakres: ${o.faultDesc || 'Przegląd i naprawa'}. Prosimy o potwierdzenie akceptacji. Pozdrawiamy, ${wName}.`;
+  } else if(type === 'received'){
+    text = `Dzień dobry! Potwierdzamy przyjęcie pojazdu ${veh} na serwis pod numerem zlecenia ${o.number}. Poinformujemy o postępach prac. ${wName}.`;
+  }
+
+  if(channel === 'whatsapp'){
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  } else {
+    const url = `sms:${cleanPhone}?body=${encodeURIComponent(text)}`;
+    window.location.href = url;
+  }
+}
+
+// --- MODUŁ F: DRUKOWANIE ZAWIESZKI SERWISOWEJ / OLEJOWEJ PDF (WARSZTAT) ---
+function printServiceTagPdf(orderId){
+  if(!hasPlan('warsztat')){ renderLocked('warsztat', 'Zawieszki serwisowe PDF', 'renderOrderDetail(\"' + orderId + '\")'); return; }
+  const o = orders.find(x => x.id === orderId);
+  if(!o) return;
+  const w = workshopInfo();
+  const today = new Date().toISOString().split('T')[0];
+  const curKm = parseInt(o.mileage, 10) || 0;
+  const nextKm = curKm > 0 ? (curKm + 3000) : '—';
+  
+  const printWindow = window.open('', '_blank');
+  if(!printWindow){ alert('Zezwól na wyskakujące okna, aby wydrukować zawieszkę.'); return; }
+
+  const html = `<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <title>Zawieszka Serwisowa - ${o.number}</title>
+    <style>
+      body { font-family: -apple-system, sans-serif; color: #111; padding: 20px; font-size: 11px; margin: 0; }
+      .tag { width: 260px; border: 2px dashed #000; border-radius: 8px; padding: 14px; margin: 0 auto; background: #fff; position: relative; }
+      .hole { width: 14px; height: 14px; border: 1.5px solid #666; border-radius: 50%; margin: 0 auto 10px auto; background: #f0f0f0; }
+      .title { font-size: 15px; font-weight: 900; text-align: center; text-transform: uppercase; margin-bottom: 2px; }
+      .sub { font-size: 10px; text-align: center; color: #555; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+      .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+      .highlight { background: #eee; padding: 6px; border-radius: 4px; font-weight: bold; margin: 8px 0; text-align: center; font-size: 12px; }
+      @media print { .no-print { display: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="no-print" style="text-align:center;margin-bottom:16px">
+      <button onclick="window.print()" style="padding:8px 16px;font-size:13px;cursor:pointer;background:#0066cc;color:#fff;border:none;border-radius:4px">🖨️ Drukuj zawieszkę na lusterko / ramę</button>
+    </div>
+    <div class="tag">
+      <div class="hole"></div>
+      <div class="title">${escapeHtml(w.name || 'KARTA SERWISOWA')}</div>
+      <div class="sub">Tel: ${escapeHtml(w.phone || '—')} ${w.address ? '· ' + escapeHtml(w.address) : ''}</div>
+      <div class="row"><span>Pojazd:</span><b>${escapeHtml(o.vehicleMake || '')} ${escapeHtml(o.vehicleModel || 'Pojazd')}</b></div>
+      <div class="row"><span>Data serwisu:</span><b>${escapeHtml(o.dateIn || today)}</b></div>
+      <div class="row"><span>Przebieg przy serwisie:</span><b>${curKm ? curKm + ' km' : '—'}</b></div>
+      <div class="row"><span>Zastosowany olej:</span><b>Syntetyk 2T / 10W40 4T</b></div>
+      <div class="highlight">NASTĘPNY PRZEGLĄD: ${nextKm !== '—' ? nextKm + ' km' : 'Za 12 miesięcy'}</div>
+      <div style="font-size:9px;color:#666;text-align:center;margin-top:8px">Zlecenie nr ${escapeHtml(o.number)}</div>
+    </div>
+  </body>
+  </html>`;
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+// --- MODUŁ G: EKSPORT ZLECEŃ DO CSV / EXCEL DLA KSIĘGOWOŚCI (WARSZTAT) ---
+function exportOrdersCsv(){
+  if(!hasPlan('warsztat')){ renderLocked('warsztat', 'Eksport zleceń do CSV / Excel', 'renderOrders()'); return; }
+  if(!orders || !orders.length){ alert('Brak zleceń do wyeksportowania.'); return; }
+
+  const headers = ['Numer zlecenia', 'Data przyjęcia', 'Klient', 'Telefon', 'Pojazd', 'VIN', 'Przebieg', 'Status', 'Części hurt zł', 'Części klient zł', 'Robocizna zł', 'Łączny koszt zł', 'Zysk warsztatu zł', 'Marża %'];
+  
+  const rows = orders.map(o => {
+    const partsSell = (o.partsList || []).reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+    const partsBuy = (o.partsList || []).reduce((acc, p) => acc + (Number(p.totalCost) || (Number(p.costPrice || 0) * (Number(p.qty) || 1))), 0);
+    const labor = Number(o.laborCost) || 0;
+    const laborBuy = Number(o.laborInternalCost) || 0;
+    const total = Number(o.totalCost) || (partsSell + labor);
+    const totalInternal = partsBuy + laborBuy;
+    const profit = Math.round((total - totalInternal) * 100) / 100;
+    const margin = total > 0 ? Math.round((profit / total) * 1000) / 10 : 0;
+
+    return [
+      o.number || '',
+      o.dateIn || '',
+      o.customerName || '',
+      o.customerPhone || '',
+      `${o.vehicleMake || ''} ${o.vehicleModel || ''}`.trim(),
+      o.vin || '',
+      o.mileage || '',
+      o.status || '',
+      partsBuy.toFixed(2),
+      partsSell.toFixed(2),
+      labor.toFixed(2),
+      total.toFixed(2),
+      profit.toFixed(2),
+      margin.toFixed(1)
+    ].map(val => '"' + String(val).replace(/"/g, '""') + '"').join(';');
+  });
+
+  const csvContent = '\uFEFF' + headers.join(';') + '\r\n' + rows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `naprawnik_zlecenia_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// --- MODUŁ H: DYKTOWANIE GŁOSOWE (WEB SPEECH API / ZERO-COST) ---
+let _voiceRecognition = null;
+function initVoiceDictation(targetInputId){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    alert('Twoja przeglądarka nie obsługuje bezpośredniego dyktowania mowy. Użyj mikrofonu klawiatury ekranowej.');
+    return;
+  }
+  const target = document.getElementById(targetInputId);
+  if(!target) return;
+
+  if(_voiceRecognition){
+    try{ _voiceRecognition.stop(); }catch(_){}
+    _voiceRecognition = null;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'pl-PL';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  const prevPlaceholder = target.placeholder;
+  target.placeholder = '🎙️ Mów teraz... (trwa nasłuchiwanie)';
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    if(transcript){
+      target.value = (target.value ? target.value + ' ' : '') + transcript;
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+      target.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  };
+
+  recognition.onerror = () => {
+    target.placeholder = prevPlaceholder;
+  };
+
+  recognition.onend = () => {
+    target.placeholder = prevPlaceholder;
+  };
+
+  recognition.start();
+  _voiceRecognition = recognition;
+}
+
 function renderOrders(filterStatus){
   if(!hasPlan('warsztat')){ renderLocked('warsztat','Karta Zlecenia Serwisowego','nav(\'home\')'); return; }
   ensureSafeArrays();
@@ -4918,6 +5448,7 @@ function renderOrders(filterStatus){
     <p style="font-size:12px;line-height:1.5">Kompleksowa obsługa przyjęcia pojazdu, kosztorysu, części, robocizny, zdjęć oraz protokołu odbioru z podpisem klienta i wydrukiem PDF.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
       <button class="btn" style="flex:1;min-width:140px;background:var(--hero);color:#120c20;font-weight:700;margin:0" onclick="renderNewOrderForm()">＋ Nowe zlecenie</button>
+      <button class="btn" style="flex:1;min-width:140px;border-color:#25D366;color:#25D366;font-size:12px;margin:0" onclick="exportOrdersCsv()">📊 Eksportuj CSV / Excel</button>
     </div>
     <input id="orderSearchInput" placeholder="🔍 Szukaj zlecenia (nr, klient, pojazd, VIN, telefon)..." value="${escapeHtml(q)}" oninput="renderOrders('${filterStatus||'all'}')">
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-top:6px">
@@ -5094,11 +5625,31 @@ function renderOrderDetail(orderId){
     </div>
   </div>
 
+  <div class="card no-print" style="border-color:#25D366;background:#0e1d13">
+    <h2 style="color:#25D366">💬 Szybkie powiadomienie klienta (WhatsApp / SMS)</h2>
+    <small style="color:var(--dim);display:block;margin-bottom:8px">Wysyłaj bezpośrednie wiadomości ze statusem i kwotą jednym kliknięciem (bez opłat bramek):</small>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn" style="flex:1;min-width:130px;background:#25D366;color:#000;font-weight:700;margin:0" onclick="sendCustomerNotification('${o.id}', 'whatsapp', 'ready')">🟢 WhatsApp: Gotowe</button>
+      <button class="btn" style="flex:1;min-width:130px;background:#00e5ff;color:#000;font-weight:700;margin:0" onclick="sendCustomerNotification('${o.id}', 'sms', 'ready')">📱 SMS: Gotowe</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn" style="flex:1;font-size:11px;padding:6px;margin:0;border-color:var(--border)" onclick="sendCustomerNotification('${o.id}', 'whatsapp', 'quote')">WA: Kosztorys</button>
+      <button class="btn" style="flex:1;font-size:11px;padding:6px;margin:0;border-color:var(--border)" onclick="sendCustomerNotification('${o.id}', 'whatsapp', 'received')">WA: Przyjęcie</button>
+      <button class="btn" style="flex:1;font-size:11px;padding:6px;margin:0;border-color:var(--border)" onclick="sendCustomerNotification('${o.id}', 'sms', 'quote')">SMS: Kosztorys</button>
+    </div>
+  </div>
+
   <div class="card">
     <h2>Diagnoza i opis prac</h2>
-    <label>Zgłoszenie / objawy:</label>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <label>Zgłoszenie / objawy:</label>
+      <button class="btn" type="button" style="width:auto;margin:0;padding:2px 8px;font-size:11px;border-color:var(--hero);color:var(--hero)" onclick="initVoiceDictation('detFault')">🎤 Dyktuj</button>
+    </div>
     <textarea id="detFault" onchange="autoSaveOrderField('${o.id}', 'faultDesc', this.value)">${escapeHtml(o.faultDesc || '')}</textarea>
-    <label>Diagnoza mechanika:</label>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <label>Diagnoza mechanika:</label>
+      <button class="btn" type="button" style="width:auto;margin:0;padding:2px 8px;font-size:11px;border-color:var(--hero);color:var(--hero)" onclick="initVoiceDictation('detDiag')">🎤 Dyktuj</button>
+    </div>
     <textarea id="detDiag" placeholder="Wnioski z weryfikacji i pomiarów..." onchange="autoSaveOrderField('${o.id}', 'diagnosis', this.value)">${escapeHtml(o.diagnosis || '')}</textarea>
     <label>Wykonane czynności / naprawy:</label>
     <textarea id="detWork" placeholder="Zakres prac: co zrobiono, co wyregulowano..." onchange="autoSaveOrderField('${o.id}', 'workDone', this.value)">${escapeHtml(o.workDone || '')}</textarea>
@@ -5198,6 +5749,7 @@ function renderOrderDetail(orderId){
   <div class="card">
     <h2>Akcje i eksport</h2>
     <div class="btn" style="border-color:#00e5ff;color:#00e5ff;font-weight:700" onclick="printOrderPdf('${o.id}')">🖨️ Drukuj zlecenie / Generuj PDF</div>
+    <div class="btn" style="border-color:#25D366;color:#25D366;font-weight:700" onclick="printServiceTagPdf('${o.id}')">🏷️ Drukuj zawieszkę serwisową / olejową</div>
     <div class="btn" style="border-color:#ffe066;color:#ffe066" onclick="transferOrderToRepairs('${o.id}')">📥 Przepisz do Historii Napraw pojazdu</div>
     <div class="btn" style="border-color:#ff6b6b;color:#ff6b6b" onclick="deleteOrder('${o.id}')">🗑️ Usuń to zlecenie</div>
   </div>`;
