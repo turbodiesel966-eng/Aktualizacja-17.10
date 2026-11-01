@@ -94,7 +94,7 @@ const precacheMarker = "const PRECACHE=['./index.html'";
 if (mobileSw.split(precacheMarker).length - 1 !== 1) {
   throw new Error("Could not locate the service-worker precache list for Android.");
 }
-mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js'");
+mobileSw = mobileSw.replace(precacheMarker, "const PRECACHE=['./index.html','./native-bridge.js','./affiliate/catalog.js','./affiliate/catalog.json'");
 await writeFile(mobileSwPath, mobileSw, "utf8");
 
 console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge and offline precache prepared.");
