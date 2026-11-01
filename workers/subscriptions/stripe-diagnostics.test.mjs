@@ -5,8 +5,8 @@ import { diagnoseStripeConfig } from "./src/index.mjs";
 const PRICE_IDS = {
   PRO_MONTHLY: "price_1UUOdRJgi8iwHKRb5mvO8dOP",
   PRO_YEARLY: "price_1UUOdWJgi8iwHKRbl85b4ODT",
-  WARSZTAT_MONTHLY: "price_1UUOrKJgi8iwHKRbHtsxzDcU",
-  WARSZTAT_YEARLY: "price_1UUOrQJgi8iwHKRbIkeq1sUY",
+  WARSZTAT_MONTHLY: "price_1UX1dtJgi8iwHKRbNWDUqSRm",
+  WARSZTAT_YEARLY: "price_1UX1dzJgi8iwHKRbDJKvqJpd",
   PRO_3D: "price_1UUfEJJgi8iwHKRbpU3ivTbn",
   PRO_7D: "price_1UUfELJgi8iwHKRbx6re7Hb3",
   WARSZTAT_3D: "price_1UUfEPJgi8iwHKRbqEotj0El",
@@ -106,8 +106,8 @@ test("Stripe diagnostics validates prices and reports no upstream error data on 
   const expected = {
     [PRICE_IDS.PRO_MONTHLY]: { amount: 900, interval: "month", type: "recurring" },
     [PRICE_IDS.PRO_YEARLY]: { amount: 10000, interval: "year", type: "recurring" },
-    [PRICE_IDS.WARSZTAT_MONTHLY]: { amount: 2900, interval: "month", type: "recurring" },
-    [PRICE_IDS.WARSZTAT_YEARLY]: { amount: 30000, interval: "year", type: "recurring" },
+    [PRICE_IDS.WARSZTAT_MONTHLY]: { amount: 2999, interval: "month", type: "recurring" },
+    [PRICE_IDS.WARSZTAT_YEARLY]: { amount: 29999, interval: "year", type: "recurring" },
     [PRICE_IDS.PRO_3D]: { amount: 300, type: "one_time" },
     [PRICE_IDS.PRO_7D]: { amount: 700, type: "one_time" },
     [PRICE_IDS.WARSZTAT_3D]: { amount: 500, type: "one_time" },
