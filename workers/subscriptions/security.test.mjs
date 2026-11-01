@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { authenticate, applyPlanUsageDelta, enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isNativeAppRequest, billingReturnPage, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
+import { authenticate, applyPlanUsageDelta, subscriptionPriceId, enforceRateLimit, requiredTierForDataKey, isReservedDataKey, safeReturnUrl, isNativeAppRequest, billingReturnPage, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, handleWebhook, photoDiagnosis, createBillingPortalSession, diagnoseStripeConfig } from "./src/index.mjs";
 import { readFile } from "node:fs/promises";
 
 function fakeLimitEnv() {
@@ -1013,4 +1013,20 @@ test("customer browser cannot refund monthly or lifetime plan usage", async () =
   assert.equal(result.ok, false);
   assert.equal(result.status, 403);
   assert.match(result.error, /cannot be decremented/i);
+});
+
+
+test("LIVE WARSZTAT checkout uses the verified 29.99/299.99 PLN prices while TEST keeps its configured prices", () => {
+  const env = {
+    STRIPE_EXPECT_LIVEMODE: "true",
+    STRIPE_PRICE_WARSZTAT_MONTHLY: "price_old_month",
+    STRIPE_PRICE_WARSZTAT_YEARLY: "price_old_year",
+    STRIPE_PRICE_PRO_MONTHLY: "price_pro_month",
+    STRIPE_PRICE_PRO_YEARLY: "price_pro_year",
+  };
+  assert.equal(subscriptionPriceId(env, "warsztat", "month"), "price_1UX1dtJgi8iwHKRbNWDUqSRm");
+  assert.equal(subscriptionPriceId(env, "warsztat", "year"), "price_1UX1dzJgi8iwHKRbDJKvqJpd");
+  env.STRIPE_EXPECT_LIVEMODE = "false";
+  assert.equal(subscriptionPriceId(env, "warsztat", "month"), "price_old_month");
+  assert.equal(subscriptionPriceId(env, "pro", "month"), "price_pro_month");
 });
