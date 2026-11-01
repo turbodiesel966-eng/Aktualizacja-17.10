@@ -77,3 +77,32 @@ test('NAPRAWNIK — przycisk powrót zachowuje historię ekranów oraz pozycję 
   assert.ok(html.includes('getScrollPos'), 'Brak getScrollPos pobierającego przewinięcie');
   assert.ok(html.includes('screenScroll: currentNavState.screenScroll'), 'Stan historii musi zapisywać screenScroll');
 });
+
+test('NAPRAWNIK — przycisk Aktualizuj na górze zmieniający kolor i treść po wykryciu aktualizacji', () => {
+  const html = read('index.html');
+  const sw = read('sw.js');
+  const version = JSON.parse(read('version.json'));
+
+  // 1. Przycisk na górze z domyślną nazwą Aktualizuj
+  assert.ok(html.includes('id="topUpdateBar"'), 'Brak górnego paska aktualizacji #topUpdateBar');
+  assert.ok(html.includes('id="btnAppUpdate"'), 'Brak przycisku aktualizacji #btnAppUpdate');
+  assert.ok(html.includes('Aktualizuj'), 'Brak domyślnego napisu Aktualizuj');
+
+  // 2. Napis po wykryciu aktualizacji i zmiana stylu
+  assert.ok(
+    html.includes('Rób Aktualizacje ten pojeb znów coś wymyślił i dodał!!!!'),
+    'Brak wymaganego napisu alertu po wykryciu aktualizacji'
+  );
+  assert.ok(html.includes('update-ready'), 'Brak klasy zmiany koloru update-ready');
+  assert.ok(html.includes('updateBtnPulse'), 'Brak animacji pulsowania przycisku po wykryciu aktualizacji');
+
+  // 3. Połączenie z wersją i automatyczne wykrywanie zmian w tle bez powiadomień
+  assert.ok(html.includes('function checkForAppUpdates('), 'Brak funkcji checkForAppUpdates');
+  assert.ok(html.includes('function triggerUpdateState('), 'Brak funkcji triggerUpdateState');
+  assert.ok(html.includes('version.json'), 'Wykrywanie musi odpytywać version.json');
+  assert.ok(typeof version.version === 'string', 'Plik version.json musi zawierać pole version');
+  assert.ok(typeof version.build === 'number', 'Plik version.json musi zawierać timestamp buildu');
+
+  // 4. Obsługa Service Worker skipWaiting
+  assert.ok(sw.includes('skipWaiting'), 'Service worker musi obsługiwać skipWaiting');
+});
