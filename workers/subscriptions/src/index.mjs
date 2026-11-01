@@ -1588,6 +1588,82 @@ async function writeUserData(request, env, auth) {
   if (!saved || Number(saved.revision) !== nextRevision) return json({ conflict: true, reason: "CONCURRENT_WRITE", current: saved ? { ...saved, value: safeParse(saved.json_value) } : null }, 409);
   return json({ saved: { key: saved.data_key, value: safeParse(saved.json_value), revision: saved.revision, updatedAt: saved.updated_at } }, 200);
 }
+
+// Monthly and lifetime quotas for NAPRAWNIK modules. Counters are bound to the server-side user account.
+const PLAN_USAGE_LIMITS = Object.freeze({
+  amator: Object.freeze({ vehicles: 1, reminders: 5, measurements: 20, parts_searches: 10, photos: 0, photo_bytes: 0, ai_analyses: 0, work_orders: 0, archived_work_orders: 0, customers: 0, customer_vehicles: 0 }),
+  pro: Object.freeze({ vehicles: 3, reminders: 15, measurements: 150, parts_searches: 50, photos: 50, photo_bytes: 1073741824, ai_analyses: 5, work_orders: 0, archived_work_orders: 0, customers: 0, customer_vehicles: 0 }),
+  warsztat: Object.freeze({ vehicles: 3, reminders: 200, measurements: 5000, parts_searches: 300, photos: 300, photo_bytes: 10737418240, ai_analyses: 30, work_orders: 30, archived_work_orders: 500, customers: 2000, customer_vehicles: 500 }),
+});
+const PLAN_USAGE_METRICS = Object.freeze(Object.keys(PLAN_USAGE_LIMITS.amator));
+const PLAN_USAGE_MONTHLY = new Set(["parts_searches", "photos", "ai_analyses", "work_orders"]);
+function planUsagePeriod(metric, tier) {
+  if (!PLAN_USAGE_MONTHLY.has(metric)) return 0;
+  const now = new Date();
+  return Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / 1000);
+}
+async function getPlanUsageValue(env, userId, metric, periodStart) {
+  const row = await env.DB.prepare("SELECT count FROM plan_usage WHERE user_id = ? AND metric = ? AND period_start = ? LIMIT 1")
+    .bind(userId, metric, periodStart).first();
+  return Number(row?.count || 0);
+}
+async function applyPlanUsageDelta(env, userId, tier, metric, delta, eventId) {
+  if (!PLAN_USAGE_METRICS.includes(metric)) return { ok: false, status: 400, error: "Unknown usage metric." };
+  if (!Number.isSafeInteger(delta) || delta === 0 || Math.abs(delta) > 10000) return { ok: false, status: 400, error: "Invalid usage delta." };
+  const limit = Number(PLAN_USAGE_LIMITS[tier]?.[metric] ?? 0);
+  const periodStart = planUsagePeriod(metric, tier);
+  const current = await getPlanUsageValue(env, userId, metric, periodStart);
+  if (delta > 0 && current + delta > limit) return { ok: false, status: 429, error: "Osiągnięto limit planu dla tej funkcji.", metric, current, limit };
+  if (delta < 0 && current + delta < 0) return { ok: false, status: 409, error: "Usage counter cannot become negative.", metric, current, limit };
+  const now = nowSeconds();
+  const safeEventId = typeof eventId === "string" && /^[A-Za-z0-9_-]{8,100}$/.test(eventId) ? eventId : null;
+  if (safeEventId) {
+    const inserted = await env.DB.prepare("INSERT OR IGNORE INTO plan_usage_events (event_id, user_id, metric, period_start, delta, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .bind(safeEventId, userId, metric, periodStart, delta, now).run();
+    if (Number(inserted.meta?.changes || 0) !== 1) {
+      return { ok: true, replayed: true, metric, count: current, limit, remaining: Math.max(0, limit - current), periodStart };
+    }
+  }
+  await env.DB.prepare("INSERT OR IGNORE INTO plan_usage (user_id, metric, period_start, count, updated_at) VALUES (?, ?, ?, 0, ?)")
+    .bind(userId, metric, periodStart, now).run();
+  const changed = await env.DB.prepare(`UPDATE plan_usage SET count = count + ?, updated_at = ?
+    WHERE user_id = ? AND metric = ? AND period_start = ?
+      AND count + ? >= 0 AND count + ? <= ?`)
+    .bind(delta, now, userId, metric, periodStart, delta, delta, limit).run();
+  if (Number(changed.meta?.changes || 0) !== 1) {
+    if (safeEventId) await env.DB.prepare("DELETE FROM plan_usage_events WHERE event_id = ? AND user_id = ?").bind(safeEventId, userId).run();
+    const latest = await getPlanUsageValue(env, userId, metric, periodStart);
+    return { ok: false, status: delta > 0 ? 429 : 409, error: delta > 0 ? "Osiągnięto limit planu dla tej funkcji." : "Usage counter could not be decremented.", metric, current: latest, limit };
+  }
+  const next = await getPlanUsageValue(env, userId, metric, periodStart);
+  return { ok: true, metric, count: next, limit, remaining: Math.max(0, limit - next), periodStart };
+}
+async function planUsageApi(request, env, auth) {
+  const tier = await recalcUserTier(env, auth.userId);
+  const admin = await isAdminUser(env, auth.userId);
+  if (request.method === "GET") {
+    const usage = {};
+    for (const metric of PLAN_USAGE_METRICS) {
+      const periodStart = planUsagePeriod(metric, tier);
+      const count = await getPlanUsageValue(env, auth.userId, metric, periodStart);
+      const limit = Number(PLAN_USAGE_LIMITS[tier]?.[metric] ?? 0);
+      usage[metric] = { count, limit: admin ? null : limit, remaining: admin ? null : Math.max(0, limit - count), unlimited: admin, periodStart };
+    }
+    return json({ tier: admin ? "warsztat" : tier, admin, usage });
+  }
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  const body = await readJson(request, 4096);
+  const metric = typeof body?.metric === "string" ? body.metric : "";
+  const delta = Number(body?.delta ?? 1);
+  if (!PLAN_USAGE_METRICS.includes(metric)) return err("Unknown usage metric.");
+  if (!Number.isSafeInteger(delta) || delta === 0 || Math.abs(delta) > 10000) return err("Invalid usage delta.");
+  if (admin) return json({ ok: true, metric, count: await getPlanUsageValue(env, auth.userId, metric, planUsagePeriod(metric, tier)), limit: null, remaining: null, unlimited: true });
+  const eventId = typeof body?.eventId === "string" ? body.eventId : null;
+  const result = await applyPlanUsageDelta(env, auth.userId, tier, metric, delta, eventId);
+  if (!result.ok) return json({ error: result.error, metric: result.metric, current: result.current, limit: result.limit }, result.status);
+  return json(result);
+}
+
 function photoField(form, key, maxLength) {
   const value = form.get(key);
   if (value === null || typeof value === "undefined") return "";
@@ -2057,6 +2133,13 @@ export default {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
         else response = await photoDiagnosis(request, env, auth);
+      } else if (url.pathname === "/api/usage" && ["GET", "POST"].includes(request.method)) {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else {
+          const limited = request.method === "POST" ? await enforceRateLimit(request, env, "user-data-write", auth.userId, RATE_LIMITS.userDataWrites) : null;
+          response = limited || await planUsageApi(request, env, auth);
+        }
       } else if (url.pathname === "/api/data" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -2083,6 +2166,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, planUsageApi, applyPlanUsageDelta, PLAN_USAGE_LIMITS };
 
 
