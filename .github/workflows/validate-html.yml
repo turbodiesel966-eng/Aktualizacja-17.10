@@ -41,6 +41,8 @@ jobs:
           done
       - name: Sprawdź moduł płatności
         run: node --check billing.js
+      - name: Sprawdź moduły warsztatowe
+        run: node --check workshop-modules.js
       - name: Sprawdź katalog techniczny
         run: node --check katalog-techniczny.js
       - name: Sprawdź Service Workera aplikacji
