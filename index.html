@@ -740,6 +740,104 @@ body{
     border-color: #ffffff;
   }
 }
+
+/* --- SEKCJA NARZĘDZI EKSPERCKICH (SPECJALNE KAFELKI) --- */
+.special-section-header{
+  margin:16px 0 10px;
+  text-align:center;
+  position:relative;
+}
+.special-section-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 12px;
+  border-radius:20px;
+  background:rgba(255,204,0,0.12);
+  border:1px solid rgba(255,204,0,0.45);
+  color:#ffcc00;
+  font-size:10.5px;
+  font-weight:900;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  margin-bottom:6px;
+  box-shadow:0 0 10px rgba(255,204,0,0.22);
+}
+.special-section-title{
+  font-size:clamp(16px,3.2vw,20px);
+  font-weight:900;
+  color:#ffffff;
+  letter-spacing:.8px;
+  margin:0 0 4px;
+  text-transform:uppercase;
+  text-shadow:0 0 14px rgba(255,204,0,.35);
+}
+.special-section-sub{
+  font-size:11.8px;
+  color:var(--dim);
+  margin:0 auto;
+  max-width:440px;
+  line-height:1.4;
+}
+.special-section-divider{
+  display:flex;
+  align-items:center;
+  text-align:center;
+  margin:22px 0 14px;
+  color:var(--dim);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+.special-section-divider::before,
+.special-section-divider::after{
+  content:"";
+  flex:1;
+  border-bottom:1px solid rgba(255,255,255,0.14);
+}
+.special-section-divider span{
+  padding:0 12px;
+}
+.special-grid{
+  margin:6px 0 14px;
+}
+@media (min-width:768px){
+  .special-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+.tile.tile-special{
+  min-height:216px;
+  border-radius:20px;
+  border-width:2.5px;
+  background:
+    radial-gradient(circle at 50% 25%,var(--tile-glow-soft) 0%,transparent 70%),
+    linear-gradient(180deg,rgba(16,12,30,.98) 0%,rgba(6,4,12,.99) 55%,rgba(8,6,16,.99) 100%);
+  box-shadow:
+    0 0 14px var(--tile-glow),
+    0 0 28px var(--tile-glow-soft),
+    inset 0 0 16px var(--tile-glow-inset),
+    inset 0 1px 1.5px rgba(255,255,255,.5);
+}
+.tile.tile-special .tile-visual{
+  height:124px;
+}
+.tile.tile-special .tile-body{
+  padding:0 10px 12px;
+}
+.tile.tile-special .tile-label{
+  font-size:clamp(12.5px,2.2vw,14.5px);
+  color:#ffcc00 !important;
+  text-shadow:0 0 10px rgba(255,204,0,.45),0 2px 4px #000 !important;
+}
+.tile.tile-special .tile-desc{
+  color:#f4f3ff;
+  font-size:11px;
+  line-height:1.32;
+  margin-top:4px;
+}
+
 </style>
 </head>
 <body>
@@ -1772,7 +1870,7 @@ function searchSymptoms(){
   let visibleMain = 0;
   let totalMain = 0;
   document.querySelectorAll('#screen .tile').forEach(el => {
-    const isMain = el.parentElement && el.parentElement.id === 'mainTileGrid';
+    const isMain = el.parentElement && (el.parentElement.id === 'mainTileGrid' || el.parentElement.id === 'expertTileGrid');
     if (isMain) totalMain++;
     if (!q) { el.style.display = ''; if (isMain) visibleMain++; return; }
     const title = normalizeSearchText(el.querySelector('.tile-label')?.textContent || '');
@@ -2489,6 +2587,24 @@ function renderHome(){
     <div class="home-search-meta"><span id="homeTileCount"></span></div>
     <div id="symptomResults"></div>
   </div>
+  <div class="special-section-header" id="expertSectionHeader">
+    <div class="special-section-badge">⭐ FUNKCJE SPECJALNE</div>
+    <div class="special-section-title">NARZĘDZIA EKSPERCKIE</div>
+    <div class="special-section-sub">Najbardziej zaawansowane moduły warsztatowe, kalkulatory precyzyjne i interaktywna diagnostyka</div>
+  </div>
+  <div class="neon-grid special-grid" id="expertTileGrid">
+    ${tile('👓','TRYB WARSZTATOWY HUD','hud',null,'Duży ekran HUD • Momenty dokręcania<br>Luzy zaworowe • Squish silnika','',{theme:'green',goldTitle:true,isSpecial:true,image:'./assets/tile-hud.jpg'})}
+    ${tile('🫁','STROICIEL GAŹNIKA','jetting',null,'Dobór dyszy głównej i iglicy<br>50cc / 70cc / Filtr stożkowy','',{theme:'orange',goldTitle:true,isSpecial:true,image:'./assets/tile-jetting.jpg'})}
+    ${tile('⚙️','TUNING NAPĘDU CVT','cvt',null,'Waga rolek • Sprężyna centralna<br>Sprzęgło • Obroty mocy silnika','',{theme:'red',goldTitle:true,isSpecial:true,image:'./assets/tile-cvt.jpg'})}
+    ${tile('🔌','PINOUTY CDI & REGULATORÓW','pinouts',null,'Interaktywne złącza zapłonu<br>Pomiary multimetrem • Diagnoza iskry','pro',{theme:'purple',goldTitle:true,badgeLabel:'PRO',isSpecial:true,image:'./assets/tile-pinouts.jpg'})}
+    ${tile('⚡','KALKULATOR SQUISH / CR','mix',null,'Prześwit tłok–głowica • Stopień sprężania<br>Presety AM6, Aerox, GY6, BigBore','',{theme:'cyan',goldTitle:true,isSpecial:true,image:'./assets/tile-squish.jpg'})}
+    ${tile('📋','ZLECENIA & SKANER VIN','orders',null,'Karta zlecenia • Skaner kodów VIN<br>Wycena • Marża • Druk etykiet PDF','warsztat',{theme:'orange',goldTitle:true,badgeLabel:'WARSZTAT',isSpecial:true,image:'./assets/tile-orders.jpg'})}
+  </div>
+
+  <div class="special-section-divider" id="categorySectionDivider">
+    <span>KATEGORIE I BAZA WIEDZY</span>
+  </div>
+
   <div class="neon-grid" id="mainTileGrid">
     ${tile('🔍','DIAGNOSTYKA','diag',null,'Objawy • Przyczyny<br>Rozwiązania','',{theme:'purple',sublabel:'2T / 4T',subIcon:'⚙️',spriteIdx:0})}
     ${tile('⚙️','CZĘŚCI','parts',null,'Ceny • Zamienniki<br>Linki','pro',{theme:'orange',subIcon:'🔩',hideBadge:true,spriteIdx:1})}
@@ -2498,30 +2614,8 @@ function renderHome(){
     ${tile('🔋','ELEKTRYKA','electric',null,'Schematy • Diagnostyka<br>Pomiary • Porady','',{theme:'orange',subIcon:'⚡',spriteIdx:5})}
     ${tile('🔩','SILNIK','engine','2T','Budowa • Regulacja<br>Remonty • Modyfikacje','',{theme:'red',subIcon:'⚙️',spriteIdx:6})}
     ${tile('🛠️','NARZĘDZIA','mix',null,'Kalkulatory • Tabele<br>Ustawienia','',{theme:'cyan',subIcon:'🧪',spriteIdx:7})}
-    ${tile('👓','TRYB WARSZTATOWY','hud',null,'Duży ekran HUD<br>Momenty • Squish • Luzy','',{
-      theme:'green',
-      goldTitle:true,
-      image:'./assets/tile-hud.jpg'
-    })}
-    ${tile('🫁','STROICIEL GAŹNIKA','jetting',null,'Dobór dysz • Iglica<br>50cc / 70cc / Stożek','',{
-      theme:'orange',
-      goldTitle:true,
-      image:'./assets/tile-jetting.jpg'
-    })}
-    ${tile('⚙️','TUNING CVT','cvt',null,'Rolki • Sprężyna centralna<br>Sprzęgło • Obroty mocy','',{
-      theme:'red',
-      goldTitle:true,
-      image:'./assets/tile-cvt.jpg'
-    })}
-    ${tile('🔌','PINOUTY CDI & REGULATORÓW','pinouts',null,'Interaktywne złącza<br>Pomiary multimetrem','pro',{
-      theme:'purple',
-      goldTitle:true,
-      badgeLabel:'PRO',
-      image:'./assets/tile-pinouts.jpg'
-    })}
     ${tile('📓','LOGI / NOTATKI','photoAssistant',null,'Historia napraw<br>Zdjęcia • Wpisy','',{theme:'purple',subIcon:'✒️',spriteIdx:8})}
     ${tile('🛵','MOJE POJAZDY','vehicles',null,'Garaż • Profil<br>Przypomnienia','',{theme:'cyan',subIcon:'🏠',spriteIdx:9})}
-    ${tile('📋','ZLECENIA SERWISOWE','orders',null,'Przyjęcie • Diagnoza • Kosztorys<br>Wydruk PDF • Podpis','warsztat',{theme:'orange',badgeLabel:'WARSZTAT',goldTitle:true,subIcon:'📋',spriteIdx:17})}
     ${tile('⚡','ELEKTRONICZNE LAB','lab',null,'Pomiary • Wartości wzorcowe<br>Automatyczna diagnoza','',{theme:'blue',goldTitle:true,subIcon:'🔬',spriteIdx:14})}
     ${tile('📅','PLAN SERWISOWY','servicePlan',null,'Obsługa wg km i daty<br>Automatyczne interwały','',{theme:'pink',goldTitle:true,subIcon:'🗓️',spriteIdx:12})}
     ${tile('🗄️','KLIENCI','clients',null,'Lista klientów • Dane<br>Historia obsługi','warsztat',{theme:'orange',subIcon:'👥',hideBadge:true,spriteIdx:10})}
@@ -2668,7 +2762,8 @@ function tile(icon,label,view,arg,description='',min='',opts={}){
 
   const plainDesc = String(description||'').replace(/<[^>]*>/g,' ');
   const searchAttr = escapeHtml(normalizeSearchText(label + ' ' + (opts.sublabel||'') + ' ' + badgeText + ' ' + plainDesc));
-  return `<div class="tile" data-theme="${theme}" data-search="${searchAttr}" role="button" tabindex="0" onclick="${clickJs}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="tile-visual" ${bgPos}>${visualContent}</div><div class="tile-body"><span class="${titleCls}">${label}${inlineLock}</span>${sublabelHtml}${badgeHtml}${description?`<span class="tile-desc">${description}</span>`:''}</div></div>`;
+  const specialCls = opts.isSpecial ? ' tile-special' : '';
+  return `<div class="tile${specialCls}" data-theme="${theme}" data-search="${searchAttr}" role="button" tabindex="0" onclick="${clickJs}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><div class="tile-visual" ${bgPos}>${visualContent}</div><div class="tile-body"><span class="${titleCls}">${label}${inlineLock}</span>${sublabelHtml}${badgeHtml}${description?`<span class="tile-desc">${description}</span>`:''}</div></div>`;
 }
 
 const SCOOTER_MANUALS = [
@@ -6452,8 +6547,8 @@ function zoomPhoto(dataUrl){
 
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
-const CURRENT_APP_VERSION = "5.23.0";
-const CURRENT_APP_BUILD = 1730495000000;
+const CURRENT_APP_VERSION = "5.24.0";
+const CURRENT_APP_BUILD = 1730497000000;
 let isAppUpdateAvailable = false;
 let initialAppETag = null;
 let initialAppLastModified = null;
