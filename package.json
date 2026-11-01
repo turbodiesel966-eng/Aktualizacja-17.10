@@ -4,7 +4,7 @@
   "private": true,
   "description": "Capacitor Android wrapper for the NAPRAWNIK workshop app",
   "scripts": {
-    "test": "node --check billing.js && node --check katalog-techniczny.js && node --check sw.js && node --check workers/subscriptions/src/index.mjs && node --test tests/static-audit.test.cjs tests/service-worker.test.cjs workers/subscriptions/security.test.mjs workers/subscriptions/admin-device-pairing.test.mjs workers/subscriptions/admin-promos.test.mjs workers/subscriptions/one-time-packages.test.mjs workers/subscriptions/photo-budget.test.mjs workers/subscriptions/stripe-diagnostics.test.mjs",
+    "test": "node --check billing.js && node --check katalog-techniczny.js && node --check sw.js && node --check workers/subscriptions/src/index.mjs && node --test tests/static-audit.test.cjs tests/service-worker.test.cjs tests/master-modules.test.cjs workers/subscriptions/security.test.mjs workers/subscriptions/admin-device-pairing.test.mjs workers/subscriptions/admin-promos.test.mjs workers/subscriptions/one-time-packages.test.mjs workers/subscriptions/photo-budget.test.mjs workers/subscriptions/stripe-diagnostics.test.mjs workers/subscriptions/limits.test.mjs",
     "mobile:prepare": "npm test && node scripts/prepare-mobile.mjs",
     "mobile:sync": "npm run mobile:prepare && npx cap sync android",
     "mobile:android": "npm run mobile:prepare && npx cap add android && npx cap sync android",

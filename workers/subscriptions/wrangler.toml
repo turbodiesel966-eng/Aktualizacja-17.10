@@ -1,0 +1,37 @@
+name = "naprawnik-subscriptions-live"
+main = "src/index.mjs"
+compatibility_date = "2026-10-18"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "naprawnik-subscriptions-live"
+database_id = "a2da4f07-f769-45f0-9ead-3bd67c385e85"
+migrations_dir = "migrations"
+
+[vars]
+PRODUCTION_ENABLED = "true"
+STRIPE_EXPECT_LIVEMODE = "true"
+ALLOWED_ORIGINS = "https://turbodiesel966-eng.github.io"
+APP_BASE_URL = "https://turbodiesel966-eng.github.io/Aktualizacja-17.10/"
+CHECKOUT_SUCCESS_URL = "https://turbodiesel966-eng.github.io/Aktualizacja-17.10/?checkout=success&session_id={CHECKOUT_SESSION_ID}"
+CHECKOUT_CANCEL_URL = "https://turbodiesel966-eng.github.io/Aktualizacja-17.10/?checkout=cancelled"
+STRIPE_PRICE_PRO_MONTHLY = "price_1UUd5LJgi8iwHKRbDlIkpQJo"
+STRIPE_PRICE_PRO_YEARLY = "price_1UUd5MJgi8iwHKRbRS7WOdWM"
+STRIPE_PRICE_WARSZTAT_MONTHLY = "price_1UUOrKJgi8iwHKRbHtsxzDcU"
+STRIPE_PRICE_WARSZTAT_YEARLY = "price_1UUOrQJgi8iwHKRbIkeq1sUY"
+STRIPE_PRICE_PRO_3D = "price_1UUfEJJgi8iwHKRbpU3ivTbn"
+STRIPE_PRICE_PRO_7D = "price_1UUfELJgi8iwHKRbx6re7Hb3"
+STRIPE_PRICE_WARSZTAT_3D = "price_1UUfEPJgi8iwHKRbqEotj0El"
+STRIPE_PRICE_WARSZTAT_7D = "price_1UUfERJgi8iwHKRbrzkPLcQg"
+PHOTO_ANALYSIS_ENABLED = "false"
+PHOTO_MONTHLY_BUDGET_USD = "5"
+PHOTO_REQUEST_RESERVE_USD = "0.25"
+OPENAI_VISION_MODEL = "gpt-6-luna"
+
+# Secrets configured in Cloudflare (never store values here):
+# ADMIN_BOOTSTRAP_KEY
+# STRIPE_SECRET_KEY
+# STRIPE_WEBHOOK_SECRET
+# OPENAI_API_KEY (optional, only when PHOTO_ANALYSIS_ENABLED = "true")
+

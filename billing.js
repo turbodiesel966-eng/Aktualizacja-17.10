@@ -27,7 +27,7 @@
         Object.prototype.hasOwnProperty.call(ORDER, state.tier) &&
         state.tier !== 'amator' &&
         Number.isFinite(Number(state.exp)) && Number(state.exp) > Date.now()) {
-      verifiedLicenseState = { tier: state.tier, exp: Number(state.exp), token: typeof state.token === 'string' ? state.token : '', verified: true, isAdmin: state.isAdmin === true };
+      verifiedLicenseState = { tier: state.tier, exp: Number(state.exp), token: typeof state.token === 'string' ? state.token : '', verified: true, isAdmin: state.isAdmin === true, planUsage: state.planUsage || null };
     } else {
       verifiedLicenseState = null;
       adminTierOverride = null;
@@ -197,7 +197,7 @@
       localStorage.setItem('naprawnik_license', JSON.stringify({ token, tier, exp: expires, checkedAt: Date.now(), role: isAdmin ? 'admin' : 'user' }));
     }
     if (token) localStorage.setItem(TOKEN_KEY, token);
-    applyVerifiedPlan({ verified: true, tier, exp: expires, token, isAdmin });
+    applyVerifiedPlan({ verified: true, tier, exp: expires, token, isAdmin, planUsage: data && data.planUsage });
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
     return tier;
   }
@@ -349,8 +349,27 @@
         ? '<p style="font-size:12px;line-height:1.5">Dostęp na określony czas. Jednorazowa płatność — bez automatycznego odnowienia.</p>' +
           oneTimeOffers.map(offer => '<div class="entry"><b>' + esc(offer.title) + ' · ' + esc(String(offer.days)) + ' dni — ' + esc(offer.price) + '</b><button class="btn" type="button" data-one-time-tier="' + esc(offer.tier) + '" data-one-time-days="' + esc(String(offer.days)) + '">Kup ' + esc(offer.title) + ' na ' + esc(String(offer.days)) + ' dni</button></div>').join('')
         : '<p style="font-size:12px;line-height:1.5">Masz już aktywny plan WARSZTAT. Pakiety równe lub niższe od aktywnego planu są ukryte, aby nie proponować zbędnego zakupu.</p>') + '</div>';
+    let usageCard = '';
+    const planUsage = license && license.planUsage;
+    if (license && license.tier !== 'amator') {
+      const u = (planUsage && planUsage.usage) || {};
+      const lim = (planUsage && planUsage.limits) || {};
+      const renewsAtStr = planUsage && planUsage.period && planUsage.period.renewsAt
+        ? new Date(planUsage.period.renewsAt * 1000).toLocaleDateString('pl-PL')
+        : 'końcem okresu rozliczeniowego';
+      usageCard = '<div class="card" style="border-color:var(--hero)"><h2>📊 Wykorzystanie i limity Twojego planu</h2>' +
+        '<div style="font-size:12px;color:var(--dim);margin-bottom:8px">Miesięczne limity odnawiają się: <b>' + esc(renewsAtStr) + '</b></div>' +
+        '<div class="entry"><b>Własne pojazdy w kartotece:</b> <span>' + (typeof vehicles !== 'undefined' ? vehicles.length : 0) + ' / ' + (lim.vehicles !== undefined ? lim.vehicles : (license.tier === 'pro' ? 3 : 500)) + '</span></div>' +
+        '<div class="entry"><b>Zapisane pomiary:</b> <span>' + (typeof measurements !== 'undefined' ? measurements.length : 0) + ' / ' + (lim.measurements !== undefined ? lim.measurements : (license.tier === 'pro' ? 150 : 5000)) + '</span></div>' +
+        '<div class="entry"><b>Wyszukiwania części w tym miesiącu:</b> <span>' + (u.parts_searches || 0) + ' / ' + (lim.parts_searches || (license.tier === 'pro' ? 50 : 300)) + '</span></div>' +
+        '<div class="entry"><b>Zdjęcia w tym miesiącu:</b> <span>' + (u.photos || 0) + ' / ' + (lim.photos || (license.tier === 'pro' ? 50 : 300)) + '</span></div>' +
+        '<div class="entry"><b>Analizy zdjęć AI w tym miesiącu:</b> <span>' + (u.ai_analyses || 0) + ' / ' + (lim.ai_analyses || (license.tier === 'pro' ? 5 : 30)) + '</span></div>' +
+        (license.tier === 'warsztat' ? '<div class="entry"><b>Nowe zlecenia w tym miesiącu:</b> <span>' + (u.new_orders || 0) + ' / ' + (lim.new_orders || 30) + '</span></div>' : '') +
+        '</div>';
+      activation = activation + usageCard;
+    }
     root.innerHTML = (typeof back === 'function' ? back() : '') +
-      '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka. PRO rozszerza bazę elektryki i funkcje diagnostyczne; analiza zdjęć AI jest chwilowo wyłączona. WARSZTAT zawiera funkcje PRO oraz narzędzia obsługi klientów i dokumentacji. Abonamentem zarządzasz w panelu Stripe.</p></div>' +
+      '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka i pomiary (1 pojazd). PRO to 3 pojazdy, 150 pomiarów z automatyczną diagnozą, 50 dobierań części i zdjęć (analiza zdjęć AI jest chwilowo wyłączona) oraz kopia w chmurze. WARSZTAT to kompleksowe narzędzie: zlecenia, PDF z podpisem klienta, do 500 pojazdów, 5000 pomiarów i 30 nowych zleceń/mc. Subskrypcją zarządzasz w portalu Stripe.</p></div>' +
       activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
       '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small><div class="btn" onclick="if(typeof nav===\'function\')nav(\'legal\')" style="margin-top:8px">📜 Regulamin i Polityka prywatności (RODO)</div></div>';
   }

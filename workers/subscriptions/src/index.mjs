@@ -9,6 +9,8 @@
  * - Install schema.sql on a NEW/verified database first; it is additive and does not drop tables.
  */
 
+import { readUsage, consumeUsage, refundUsage, checkBackupLimits, limitsForTier, MONTHLY_METRICS } from "./limits.mjs";
+
 const ACTIVE_SUB_STATUSES = new Set(["active", "trialing"]);
 const BILLING_GRACE_SECONDS = 3 * 24 * 60 * 60;
 const TOKEN_LIFETIME_SECONDS = 365 * 24 * 60 * 60;
@@ -1147,7 +1149,43 @@ async function getMe(env, auth) {
     grace_until: null,
     granted_at: now
   }] : [];
-  return json({ user: { ...user, tier: isAdmin ? "warsztat" : currentTier, role: admin?.role || "user" }, subscriptions: [...adminEntitlements, ...subscriptions, ...promoEntitlements, ...oneTimeEntitlements] });
+  const effectiveTier = isAdmin ? "warsztat" : currentTier;
+  let planUsage = null;
+  try { planUsage = await readUsage(env, auth.userId, effectiveTier, isAdmin, now); }
+  catch (error) { console.error(JSON.stringify({ event: "usage_read_failed", code: error?.message || "unknown" })); }
+  return json({ user: { ...user, tier: effectiveTier, role: admin?.role || "user" }, subscriptions: [...adminEntitlements, ...subscriptions, ...promoEntitlements, ...oneTimeEntitlements], planUsage });
+}
+
+async function userPlanContext(env, userId) {
+  const isAdmin = await isAdminUser(env, userId);
+  const tier = isAdmin ? "warsztat" : await recalcUserTier(env, userId);
+  return { tier, isAdmin };
+}
+
+async function getUsage(env, auth) {
+  const { tier, isAdmin } = await userPlanContext(env, auth.userId);
+  return json(await readUsage(env, auth.userId, tier, isAdmin, nowSeconds()));
+}
+
+async function postUsageConsume(request, env, auth) {
+  const body = await readJson(request);
+  const metric = body?.metric;
+  if (!MONTHLY_METRICS.includes(metric)) return err("Nieznana metryka limitu.", 400);
+  const { tier, isAdmin } = await userPlanContext(env, auth.userId);
+  const result = await consumeUsage(env, {
+    userId: auth.userId, tier, isAdmin, metric,
+    amount: body?.amount === undefined ? 1 : Number(body.amount),
+    bytes: body?.bytes === undefined ? 0 : Number(body.bytes),
+    key: body?.key, now: nowSeconds()
+  });
+  if (!result.ok) return json({ error: result.error, code: result.code || "BAD_REQUEST", metric: result.metric || metric, limit: result.limit, used: result.used, renewsAt: result.renewsAt }, result.status || 400);
+  return json({ ok: true, duplicate: !!result.duplicate, metric, used: result.used, limit: Number.isFinite(result.limit) ? result.limit : null, renewsAt: result.renewsAt });
+}
+
+async function postUsageRefund(request, env, auth) {
+  const body = await readJson(request);
+  if (typeof body?.key !== "string" || !/^[A-Za-z0-9_.:-]{8,100}$/.test(body.key)) return err("Nieprawidłowy klucz zdarzenia.", 400);
+  return json(await refundUsage(env, { userId: auth.userId, key: body.key, now: nowSeconds() }));
 }
 
 async function isAdminUser(env, userId) {
@@ -1568,6 +1606,26 @@ async function writeUserData(request, env, auth) {
   const serverNow = Date.now();
   const current = await env.DB.prepare("SELECT revision, updated_at, json_value FROM user_data WHERE user_id = ? AND data_key = ? LIMIT 1")
     .bind(auth.userId, body.key).first();
+  if (body.key === "pro:workshop_backup") {
+    const { tier: effectiveTier, isAdmin } = await userPlanContext(env, auth.userId);
+    const violations = checkBackupLimits(effectiveTier, isAdmin, body.value, current ? safeParse(current.json_value) : null);
+    if (violations && violations.length) {
+      const v = violations[0];
+      const metricLabels = {
+        vehicles: "pojazdów",
+        reminders: "przypomnień",
+        measurements: "pomiarów",
+        customers: "klientów",
+        archived_orders: "zleceń"
+      };
+      const label = metricLabels[v.metric] || v.metric;
+      return json({
+        error: `Osiągnięto limit ${label} dla Twojego planu (limit: ${v.limit}, próbujesz zapisać: ${v.count}). Zwiększ pakiet do WARSZTAT, aby zapisać więcej.`,
+        code: "LIMIT_EXCEEDED",
+        violations
+      }, 403);
+    }
+  }
   // Timestamps from devices are hints only; reject stale writes and require revision for optimistic concurrency.
   if (current && Number(clientUpdatedAt) < Number(current.updated_at)) {
     return json({ conflict: true, reason: "STALE_CLIENT_TIMESTAMP", current: { revision: current.revision, updatedAt: current.updated_at, value: safeParse(current.json_value) } }, 409);
@@ -1693,13 +1751,33 @@ async function photoDiagnosis(request, env, auth) {
   }
 
   const dimensionsTotal = imageContent.length; // The count is included in usage reporting; per-file pixels are capped above.
+  const { tier: effectiveTier, isAdmin } = await userPlanContext(env, auth.userId);
+  const aiKey = "ai_" + auth.userId + "_" + nowSeconds() + "_" + Math.random().toString(36).slice(2, 10);
+  const usageCheck = await consumeUsage(env, {
+    userId: auth.userId, tier: effectiveTier, isAdmin, metric: "ai_analyses",
+    amount: 1, key: aiKey, now: nowSeconds()
+  });
+  if (!usageCheck.ok) {
+    return json({
+      error: usageCheck.error || "Wykorzystano miesięczny limit analiz AI dla Twojego planu.",
+      code: usageCheck.code || "LIMIT_EXCEEDED",
+      metric: "ai_analyses",
+      limit: usageCheck.limit,
+      used: usageCheck.used,
+      renewsAt: usageCheck.renewsAt
+    }, usageCheck.status || 403);
+  }
   let budgetReservation;
   try { budgetReservation = await reservePhotoBudget(env); }
   catch (error) {
+    await refundUsage(env, { userId: auth.userId, key: aiKey, now: nowSeconds() }).catch(() => {});
     console.error(JSON.stringify({ event: "photo_budget_reserve_failed", code: error?.message || "unknown" }));
     return err("Nie można potwierdzić dostępnego budżetu AI. Analiza została bezpiecznie zablokowana.", 503);
   }
-  if (!budgetReservation) return err("Miesięczny budżet analizy zdjęć AI został wykorzystany. Spróbuj w kolejnym okresie.", 429);
+  if (!budgetReservation) {
+    await refundUsage(env, { userId: auth.userId, key: aiKey, now: nowSeconds() }).catch(() => {});
+    return err("Miesięczny budżet analizy zdjęć AI został wykorzystany. Spróbuj w kolejnym okresie.", 429);
+  }
   const vehicle = [
     ["Marka", make], ["Model", model], ["Rocznik", year], ["Silnik", engine],
     ["Kategoria usterki", category], ["Objawy", symptoms], ["Dodatkowe informacje", extra],
@@ -1729,6 +1807,7 @@ async function photoDiagnosis(request, env, auth) {
     });
   } catch (error) {
     await settlePhotoBudget(env, budgetReservation, null).catch(() => {});
+    await refundUsage(env, { userId: auth.userId, key: aiKey, now: nowSeconds() }).catch(() => {});
     console.error(JSON.stringify({ event: "photo_diagnosis_upstream_network_error", aborted: error?.name === "AbortError" }));
     return err(error?.name === "AbortError" ? "Analiza AI przekroczyła limit czasu. Spróbuj ponownie." : "Nie udało się połączyć z usługą analizy AI.", 502);
   } finally {
@@ -1740,6 +1819,7 @@ async function photoDiagnosis(request, env, auth) {
   const actualCost = usage ? estimatePhotoCostMicrousd(modelName, Number(usage.input_tokens), Number(usage.output_tokens)) : null;
   await settlePhotoBudget(env, budgetReservation, actualCost).catch(error => console.error(JSON.stringify({ event: "photo_budget_settlement_failed", code: error?.message || "unknown" })));
   if (!upstream.ok) {
+    await refundUsage(env, { userId: auth.userId, key: aiKey, now: nowSeconds() }).catch(() => {});
     console.error(JSON.stringify({
       event: "photo_diagnosis_upstream_rejected",
       status: upstream.status,
@@ -1750,7 +1830,10 @@ async function photoDiagnosis(request, env, auth) {
     return err("Usługa analizy AI jest chwilowo niedostępna. Spróbuj później.", 502);
   }
   const analysis = responseOutputText(data);
-  if (!analysis) return err("Usługa AI nie zwróciła tekstowego wyniku analizy.", 502);
+  if (!analysis) {
+    await refundUsage(env, { userId: auth.userId, key: aiKey, now: nowSeconds() }).catch(() => {});
+    return err("Usługa AI nie zwróciła tekstowego wyniku analizy.", 502);
+  }
   return json({ analysis, model: modelName }, 200);
 }
 
@@ -2057,6 +2140,18 @@ export default {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
         else response = await photoDiagnosis(request, env, auth);
+      } else if (url.pathname === "/api/usage" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await getUsage(env, auth);
+      } else if (url.pathname === "/api/usage/consume" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await postUsageConsume(request, env, auth);
+      } else if (url.pathname === "/api/usage/refund" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await postUsageRefund(request, env, auth);
       } else if (url.pathname === "/api/data" && request.method === "GET") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -2083,6 +2178,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, getUsage, postUsageConsume, postUsageRefund, userPlanContext };
 
 

@@ -664,13 +664,17 @@ function makePhotoTestEnv(tier = "pro", openAiKey = "sk_test_mock_openai_key") {
     PHOTO_MONTHLY_BUDGET_USD: "5",
     PHOTO_REQUEST_RESERVE_USD: "0.25",
     DB: {
+      async batch() { return []; },
       prepare(sql) {
         return {
           bind(...params) {
             return {
               async first() {
+                if (sql.includes("SELECT role FROM admin_users")) return null;
                 if (sql.includes("INSERT INTO request_limits")) return { request_count: 1 };
                 if (sql.includes("INSERT INTO photo_usage_budget")) return { period_start: params[0], budget_microusd: params[1] };
+                if (sql.includes("FROM usage_events WHERE user_id = ? AND idem_key = ?")) { if (sql.includes("SELECT 1 AS x")) return { x: 1 }; return null; }
+                if (sql.includes("FROM usage_counters")) return { used: 0 };
                 throw new Error("Unexpected photo first() SQL: " + sql);
               },
               async all() {

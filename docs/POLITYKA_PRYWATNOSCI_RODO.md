@@ -30,3 +30,4 @@ Użytkownik ma prawo do:
 2. Całkowitego usunięcia danych lokalnych z urządzenia przyciskiem **Wyczyść wszystkie dane lokalne**,
 3. Zarządzania subskrypcją i danymi rozliczeniowymi w oficjalnym **Panelu subskrypcji Stripe (Billing Portal)**,
 4. Kontaktu z administratorem w sprawach dotyczących konta, płatności i realizacji praw wynikających z RODO.
+
