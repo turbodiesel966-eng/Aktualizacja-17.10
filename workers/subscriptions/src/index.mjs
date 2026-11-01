@@ -1628,8 +1628,8 @@ async function applyPlanUsageDelta(env, userId, tier, metric, delta, eventId) {
     .bind(userId, metric, periodStart, now).run();
   const changed = await env.DB.prepare(`UPDATE plan_usage SET count = count + ?, updated_at = ?
     WHERE user_id = ? AND metric = ? AND period_start = ?
-      AND count + ? >= 0 AND count + ? <= ?`)
-    .bind(delta, now, userId, metric, periodStart, delta, delta, limit).run();
+      AND count + ? >= 0 AND (? < 0 OR count + ? <= ?)`)
+    .bind(delta, now, userId, metric, periodStart, delta, delta, delta, limit).run();
   if (Number(changed.meta?.changes || 0) !== 1) {
     if (safeEventId) await env.DB.prepare("DELETE FROM plan_usage_events WHERE event_id = ? AND user_id = ?").bind(safeEventId, userId).run();
     const latest = await getPlanUsageValue(env, userId, metric, periodStart);
