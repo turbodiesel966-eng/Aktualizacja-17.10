@@ -2163,6 +2163,28 @@ export default {
           const limited = await enforceRateLimit(request, env, "user-data-write", auth.userId, RATE_LIMITS.userDataWrites);
           response = limited || await writeUserData(request, env, auth);
         }
+      } else if (url.pathname === "/api/catalog/sync" && request.method === "GET") {
+        try {
+          const models = await env.DB.prepare("SELECT * FROM catalog_models ORDER BY brand, model ASC").all().catch(() => ({ results: [] }));
+          const parts = await env.DB.prepare("SELECT * FROM catalog_parts ORDER BY category, title ASC").all().catch(() => ({ results: [] }));
+          const tuning = await env.DB.prepare("SELECT * FROM catalog_tuning_specs ORDER BY engine_name ASC").all().catch(() => ({ results: [] }));
+          response = json({
+            ok: true,
+            models: models.results || [],
+            parts: parts.results || [],
+            tuning: tuning.results || [],
+            syncedAt: Date.now()
+          });
+        } catch (e) {
+          response = json({ ok: false, error: e.message }, 500);
+        }
+      } else if (url.pathname === "/api/tuning-specs" && request.method === "GET") {
+        try {
+          const list = await env.DB.prepare("SELECT * FROM catalog_tuning_specs ORDER BY engine_name ASC").all().catch(() => ({ results: [] }));
+          response = json({ ok: true, specs: list.results || [] });
+        } catch (e) {
+          response = json({ ok: false, error: e.message }, 500);
+        }
       } else {
         response = err("Not found", 404);
       }

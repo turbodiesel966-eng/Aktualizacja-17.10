@@ -767,7 +767,77 @@ $('#clock').textContent = new Date().toLocaleDateString('pl-PL');
 
 const NAPRAWNIK_STORAGE_KEYS=['naprawnik_workshop','naprawnik_notes','naprawnik_log','naprawnik_shop','naprawnik_reminders','naprawnik_checklist_done','naprawnik_vehicles','naprawnik_repairs','naprawnik_orders','naprawnik_measurements','naprawnik_pin'];
 function load(key){ try{ const raw=localStorage.getItem(key); return raw===null ? [] : JSON.parse(raw); }catch(e){ console.error('NAPRAWNIK: błąd odczytu danych',key,e); return []; } }
-function save(key,val){ try{ localStorage.setItem(key, JSON.stringify(val)); return true; }catch(e){ console.error('NAPRAWNIK: nie udało się zapisać danych',key,e); if(!window.__naprawnikStorageWarning){window.__naprawnikStorageWarning=true; alert('Nie udało się zapisać danych. Pamięć przeglądarki może być pełna lub zablokowana. Wyeksportuj kopię zapasową i zwolnij miejsce.');} return false; } }
+
+// Zero-cost client-side database storage via IndexedDB for photos and large datasets
+const IDB_NAME = 'naprawnik_db';
+const IDB_VER = 1;
+let _idbPromise = null;
+function getIDB(){
+  if(!_idbPromise){
+    _idbPromise = new Promise((resolve) => {
+      if(typeof window === 'undefined' || !window.indexedDB) return resolve(null);
+      const req = window.indexedDB.open(IDB_NAME, IDB_VER);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('photos')) db.createObjectStore('photos');
+        if(!db.objectStoreNames.contains('catalog_cache')) db.createObjectStore('catalog_cache');
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => { console.warn('IDB open failed:', req.error); resolve(null); };
+    });
+  }
+  return _idbPromise;
+}
+
+async function idbSavePhoto(photoId, dataUrl){
+  try{
+    const db = await getIDB();
+    if(!db) return false;
+    return new Promise(res => {
+      const tx = db.transaction('photos', 'readwrite');
+      tx.objectStore('photos').put(dataUrl, photoId);
+      tx.oncomplete = () => res(true);
+      tx.onerror = () => res(false);
+    });
+  }catch(_){ return false; }
+}
+
+async function idbGetPhoto(photoId){
+  try{
+    const db = await getIDB();
+    if(!db) return null;
+    return new Promise(res => {
+      const tx = db.transaction('photos', 'readonly');
+      const req = tx.objectStore('photos').get(photoId);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => res(null);
+    });
+  }catch(_){ return null; }
+}
+
+function save(key,val){
+  try{
+    localStorage.setItem(key, JSON.stringify(val));
+    return true;
+  }catch(e){
+    console.warn('NAPRAWNIK: storage quota warning on', key, e);
+    if(key === 'naprawnik_orders' || key === 'naprawnik_repairs'){
+      try {
+        getIDB().then(db => {
+          if(db){
+            const tx = db.transaction('photos', 'readwrite');
+            tx.objectStore('photos').put(val, 'backup_' + key);
+          }
+        });
+      }catch(_){}
+    }
+    if(!window.__naprawnikStorageWarning){
+      window.__naprawnikStorageWarning=true;
+      alert('Pamięć przeglądarki jest bliska wyczerpania. Zdjęcia są bezpiecznie archiwizowane w bazie IndexedDB urządzenia.');
+    }
+    return false;
+  }
+}
 
 // Wartości orientacyjne, NIE są specyfikacją OEM. Nie stosować bez potwierdzenia w serwisówce dokładnego wariantu.
 const torque = {
@@ -2890,6 +2960,34 @@ function renderMix(){
       <div id="torqueConvResult" class="entry" style="font-size:14px;text-align:center;color:var(--hero)">Wpisz wartość momentu</div>
     </div>
 
+    <div class="card"><h2>⚡ 5. Kalkulator Squish Clearance & Stopnia Sprężania (CR)</h2>
+      <small style="color:var(--dim);display:block;margin-bottom:8px">Oblicz bezpieczną szczelinę squish (prześwit tłok–głowica) oraz geometryczny stopień sprężania. Wybierz preset fabryczny/sportowy lub wprowadź własne parametry.</small>
+      <label>Wybierz preset silnika / cylindra:</label>
+      <select id="squishPresetSel" onchange="applySquishPreset(this.value)">
+        <option value="">-- Własne parametry (Custom) --</option>
+        <option value="am6">Minarelli AM6 50cc (Bore 40.3 / Stroke 39.0 / Squish 0.85-0.95 mm)</option>
+        <option value="aerox">Yamaha Aerox / Minarelli 2T Horiz 50cc (Bore 40.0 / Stroke 39.2 / Squish 0.80-0.90 mm)</option>
+        <option value="hiper2">Piaggio Hi-Per2 50cc (Bore 40.0 / Stroke 39.3 / Squish 0.80-0.90 mm)</option>
+        <option value="d50b0">Derbi D50B0 50cc (Bore 39.9 / Stroke 40.0 / Squish 0.85-0.95 mm)</option>
+        <option value="gy6_50">GY6 50cc 4T 139QMB (Bore 39.0 / Stroke 41.4 / Squish 1.00-1.15 mm)</option>
+        <option value="gy6_125">GY6 125cc 4T 152QMI (Bore 52.4 / Stroke 57.8 / Squish 1.05-1.20 mm)</option>
+        <option value="bb70_street">Big Bore 70cc Street / Sport (Bore 47.0 / Stroke 39.2 / Squish 0.85-0.95 mm)</option>
+        <option value="bb70_racing">Big Bore 70cc Racing / MHR / Stage6 (Bore 47.6 / Stroke 39.2 / Squish 0.60-0.70 mm / 98+ okt.)</option>
+      </select>
+      <div class="grid2" style="margin-top:8px">
+        <div><label>Średnica tłoka / Bore (mm):</label><input id="sqBore" type="number" step="0.1" placeholder="np. 40.0" oninput="calcSquishAndCrUI()"></div>
+        <div><label>Skok wału / Stroke (mm):</label><input id="sqStroke" type="number" step="0.1" placeholder="np. 39.2" oninput="calcSquishAndCrUI()"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Zmierzony Squish (mm):</label><input id="sqVal" type="number" step="0.05" placeholder="np. 0.85" oninput="calcSquishAndCrUI()"></div>
+        <div><label>Objętość komory Vc (cm³, opcja):</label><input id="sqVc" type="number" step="0.1" placeholder="np. 4.5" oninput="calcSquishAndCrUI()"></div>
+      </div>
+      <div id="squishResultBox" class="entry" style="margin-top:10px;text-align:center">
+        <div id="squishBadge" style="display:inline-block;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-bottom:6px;background:#2a2a40;color:#00e5ff">Wpisz parametry lub wybierz preset</div>
+        <div id="squishMetrics" style="font-size:14px;color:var(--text);margin:6px 0">Pojemność: — cm³ | Stopień sprężania: — : 1</div>
+        <small id="squishTip" style="display:block;line-height:1.5;color:var(--dim)">Zalecany pomiar: kawałek miękkiej cyny lutowniczej (1.0-1.5 mm) zgięty w łuk wprowadzony przez otwór świecy równolegle do sworznia tłoka, po czym obrót wałem przez GMP.</small>
+      </div>
+    </div>
     <div class="card"><h2>🔥 4. Popularne świece zapłonowe — zamienniki i kontrola</h2>
       <table>
         <tr><th>Zastosowanie</th><th>NGK</th><th>Denso</th><th>Uwagi</th></tr>
@@ -2935,6 +3033,102 @@ function calcTorqueConv(){
   const ftlb = nm / 1.35582;
   const inlb = nm / 0.112985;
   res.textContent = `${nm.toFixed(1)} Nm  •  ${kgm.toFixed(2)} kgf·m  •  ${ftlb.toFixed(1)} ft-lb  •  ${Math.round(inlb)} in-lb`;
+}
+
+const SQUISH_PRESETS = {
+  am6: { name: 'Minarelli AM6 50cc', bore: 40.3, stroke: 39.0, squish: 0.90, vc: 4.5 },
+  aerox: { name: 'Yamaha Aerox / Minarelli 2T Horiz', bore: 40.0, stroke: 39.2, squish: 0.85, vc: 4.5 },
+  hiper2: { name: 'Piaggio Hi-Per2 50cc', bore: 40.0, stroke: 39.3, squish: 0.85, vc: 4.4 },
+  d50b0: { name: 'Derbi D50B0 50cc', bore: 39.9, stroke: 40.0, squish: 0.90, vc: 4.5 },
+  gy6_50: { name: 'GY6 50cc 4T', bore: 39.0, stroke: 41.4, squish: 1.05, vc: 5.2 },
+  gy6_125: { name: 'GY6 125cc 4T', bore: 52.4, stroke: 57.8, squish: 1.10, vc: 13.5 },
+  bb70_street: { name: 'Big Bore 70cc Street', bore: 47.0, stroke: 39.2, squish: 0.90, vc: 6.0 },
+  bb70_racing: { name: 'Big Bore 70cc Racing', bore: 47.6, stroke: 39.2, squish: 0.65, vc: 5.4 }
+};
+
+function applySquishPreset(key){
+  const p = SQUISH_PRESETS[key];
+  if(!p) return;
+  const bEl = document.getElementById('sqBore');
+  const sEl = document.getElementById('sqStroke');
+  const sqEl = document.getElementById('sqVal');
+  const vcEl = document.getElementById('sqVc');
+  if(bEl) bEl.value = p.bore;
+  if(sEl) sEl.value = p.stroke;
+  if(sqEl) sqEl.value = p.squish;
+  if(vcEl) vcEl.value = p.vc;
+  calcSquishAndCrUI();
+}
+
+function calcSquishAndCr(bore, stroke, squish, chamberVol){
+  const b = parseFloat(bore) || 0;
+  const s = parseFloat(stroke) || 0;
+  const sq = parseFloat(squish) || 0;
+  const vc = parseFloat(chamberVol) || 0;
+  if(b <= 0 || s <= 0) return { error: 'Podaj średnicę i skok cylindra' };
+  const dispCc = (Math.PI * Math.pow(b / 2, 2) * s) / 1000;
+  let cr = null;
+  if(vc > 0){
+    cr = (dispCc + vc) / vc;
+  }
+  let status = 'ok';
+  let badgeColor = '#00f57a';
+  let message = '';
+
+  if(sq <= 0){
+    status = 'pending';
+    badgeColor = '#00e5ff';
+    message = 'Wprowadź zmierzony squish (mm) cyną lutowniczą.';
+  } else if(sq < 0.55){
+    status = 'danger';
+    badgeColor = '#ff4d4d';
+    message = '🚨 KRYTYCZNE NIEBEZPIECZEŃSTWO: Squish < 0.55 mm! Ryzyko uderzenia tłoka o głowicę przy wysokich RPM (ugięcie korby i luzy cieplne). Natychmiast zwiększ grubość uszczelki pod cylindrem!';
+  } else if(sq < 0.70){
+    status = 'warning_tight';
+    badgeColor = '#ffe066';
+    message = '⚠️ BARDZO CIASNY SQUISH (Setup Racing): Dopuszczalny wyłącznie w wysilonych silnikach wyścigowych z paliwem min. 98/100 oktanów. Ryzyko detonacji na PB95!';
+  } else if(sq <= 1.05){
+    status = 'optimal';
+    badgeColor = '#00f57a';
+    message = '✅ OPTYMALNY SQUISH: Prawidłowe zawirowanie mieszanki w komorze spalania, bezpieczny prześwit termiczny i maksymalna sprawność.';
+  } else {
+    status = 'too_loose';
+    badgeColor = '#ffe066';
+    message = 'ℹ️ ZA DUŻY SQUISH (> 1.05 mm): Spadek zawirowania, gorsze spalanie w strefie krawędziowej i niższy stopień sprężania. Zalecana cieńsza uszczelka pod cylinder.';
+  }
+
+  return {
+    dispCc: Math.round(dispCc * 10) / 10,
+    cr: cr ? Math.round(cr * 10) / 10 : null,
+    squish: sq,
+    status,
+    badgeColor,
+    message
+  };
+}
+
+function calcSquishAndCrUI(){
+  const b = document.getElementById('sqBore')?.value;
+  const s = document.getElementById('sqStroke')?.value;
+  const sq = document.getElementById('sqVal')?.value;
+  const vc = document.getElementById('sqVc')?.value;
+  const badge = document.getElementById('squishBadge');
+  const metrics = document.getElementById('squishMetrics');
+  const tip = document.getElementById('squishTip');
+  if(!badge || !metrics || !tip) return;
+  const res = calcSquishAndCr(b, s, sq, vc);
+  if(res.error){
+    badge.textContent = res.error;
+    badge.style.color = '#ff991f';
+    badge.style.border = '1px solid #ff991f';
+    return;
+  }
+  badge.textContent = res.status === 'optimal' ? '✅ SQUISH W NORMIE' : (res.status === 'danger' ? '🚨 KOLIZJA / DETONACJA' : (res.status === 'warning_tight' ? '⚠️ RACING ONLY' : (res.status === 'pending' ? 'Wpisz squish' : 'ℹ️ KONTROLA USZCZELKI')));
+  badge.style.color = res.badgeColor;
+  badge.style.border = '1px solid ' + res.badgeColor;
+  badge.style.background = 'rgba(0,0,0,0.4)';
+  metrics.innerHTML = `Pojemność skokowa: <b>${res.dispCc} cm³</b>` + (res.cr ? ` | Stopień sprężania: <b>${res.cr}:1</b>` : ' | CR: podaj Vc');
+  tip.textContent = res.message;
 }
 
 function renderReminders(){
@@ -3446,7 +3640,10 @@ function renderVehicles(){
     <input id="vCatalogSearch" placeholder="Szukaj w katalogu: ZIP, Italjet, TGB, Agility…" oninput="filterVehicleCatalog()" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin:8px 0">
     <select id="vCatalogModel" onchange="applyCatalogModel()" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin:4px 0 10px"><option value="">Wybierz markę i rodzinę modelu…</option>${SCOOTER_CATALOG.map((m,i)=>`<option value="${i}">${m[0]} — ${m[1]} (${m[2]} cm³)</option>`).join('')}</select>
     <small style="color:var(--dim)">W katalogu: ${SCOOTER_CATALOG.length} rodzin modeli. To szeroka baza startowa, nie pełny spis wszystkich generacji świata.</small><br><br>
-    <input id="vVin" placeholder="VIN">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+      <input id="vVin" placeholder="VIN" style="flex:1;margin:0">
+      <button type="button" class="btn" style="width:auto;margin:0;padding:8px 10px;font-size:12px;background:#1a1a2e;border:1px solid var(--cyan);color:var(--cyan);white-space:nowrap" onclick="startVinCameraScan('vVin')">📷 Skanuj</button>
+    </div>
     <input id="vBrand" placeholder="Marka">
     <input id="vModel" placeholder="Model">
     <input id="vYear" placeholder="Rok">
@@ -4543,6 +4740,166 @@ function generateOrderNumber(){
   return 'ZLEC/' + year + '/' + String(count).padStart(2, '0');
 }
 
+
+// 100% Free Client-Side HTML5 Camera VIN / Barcode Scanner (zero external API cost)
+let _vinScanStream = null;
+let _vinScanAnimFrame = null;
+let _vinScanActiveTargetId = null;
+
+function startVinCameraScan(targetInputId){
+  _vinScanActiveTargetId = targetInputId;
+  let modal = document.getElementById('vinScanModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'vinScanModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:#151525;border:1px solid var(--accent);border-radius:12px;width:100%;max-width:440px;padding:16px;box-shadow:0 0 24px rgba(0,229,255,0.25);position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <b style="color:var(--cyan);font-size:16px">📷 Skaner VIN / Barcode</b>
+        <span onclick="closeVinScanModal()" style="font-size:22px;color:var(--dim);cursor:pointer;padding:4px 8px">✕</span>
+      </div>
+      <p style="font-size:12px;color:var(--dim);line-height:1.4">Skieruj aparat na tabliczkę znamionową, dowód lub kod kreskowy VIN (Code 39, Code 128, QR).</p>
+      <div style="position:relative;width:100%;height:220px;background:#000;border-radius:8px;overflow:hidden;margin:10px 0;display:flex;align-items:center;justify-content:center">
+        <video id="vinScanVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover"></video>
+        <div style="position:absolute;top:20%;left:8%;right:8%;bottom:20%;border:2px dashed #00e5ff;border-radius:6px;pointer-events:none;box-shadow:0 0 10px rgba(0,229,255,0.4)">
+          <div style="width:100%;height:2px;background:#ff0055;position:absolute;top:50%;box-shadow:0 0 8px #ff0055"></div>
+        </div>
+      </div>
+      <div id="vinScanStatus" style="font-size:12px;text-align:center;color:var(--hero);min-height:20px;margin-bottom:10px">Uruchamianie aparatu...</div>
+      <div style="display:flex;gap:8px">
+        <label class="btn" style="flex:1;margin:0;font-size:12px;text-align:center;padding:8px;background:#222;border-color:var(--border);cursor:pointer">
+          📁 Wybierz zdjęcie
+          <input type="file" accept="image/*" capture="camera" style="display:none" onchange="scanVinFromFileInput(this)">
+        </label>
+        <button type="button" class="btn" style="flex:1;margin:0;font-size:12px;padding:8px;border-color:#ff6b6b;color:#ff6b6b" onclick="closeVinScanModal()">Zamknij</button>
+      </div>
+    </div>
+  `;
+  modal.style.display = 'flex';
+
+  const video = document.getElementById('vinScanVideo');
+  const status = document.getElementById('vinScanStatus');
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    if(status) status.innerHTML = '⚠️ Brak bezpośredniego dostępu do kamery w przeglądarce. Użyj przycisku „Wybierz zdjęcie”.';
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      _vinScanStream = stream;
+      if(video){
+        video.srcObject = stream;
+        video.play();
+        if(status) status.textContent = 'Nakieruj czerwoną linię na kod kreskowy lub VIN...';
+        initBarcodeScanLoop(video, status);
+      }
+    })
+    .catch(err => {
+      console.warn('Camera access rejected or unavailable:', err);
+      if(status) status.innerHTML = '⚠️ Nie uzyskano uprawnień do kamery. Kliknij „Wybierz zdjęcie” poniżej.';
+    });
+}
+
+function initBarcodeScanLoop(video, statusEl){
+  if(!('BarcodeDetector' in window)){
+    if(statusEl) statusEl.innerHTML = 'Wskazówka: skieruj na kod lub użyj „Wybierz zdjęcie”.';
+    return;
+  }
+  const detector = new window.BarcodeDetector({ formats: ['code_39', 'code_128', 'qr_code', 'ean_13', 'data_matrix'] });
+
+  async function scanFrame(){
+    if(!_vinScanStream || !video || video.readyState < 2){
+      _vinScanAnimFrame = requestAnimationFrame(scanFrame);
+      return;
+    }
+    try{
+      const barcodes = await detector.detect(video);
+      if(barcodes && barcodes.length > 0){
+        for(const b of barcodes){
+          const raw = (b.rawValue || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+          if(raw.length >= 6){
+            onVinDetected(raw);
+            return;
+          }
+        }
+      }
+    }catch(_){}
+    _vinScanAnimFrame = requestAnimationFrame(scanFrame);
+  }
+  _vinScanAnimFrame = requestAnimationFrame(scanFrame);
+}
+
+function scanVinFromFileInput(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const status = document.getElementById('vinScanStatus');
+  if(status) status.textContent = 'Przetwarzanie zdjęcia...';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const img = new Image();
+    img.onload = async () => {
+      if('BarcodeDetector' in window){
+        try{
+          const detector = new window.BarcodeDetector({ formats: ['code_39', 'code_128', 'qr_code', 'ean_13', 'data_matrix'] });
+          const barcodes = await detector.detect(img);
+          if(barcodes && barcodes.length > 0){
+            for(const b of barcodes){
+              const raw = (b.rawValue || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+              if(raw.length >= 6){
+                onVinDetected(raw);
+                return;
+              }
+            }
+          }
+        }catch(_){}
+      }
+      const manual = prompt('Wpisz lub potwierdź numer VIN ze zdjęcia:', '');
+      if(manual){
+        onVinDetected(manual.trim().toUpperCase());
+      } else {
+        if(status) status.textContent = 'Nie odnaleziono kodu. Wpisz numer ręcznie.';
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function onVinDetected(val){
+  const clean = val.replace(/[^A-Z0-9]/g, '').slice(0, 17);
+  if(_vinScanActiveTargetId){
+    const inp = document.getElementById(_vinScanActiveTargetId);
+    if(inp){
+      inp.value = clean;
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+      inp.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+  try{
+    if(navigator.vibrate) navigator.vibrate([80, 40, 80]);
+  }catch(_){}
+  closeVinScanModal();
+}
+
+function closeVinScanModal(){
+  if(_vinScanAnimFrame){
+    cancelAnimationFrame(_vinScanAnimFrame);
+    _vinScanAnimFrame = null;
+  }
+  if(_vinScanStream){
+    try{
+      _vinScanStream.getTracks().forEach(t => t.stop());
+    }catch(_){}
+    _vinScanStream = null;
+  }
+  const modal = document.getElementById('vinScanModal');
+  if(modal) modal.style.display = 'none';
+}
+
 function renderOrders(filterStatus){
   if(!hasPlan('warsztat')){ renderLocked('warsztat','Karta Zlecenia Serwisowego','nav(\'home\')'); return; }
   ensureSafeArrays();
@@ -4633,7 +4990,13 @@ function renderNewOrderForm(prefillVehicleId){
     </div>
 
     <div class="grid2">
-      <div><label>Numer VIN:</label><input id="ordVin" placeholder="VIN (17 znaków)" value="${v ? escapeHtml(v.vin || '') : ''}"></div>
+      <div>
+        <label>Numer VIN:</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="ordVin" placeholder="VIN (17 znaków)" value="${v ? escapeHtml(v.vin || '') : ''}" style="flex:1">
+          <button type="button" class="btn" style="width:auto;margin:0;padding:8px 10px;font-size:12px;background:#1a1a2e;border:1px solid var(--cyan);color:var(--cyan);white-space:nowrap" onclick="startVinCameraScan('ordVin')">📷 Skanuj</button>
+        </div>
+      </div>
       <div><label>Przebieg (km):</label><input id="ordMileage" type="number" placeholder="np. 14200" value="${v ? escapeHtml(v.mileage || '') : ''}"></div>
     </div>
 
@@ -4747,9 +5110,10 @@ function renderOrderDetail(orderId){
       ${renderOrderPartsList(o)}
     </div>
     <div style="margin-top:10px;display:flex;gap:6px">
-      <input id="newPartName" placeholder="Nazwa części" style="flex:2">
-      <input id="newPartQty" type="number" value="1" min="1" placeholder="Ilość" style="width:60px">
-      <input id="newPartPrice" type="number" step="0.5" placeholder="Cena/szt." style="width:80px">
+      <input id="newPartName" placeholder="Nazwa części" style="flex:2;min-width:110px">
+      <input id="newPartQty" type="number" value="1" min="1" placeholder="Ilość" style="width:48px">
+      <input id="newPartCost" type="number" step="0.5" placeholder="Hurt zł" style="width:64px" title="Koszt hurt/zakup (opcjonalny)">
+      <input id="newPartPrice" type="number" step="0.5" placeholder="Cena zł" style="width:64px" title="Cena dla klienta">
       <button class="btn" style="margin:0;padding:8px 12px" onclick="addPartToOrder('${o.id}')">＋</button>
     </div>
 
@@ -4761,6 +5125,39 @@ function renderOrderDetail(orderId){
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:16px;color:var(--hero)">
         <b>ŁĄCZNY KOSZT NAPRAWY:</b>
         <b id="ordTotalDisplay">${o.totalCost || 0} zł</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="card no-print" style="border-color:#ffe066;background:#181828">
+    <h2 style="color:#ffe066">📊 Analiza rentowności i zysk warsztatu (POUFNE)</h2>
+    <small style="color:var(--dim);display:block;margin-bottom:10px">Widoczne wyłącznie dla mechanika — <b>nigdy nie pojawia się na wydruku klienta</b>.</small>
+    <div class="grid2">
+      <div>
+        <label>Koszt własny robocizny (stawka mech./koszt):</label>
+        <input id="ordLaborCostInternal" type="number" step="5" value="${o.laborInternalCost || 0}" onchange="updateOrderLaborCost('${o.id}', this.value)" style="text-align:right" placeholder="np. 50">
+      </div>
+      <div>
+        <label>Zysk na samej robociźnie:</label>
+        <div style="font-size:15px;font-weight:700;color:#00f57a;padding:8px 0">${Math.max(0, (o.laborCost||0) - (o.laborInternalCost||0))} zł</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:10px;border-radius:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
+        <span>Przychód ze zlecenia (Klient płaci):</span>
+        <b>${o.totalCost || 0} zł</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;color:var(--dim)">
+        <span>Całkowity koszt własny (Części hurt + robocizna):</span>
+        <span>${o.totalInternalCost || 0} zł</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:6px;border-top:1px solid var(--border);font-size:16px;color:#00f57a">
+        <b>ZYSK CZYSTY WARSZTATU:</b>
+        <b>${o.grossProfit !== undefined ? o.grossProfit : (o.totalCost||0)} zł</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:var(--dim)">
+        <span>Marża zlecenia: <b style="color:#ffe066">${o.marginPercent || 0}%</b></span>
+        <span>Narzut na częściach: <b style="color:#00e5ff">${o.markupPartsPercent || 0}%</b></span>
       </div>
     </div>
   </div>
@@ -4816,7 +5213,8 @@ function renderOrderPartsList(o){
       <tr style="border-bottom:1px solid var(--border);color:var(--dim)">
         <th style="text-align:left;padding:4px">Część</th>
         <th style="text-align:center;padding:4px;width:30px">Ilość</th>
-        <th style="text-align:right;padding:4px;width:60px">Cena</th>
+        <th style="text-align:right;padding:4px;width:55px" title="Koszt hurt/zakup">Hurt</th>
+        <th style="text-align:right;padding:4px;width:55px">Cena</th>
         <th style="text-align:right;padding:4px;width:60px">Razem</th>
         <th style="width:24px"></th>
       </tr>
@@ -4826,6 +5224,7 @@ function renderOrderPartsList(o){
       <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
         <td style="padding:6px 4px">${escapeHtml(p.name)}</td>
         <td style="text-align:center;padding:6px 4px">${p.qty}</td>
+        <td style="text-align:right;padding:6px 4px;color:var(--dim)">${p.costPrice ? p.costPrice + ' zł' : '—'}</td>
         <td style="text-align:right;padding:6px 4px">${p.unitPrice} zł</td>
         <td style="text-align:right;padding:6px 4px;font-weight:700">${p.total} zł</td>
         <td style="text-align:center"><span style="color:#ff6b6b;cursor:pointer;font-weight:700" onclick="removeOrderPart('${o.id}', ${idx})">✕</span></td>
@@ -4839,11 +5238,22 @@ function addPartToOrder(orderId){
   if(!o) return;
   const name = document.getElementById('newPartName').value.trim();
   const qty = parseInt(document.getElementById('newPartQty').value, 10) || 1;
+  const costPrice = parseFloat(document.getElementById('newPartCost')?.value) || 0;
   const unitPrice = parseFloat(document.getElementById('newPartPrice').value) || 0;
   if(!name){ alert('Wpisz nazwę części.'); return; }
   if(!Array.isArray(o.partsList)) o.partsList = [];
   const total = Math.round(qty * unitPrice * 100) / 100;
-  o.partsList.push({ name, qty, unitPrice, total });
+  const totalCost = Math.round(qty * costPrice * 100) / 100;
+  o.partsList.push({ name, qty, costPrice, unitPrice, total, totalCost });
+  recalculateOrderTotal(o);
+  save('naprawnik_orders', orders);
+  renderOrderDetail(orderId);
+}
+
+function updateOrderLaborCost(orderId, val){
+  const o = orders.find(x => x.id === orderId);
+  if(!o) return;
+  o.laborInternalCost = Math.max(0, parseFloat(val) || 0);
   recalculateOrderTotal(o);
   save('naprawnik_orders', orders);
   renderOrderDetail(orderId);
@@ -4859,8 +5269,16 @@ function removeOrderPart(orderId, index){
 }
 
 function recalculateOrderTotal(o){
-  const partsSum = (o.partsList || []).reduce((acc, p) => acc + (Number(p.total) || 0), 0);
-  o.totalCost = Math.round((partsSum + (Number(o.laborCost) || 0)) * 100) / 100;
+  const partsSellSum = (o.partsList || []).reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+  const partsBuySum = (o.partsList || []).reduce((acc, p) => acc + (Number(p.totalCost) || (Number(p.costPrice || 0) * (Number(p.qty) || 1))), 0);
+  const laborSell = Number(o.laborCost) || 0;
+  const laborBuy = Number(o.laborInternalCost) || 0;
+
+  o.totalCost = Math.round((partsSellSum + laborSell) * 100) / 100;
+  o.totalInternalCost = Math.round((partsBuySum + laborBuy) * 100) / 100;
+  o.grossProfit = Math.round((o.totalCost - o.totalInternalCost) * 100) / 100;
+  o.marginPercent = o.totalCost > 0 ? Math.round((o.grossProfit / o.totalCost) * 1000) / 10 : 0;
+  o.markupPartsPercent = partsBuySum > 0 ? Math.round(((partsSellSum - partsBuySum) / partsBuySum) * 1000) / 10 : 0;
 }
 
 function updateOrderLabor(orderId, val){

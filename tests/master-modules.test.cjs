@@ -106,3 +106,75 @@ test('NAPRAWNIK — przycisk Aktualizuj na górze zmieniający kolor i treść p
   // 4. Obsługa Service Worker skipWaiting
   assert.ok(sw.includes('skipWaiting'), 'Service worker musi obsługiwać skipWaiting');
 });
+
+test('NAPRAWNIK MASTER — Kalkulator Squish & CR oraz presety tuningowe 2T/4T', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('Kalkulator Squish Clearance & Stopnia Sprężania (CR)'), 'Brak nagłówka kalkulatora Squish & CR');
+  assert.ok(html.includes('applySquishPreset'), 'Brak funkcji applySquishPreset');
+  assert.ok(html.includes('calcSquishAndCr'), 'Brak funkcji calcSquishAndCr');
+  assert.ok(html.includes('SQUISH_PRESETS'), 'Brak mapy presetów SQUISH_PRESETS');
+  assert.ok(html.includes('am6'), 'Brak presetu AM6');
+  assert.ok(html.includes('aerox'), 'Brak presetu Aerox');
+  assert.ok(html.includes('bb70_racing'), 'Brak presetu BB70 Racing');
+
+  // Ekstrakcja funkcji do testów jednostkowych
+  const vm = require('vm');
+  const sandbox = { Math, parseFloat, console };
+  const fnCode = html.slice(html.indexOf('function calcSquishAndCr('), html.indexOf('function calcSquishAndCrUI('));
+  vm.runInNewContext(fnCode, sandbox);
+
+  // Testy matematyczne
+  const resOptimal = sandbox.calcSquishAndCr(40.0, 39.2, 0.85, 4.5);
+  assert.strictEqual(resOptimal.dispCc, 49.3);
+  assert.strictEqual(resOptimal.cr, 11.9);
+  assert.strictEqual(resOptimal.status, 'optimal');
+
+  const resDanger = sandbox.calcSquishAndCr(47.6, 39.2, 0.45, 5.0);
+  assert.strictEqual(resDanger.status, 'danger');
+  assert.ok(resDanger.message.includes('KRYTYCZNE NIEBEZPIECZEŃSTWO'));
+
+  const resRacing = sandbox.calcSquishAndCr(47.6, 39.2, 0.65, 5.0);
+  assert.strictEqual(resRacing.status, 'warning_tight');
+});
+
+test('NAPRAWNIK MASTER — Skaner VIN aparatem i kodów kreskowych (HTML5 zero-cost)', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('startVinCameraScan'), 'Brak funkcji startVinCameraScan');
+  assert.ok(html.includes('closeVinScanModal'), 'Brak funkcji closeVinScanModal');
+  assert.ok(html.includes('scanVinFromFileInput'), 'Brak funkcji scanVinFromFileInput');
+  assert.ok(html.includes('BarcodeDetector'), 'Brak detektora kodów kreskowych BarcodeDetector');
+  assert.ok(html.includes('getUserMedia'), 'Brak wywołania kamery getUserMedia');
+  assert.ok(html.includes('📷 Skanuj'), 'Brak przycisku skanowania w formularzach');
+});
+
+test('NAPRAWNIK MASTER — Rentowność i marża warsztatu (poufny widok mechanika)', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('Analiza rentowności i zysk warsztatu (POUFNE)'), 'Brak karty rentowności w zleceniu');
+  assert.ok(html.includes('no-print'), 'Karta rentowności musi być ukryta przed wydrukiem');
+  assert.ok(html.includes('updateOrderLaborCost'), 'Brak funkcji updateOrderLaborCost');
+  assert.ok(html.includes('grossProfit'), 'Brak wyliczenia zysku czystego grossProfit');
+  assert.ok(html.includes('marginPercent'), 'Brak wyliczenia marży marginPercent');
+  assert.ok(html.includes('markupPartsPercent'), 'Brak wyliczenia narzutu na częściach markupPartsPercent');
+});
+
+test('NAPRAWNIK MASTER — IndexedDB oraz rozszerzenie bazy danych D1 (katalog techniczny)', () => {
+  const html = read('index.html');
+  const workerSrc = read('workers/subscriptions/src/index.mjs');
+  const migration = read('workers/subscriptions/migrations/0008_technical_catalog.sql');
+
+  // IndexedDB
+  assert.ok(html.includes('naprawnik_db'), 'Brak bazy IndexedDB naprawnik_db');
+  assert.ok(html.includes('idbSavePhoto'), 'Brak funkcji idbSavePhoto');
+  assert.ok(html.includes('idbGetPhoto'), 'Brak funkcji idbGetPhoto');
+
+  // D1 Migration
+  assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS catalog_models'), 'Brak tabeli catalog_models w migracji');
+  assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS catalog_parts'), 'Brak tabeli catalog_parts w migracji');
+  assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS catalog_tuning_specs'), 'Brak tabeli catalog_tuning_specs w migracji');
+  assert.ok(migration.includes('Minarelli AM6'), 'Brak danych AM6 w migracji');
+
+  // Worker API
+  assert.ok(workerSrc.includes('/api/catalog/sync'), 'Brak endpointu /api/catalog/sync w Workerze');
+  assert.ok(workerSrc.includes('/api/tuning-specs'), 'Brak endpointu /api/tuning-specs w Workerze');
+});
+
