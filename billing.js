@@ -17,7 +17,7 @@
   // Zweryfikowane aktywne ceny subskrypcji LIVE. Aktualizuj je razem z cenami w Stripe.
   const DISPLAY_PRICES = {
     pro: { month: '14,99 zł / miesiąc', year: '149,99 zł / rok (oszczędzasz 29,89 zł)' },
-    warsztat: { month: '29 zł / miesiąc', year: '300 zł / rok (oszczędzasz 48 zł)' }
+    warsztat: { month: '29,99 zł / miesiąc', year: '299,99 zł / rok (oszczędzasz 59,89 zł)' }
   };
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   let verifiedLicenseState = null;
