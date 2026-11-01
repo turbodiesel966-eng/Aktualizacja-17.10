@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { diagnoseStripeConfig } from "./src/index.mjs";
 
 const PRICE_IDS = {
-  PRO_MONTHLY: "price_1UUOdRJgi8iwHKRb5mvO8dOP",
-  PRO_YEARLY: "price_1UUOdWJgi8iwHKRbl85b4ODT",
+  PRO_MONTHLY: "price_1UUd5LJgi8iwHKRbDlIkpQJo",
+  PRO_YEARLY: "price_1UUd5MJgi8iwHKRbRS7WOdWM",
   WARSZTAT_MONTHLY: "price_1UX1dtJgi8iwHKRbNWDUqSRm",
   WARSZTAT_YEARLY: "price_1UX1dzJgi8iwHKRbDJKvqJpd",
   PRO_3D: "price_1UUfEJJgi8iwHKRbpU3ivTbn",
@@ -104,8 +104,8 @@ test("Stripe diagnostics explains the exact missing LIVE Prices read permission"
 test("Stripe diagnostics validates prices and reports no upstream error data on success", async () => {
   const originalFetch = globalThis.fetch;
   const expected = {
-    [PRICE_IDS.PRO_MONTHLY]: { amount: 900, interval: "month", type: "recurring" },
-    [PRICE_IDS.PRO_YEARLY]: { amount: 10000, interval: "year", type: "recurring" },
+    [PRICE_IDS.PRO_MONTHLY]: { amount: 1499, interval: "month", type: "recurring" },
+    [PRICE_IDS.PRO_YEARLY]: { amount: 14999, interval: "year", type: "recurring" },
     [PRICE_IDS.WARSZTAT_MONTHLY]: { amount: 2999, interval: "month", type: "recurring" },
     [PRICE_IDS.WARSZTAT_YEARLY]: { amount: 29999, interval: "year", type: "recurring" },
     [PRICE_IDS.PRO_3D]: { amount: 300, type: "one_time" },
