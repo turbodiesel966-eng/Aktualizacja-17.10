@@ -78,8 +78,8 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /function applyVerifiedPlan\(state\)/);
   assert.match(billing, /14,99 zł \/ miesiąc/);
   assert.match(billing, /149,99 zł \/ rok \(oszczędzasz 29,89 zł\)/);
-  assert.match(billing, /29 zł \/ miesiąc/);
-  assert.match(billing, /300 zł \/ rok \(oszczędzasz 48 zł\)/);
+  assert.match(billing, /29,99 zł \/ miesiąc/);
+  assert.match(billing, /299,99 zł \/ rok \(oszczędzasz 59,89 zł\)/);
   assert.match(billing, /Object\.defineProperty\(window, 'naprawnikGetVerifiedLicense'/);
   assert.doesNotMatch(billing, /window\.naprawnikApplyVerifiedLicense|window\.naprawnikClearVerifiedLicense/);
   assert.match(billing, /Idempotency-Key/);
