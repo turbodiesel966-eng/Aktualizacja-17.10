@@ -551,3 +551,16 @@ test('siatka kafelków neonowych i filtrowanie kart diagnostycznych obsługują 
   assert.equal(mockCards[1].style.display, '');
   assert.equal(mockCards[2].style.display, '');
 });
+
+test('APK korzysta z tych samych plików źródłowych co wersja Web i posiada synchronizację OTA na żywo', () => {
+  const prep = read('scripts/prepare-mobile.mjs');
+  const bridge = read('scripts/native-bridge.js');
+  const verify = read('scripts/verify-apk.py');
+
+  assert.ok(prep.includes('"neon-tiles-art.jpg"'));
+  assert.ok(prep.includes("const WEB_LIVE_BASE='https://turbodiesel966-eng.github.io/Aktualizacja-17.10'"));
+  assert.ok(prep.includes('function instrumentNativeHtml(html)'));
+  assert.ok(bridge.includes('https://turbodiesel966-eng.github.io/Aktualizacja-17.10'));
+  assert.ok(bridge.includes('window.__naprawnikWebSync = syncWithLiveWeb'));
+  assert.ok(verify.includes('assets/public/assets/neon-tiles-art.jpg'));
+});

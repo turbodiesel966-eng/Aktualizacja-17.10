@@ -190,4 +190,63 @@ if (Capacitor.isNativePlatform()) {
 
     void App.exitApp();
   });
+
+  // Live OTA Web Sync: keep the installed Android APK automatically synchronized
+  // with the published Web version on GitHub Pages while preserving offline cache.
+  const WEB_LIVE_BASE = "https://turbodiesel966-eng.github.io/Aktualizacja-17.10";
+  const OTA_HASH_KEY = "naprawnik_ota_live_sig";
+  const bootTimestamp = Date.now();
+
+  function simpleSig(str) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h.toString(16) + ":" + str.length;
+  }
+
+  function instrumentHtml(html) {
+    if (typeof html !== "string" || !html.includes("const APP_VERSION")) return null;
+    let out = html;
+    const navMarker = "function nav(view, arg){";
+    if (!out.includes("window.__naprawnikView") && out.includes(navMarker)) {
+      out = out.replace(navMarker, navMarker + '\n  window.__naprawnikView = String(view || "home");');
+    }
+    if (!out.includes("./native-bridge.js")) {
+      const idx = out.lastIndexOf("</body>");
+      if (idx >= 0) out = out.slice(0, idx) + '  <script src="./native-bridge.js"></script>\n' + out.slice(idx);
+    }
+    return out;
+  }
+
+  async function syncWithLiveWeb() {
+    if (!navigator.onLine || typeof caches === "undefined") return false;
+    try {
+      const res = await fetch(WEB_LIVE_BASE + "/index.html?v=" + Date.now(), { cache: "no-store", mode: "cors", credentials: "omit" });
+      if (!res.ok) return false;
+      const rawHtml = await res.text();
+      const patched = instrumentHtml(rawHtml);
+      if (!patched) return false;
+      const sig = simpleSig(patched);
+      const prevSig = localStorage.getItem(OTA_HASH_KEY);
+      const keys = await caches.keys();
+      const nativeCacheName = keys.find(k => k.endsWith("-native")) || "naprawnik-v5-38-native";
+      const cache = await caches.open(nativeCacheName);
+      await cache.put("./index.html", new Response(patched, { status: 200, headers: { "Content-Type": "text/html;charset=utf-8" } }));
+      localStorage.setItem(OTA_HASH_KEY, sig);
+      if (prevSig && prevSig !== sig && (Date.now() - bootTimestamp < 4500) && String(window.__naprawnikView || "home") === "home") {
+        window.location.reload();
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  window.__naprawnikWebSync = syncWithLiveWeb;
+  setTimeout(() => { void syncWithLiveWeb(); }, 800);
+  void App.addListener("appStateChange", ({ isActive }) => {
+    if (isActive) void syncWithLiveWeb();
+  });
 }
