@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "currency": "PLN",
+  "disclosure": "Link afiliacyjny. NAPRAWNIK może otrzymać prowizję po zakupie; cena dla użytkownika nie wzrasta z tego powodu.",
+  "categories": [
+    {
+      "id": "tools",
+      "name": "Narzędzia warsztatowe"
+    },
+    {
+      "id": "parts",
+      "name": "Części i podzespoły"
+    },
+    {
+      "id": "scooters",
+      "name": "Części do skuterów 2T/4T"
+    },
+    {
+      "id": "electronics",
+      "name": "Elektronika i diagnostyka"
+    },
+    {
+      "id": "consumables",
+      "name": "Materiały eksploatacyjne"
+    },
+    {
+      "id": "chemistry",
+      "name": "Lakiery i chemia"
+    },
+    {
+      "id": "tuning",
+      "name": "Tuning i akcesoria"
+    }
+  ],
+  "merchants": [
+    {
+      "id": "motolak",
+      "name": "Motolak",
+      "network": "WebePartners",
+      "status": "link_available",
+      "affiliateUrl": "https://webep1.com/go/37a852f559",
+      "categoryIds": [
+        "chemistry"
+      ],
+      "note": "Istniejący link z aplikacji; katalog produktów, ceny i feed nie zostały jeszcze zweryfikowane."
+    },
+    {
+      "id": "tooles",
+      "name": "Tooles.pl",
+      "network": "WebePartners",
+      "status": "pending_account_verification",
+      "affiliateUrl": null,
+      "categoryIds": [
+        "tools"
+      ],
+      "note": "Nie dodawać ofert do czasu potwierdzenia akceptacji programu i pobrania linków/feedu."
+    },
+    {
+      "id": "topbuy",
+      "name": "TopBuy.eu",
+      "network": "WebePartners",
+      "status": "pending_account_verification",
+      "affiliateUrl": null,
+      "categoryIds": [
+        "tools",
+        "electronics",
+        "consumables"
+      ],
+      "note": "Nie dodawać ofert do czasu potwierdzenia akceptacji programu i pobrania linków/feedu."
+    },
+    {
+      "id": "etomnar",
+      "name": "eTOMNAR",
+      "network": "WebePartners",
+      "status": "pending_account_verification",
+      "affiliateUrl": null,
+      "categoryIds": [
+        "parts",
+        "consumables"
+      ],
+      "note": "Nie dodawać ofert do czasu potwierdzenia akceptacji programu i pobrania linków/feedu."
+    }
+  ],
+  "offers": [],
+  "importPolicy": {
+    "acceptedFormats": [
+      "CSV",
+      "XML"
+    ],
+    "requiredFields": [
+      "title",
+      "merchantId",
+      "categoryId",
+      "affiliateUrl"
+    ],
+    "optionalFields": [
+      "imageUrl",
+      "price",
+      "currency",
+      "description",
+      "sku",
+      "availability"
+    ],
+    "requireHttps": true,
+    "allowOnlyVerifiedMerchants": true,
+    "neverInventMissingValues": true
+  }
+}
