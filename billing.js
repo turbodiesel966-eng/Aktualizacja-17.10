@@ -58,6 +58,16 @@
     writable: false,
     configurable: false
   });
+  Object.defineProperty(window, 'naprawnikGetAdminPreviewState', {
+    value: function() {
+      if (!verifiedLicenseState || !verifiedLicenseState.isAdmin || Number(verifiedLicenseState.exp) <= Date.now()) return null;
+      const previewTier = (adminTierOverride && Object.prototype.hasOwnProperty.call(ORDER, adminTierOverride)) ? adminTierOverride : 'warsztat';
+      return { isAdmin: true, serverTier: 'warsztat', previewTier, isPreviewActive: previewTier !== 'warsztat' };
+    },
+    enumerable: false,
+    writable: false,
+    configurable: false
+  });
   window.npSetAdminPreviewTier = function(tier) {
     if (!verifiedLicenseState || !verifiedLicenseState.isAdmin) {
       alert('Przełącznik trybu abonamentu jest dostępny wyłącznie na zweryfikowanym koncie właściciela / ADMINA.');

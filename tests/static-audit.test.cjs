@@ -630,4 +630,11 @@ test('odzyskiwanie klucza z pliku .txt, ekran regulaminu/RODO oraz katalog techn
   assert.ok(billing.includes('data-np-download-key="1"'));
   assert.ok(billing.includes('id="licKeyFileIn"'));
   assert.ok(pkg.scripts['mobile:prepare'].startsWith('npm test &&'));
+  assert.ok(html.includes('const meterSafetyGuides = {'));
+  assert.ok(html.includes('Przygotowanie stanowiska i miernika'));
+  assert.ok(html.includes('Czego NIE robić (Bezpieczeństwo)'));
+  assert.ok(html.includes('Wyszukiwarka warsztatowa 5-w-1 + Garaż/VIN'));
+  assert.ok(html.includes('function mergeBackupArray(localArr, cloudArr)'));
+  assert.ok(html.includes('Podgląd ADMINA'));
+  assert.ok(billing.includes("Object.defineProperty(window, 'naprawnikGetAdminPreviewState'"));
 });

@@ -1260,20 +1260,86 @@ const multimeterProcedures = [
  {title:'Regulator napięcia — wstępny test diod prostowniczych',steps:['Odłącz akumulator i wypnij wtyczkę regulatora napięcia z instalacji.','Ustaw multimetr na test diody (symbol diody).','Zgodnie z tabelą pinoutu z DTR sprawdź przejścia w kierunku przewodzenia i zaporowym między wejściami faz AC a wyjściem +DC oraz masą.','Obejrzyj piny we wtyczce pod kątem nadtopień i korozji.'],expected:'W kierunku przewodzenia sprawna dioda prostownicza pokazuje typowy spadek napięcia złącza (ok. 0,4–0,7 V), a w kierunku zaporowym OL. Zwarcie (0 V w obu kierunkach) oznacza przebitą diodę/tyrystor. Pełna weryfikacja wymaga pomiaru ładowania pod obciążeniem.'},
  {title:'Pobór prądu spoczynkowego (upływ na postoju)',steps:['Wyłącz zapłon, wyjmij kluczyk i odczekaj, aż wygasną podtrzymania licznika/ECU.','Przełóż czerwony przewód multimetru do gniazda A (10 A) i ustaw zakres DC A.','Odłącz klemę minusową akumulatora i włącz multimetr SZEREGOWO między biegun (−) akumulatora a odpiętą klemę masową.','UWAGA: Nie włączaj rozrusznika ani świateł, gdy miernik jest wpięty szeregowo! Jeśli pobór jest za wysoki, wyjmuj pojedynczo bezpieczniki i odłączaj regulator/akcesoria, obserwując spadek wskazań.'],expected:'W prostych skuterach bez zegara i alarmu pobór spoczynkowy jest bliski 0 mA; z zegarem/immobilizerem zwykle kilka miliamperów wg DTR. Pobór rzędu kilkudziesięciu–kilkuset mA rozładuje mały akumulator skuterowy w kilka dni.'}
 ];
+const meterSafetyGuides = {
+  'Akumulator — napięcie spoczynkowe': {
+    prep: 'Przewód czerwony w gnieździe V/Ω, czarny w COM. Zakres: 20 V DC (prąd stały). Zapłon WYŁĄCZONY, kluczyk wyjęty, akumulator po min. 30–60 min od zakończenia ładowania.',
+    dont: 'Nie zewrzyj końcówek sond między klemą (+) a ramą lub klemą (−). Nie wykonuj pomiaru w trybie prądowym (gniazdo 10A) ani na zakresie rezystancji (Ω) — grozi to spaleniem bezpiecznika miernika i iskrzeniem przy akumulatorze.'
+  },
+  'Ładowanie — test na pracującym silniku': {
+    prep: 'Przewód czerwony w gnieździe V/Ω, czarny w COM. Zakres: 20 V DC. Skuter ustawiony stabilnie na centralnej podstawce, koło tylne w powietrzu, wentylacja spalin zapewniona.',
+    dont: 'NIGDY nie odłączaj klemy akumulatora przy pracującym silniku, aby „sprawdzić, czy zgaśnie” — skok napięcia z alternatora może natychmiast zniszczyć regulator, DC-CDI lub sterownik ECU/EFI. Uważaj na przewody pomiarowe w pobliżu wirującego wentylatora magneta i koła.'
+  },
+  'Stator — uzwojenia': {
+    prep: 'Do pomiaru rezystancji (Ω): zapłon WYŁĄCZONY, wtyczka statora rozpięta od regulatora/CDI, zakres 200 Ω (dla cewek ładowania/świateł) oraz 2 kΩ (dla cewki wzbudzającej AC-CDI). Do pomiaru napięcia: zakres 200 V AC podczas kręcenia/pracy wg DTR.',
+    dont: 'Nie mierz rezystancji (Ω) przy pracującym silniku ani na podłączonej wiązce. W układach AC-CDI cewka wzbudzająca wytwarza wysokie napięcie (100–300 V AC) — nie dotykaj gołymi palcami pinów podczas kręcenia rozrusznikiem.'
+  },
+  'Cewka zapłonowa': {
+    prep: 'Zapłon WYŁĄCZONY, przewód zasilający cewkę odłączony, fajka zdjęta ze świecy. Zakres: 200 Ω (uzwojenie pierwotne, odejmij opór własny przewodów miernika!) oraz 20 kΩ (uzwojenie wtórne i fajka z rezystorem).',
+    dont: 'Nie mierz zwykłym multimetrem impulsu na przewodzie wejściowym cewki z modułu CDI podczas kręcenia — pik napięcia z kondensatora CDI (200–400 V) może uszkodzić miernik bez adaptera szczytowego (DVA). W układach EFI nie zwieraj sterowania cewki do masy.'
+  },
+  'Impulsator / pickup': {
+    prep: 'Zapłon WYŁĄCZONY, kostka impulsatora odłączona od modułu CDI/ECU. Zakres: 200 Ω lub 2 kΩ (zależnie od rodziny silnika: Minarelli/Piaggio/GY6). Dla testu sygnału: zakres mV/V AC lub adapter DVA podczas kręcenia.',
+    dont: 'Nie podawaj +12 V na przewody impulsatora. Podczas sprawdzania szczeliny między czujnikiem a wypustem koła magnesowego upewnij się, że zapłon jest wyłączony, a kluczyk wyjęty.'
+  },
+  'Ciągłość przewodu': {
+    prep: 'Zapłon WYŁĄCZONY, klemę (−) akumulatora najlepiej odłączyć. Wtyczki badanego odcinka wiązki wypięte z modułu CDI/ECU (aby nie mierzyć przejścia „przez elektronikę”). Zakres: 200 Ω lub sygnalizator dźwiękowy (buzzer).',
+    dont: 'Nie przekłuwaj izolacji przewodów igłami w miejscach narażonych na wodę i sól — wnikająca wilgoć spowoduje zieloną korozję miedzi pod izolacją po kilku tygodniach. Mierz od strony konektorów we wtyczkach.'
+  },
+  'Spadek napięcia — masa': {
+    prep: 'Przewód czerwony w gnieździe V/Ω, czarny w COM. Zakres: 2 V DC lub 20 V DC. Obwód musi być WŁĄCZONY i obciążony (np. włączone światła lub próba rozruchu), bo na rozłączonym obwodzie spadek napięcia zawsze wyniesie 0 V.',
+    dont: 'Nie polegaj wyłącznie na teście „piszczyka” (ciągłości) dla przewodu masowego rozrusznika — jedna cała nitka miedzi „zadzowni” na mierniku, ale pod prądem 40 A straci napięcie. Nie zwieraj sondą plusa rozrusznika do karteru.'
+  },
+  'Ssanie automatyczne PTC — oporność i zasilanie': {
+    prep: 'Na zimnym silniku (ok. 20°C) wypnij 2-pinowe złącze ssania. Do testu grzałki: zakres 200 Ω. Do testu zasilania z wiązki: uruchom silnik i sprawdź w DTR, czy dany model zasila ssanie prądem przemiennym ze statora (V AC) czy stałym po stacyjce (V DC).',
+    dont: 'Nie podłączaj ssania przeznaczonego do obwodu z rezystorem balastowym bezpośrednio pod akumulator na dłużej niż przewiduje procedura testowa — przegrzejesz kapsułę woskową.'
+  },
+  'Czujnik poziomu paliwa — rezystancja pływaka': {
+    prep: 'Zapłon WYŁĄCZONY, kluczyk wyjęty, przewietrzone stanowisko z dala od źródeł ognia i iskier. Wtyczka czujnika odłączona przy zbiorniku. Zakres: 2 kΩ.',
+    dont: 'NIGDY nie podawaj napięcia z zewnętrznego akumulatora/prostownika na piny pływaka paliwowego — iskrzenie na ścieżce oporowej wewnątrz zbiornika grozi zapłonem oparów benzyny!'
+  },
+  'Czujnik stopki bocznej i świateł STOP': {
+    prep: 'Zapłon WYŁĄCZONY, złącze czujnika rozpięte. Zakres: 200 Ω / test ciągłości. Upewnij się, że skuter stoi stabilnie na podstawce centralnej przed manipulowaniem stopką boczną.',
+    dont: 'Nie zostawiaj na stałe zmostkowanego przewodu czujnika stopki bocznej ani klamki hamulca — ruszenie z rozłożoną stopką lub uruchomienie rozrusznika na otwartej przepustnicy grozi wypadkiem.'
+  },
+  'Regulator napięcia — wstępny test diod prostowniczych': {
+    prep: 'Zapłon WYŁĄCZONY, wtyczka regulatora całkowicie wypięta z instalacji. Multimetr ustawiony na test diody (symbol diody ->|).',
+    dont: 'Nie traktuj poprawnego testu diod na zimno jako 100% gwarancji sprawności regulatora — tyrystor bocznikujący (SCR) może przestawać działać dopiero pod obciążeniem i po nagrzaniu.'
+  },
+  'Pobór prądu spoczynkowego (upływ na postoju)': {
+    prep: 'Zapłon WYŁĄCZONY, kluczyk wyjęty. Przełóż czerwony przewód multimetru do gniazda 10A DC, ustaw pokrętło na 10A DC. Włącz miernik SZEREGOWO między odpiętą klemę (−) a słupek (−) akumulatora.',
+    dont: 'POD ŻADNYM POZOREM nie naciskaj przycisku START (rozrusznika), klaksonu ani nie włączaj świateł, gdy miernik jest wpięty szeregowo! Prąd rozrusznika (30–60 A) natychmiast przepali bezpiecznik 10 A w multimetrze. Po zakończeniu pomiaru od razu przełóż czerwony przewód z powrotem do gniazda V/Ω!'
+  }
+};
 let activeMeterProcedure = null;
 function renderMultimeter(){
   if(activeMeterProcedure){
     const p = multimeterProcedures.find(x=>x.title===activeMeterProcedure);
+    const sg = (p && meterSafetyGuides[p.title]) || {
+      prep: 'Przewód czerwony w gnieździe V/Ω, czarny w COM. Dobierz zakres (DC / AC / Ω) zgodnie z DTR badanego modelu.',
+      dont: 'Nie mierz rezystancji (Ω) w obwodzie pod napięciem. Unikaj zwarcia końcówek pomiarowych przy akumulatorze.'
+    };
     screen.innerHTML = `<div class="btn back" onclick="activeMeterProcedure=null;renderMultimeter()">← Wstecz</div>
       <div class="card"><h2>${escapeHtml(p.title)}</h2>
-      <small style="color:#ff6b6b">⚠️ Odłącz zasilanie tam, gdzie wymaga tego procedura. Nie mierz rezystancji w obwodzie pod napięciem.</small><br><br>
+      <div class="entry" style="border-left:3px solid #00e5ff;padding-left:8px;margin-bottom:8px">
+        <b style="color:#00e5ff">🛠️ Przygotowanie stanowiska i miernika</b>
+        <small style="white-space:normal;line-height:1.45">${escapeHtml(sg.prep)}</small>
+      </div>
+      <div class="entry" style="border-left:3px solid #ff6b6b;padding-left:8px;margin-bottom:10px">
+        <b style="color:#ff6b6b">⛔ Czego NIE robić (Bezpieczeństwo)</b>
+        <small style="white-space:normal;line-height:1.45">${escapeHtml(sg.dont)}</small>
+      </div>
       ${p.steps.map((s,i)=>`<div class="entry">${i+1}. ${escapeHtml(s)}</div>`).join('')}
       </div>
-      <div class="card"><h2>Wynik / interpretacja</h2><div class="entry">${escapeHtml(p.expected)}</div></div>`;
+      <div class="card"><h2>Wynik / interpretacja</h2><div class="entry">${escapeHtml(p.expected)}</div></div>
+      <div class="card" style="border-color:#6f3e9c"><h2>⚡ Różnice układów: AC-CDI vs DC-CDI vs EFI</h2>
+        <div class="entry"><b>AC-CDI (np. klasyczne 2T / część GY6):</b><small style="white-space:normal">Zasilanie zapłonu pochodzi z cewki wzbudzającej statora (100–300 V AC). Gaśnie przez zwarcie przewodu kill do masy — nigdy nie podawaj +12 V na przewód gaszenia!</small></div>
+        <div class="entry"><b>DC-CDI (wybrane 2T i 4T):</b><small style="white-space:normal">Moduł zasilany jest napięciem +12 V DC po stacyjce i bezpieczniku. Rozładowany akumulator lub przepalony bezpiecznik główny oznacza całkowity brak iskry.</small></div>
+        <div class="entry"><b>EFI (wtrysk elektroniczny 4T / PureJet 2T):</b><small style="white-space:normal">Czujniki (TPS, MAP, ECT) pracują na linii referencyjnej 5 V z ECU. Nie sprawdzaj wtyczek ECU „kontrolką żarówkową” 12 V i nie zwieraj pinów sterownika.</small></div>
+      </div>`;
     return;
   }
-  screen.innerHTML = back() + `<div class="card"><h2>Multimetr — procedury warsztatowe</h2>
-    <small style="color:var(--dim)">Dobieraj zakres i sposób pomiaru do DTR konkretnego pojazdu.</small><br><br>
+  screen.innerHTML = back() + `<div class="card"><h2>Multimetr — procedury warsztatowe (${multimeterProcedures.length})</h2>
+    <small style="color:var(--dim)">Każda procedura zawiera przygotowanie miernika, ostrzeżenia przed zwarciem oraz interpretację dla AC-CDI, DC-CDI i EFI.</small><br><br>
     ${multimeterProcedures.map(p=>`<div class="btn mtr-hit" data-t="${escapeHtml(p.title)}">${escapeHtml(p.title)}</div>`).join('')}
     </div>`;
   screen.querySelectorAll('.mtr-hit').forEach(el=>el.addEventListener('click', ()=>{ activeMeterProcedure = el.dataset.t; renderMultimeter(); }));
@@ -1590,11 +1656,39 @@ function searchSymptoms(){
   res.innerHTML = matches.length===0
     ? '<div class="empty">Brak trafień — spróbuj innego słowa.</div>'
     : matches.map(m=>`<div class="entry symptom-hit" data-idx="${m.idx}" style="cursor:pointer"><b>${escapeHtml(m.path[m.path.length-1])}</b><small>${escapeHtml(m.path.slice(0,-1).join(' › '))}</small></div>`).join('');
+  const kHits = (typeof knowledgeCases !== 'undefined' ? knowledgeCases : [])
+    .filter(c => normalizeSearchText(c.title + ' ' + c.tags + ' ' + c.areas.map(a => a.join(' ')).join(' ')).includes(q))
+    .slice(0, 3);
+  const sHits = (typeof scooterSchematics !== 'undefined' ? scooterSchematics : [])
+    .filter(s => normalizeSearchText(s.name + ' ' + s.sub + ' ' + s.type + ' ' + s.notes).includes(q))
+    .slice(0, 2);
+  const mHits = (typeof multimeterProcedures !== 'undefined' ? multimeterProcedures : [])
+    .filter(m => normalizeSearchText(m.title + ' ' + m.expected).includes(q))
+    .slice(0, 2);
+  const extraHtml = [
+    ...kHits.map(c => `<div class="entry home-know-hit" data-kid="${escapeHtml(c.id)}" style="cursor:pointer;border-left:3px solid #00e5ff;padding-left:8px"><b>🧭 Karta usterki: ${escapeHtml(c.title)}</b><small>Diagnostyka łączona · ${escapeHtml(c.tags)}</small></div>`),
+    ...sHits.map(s => `<div class="entry home-schem-hit" data-sname="${escapeHtml(s.name)}" style="cursor:pointer;border-left:3px solid #b388ff;padding-left:8px"><b>🔌 Schemat: ${escapeHtml(s.name)}</b><small>${escapeHtml(s.sub)}</small></div>`),
+    ...mHits.map(m => `<div class="entry home-mtr-hit" data-mtitle="${escapeHtml(m.title)}" style="cursor:pointer;border-left:3px solid #00f57a;padding-left:8px"><b>📏 Multimetr: ${escapeHtml(m.title)}</b><small>Procedura pomiarowa krok po kroku</small></div>`)
+  ].join('');
+  if (matches.length === 0 && extraHtml) {
+    res.innerHTML = extraHtml;
+  } else if (extraHtml) {
+    res.innerHTML += extraHtml;
+  }
   res.querySelectorAll('.symptom-hit').forEach(el=>{
     el.addEventListener('click', ()=>{
       const leaf = diagLeaves[Number(el.dataset.idx)];
       jumpToDiagLeaf(leaf.path, leaf.node);
     });
+  });
+  res.querySelectorAll('.home-know-hit').forEach(el=>{
+    el.addEventListener('click', ()=>{ nav('knowledge'); setTimeout(()=>jumpToKnowledge(el.dataset.kid), 30); });
+  });
+  res.querySelectorAll('.home-schem-hit').forEach(el=>{
+    el.addEventListener('click', ()=>{ nav('schematics'); const inp=$('#schematicFilter'); if(inp){inp.value=el.dataset.sname; filterSchematics();} });
+  });
+  res.querySelectorAll('.home-mtr-hit').forEach(el=>{
+    el.addEventListener('click', ()=>{ activeMeterProcedure = el.dataset.mtitle; nav('multimeter'); });
   });
 }
 
@@ -2111,7 +2205,18 @@ function curPlan(){const l=licGet();return l?l.tier:'amator';}
 function hasPlan(min){return Object.prototype.hasOwnProperty.call(PLAN_ORDER,min)&&PLAN_ORDER[curPlan()]>=PLAN_ORDER[min];}
 function lk(min){return hasPlan(min)?'':'🔒 ';}
 function vehicleLimit(){return {amator:3,pro:30,warsztat:Infinity}[curPlan()];}
-function updatePlanBadge(){const b=document.getElementById('planBadge');if(b)b.textContent='· '+PLAN_NAMES[curPlan()];}
+function updatePlanBadge(){
+  const b=document.getElementById('planBadge');
+  if(!b)return;
+  const adm=typeof window.naprawnikGetAdminPreviewState==='function'?window.naprawnikGetAdminPreviewState():null;
+  if(adm&&adm.isAdmin){
+    b.textContent=adm.isPreviewActive
+      ? '· '+PLAN_NAMES[curPlan()]+' (👁️ Podgląd ADMINA)'
+      : '· '+PLAN_NAMES[curPlan()]+' (👑 ADMIN)';
+    return;
+  }
+  b.textContent='· '+PLAN_NAMES[curPlan()];
+}
 function planItems(k){
   const cat=(typeof modelCatalog!=='undefined'?modelCatalog.length:293), kc=(typeof knowledgeCases!=='undefined'?knowledgeCases.length:39);
   return {
@@ -2850,31 +2955,68 @@ function addShop(name,tier,price){
 }
 function clearShop(){ shopLaborCost=0; shopClientNote=''; save('naprawnik_shop', []); renderShop(); }
 
+function setQuickSearch(phrase){
+  const inp = $('#q');
+  if (!inp) return;
+  inp.value = phrase;
+  doSearch();
+}
 function renderSearch(){
-  screen.innerHTML = `<div class="card"><h2>Szukaj po VIN / słowie kluczowym</h2>
-    <input id="q" placeholder="Wpisz VIN lub frazę..." oninput="doSearch()">
+  const chips = ['brak iskry','nie ładuje','gaśnie na ciepło','kopniak ślizga','ssanie zalewa','szarpie CVT','kranik podciśnieniowy','przegrzewa się'];
+  screen.innerHTML = `<div class="card"><h2>🔍 Wyszukiwarka warsztatowa 5-w-1 + Garaż/VIN</h2>
+    <small style="color:var(--dim);display:block;margin-bottom:8px">Wpisz objaw (np. „nie ładuje”, „brak iskry”, „kopniak”), kod silnika, część lub numer VIN — przeszukujemy jednocześnie karty usterek, schematy, procedury multimetrem, ścieżki TAK/NIE, profile silników i Twoją kartotekę.</small>
+    <input id="q" placeholder="Szukaj objawu, schematu, pomiaru lub VIN…" oninput="doSearch()">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">
+      ${chips.map(ch=>`<span class="knowledge-rel" role="button" tabindex="0" onclick="setQuickSearch('${escapeHtml(ch)}')">⚡ ${escapeHtml(ch)}</span>`).join('')}
+    </div>
     <div id="results"></div></div>`;
 }
 function doSearch(){
   const q=normalizeSearchText($('#q')?.value||''); const res=$('#results');
   if(!q){ res.innerHTML=''; return; }
-  const has=(...a)=>a.some(x=>normalizeSearchText(x).includes(q));
+  const words=q.split(/\s+/).filter(Boolean);
+  const has=(...a)=>{
+    const hay=normalizeSearchText(a.join(' '));
+    return hay.includes(q) || (words.length>1 && words.every(w=>hay.includes(w)));
+  };
   const notes=load('naprawnik_notes').filter(n=>has(n.vin,n.text));
   const logs=load('naprawnik_log').filter(l=>has(l.vin,l.desc));
   const rems=load('naprawnik_reminders').filter(r=>has(r.vin,r.desc));
   const vs=vehicles.filter(v=>has(v.vin,v.brand,v.model,v.year,v.engine,v.ownerName,v.ownerPhone,v.mods));
   const rs=repairs.filter(r=>has(r.symptom,r.diagnosis,r.repair,r.parts));
+  const kCases=(typeof knowledgeCases!=='undefined'?knowledgeCases:[]).filter(c=>has(c.title,c.tags,c.category||'',c.areas.map(a=>a.join(' ')).join(' '))).slice(0,8);
+  const schems=(typeof scooterSchematics!=='undefined'?scooterSchematics:[]).filter(s=>has(s.name,s.sub,s.type,s.notes,(s.nodes||[]).join(' '))).slice(0,6);
+  const meters=(typeof multimeterProcedures!=='undefined'?multimeterProcedures:[]).filter(m=>has(m.title,m.expected,(m.steps||[]).join(' '))).slice(0,6);
+  const flows=Object.entries(typeof diagFlows!=='undefined'?diagFlows:{}).filter(([id,f])=>has(f.title,(f.steps||[]).map(s=>(s.q||'')+' '+(s.result||'')+' '+(s.detail||'')).join(' '))).slice(0,6);
+  const engs=(typeof engineProfiles!=='undefined'?engineProfiles:[]).filter(p=>has(p.name,p.family,p.info,(p.checks||[]).join(' '))).slice(0,5);
+  const leaves=(typeof diagLeaves!=='undefined'?diagLeaves:[]).map((x,idx)=>({...x,idx})).filter(x=>has(x.path.join(' '),(x.node.causes||[]).join(' '))).slice(0,6);
+
   Promise.resolve().then(()=>paDbRequest('readonly','all')).catch(()=>[]).then(rows=>{
     const el=$('#results'); if(!el || normalizeSearchText($('#q')?.value||'')!==q) return;
     const cs=(rows||[]).filter(r=>r&&has(r.make,r.model,r.symptoms,r.extra,r.analysis)&&/^pa_[a-z0-9_]+$/i.test(String(r.id)));
-    if(![notes,logs,rems,vs,rs,cs].some(a=>a.length)){ el.innerHTML='<div class="empty">Brak wyników</div>'; return; }
+    if(![notes,logs,rems,vs,rs,cs,kCases,schems,meters,flows,engs,leaves].some(a=>a.length)){
+      el.innerHTML='<div class="empty">Brak wyników — spróbuj krótszej frazy (np. „iskra”, „ładowanie”, „gaźnik”, „CVT”).</div>';
+      return;
+    }
     el.innerHTML=
-      vs.map(v=>`<div class="entry srch-veh" data-id="${escapeHtml(v.id)}" style="cursor:pointer"><b>Pojazd · ${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'')}</b><small>${escapeHtml(v.vin||'—')}${v.ownerName?' · '+escapeHtml(v.ownerName):''}</small></div>`).join('')+
-      rs.map(r=>`<div class="entry srch-veh" data-id="${escapeHtml(r.vehicleId||'')}" style="cursor:pointer"><b>Naprawa · ${escapeHtml(r.repair||'')}</b><small>${escapeHtml(r.date||'')}</small><div>${escapeHtml(r.symptom||'')}</div></div>`).join('')+
-      cs.map(r=>`<div class="entry srch-case" data-id="${escapeHtml(r.id)}" style="cursor:pointer"><b>Asystent zdjęć · ${escapeHtml([r.make,r.model].filter(Boolean).join(' ')||'Pojazd niepodany')}</b><small>${escapeHtml(paDate(r.createdAt))}</small><div>${escapeHtml(r.symptoms||'')}</div></div>`).join('')+
-      rems.map(r=>`<div class="entry"><b>Przypomnienie · ${escapeHtml(r.vin||'—')}</b><small>${escapeHtml(r.date||'')}</small><div>${escapeHtml(r.desc||'')}</div></div>`).join('')+
-      notes.map(n=>`<div class="entry"><b>Notatka · ${escapeHtml(n.vin||'—')}</b><small>${escapeHtml(n.date||'')}</small><div>${escapeHtml(n.text||'')}</div></div>`).join('')+
-      logs.map(l=>`<div class="entry"><b>Log · ${escapeHtml(l.vin||'—')}</b><small>${escapeHtml(l.date||'')}</small><div>${escapeHtml(l.desc||'')}</div></div>`).join('');
+      kCases.map(c=>`<div class="entry srch-know" data-kid="${escapeHtml(c.id)}" style="cursor:pointer;border-left:3px solid #00e5ff;padding-left:8px"><b>🧭 Usterka / naprawa · ${escapeHtml(c.title)}</b><small>${escapeHtml(knowledgeCategory(c))} · ${escapeHtml(c.tags)}</small></div>`).join('')+
+      flows.map(([fid,f])=>`<div class="entry srch-flow" data-fid="${escapeHtml(fid)}" style="cursor:pointer;border-left:3px solid #ffae2b;padding-left:8px"><b>🔀 Krok po kroku (TAK/NIE) · ${escapeHtml(f.title)}</b><small>Interaktywne drzewo decyzyjne</small></div>`).join('')+
+      schems.map(s=>`<div class="entry srch-schem" data-sname="${escapeHtml(s.name)}" style="cursor:pointer;border-left:3px solid #b388ff;padding-left:8px"><b>🔌 Schemat elektryczny · ${escapeHtml(s.name)}</b><small>${escapeHtml(s.sub)} · ${escapeHtml(s.type)}</small></div>`).join('')+
+      meters.map(m=>`<div class="entry srch-mtr" data-mtitle="${escapeHtml(m.title)}" style="cursor:pointer;border-left:3px solid #00f57a;padding-left:8px"><b>📏 Pomiar multimetrem · ${escapeHtml(m.title)}</b><small>${escapeHtml(m.expected)}</small></div>`).join('')+
+      engs.map(p=>`<div class="entry srch-eng" data-eid="${escapeHtml(p.id)}" style="cursor:pointer;border-left:3px solid #ff4081;padding-left:8px"><b>🔧 Profil silnika · ${escapeHtml(p.name)}</b><small>${escapeHtml(p.family)} · ${escapeHtml(p.info)}</small></div>`).join('')+
+      leaves.map(m=>`<div class="entry srch-leaf" data-idx="${m.idx}" style="cursor:pointer"><b>🌳 Objaw · ${escapeHtml(m.path[m.path.length-1])}</b><small>${escapeHtml(m.path.slice(0,-1).join(' › '))}</small></div>`).join('')+
+      vs.map(v=>`<div class="entry srch-veh" data-id="${escapeHtml(v.id)}" style="cursor:pointer"><b>🛵 Pojazd · ${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'')}</b><small>${escapeHtml(v.vin||'—')}${v.ownerName?' · '+escapeHtml(v.ownerName):''}</small></div>`).join('')+
+      rs.map(r=>`<div class="entry srch-veh" data-id="${escapeHtml(r.vehicleId||'')}" style="cursor:pointer"><b>🛠️ Naprawa · ${escapeHtml(r.repair||'')}</b><small>${escapeHtml(r.date||'')}</small><div>${escapeHtml(r.symptom||'')}</div></div>`).join('')+
+      cs.map(r=>`<div class="entry srch-case" data-id="${escapeHtml(r.id)}" style="cursor:pointer"><b>📷 Asystent zdjęć · ${escapeHtml([r.make,r.model].filter(Boolean).join(' ')||'Pojazd niepodany')}</b><small>${escapeHtml(paDate(r.createdAt))}</small><div>${escapeHtml(r.symptoms||'')}</div></div>`).join('')+
+      rems.map(r=>`<div class="entry"><b>📅 Przypomnienie · ${escapeHtml(r.vin||'—')}</b><small>${escapeHtml(r.date||'')}</small><div>${escapeHtml(r.desc||'')}</div></div>`).join('')+
+      notes.map(n=>`<div class="entry"><b>📝 Notatka · ${escapeHtml(n.vin||'—')}</b><small>${escapeHtml(n.date||'')}</small><div>${escapeHtml(n.text||'')}</div></div>`).join('')+
+      logs.map(l=>`<div class="entry"><b>📦 Log · ${escapeHtml(l.vin||'—')}</b><small>${escapeHtml(l.date||'')}</small><div>${escapeHtml(l.desc||'')}</div></div>`).join('');
+    el.querySelectorAll('.srch-know').forEach(e=>e.addEventListener('click',()=>{ nav('knowledge'); setTimeout(()=>jumpToKnowledge(e.dataset.kid), 30); }));
+    el.querySelectorAll('.srch-flow').forEach(e=>e.addEventListener('click',()=>startDiagFlow(e.dataset.fid)));
+    el.querySelectorAll('.srch-schem').forEach(e=>e.addEventListener('click',()=>{ nav('schematics'); const inp=$('#schematicFilter'); if(inp){inp.value=e.dataset.sname; filterSchematics();} }));
+    el.querySelectorAll('.srch-mtr').forEach(e=>e.addEventListener('click',()=>{ activeMeterProcedure=e.dataset.mtitle; nav('multimeter'); }));
+    el.querySelectorAll('.srch-eng').forEach(e=>e.addEventListener('click',()=>{ activeEngineProfileId=e.dataset.eid; nav('engineProfile'); }));
+    el.querySelectorAll('.srch-leaf').forEach(e=>e.addEventListener('click',()=>{ const leaf=diagLeaves[Number(e.dataset.idx)]; if(leaf)jumpToDiagLeaf(leaf.path,leaf.node); }));
     el.querySelectorAll('.srch-veh').forEach(e=>e.addEventListener('click',()=>{ if(vehicles.some(v=>v.id===e.dataset.id)){ selectedVehicleId=e.dataset.id; nav('vehicleDetail'); } }));
     el.querySelectorAll('.srch-case').forEach(e=>e.addEventListener('click',()=>renderPhotoAssistantCase(e.dataset.id)));
   });
@@ -2962,6 +3104,28 @@ async function saveCloudBackup(){
   NAPRAWNIK_STORAGE_KEYS.filter(k=>k!=='naprawnik_pin').forEach(k=>{const raw=localStorage.getItem(k); if(raw!==null) payload.data[k]=JSON.parse(raw);});
   await window.npCloudBackupSave(payload);
 }
+function mergeBackupArray(localArr, cloudArr){
+  const a = Array.isArray(localArr) ? localArr : [];
+  const b = Array.isArray(cloudArr) ? cloudArr : [];
+  const out = [...a];
+  const seenIds = new Set(a.map(x => x && x.id).filter(Boolean));
+  const seenJson = new Set(a.map(x => JSON.stringify(x)));
+  for (const item of b) {
+    if (item && typeof item === 'object' && item.id) {
+      if (!seenIds.has(item.id)) {
+        seenIds.add(item.id);
+        out.push(item);
+      }
+    } else {
+      const s = JSON.stringify(item);
+      if (!seenJson.has(s)) {
+        seenJson.add(s);
+        out.push(item);
+      }
+    }
+  }
+  return out;
+}
 async function restoreCloudBackup(){
   if(!hasPlan('pro')){ renderLocked('pro','Kopia zapasowa w chmurze','renderSettings()'); return; }
   if(typeof window.npCloudBackupRestore !== 'function'){ alert('Moduł chmury jest niedostępny.'); return; }
@@ -2972,13 +3136,36 @@ async function restoreCloudBackup(){
     alert('Pobrana kopia z chmury ma nieprawidłowy format.'); return;
   }
   const dateStr = payload.exportedAt ? new Date(payload.exportedAt).toLocaleString('pl-PL') : 'nieznana data';
-  if(!confirm('Znaleziono kopię w chmurze z dnia: ' + dateStr + '. Zastąpić obecne dane lokalne danymi z chmury?')) return;
+  const cVeh = Array.isArray(payload.data.naprawnik_vehicles) ? payload.data.naprawnik_vehicles.length : 0;
+  const cRep = Array.isArray(payload.data.naprawnik_repairs) ? payload.data.naprawnik_repairs.length : 0;
+  const cNot = Array.isArray(payload.data.naprawnik_notes) ? payload.data.naprawnik_notes.length : 0;
+  const lVeh = vehicles.length;
+  const lRep = repairs.length;
+  const lNot = load('naprawnik_notes').length;
+  const summary = '☁️ Kopia w chmurze z dnia: ' + dateStr + '\n' +
+    '• W chmurze: ' + cVeh + ' pojazdów, ' + cRep + ' napraw, ' + cNot + ' notatek\n' +
+    '• Na tym urządzeniu: ' + lVeh + ' pojazdów, ' + lRep + ' napraw, ' + lNot + ' notatek\n\n';
+  const doMerge = confirm(summary + 'Kliknij OK, aby BEZPIECZNIE POŁĄCZYĆ (scalić) dane z chmury z danymi lokalnymi bez utraty nowych wpisów.\n(Kliknij Anuluj, jeśli chcesz przejść do opcji całkowitego zastąpienia lub przerwać).');
+  if (doMerge) {
+    for(const k of Object.keys(payload.data)){
+      if(!NAPRAWNIK_STORAGE_KEYS.includes(k) || k==='naprawnik_pin') continue;
+      if(Array.isArray(payload.data[k])){
+        const merged = mergeBackupArray(load(k), payload.data[k]);
+        localStorage.setItem(k, JSON.stringify(merged));
+      }
+    }
+    vehicles=load('naprawnik_vehicles'); repairs=load('naprawnik_repairs');
+    alert('✅ Bezpiecznie połączono (scalono) dane z chmury z kartoteką na tym urządzeniu.');
+    renderSettings();
+    return;
+  }
+  if(!confirm(summary + 'Czy chcesz CAŁKOWICIE ZASTĄPIĆ dane lokalne kopią z chmury? (Wpisy dodane tylko na tym urządzeniu zostaną nadpisane).')) return;
   for(const k of Object.keys(payload.data)){
     if(!NAPRAWNIK_STORAGE_KEYS.includes(k)) continue;
     if(k!=='naprawnik_pin' && Array.isArray(payload.data[k])) localStorage.setItem(k, JSON.stringify(payload.data[k]));
   }
   vehicles=load('naprawnik_vehicles'); repairs=load('naprawnik_repairs');
-  alert('☁️ Dane warsztatu zostały przywrócone z chmury.');
+  alert('☁️ Dane warsztatu zostały całkowicie zastąpione kopią z chmury.');
   renderSettings();
 }
 function exportBackup(){
