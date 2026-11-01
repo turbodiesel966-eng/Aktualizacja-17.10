@@ -1230,7 +1230,7 @@ function filterEngineProfiles(){const q=normalizeSearchText(document.getElementB
 function renderEngineProfile(){
   const p = engineProfiles.find(x=>x.id===activeEngineProfileId) || engineProfiles[0];
   const active = vehicles.find(v=>v.id===selectedVehicleId);
-  screen.innerHTML = `<div class="btn back" onclick="nav('models')">← Wstecz</div>
+  screen.innerHTML = `<div class="btn back" onclick="navBack()">← Wstecz</div>
     <div class="card"><h2>${escapeHtml(p.name)}</h2>
       <small style="color:var(--dim)">${escapeHtml(p.family)}</small>
       <div class="entry">${escapeHtml(p.info)}</div>
@@ -2609,7 +2609,7 @@ function filterManualCards(){
  const q=normalizeSearchText(document.getElementById('manualSearch')?.value||'');
  document.querySelectorAll('.manual-entry').forEach(el=>{const hay=normalizeSearchText((el.dataset.search||'')+' '+(el.textContent||''));el.style.display=(!q||hay.includes(q))?'block':'none';});
 }
-function back(){ return `<div class="btn back" onclick="nav('home')">← Powrót</div>`; }
+function back(){ return `<div class="btn back" onclick="navBack()">← Powrót</div>`; }
 
 function crumbsHtml(){
   return `<div style="color:var(--dim);font-size:11px;margin-bottom:10px">${diagCrumbs.join(' › ')}</div>`;
@@ -2672,7 +2672,7 @@ function diagSelect(i){
 function diagBack(){
   if(diagLeaf){ diagLeaf = null; diagCrumbs.pop(); renderDiag(); return; }
   if(diagStack.length>1){ diagStack.pop(); diagCrumbs.pop(); renderDiag(); }
-  else { nav('home'); }
+  else { navBack(); }
 }
 function diagReset(){ diagStack=[diagTree]; diagCrumbs=['Diagnostyka']; diagLeaf=null; renderDiag(); }
 
@@ -3401,7 +3401,7 @@ function renderVehicleDetail(){
   const v = vehicles.find(x=>x.id===selectedVehicleId);
   if(!v){ screen.innerHTML = back(); return; }
   const rs = repairs.filter(r=>r.vehicleId===selectedVehicleId);
-  screen.innerHTML = `<div class="btn back" onclick="nav('vehicles')">← Wstecz</div>` + `
+  screen.innerHTML = `<div class="btn back" onclick="navBack()">← Wstecz</div>` + `
   <div class="card"><h2>${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'Pojazd')}</h2>
     <small>VIN: ${escapeHtml(v.vin||'—')}</small>
     <small>Rok: ${escapeHtml(v.year||'—')} · Silnik: ${escapeHtml(v.engine||'—')} · Przebieg: ${escapeHtml(v.mileage||'—')}</small>
@@ -3857,21 +3857,88 @@ function filterPartsFinder(){
   </div>`).join('');
 }
 
+const navHistory = [];
+let currentNavState = null;
 let _isPopState = false;
-function nav(view, arg){
+let _isNavBack = false;
+
+function getScrollPos(){
+  const scr = document.getElementById("screen");
+  const screenScroll = scr ? scr.scrollTop : 0;
+  const winScroll = (typeof window !== "undefined" ? (window.pageYOffset || (document.documentElement && document.documentElement.scrollTop) || window.scrollY || 0) : 0);
+  return { screenScroll, winScroll };
+}
+
+function restoreScrollPos(pos){
+  if(!pos) return;
+  const scr = document.getElementById("screen");
+  if(scr && typeof pos.screenScroll === "number"){
+    scr.scrollTop = pos.screenScroll;
+  }
+  if(typeof window !== "undefined" && typeof window.scrollTo === "function" && typeof pos.winScroll === "number"){
+    window.scrollTo(0, pos.winScroll);
+  }
+}
+
+function nav(view, arg, restoreState){
+  const isBack = Boolean(restoreState);
+
+  // 1. Zapisz bieżącą pozycję przewijania widoku opuszczanego
+  if(currentNavState){
+    const pos = getScrollPos();
+    currentNavState.screenScroll = pos.screenScroll;
+    currentNavState.winScroll = pos.winScroll;
+
+    // Ruch w przód: odłóż poprzedni stan na stos historii
+    if(!isBack){
+      if(currentNavState.view !== view || currentNavState.arg !== (arg || null)){
+        navHistory.push({
+          view: currentNavState.view,
+          arg: currentNavState.arg,
+          screenScroll: currentNavState.screenScroll,
+          winScroll: currentNavState.winScroll
+        });
+        if(navHistory.length > 50) navHistory.shift();
+      }
+    }
+  }
+
+  // 2. Ustaw stan dla nowego widoku
+  if(isBack && restoreState){
+    currentNavState = {
+      view,
+      arg: arg || null,
+      screenScroll: restoreState.screenScroll || 0,
+      winScroll: restoreState.winScroll || 0
+    };
+  } else {
+    currentNavState = {
+      view,
+      arg: arg || null,
+      screenScroll: 0,
+      winScroll: 0
+    };
+  }
+
   currentNav = (view==='search'||view==='settings'||view==='vehicles'||view==='vehicleDetail') ? (view==='vehicleDetail'?'vehicles':view) : 'home';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===currentNav));
   updatePlanBadge();
+
   try {
-    if (!_isPopState && typeof history !== 'undefined' && typeof history.pushState === 'function') {
+    if (!_isPopState && !_isNavBack && typeof history !== 'undefined' && typeof history.pushState === 'function') {
       const cur = history.state;
-      if (!cur || cur.view !== view || cur.arg !== arg) {
-        history.pushState({ view, arg: arg || null }, '');
+      if (!cur || cur.view !== view || cur.arg !== (arg || null)) {
+        history.pushState({ view, arg: arg || null, screenScroll: currentNavState.screenScroll, winScroll: currentNavState.winScroll }, '');
       }
     }
+  } catch (_) {}
+
+  // 3. Resetuj pozycję na (0,0) wyłącznie przy nawigacji w przód
+  if(!isBack){
     if (screen) screen.scrollTop = 0;
     if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') window.scrollTo(0, 0);
-  } catch (_) {}
+  }
+
   if(NAV_MIN[view] && !hasPlan(NAV_MIN[view])){ renderLocked(NAV_MIN[view], NAV_LABEL[view]||view); return; }
   if(view==='plans') renderPlans();
   else if(view==='home') renderHome();
@@ -3912,15 +3979,58 @@ function nav(view, arg){
   else if(view==='photoCase') renderPhotoAssistantCase(arg);
   else if(view==='manuals') renderManuals();
   else if(view==='legal') renderLegal();
+
+  // 4. Przywróć pozycję przewijania po wyrenderowaniu widoku
+  if(isBack && restoreState){
+    restoreScrollPos(restoreState);
+    if(typeof requestAnimationFrame === 'function'){
+      requestAnimationFrame(() => {
+        restoreScrollPos(restoreState);
+        setTimeout(() => restoreScrollPos(restoreState), 30);
+      });
+    } else {
+      setTimeout(() => restoreScrollPos(restoreState), 30);
+    }
+  }
 }
+
+function navBack(){
+  if(navHistory.length > 0){
+    const prev = navHistory.pop();
+    _isNavBack = true;
+    try {
+      if(typeof history !== 'undefined' && typeof history.back === 'function' && history.state){
+        history.back();
+      }
+    } catch (_) {}
+    nav(prev.view, prev.arg, prev);
+    setTimeout(() => { _isNavBack = false; }, 350);
+    return;
+  }
+  if(currentNavState && currentNavState.view !== 'home'){
+    nav('home');
+  }
+}
+window.navBack = navBack;
+window.nav = nav;
+
 document.querySelectorAll('.nav-item').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.nav)));
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
   window.addEventListener('popstate', e => {
+    if(_isNavBack){
+      _isNavBack = false;
+      return;
+    }
     _isPopState = true;
     try {
-      const st = e && e.state;
-      if (st && st.view) nav(st.view, st.arg);
-      else nav('home');
+      if(navHistory.length > 0){
+        const prev = navHistory.pop();
+        nav(prev.view, prev.arg, prev);
+      } else {
+        const st = e && e.state;
+        if(st && st.view) nav(st.view, st.arg, st);
+        else nav('home');
+      }
     } finally {
       _isPopState = false;
     }
@@ -4068,7 +4178,7 @@ async function renderPhotoAssistantCase(id){
     screen.innerHTML=back()+`<div class="card" id="paCaseMarker" data-case="${paEscape(r.id)}"><h2>🧠 Przypadek diagnostyczny</h2><div class="pa-case-title">${paEscape([r.make,r.model,r.year].filter(Boolean).join(' ')||'Pojazd niepodany')}</div><div class="pa-meta">Zapisano: ${paDate(r.createdAt)} • ${paEscape(r.engine||'Silnik niepodany')}</div><p style="font-size:12px;line-height:1.55;margin:10px 0">${paEscape(r.symptoms)}</p>${r.extra?`<div class="entry"><b>Dodatkowe informacje</b><small>${paEscape(r.extra)}</small></div>`:''}<div class="pa-photo-grid">${photos||'<div class="pa-small">Brak zdjęć w tym przypadku.</div>'}</div><button class="btn" type="button" disabled>🧠 Analiza AI — w przygotowaniu</button><button class="btn" onclick="paEditCase('${paEscape(r.id)}')">✏️ Dodaj notatkę do przypadku</button></div>
     <div class="card"><h2>🔎 Analiza zdjęć AI</h2>${r.analysisStatus==='running'?'<div class="pa-status">Analizuję zdjęcia na serwerze…</div>':''}${r.analysis?`<div class="pa-result">${paEscape(r.analysis)}</div><div class="pa-meta">${r.analysisStatus==='done'?'Analiza zakończona':r.analysisStatus==='error'?'Analiza nieudana':'Status: '+paEscape(r.analysisStatus)} ${r.analysisAt?'• '+paDate(r.analysisAt):''}</div>`:'<div class="pa-status offline">Analiza AI jest tymczasowo wyłączona. Zapis zdjęć, historii i checklist działa offline.</div>'}<div class="pa-small" style="margin-top:8px">AI podaje możliwe przyczyny, nie potwierdza usterki na pewno. Wnioski weryfikuj pomiarami i dokumentacją dokładnego modelu.</div></div>
     <div class="card"><h2>✅ Checklista offline</h2><div class="pa-small">Zaznaczenia są zapisywane na urządzeniu i pozostają dostępne bez internetu.</div>${r.checklist.map((c,i)=>`<label class="pa-check"><input type="checkbox" ${c.done?'checked':''} onchange="paToggleCheck('${paEscape(r.id)}',${i},this.checked)"><span>${paEscape(c.label)}</span></label>`).join('')}<button class="btn" onclick="paResetChecklist('${paEscape(r.id)}')">Resetuj checklistę</button></div>
-    <div class="card"><button class="btn" onclick="nav('photoAssistant')">← Wróć do asystenta i historii</button><button class="btn pa-danger" onclick="paDeleteCase('${paEscape(r.id)}')">🗑️ Usuń ten przypadek i zdjęcia</button></div>`;paBindPhotoLinks(r);
+    <div class="card"><button class="btn" onclick="navBack()">← Wróć do asystenta i historii</button><button class="btn pa-danger" onclick="paDeleteCase('${paEscape(r.id)}')">🗑️ Usuń ten przypadek i zdjęcia</button></div>`;paBindPhotoLinks(r);
   }catch(e){alert('Nie udało się otworzyć przypadku: '+(e.message||e));nav('photoAssistant');}
 }
 async function paToggleCheck(id,index,checked){try{await paUpdateCase(id,r=>{if(!Array.isArray(r.checklist)||!r.checklist.length)r.checklist=paChecklistFor(r.category);if(r.checklist[index])r.checklist[index].done=!!checked;});}catch(e){alert('Nie udało się zapisać checklisty: '+(e.message||e));}}
@@ -4422,7 +4532,7 @@ function renderNewOrderForm(prefillVehicleId){
   if(prefillVehicleId) v = vehicles.find(x => x.id === prefillVehicleId);
   const nextNum = generateOrderNumber();
 
-  screen.innerHTML = `<div class="btn back" onclick="renderOrders()">← Anuluj i wróć</div>
+  screen.innerHTML = `<div class="btn back" onclick="navBack()">← Anuluj i wróć</div>
   <div class="card" style="border-color:var(--hero)">
     <h2>📋 Nowe Zlecenie Serwisowe</h2>
     <div style="font-size:13px;color:var(--hero);font-weight:700;margin-bottom:8px">Numer: ${nextNum}</div>
@@ -4526,7 +4636,7 @@ function renderOrderDetail(orderId){
   const workshop = workshopInfo();
   const st = ORDER_STATUS_LABELS[o.status] || { label: o.status, color: '#fff' };
 
-  screen.innerHTML = `<div class="btn back" onclick="renderOrders()">← Wróć do listy zleceń</div>
+  screen.innerHTML = `<div class="btn back" onclick="navBack()">← Wróć do listy zleceń</div>
   <div class="card" style="border-color:${st.color}">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h2>${escapeHtml(o.number)}</h2>

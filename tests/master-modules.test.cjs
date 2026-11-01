@@ -67,3 +67,13 @@ test('NAPRAWNIK MASTER — billing.js prezentuje nowe limity i kartę zużycia p
   assert.ok(billing.includes('Własne pojazdy w kartotece'), 'Brak limitu pojazdów w billing.js');
   assert.ok(billing.includes('planUsage'), 'Brak obsługi planUsage w billing.js');
 });
+
+test('NAPRAWNIK — przycisk powrót zachowuje historię ekranów oraz pozycję przewijania', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('function back(){ return `<div class="btn back" onclick="navBack()">← Powrót</div>`; }'), 'Przycisk back() musi wywoływać navBack(), a nie twarde nav("home")');
+  assert.ok(html.includes('function navBack()'), 'Brak funkcji navBack()');
+  assert.ok(html.includes('navHistory.pop()'), 'navBack musi zdejmofać poprzedni stan z navHistory');
+  assert.ok(html.includes('restoreScrollPos'), 'Brak restoreScrollPos przywracającego przewinięcie');
+  assert.ok(html.includes('getScrollPos'), 'Brak getScrollPos pobierającego przewinięcie');
+  assert.ok(html.includes('screenScroll: currentNavState.screenScroll'), 'Stan historii musi zapisywać screenScroll');
+});

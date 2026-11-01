@@ -569,7 +569,7 @@
       (newCode ? '<div class="entry" style="border-color:var(--hero)"><b>Nowy kod — pokaż go odbiorcy tylko teraz</b><input id="npPromoCreatedCode" readonly value="' + esc(newCode) + '"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'npPromoCreatedCode\').value).then(()=>alert(\'Skopiowano kod.\')).catch(()=>alert(\'Skopiuj kod ręcznie.\'))">Skopiuj kod</button></div>' : '') +
       '</div><div class="card"><h2>📋 Kody promocyjne</h2>' + rows + '</div>' +
       aiBudgetCard + '<div class="card"><h2>🧾 Historia wykorzystania kodów</h2><small style="color:var(--dim)">Maksymalnie 100 ostatnich wpisów. Pokazujemy skrócone ID konta, bez adresów e-mail. Historia jest przechowywana przez 12 miesięcy.</small>' + redemptionRows + '</div>' +
-      '<div class="card"><button class="btn" onclick="nav(\'settings\')">← Wróć do ustawień</button></div>';
+      '<div class="card"><button class="btn" onclick="if(typeof navBack===\'function\')navBack();else nav(\'settings\')">← Wróć do ustawień</button></div>';
   }
   window.npOpenAdminPanel = async function() {
     if (!API) { alert('Panel dostępny wyłącznie w oficjalnej aplikacji.'); return; }
