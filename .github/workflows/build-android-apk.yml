@@ -1,3 +1,4 @@
+
 name: Build NAPRAWNIK Android APK
 
 on:
@@ -42,6 +43,7 @@ jobs:
     name: Build installable Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -77,7 +79,62 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Check persistent release-signing secrets
+        id: signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          present=0
+          for name in \
+            ANDROID_KEYSTORE_BASE64 \
+            ANDROID_KEYSTORE_PASSWORD \
+            ANDROID_KEY_ALIAS \
+            ANDROID_KEY_PASSWORD
+          do
+            if [[ -n "${!name:-}" ]]; then
+              present=$((present + 1))
+            fi
+          done
+
+          if [[ "$present" -eq 0 ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "No release-signing secrets configured. Building DEBUG only."
+            exit 0
+          fi
+
+          if [[ "$present" -ne 4 ]]; then
+            echo "::error::Incomplete Android release-signing configuration. Configure all four secrets."
+            exit 1
+          fi
+
+          KEYSTORE_PATH="$RUNNER_TEMP/naprawnik-release.keystore"
+
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+
+          keytool -list \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" \
+            >/dev/null
+
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          echo "keystore_file=$KEYSTORE_PATH" >> "$GITHUB_OUTPUT"
+          echo "Release keystore successfully validated."
+
       - name: Set package identity, version and optional persistent signing
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ steps.signing.outputs.keystore_file }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: node scripts/configure-android-build.mjs
 
       - name: Generate branded NAPRAWNIK launcher and splash
@@ -101,22 +158,11 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Check persistent release-signing secrets
-        id: signing
-        shell: bash
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          echo "enabled=false" >> "$GITHUB_OUTPUT"
-          echo "Release signing is intentionally disabled during DEBUG testing."
-
       - name: Build stable signed release APK
         if: steps.signing.outputs.enabled == 'true'
         working-directory: android
         env:
+          ANDROID_KEYSTORE_FILE: ${{ steps.signing.outputs.keystore_file }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -127,12 +173,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           APK="android/app/build/outputs/apk/release/app-release.apk"
           python3 scripts/verify-apk.py "$APK"
+
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+
           test -x "$AAPT"
           test -x "$APKSIGNER"
+
           "$AAPT" dump badging "$APK" | grep -F "package: name='pl.turbodiesel.naprawnik.mobile'"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
 
@@ -151,4 +201,3 @@ jobs:
           set -euo pipefail
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           "$AAPT" dump badging android/app/build/outputs/apk/debug/app-debug.apk | grep -F "package: name='pl.turbodiesel.naprawnik.mobile'"
-
