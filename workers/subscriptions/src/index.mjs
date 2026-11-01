@@ -1610,6 +1610,8 @@ async function getPlanUsageValue(env, userId, metric, periodStart) {
 async function applyPlanUsageDelta(env, userId, tier, metric, delta, eventId) {
   if (!PLAN_USAGE_METRICS.includes(metric)) return { ok: false, status: 400, error: "Unknown usage metric." };
   if (!Number.isSafeInteger(delta) || delta === 0 || Math.abs(delta) > 10000) return { ok: false, status: 400, error: "Invalid usage delta." };
+  // Customer clients may consume quota, but cannot refund it by posting negative deltas.
+  if (delta < 0) return { ok: false, status: 403, error: "Usage counters cannot be decremented by a customer client." };
   const limit = Number(PLAN_USAGE_LIMITS[tier]?.[metric] ?? 0);
   const periodStart = planUsagePeriod(metric, tier);
   const current = await getPlanUsageValue(env, userId, metric, periodStart);
