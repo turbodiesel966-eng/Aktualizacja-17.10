@@ -52,6 +52,7 @@ await mkdir(webDir, { recursive: true });
 for (const file of requiredFiles) {
   await cp(path.join(root, file), path.join(webDir, file));
 }
+await cp(path.join(root, "affiliate"), path.join(webDir, "affiliate"), { recursive: true });
 await mkdir(path.join(webDir, "assets"), { recursive: true });
 for (const file of ["naprawnik-icon.svg", "naprawnik-icon-192.svg", "naprawnik-icon-512.svg"]) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
@@ -74,6 +75,7 @@ if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
 mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
+  '  <script src="./affiliate/catalog.js"></script>\n' +
   '  <script src="./native-bridge.js"></script>\n' +
   mobileHtml.slice(closingBodyIndex);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
