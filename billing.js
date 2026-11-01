@@ -808,6 +808,46 @@
       alert('Zakup został anulowany. Nie pobrano płatności.');
     }
   };
+
+  // Server-side quota and paid-module data bridge. Quotas are checked against the authenticated D1 account.
+  window.npUsageGet = async function() {
+    const token = await accountEnsure();
+    return api('/api/usage', undefined, 'GET', token);
+  };
+  window.npUsageChange = async function(metric, delta, eventId) {
+    const token = await accountEnsure();
+    const id = eventId || (window.crypto && typeof window.crypto.randomUUID === 'function'
+      ? window.crypto.randomUUID()
+      : 'np_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2));
+    return api('/api/usage', { metric, delta: Number(delta), eventId: id }, 'POST', token);
+  };
+  window.npModuleCloudLoad = async function() {
+    const license = typeof window.naprawnikGetVerifiedLicense === 'function' ? window.naprawnikGetVerifiedLicense() : null;
+    if (!license || license.verified !== true || !['pro', 'warsztat'].includes(license.tier)) {
+      throw new Error('Synchronizacja modułów wymaga aktywnego planu PRO lub WARSZTAT.');
+    }
+    const token = await accountEnsure();
+    const response = await api('/api/data?key=' + encodeURIComponent('pro:workshop_modules_v1'), undefined, 'GET', token);
+    const item = response && response.item;
+    if (!item) return { value: null, revision: 0, updatedAt: 0 };
+    let value = item.json_value;
+    if (typeof value === 'string') value = JSON.parse(value);
+    return { value, revision: Number(item.revision || 0), updatedAt: Number(item.updated_at || 0) };
+  };
+  window.npModuleCloudSave = async function(value, revision) {
+    const license = typeof window.naprawnikGetVerifiedLicense === 'function' ? window.naprawnikGetVerifiedLicense() : null;
+    if (!license || license.verified !== true || !['pro', 'warsztat'].includes(license.tier)) {
+      throw new Error('Synchronizacja modułów wymaga aktywnego planu PRO lub WARSZTAT.');
+    }
+    const token = await accountEnsure();
+    return api('/api/data', {
+      key: 'pro:workshop_modules_v1',
+      value,
+      revision: Number(revision || 0),
+      updatedAt: Date.now()
+    }, 'PUT', token);
+  };
+
   // Replace the legacy, broken Netlify activation callbacks with the Cloudflare API path.
   window.licBoot = window.npBillingBoot;
   trackVisit();
