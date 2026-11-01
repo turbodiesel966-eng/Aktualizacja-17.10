@@ -1174,7 +1174,7 @@ async function revokeUserDevice(request, env, auth) {
   if (Number(result.meta?.changes || 0) !== 1) return err("Nie znaleziono aktywnego urządzenia.", 404);
   await env.DB.prepare("UPDATE api_tokens SET revoked_at = ? WHERE user_id = ? AND device_id_hash = ? AND revoked_at IS NULL")
     .bind(now, auth.userId, hash).run();
-  return json({ ok: true, message: "Urządzenie odłączono. Jego przypisane klucze dostępu zostały unieważnione." });
+  return json({ ok: true, sessionRevoked: auth.deviceIdHash === hash, message: "Urządzenie odłączono. Jego przypisane klucze dostępu zostały unieważnione." });
 }
 
 async function getMe(env, auth) {
