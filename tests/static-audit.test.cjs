@@ -11,14 +11,14 @@ test('baza wiedzy zawiera co najmniej 70 unikalnych kart, w tym wszystkie 20 now
   const html = read('index.html');
   const caseBlock = html.split('const knowledgeCases = [')[1].split('const KNOW_LINKS={')[0];
   const ids = Array.from(caseBlock.matchAll(/\{\s*["']?id["']?\s*:\s*["']([^"']+)["']/g), match => match[1]);
-  assert.ok(ids.length >= 70, 'Oczekiwano co najmniej 70 kart, znaleziono ' + ids.length);
+  assert.ok(ids.length >= 95, 'Oczekiwano co najmniej 95 kart, znaleziono ' + ids.length);
   assert.equal(new Set(ids).size, ids.length, 'ID kart diagnostycznych muszą być unikalne');
   for (const id of [
     'charging-no-rise', 'charging-overvoltage', 'starter-clicks', 'starter-spins-no-crank',
     'carb-fuel-overflow', 'fuel-starvation-high-rpm', 'idle-hangs-two-stroke', 'two-stroke-overheat',
     'four-stroke-hard-start-valves', 'lights-intermittent', 'spark-intermittent-bumps',
     'rear-wheel-binding', 'brake-overheating', 'coolant-overheating', 'oil-leak-crankcase',
-    'fuel-smell-leak', 'efi-idle-surge', 'engine-noise-sudden', 'compression-low', 'engine-dies-after-wash'
+    'fuel-smell-leak', 'efi-idle-surge', 'engine-noise-sudden', 'compression-low', 'engine-dies-after-wash', 'auto-choke-ptc-fault', 'vacuum-petcock-diaphragm', 'cvk-diaphragm-tear', 'torque-driver-grooves', 'cvt-clutch-bearing-noise', 'final-drive-seal-leak', 'crankcase-breather-oil', 'timing-chain-tensioner-4t', 'burnt-exhaust-valve-4t', 'exhaust-clogged-carbon-2t', 'reed-valve-petals-2t', 'crankshaft-bearings-play', 'flywheel-woodruff-key', 'ignition-switch-short-rain', 'sidestand-switch-cutout', 'ballast-resistor-ac-lights', 'seized-variator-rear-spline', 'speedometer-drive-vss', 'warped-brake-disc-pulsing', 'gearbox-oil-emulsion', 'decompressor-4t-hot-crank', 'kickstarter-ratchet-jam', 'oil-pump-2t-air-bubble', 'lean-angle-sensor-no-start', 'flasher-relay-led-hyperflash'
   ]) {
     assert.ok(ids.includes(id), 'Brak nowej karty diagnostycznej: ' + id);
   }
