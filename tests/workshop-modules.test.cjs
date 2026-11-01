@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const source = fs.readFileSync(new URL('../workshop-modules.js', import.meta.url), 'utf8');
+const source = fs.readFileSync(require('node:path').join(__dirname, '../workshop-modules.js'), 'utf8');
 
 test('NAPRAWNIK Workshop exposes all five connected modules', () => {
   for (const marker of ['work_orders','Elektroniczne laboratorium','Inteligentny dobór części','Historia napraw ze zdjęciami','Automatyczny plan serwisowy']) {
