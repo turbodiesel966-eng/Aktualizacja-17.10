@@ -81,8 +81,9 @@ test("revoked device invalidates its bound bearer token", async () => {
   const hash="a".repeat(64);
   env.state.devices.set(hash,{device_id_hash:hash,user_id:"user-1",label:"Android",first_seen_at:1,last_seen_at:1,revoked_at:null});
   env.state.token={token_hash:await sha256Hex("a".repeat(64)),user_id:"user-1",expires_at:Math.floor(Date.now()/1000)+3600,revoked_at:null,device_id_hash:hash};
-  const response=await revokeUserDevice(new Request("https://api.example/api/devices/revoke",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({deviceRef:hash})}),env,{userId:"user-1"});
+  const response=await revokeUserDevice(new Request("https://api.example/api/devices/revoke",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({deviceRef:hash})}),env,{userId:"user-1",deviceIdHash:hash});
   assert.equal(response.status,200);
+  assert.equal((await response.json()).sessionRevoked,true);
   assert.ok(env.state.devices.get(hash).revoked_at);
   assert.equal(env.state.revokedTokens,1);
   assert.equal(await authenticate(new Request("https://api.example",{headers:{Authorization:"Bearer "+"a".repeat(64)}}),env),null);
