@@ -616,3 +616,18 @@ test('konto właściciela / ADMINA otrzymuje automatycznie pełny dostęp WARSZT
   context.npSetAdminPreviewTier('warsztat');
   assert.equal(context.naprawnikGetVerifiedLicense()?.tier, 'warsztat');
 });
+
+test('odzyskiwanie klucza z pliku .txt, ekran regulaminu/RODO oraz katalog techniczny są zintegrowane', () => {
+  const html = read('index.html');
+  const billing = read('billing.js');
+  const pkg = JSON.parse(read('package.json'));
+
+  assert.ok(html.includes('<script src="./katalog-techniczny.js"></script>'));
+  assert.ok(html.includes('function renderLegal()'));
+  assert.ok(html.includes("else if(view==='legal') renderLegal();"));
+  assert.ok(billing.includes('window.licDownloadKey = function()'));
+  assert.ok(billing.includes('window.licLoadKeyFile = async function(event)'));
+  assert.ok(billing.includes('data-np-download-key="1"'));
+  assert.ok(billing.includes('id="licKeyFileIn"'));
+  assert.ok(pkg.scripts['mobile:prepare'].startsWith('npm test &&'));
+});

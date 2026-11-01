@@ -324,9 +324,9 @@
     };
     let activation;
     if (license && license.token && license.tier !== 'amator' && license.exp > Date.now()) {
-      activation = '<div class="card"><h2>🔑 Dostęp aktywny</h2><p>Plan: <b>' + NAMES[license.tier] + '</b></p><p>Ważny do ' + esc(new Date(license.exp).toLocaleDateString('pl-PL')) + '.</p><textarea id="licKeyShow" readonly style="min-height:70px">' + esc(license.token) + '</textarea><div class="btn" data-np-copy="1">📋 Skopiuj klucz dostępu</div><div class="btn" data-np-refresh="1">🔄 Sprawdź abonament</div><div class="btn" data-np-portal="1">⚙️ Zarządzaj subskrypcją / anuluj</div><div class="btn" data-np-logout="1">🚪 Wyloguj z tego urządzenia</div></div>';
+      activation = '<div class="card"><h2>🔑 Dostęp aktywny</h2><p>Plan: <b>' + NAMES[license.tier] + '</b></p><p>Ważny do ' + esc(new Date(license.exp).toLocaleDateString('pl-PL')) + '.</p><textarea id="licKeyShow" readonly style="min-height:70px">' + esc(license.token) + '</textarea><div class="btn" data-np-copy="1">📋 Skopiuj klucz dostępu</div><div class="btn" data-np-download-key="1" style="border-color:#00f57a;color:#00f57a">💾 Pobierz klucz jako plik (.txt)</div><div class="btn" data-np-refresh="1">🔄 Sprawdź abonament</div><div class="btn" data-np-portal="1">⚙️ Zarządzaj subskrypcją / anuluj</div><div class="btn" data-np-logout="1">🚪 Wyloguj z tego urządzenia</div></div>';
     } else {
-      activation = '<div class="card"><h2>🔑 Aktywacja / odzyskanie dostępu</h2><p style="font-size:12px;line-height:1.5">Po zakupie dostęp aktywuje się po potwierdzeniu Stripe. Na innym urządzeniu wklej klucz dostępu zapisany po zakupie.</p><input id="licKeyIn" placeholder="Wklej klucz dostępu"><div class="btn" data-np-activate="1">✅ Aktywuj / sprawdź klucz</div></div>';
+      activation = '<div class="card"><h2>🔑 Aktywacja / odzyskanie dostępu</h2><p style="font-size:12px;line-height:1.5">Po zakupie dostęp aktywuje się po potwierdzeniu Stripe. Na innym urządzeniu wklej klucz dostępu lub wczytaj zapisany plik <code>.txt</code>.</p><input id="licKeyIn" placeholder="Wklej klucz dostępu"><div class="btn" data-np-activate="1">✅ Aktywuj / sprawdź klucz</div><label class="btn" for="licKeyFileIn" style="display:block;border-color:#00e5ff;color:#00e5ff">📂 Wczytaj klucz z pliku (.txt)</label><input id="licKeyFileIn" type="file" accept=".txt,text/plain" onchange="window.licLoadKeyFile && window.licLoadKeyFile(event)" style="display:none"></div>';
     }
     const oneTimeOffers = [
       { tier: 'pro', days: 3, price: '3,00 zł', title: 'PRO' },
@@ -342,7 +342,7 @@
     root.innerHTML = (typeof back === 'function' ? back() : '') +
       '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka. PRO rozszerza bazę elektryki i funkcje diagnostyczne; analiza zdjęć AI jest chwilowo wyłączona. WARSZTAT zawiera funkcje PRO oraz narzędzia obsługi klientów i dokumentacji. Abonamentem zarządzasz w panelu Stripe.</p></div>' +
       activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
-      '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small></div>';
+      '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small><div class="btn" onclick="if(typeof nav===\'function\')nav(\'legal\')" style="margin-top:8px">📜 Regulamin i Polityka prywatności (RODO)</div></div>';
   }
   window.renderPlans = renderPlansBridge;
   window.npStartCheckout = checkout;
@@ -373,6 +373,56 @@
     const value = input && input.value || '';
     if (navigator.clipboard && value) navigator.clipboard.writeText(value).then(() => alert('Skopiowano klucz dostępu. Zapisz go bezpiecznie.')).catch(() => alert('Skopiuj klucz ręcznie.'));
     else alert('Skopiuj klucz ręcznie.');
+  };
+  window.licDownloadKey = function() {
+    const lic = getVerifiedPlan();
+    const input = document.querySelector('#licKeyShow');
+    const token = (input && input.value || lic && lic.token || tokenGet() || '').trim();
+    if (!token) { alert('Brak aktywnego klucza do zapisania.'); return; }
+    try {
+      const content = [
+        'NAPRAWNIK — Twój osobisty klucz dostępu do abonamentu',
+        'Data zapisu: ' + new Date().toLocaleString('pl-PL'),
+        'Plan: ' + (lic && NAMES[lic.tier] ? NAMES[lic.tier] : 'Konto NAPRAWNIK'),
+        '',
+        'KLUCZ DOSTĘPU (wklej go w zakładce Plany -> Aktywacja lub wczytaj ten plik):',
+        token,
+        '',
+        'WAŻNE: Nie udostępniaj tego pliku osobom trzecim. Zachowaj go na dysku lub w chmurze, aby odzyskać dostęp po wymianie telefonu lub wyczyszczeniu przeglądarki.'
+      ].join('\r\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'NAPRAWNIK-klucz-dostepu-' + new Date().toISOString().slice(0, 10) + '.txt';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      alert('💾 Zapisano plik z kluczem dostępu. Przechowuj go w bezpiecznym miejscu.');
+    } catch (_) {
+      alert('Nie udało się pobrać pliku. Skopiuj klucz ręcznie przyciskiem powyżej.');
+    }
+  };
+  window.licLoadKeyFile = async function(event) {
+    const file = event && event.target && event.target.files && event.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const match = String(text || '').match(/\b([a-fA-F0-9]{48,128}|[A-Za-z0-9_-]{32,128})\b/g);
+      const candidate = match ? match[match.length - 1] : String(text || '').trim();
+      const input = document.querySelector('#licKeyIn');
+      if (input && candidate) {
+        input.value = candidate.trim();
+        await window.licActivateInput();
+      } else {
+        alert('Nie znaleziono poprawnego klucza dostępu w wybranym pliku.');
+      }
+    } catch (_) {
+      alert('Nie udało się odczytać pliku z kluczem.');
+    } finally {
+      if (event && event.target) event.target.value = '';
+    }
   };
   window.openBillingPortal = async function() {
     try {
@@ -712,12 +762,13 @@
     return data;
   };
   document.addEventListener('click', async event => {
-    const button = event.target.closest('[data-one-time-tier][data-one-time-days], [data-plan][data-interval], .np-buy, [data-np-copy], [data-np-refresh], [data-np-portal], [data-np-logout], [data-np-activate], [data-billing-nav]');
+    const button = event.target.closest('[data-one-time-tier][data-one-time-days], [data-plan][data-interval], .np-buy, [data-np-copy], [data-np-download-key], [data-np-refresh], [data-np-portal], [data-np-logout], [data-np-activate], [data-billing-nav]');
     if (!button) return;
     if (button.hasAttribute('data-one-time-tier')) { await checkoutOneTime(button.dataset.oneTimeTier, Number(button.dataset.oneTimeDays)); return; }
     if (button.hasAttribute('data-billing-nav')) { if (typeof nav === 'function') nav('plans'); return; }
     if (button.dataset.plan && button.dataset.interval) { await checkout(button.dataset.plan, button.dataset.interval); return; }
     if (button.hasAttribute('data-np-copy')) { window.licCopy(); return; }
+    if (button.hasAttribute('data-np-download-key')) { window.licDownloadKey(); return; }
     if (button.hasAttribute('data-np-refresh')) { await refresh(false); renderPlansBridge(); return; }
     if (button.hasAttribute('data-np-portal')) { await window.openBillingPortal(); return; }
     if (button.hasAttribute('data-np-logout')) { window.licDeactivate(); return; }

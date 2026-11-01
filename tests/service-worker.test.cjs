@@ -24,6 +24,7 @@ test('PWA manifest has valid relative scope, start URL and matching app icon', (
   assert.match(index, /<link rel="icon" type="image\/svg\+xml" href="\.\/assets\/naprawnik-icon\.svg">/);
   const sw = read('sw.js');
   assert.ok(sw.includes("'./manifest.webmanifest'"));
+  assert.ok(sw.includes("'./katalog-techniczny.js'"));
   assert.ok(sw.includes("'./assets/naprawnik-icon.svg'"));
   assert.ok(sw.includes("'./assets/naprawnik-icon-192.svg'"));
   assert.ok(sw.includes("'./assets/naprawnik-icon-512.svg'"));

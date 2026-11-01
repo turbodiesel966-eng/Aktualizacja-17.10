@@ -2884,7 +2884,7 @@ function renderSettings(){
   screen.innerHTML = `<div class="card"><h2>Ustawienia</h2>
     <small style="color:var(--dim)">${APP_VERSION} — aplikacja działa lokalnie; dane nie są synchronizowane z serwerem.</small><br><br>
     <div class="alert">⚠️ PIN nie szyfruje danych. Dane lokalne mogą zniknąć po wyczyszczeniu danych przeglądarki, zmianie urządzenia lub awarii pamięci.</div>
-    <div class="card" style="border-color:var(--hero)"><h2>💎 Plan: ${PLAN_NAMES[curPlan()]}</h2><small style="color:var(--dim)">Płatności obsługuje Stripe. Licencja jest sprawdzana po stronie serwera. Regulamin, politykę prywatności i dane sprzedawcy opublikuj przed sprzedażą.</small><div class="btn" onclick="nav('plans')">Plany, zakup i licencja</div></div>
+    <div class="card" style="border-color:var(--hero)"><h2>💎 Plan: ${PLAN_NAMES[curPlan()]}</h2><small style="color:var(--dim)">Płatności obsługuje Stripe. Licencja jest sprawdzana po stronie serwera. Zasady korzystania, płatności i ochrony danych znajdziesz w regulaminie i polityce prywatności poniżej.</small><div class="btn" onclick="nav('plans')">Plany, zakup i licencja</div><div class="btn" onclick="nav('legal')">📜 Regulamin i Polityka prywatności (RODO)</div></div>
     <div class="card" style="border-color:#8b5cf6"><h2>🎟️ Kod promocyjny</h2><small style="color:var(--dim)">Jeśli masz kod od organizatora testów lub konkursu, wpisz go tutaj. Dostęp będzie przypisany do konta i potwierdzony przez serwer.</small><input id="npPromoCode" autocomplete="off" autocapitalize="characters" maxlength="40" placeholder="Wpisz kod promocyjny"><div class="btn" onclick="window.npRedeemPromo()">Aktywuj kod</div></div>
     <div class="card"><h2>🛡️ Właściciel aplikacji</h2><small style="color:var(--dim)">Panel statystyk i zarządzania promocjami jest dostępny tylko po potwierdzeniu uprawnień przez serwer.</small><div class="btn" onclick="window.npOpenAdminPanel()">Otwórz panel właściciela / ADMINA</div></div>
     <div class="card"><h2>🔐 Prywatność i statystyki</h2><small style="color:var(--dim)">Anonimowe statystyki są opcjonalne i domyślnie wyłączone. Po włączeniu zapisujemy losowe identyfikatory jako skróty i daty sesji, bez surowych adresów IP. Możesz wyłączyć zbieranie w dowolnym momencie.</small><div class="btn" onclick="window.npSetAnalyticsConsent(true)">Włącz anonimowe statystyki</div><div class="btn" onclick="window.npSetAnalyticsConsent(false)">Wyłącz anonimowe statystyki</div></div>
@@ -2907,6 +2907,33 @@ function renderSettings(){
     ${pin
       ? `<div class="btn" onclick="startPinSetup()">🔒 Zmień PIN</div><div class="btn" onclick="disablePin()">🔓 Wyłącz PIN</div>`
       : `<div class="btn" onclick="startPinSetup()">🔒 Ustaw PIN (blokada ekranu)</div>`}
+    </div>`;
+}
+function renderLegal(){
+  screen.innerHTML = back() + `
+    <div class="card" style="border-color:var(--accent)">
+      <h2>📜 Regulamin i Polityka prywatności (RODO)</h2>
+      <small style="color:var(--dim)">Zasady korzystania z aplikacji NAPRAWNIK (${APP_VERSION}), subskrypcji, pakietów czasowych oraz przetwarzania danych.</small>
+    </div>
+    <div class="card">
+      <h2>1. Charakter usługi i bezpieczeństwo warsztatowe</h2>
+      <div class="entry"><small style="white-space:normal;line-height:1.5">• NAPRAWNIK jest aplikacją wspierającą diagnostykę, dokumentowanie napraw i organizację warsztatu dla skuterów oraz lekkich motocykli 2T/4T.<br>• Dane diagnostyczne, schematy blokowe, kalkulatory i opisy przypadków mają charakter pomocniczy — przed wykonaniem naprawy lub dokręcaniem połączeń zawsze zweryfikuj parametry w dokumentacji technicznej (DTR / Workshop Manual) konkretnego modelu, rocznika i kodu silnika.<br>• Prace przy układach paliwowych, hamulcowych i elektrycznych wykonuj z zachowaniem zasad BHP i ppoż.</small></div>
+    </div>
+    <div class="card">
+      <h2>2. Konto, klucz dostępu i kopie zapasowe</h2>
+      <div class="entry"><small style="white-space:normal;line-height:1.5">• Konto dostępowe tworzone jest bez podawania hasła — na podstawie kryptograficznie losowego klucza dostępu (tokenu). Serwer przechowuje wyłącznie jednokierunkowy skrót <code>SHA-256</code> klucza.<br>• Po zakupie planu PRO lub WARSZTAT pobierz swój klucz jako plik <code>.txt</code> w zakładce <b>Plany i licencja → Pobierz klucz jako plik (.txt)</b>, aby móc odtworzyć dostęp na nowym telefonie lub po wyczyszczeniu przeglądarki.<br>• Dane warsztatowe (pojazdy, naprawy, notatki, zdjęcia) są domyślnie zapisywane lokalnie na urządzeniu (<code>localStorage</code> / <code>IndexedDB</code>). Użytkownicy planów PRO/WARSZTAT mogą dodatkowo wykonać szyfrowaną połączeniem HTTPS kopię zapasową w chmurze Cloudflare D1.</small></div>
+    </div>
+    <div class="card">
+      <h2>3. Płatności, subskrypcje i pakiety jednorazowe</h2>
+      <div class="entry"><small style="white-space:normal;line-height:1.5">• Płatności realizowane są wyłącznie przez certyfikowany system <b>Stripe Checkout</b>. Aplikacja NAPRAWNIK nigdy nie widzi ani nie przechowuje numerów kart płatniczych.<br>• Subskrypcje miesięczne i roczne odnawiają się automatycznie do momentu anulowania w <b>Panelu subskrypcji Stripe (Billing Portal)</b> dostępnym jednym kliknięciem w zakładce <b>Plany</b>.<br>• Pakiety jednorazowe (3-dniowe i 7-dniowe) są opłatami jednorazowymi i wygasają samoczynnie po upływie wybranego okresu.<br>• Dostęp do treści cyfrowych (funkcji PRO/WARSZTAT) jest uruchamiany natychmiast po potwierdzeniu płatności przez Stripe.</small></div>
+    </div>
+    <div class="card">
+      <h2>4. Polityka prywatności i ochrona danych (RODO)</h2>
+      <div class="entry"><small style="white-space:normal;line-height:1.5">• <b>Minimalizacja danych:</b> Do korzystania z bezpłatnego planu AMATOR nie jest wymagane zakładanie konta ani podawanie żadnych danych osobowych.<br>• <b>Dane rozliczeniowe:</b> Dane podane podczas płatności przetwarza operator płatności Stripe (Stripe Payments Europe, Ltd.) oraz usługodawca w celu realizacji umowy i obowiązków księgowych.<br>• <b>Baza serwerowa (Cloudflare D1 — region UE):</b> Przechowuje skrót <code>SHA-256</code> klucza dostępu, status i datę ważności licencji, powiązane identyfikatory sesji/klienta Stripe oraz — wyłącznie na żądanie użytkownika — kopię zapasową danych warsztatu.<br>• <b>Statystyki:</b> Anonimowe statystyki odwiedzin są domyślnie wyłączone (opt-in) i nawet po włączeniu w Ustawieniach nie zapisują surowych adresów IP.<br>• <b>Prawa użytkownika:</b> Masz prawo do wglądu w swoje dane, ich eksportu (do plików JSON/CSV), usunięcia danych lokalnych (przycisk „Wyczyść wszystkie dane lokalne”) oraz kontaktu w sprawach subskrypcji przez sekcję Kontakt.</small></div>
+    </div>
+    <div class="card">
+      <h2>5. Kontakt i zgłoszenia reklamacyjne</h2>
+      <div class="entry"><small style="white-space:normal;line-height:1.5">W sprawach technicznych, rozliczeń oraz reklamacji skorzystaj z formularza kontaktowego w aplikacji lub skontaktuj się bezpośrednio z administratorem.</small><div class="btn" onclick="nav('contact')">✉️ Przejdź do sekcji Kontakt</div></div>
     </div>`;
 }
 function renderAndroidApkCard(){
@@ -3562,6 +3589,7 @@ function nav(view, arg){
   else if(view==='photoAssistant') renderPhotoAssistant();
   else if(view==='photoCase') renderPhotoAssistantCase(arg);
   else if(view==='manuals') renderManuals();
+  else if(view==='legal') renderLegal();
 }
 document.querySelectorAll('.nav-item').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.nav)));
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
@@ -3990,6 +4018,7 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.
 if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
+<script src="./katalog-techniczny.js"></script>
 <script src="./billing.js?v=17"></script>
 </body>
 </html>
