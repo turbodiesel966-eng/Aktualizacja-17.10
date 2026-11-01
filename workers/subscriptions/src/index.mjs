@@ -274,12 +274,26 @@ async function enforceRateLimit(request, env, scope, subject, policy) {
   return null;
 }
 
+const WARSZTAT_LIVE_PRICE_IDS = Object.freeze({
+  month: "price_1UX1dtJgi8iwHKRbNWDUqSRm",
+  year: "price_1UX1dzJgi8iwHKRbDJKvqJpd",
+});
+function subscriptionPriceId(env, tier, interval) {
+  if (tier === "warsztat" && env.STRIPE_EXPECT_LIVEMODE === "true") {
+    return WARSZTAT_LIVE_PRICE_IDS[interval] || null;
+  }
+  return tier === "pro"
+    ? (interval === "month" ? env.STRIPE_PRICE_PRO_MONTHLY : env.STRIPE_PRICE_PRO_YEARLY)
+    : (interval === "month" ? env.STRIPE_PRICE_WARSZTAT_MONTHLY : env.STRIPE_PRICE_WARSZTAT_YEARLY);
+}
 function priceMap(env) {
   const entries = [
     [env.STRIPE_PRICE_PRO_MONTHLY, { tier: "pro", interval: "month" }],
     [env.STRIPE_PRICE_PRO_YEARLY, { tier: "pro", interval: "year" }],
     [env.STRIPE_PRICE_WARSZTAT_MONTHLY, { tier: "warsztat", interval: "month" }],
     [env.STRIPE_PRICE_WARSZTAT_YEARLY, { tier: "warsztat", interval: "year" }],
+    [WARSZTAT_LIVE_PRICE_IDS.month, { tier: "warsztat", interval: "month" }],
+    [WARSZTAT_LIVE_PRICE_IDS.year, { tier: "warsztat", interval: "year" }],
   ].filter(([id]) => typeof id === "string" && id.startsWith("price_"));
   const map = new Map();
   for (const [id, value] of entries) {
@@ -768,10 +782,7 @@ async function checkout(request, env, auth) {
   const tier = body?.tier;
   const interval = body?.interval;
   if (!(["pro", "warsztat"].includes(tier)) || !(["month", "year"].includes(interval))) return err("Invalid tier or interval");
-  const priceId = ({
-    pro: { month: env.STRIPE_PRICE_PRO_MONTHLY, year: env.STRIPE_PRICE_PRO_YEARLY },
-    warsztat: { month: env.STRIPE_PRICE_WARSZTAT_MONTHLY, year: env.STRIPE_PRICE_WARSZTAT_YEARLY },
-  })[tier][interval];
+  const priceId = subscriptionPriceId(env, tier, interval);
   if (!priceId || !priceId.startsWith("price_")) return err("Price is not configured", 503);
   const nowBeforeCheckout = nowSeconds();
   const pendingOneTime = await env.DB.prepare("SELECT expires_at FROM one_time_checkout_locks WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
@@ -1331,8 +1342,8 @@ async function diagnoseStripeConfig(env) {
   const definitions = [
     { key: "PRO_MONTHLY", label: "PRO miesięcznie", id: env.STRIPE_PRICE_PRO_MONTHLY, interval: "month", type: "recurring" },
     { key: "PRO_YEARLY", label: "PRO rocznie", id: env.STRIPE_PRICE_PRO_YEARLY, interval: "year", type: "recurring" },
-    { key: "WARSZTAT_MONTHLY", label: "WARSZTAT miesięcznie", id: env.STRIPE_PRICE_WARSZTAT_MONTHLY, interval: "month", type: "recurring" },
-    { key: "WARSZTAT_YEARLY", label: "WARSZTAT rocznie", id: env.STRIPE_PRICE_WARSZTAT_YEARLY, interval: "year", type: "recurring" },
+    { key: "WARSZTAT_MONTHLY", label: "WARSZTAT miesięcznie", id: subscriptionPriceId(env, "warsztat", "month"), interval: "month", type: "recurring" },
+    { key: "WARSZTAT_YEARLY", label: "WARSZTAT rocznie", id: subscriptionPriceId(env, "warsztat", "year"), interval: "year", type: "recurring" },
     { key: "PRO_3D", label: "PRO 3 dni — 3 zł", id: env.STRIPE_PRICE_PRO_3D, type: "one_time", amount: 300 },
     { key: "PRO_7D", label: "PRO 7 dni — 7 zł", id: env.STRIPE_PRICE_PRO_7D, type: "one_time", amount: 700 },
     { key: "WARSZTAT_3D", label: "WARSZTAT 3 dni — 5 zł", id: env.STRIPE_PRICE_WARSZTAT_3D, type: "one_time", amount: 500 },
@@ -2168,6 +2179,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, planUsageApi, applyPlanUsageDelta, PLAN_USAGE_LIMITS };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, subscriptionPriceId, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, planUsageApi, applyPlanUsageDelta, PLAN_USAGE_LIMITS };
 
 
