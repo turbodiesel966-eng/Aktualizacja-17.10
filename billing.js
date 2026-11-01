@@ -21,32 +21,54 @@
   };
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   let verifiedLicenseState = null;
+  let adminTierOverride = null;
   function applyVerifiedPlan(state) {
     if (state && state.verified === true &&
         Object.prototype.hasOwnProperty.call(ORDER, state.tier) &&
         state.tier !== 'amator' &&
         Number.isFinite(Number(state.exp)) && Number(state.exp) > Date.now()) {
-      verifiedLicenseState = { tier: state.tier, exp: Number(state.exp), token: typeof state.token === 'string' ? state.token : '', verified: true };
+      verifiedLicenseState = { tier: state.tier, exp: Number(state.exp), token: typeof state.token === 'string' ? state.token : '', verified: true, isAdmin: state.isAdmin === true };
     } else {
       verifiedLicenseState = null;
+      adminTierOverride = null;
     }
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
   }
   function clearVerifiedPlan() {
     const hadPaid = !!(verifiedLicenseState && verifiedLicenseState.tier !== 'amator');
     verifiedLicenseState = null;
+    adminTierOverride = null;
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
     if (hadPaid && typeof nav === 'function') nav('home');
   }
   Object.defineProperty(window, 'naprawnikGetVerifiedLicense', {
     value: function() {
-      if (verifiedLicenseState && Number(verifiedLicenseState.exp) <= Date.now()) verifiedLicenseState = null;
-      return verifiedLicenseState ? { ...verifiedLicenseState } : null;
+      if (verifiedLicenseState && Number(verifiedLicenseState.exp) <= Date.now()) {
+        verifiedLicenseState = null;
+        adminTierOverride = null;
+      }
+      if (!verifiedLicenseState) return null;
+      if (verifiedLicenseState.isAdmin && adminTierOverride && Object.prototype.hasOwnProperty.call(ORDER, adminTierOverride)) {
+        if (adminTierOverride === 'amator') return null;
+        return { ...verifiedLicenseState, tier: adminTierOverride };
+      }
+      return { ...verifiedLicenseState };
     },
     enumerable: false,
     writable: false,
     configurable: false
   });
+  window.npSetAdminPreviewTier = function(tier) {
+    if (!verifiedLicenseState || !verifiedLicenseState.isAdmin) {
+      alert('Przełącznik trybu abonamentu jest dostępny wyłącznie na zweryfikowanym koncie właściciela / ADMINA.');
+      return;
+    }
+    if (!Object.prototype.hasOwnProperty.call(ORDER, tier)) return;
+    adminTierOverride = tier === 'warsztat' ? null : tier;
+    if (typeof updatePlanBadge === 'function') updatePlanBadge();
+    const el = document.getElementById('npAdminActiveTierLabel');
+    if (el) el.textContent = NAMES[tier] + (tier === 'warsztat' ? ' (Pełny dostęp właściciela — wszystko odblokowane)' : ' (Podgląd widoku planu ' + NAMES[tier] + ')');
+  };
 
   function tokenGet() {
     try { return localStorage.getItem(TOKEN_KEY) || ((JSON.parse(localStorage.getItem('naprawnik_license') || 'null') || {}).token) || ''; }
@@ -137,7 +159,8 @@
   }
   function savePlan(data, token) {
     const user = data && data.user || {};
-    const requestedTier = Object.prototype.hasOwnProperty.call(ORDER, user.tier) ? user.tier : 'amator';
+    const isAdmin = user.role === 'admin';
+    const requestedTier = isAdmin ? 'warsztat' : (Object.prototype.hasOwnProperty.call(ORDER, user.tier) ? user.tier : 'amator');
     const now = Date.now();
     const nowSeconds = now / 1000;
     const subscriptions = Array.isArray(data && data.subscriptions) ? data.subscriptions : [];
@@ -146,22 +169,25 @@
       if (['active', 'trialing'].includes(item.status)) return Number(item.current_period_end || 0) > nowSeconds;
       return item.status === 'past_due' && Number(item.grace_until || 0) > nowSeconds;
     });
-    const activeTier = active.reduce((best, item) =>
+    const activeTier = isAdmin ? 'warsztat' : active.reduce((best, item) =>
       ORDER[item.tier] > ORDER[best] ? item.tier : best, 'amator');
     // Expiry must come from the active subscription for the granted tier, not another lower-tier plan.
     const matchingPeriods = active.filter(item => item.tier === requestedTier).map(item =>
       Number(item.status === 'past_due' ? item.grace_until : item.current_period_end)
     ).filter(value => Number.isFinite(value) && value > nowSeconds);
-    const expires = requestedTier === activeTier && matchingPeriods.length ? Math.max(...matchingPeriods) * 1000 : 0;
+    const ownerDefaultExp = now + 10 * 365 * 24 * 60 * 60 * 1000;
+    const expires = isAdmin
+      ? (matchingPeriods.length ? Math.max(...matchingPeriods) * 1000 : ownerDefaultExp)
+      : (requestedTier === activeTier && matchingPeriods.length ? Math.max(...matchingPeriods) * 1000 : 0);
     // The server's calculated tier and the current subscription tier must agree; mismatches fail closed.
-    const tier = requestedTier !== 'amator' && requestedTier === activeTier && expires > now ? requestedTier : 'amator';
+    const tier = isAdmin ? 'warsztat' : (requestedTier !== 'amator' && requestedTier === activeTier && expires > now ? requestedTier : 'amator');
     if (tier === 'amator') {
       localStorage.removeItem('naprawnik_license');
     } else {
-      localStorage.setItem('naprawnik_license', JSON.stringify({ token, tier, exp: expires, checkedAt: Date.now() }));
+      localStorage.setItem('naprawnik_license', JSON.stringify({ token, tier, exp: expires, checkedAt: Date.now(), role: isAdmin ? 'admin' : 'user' }));
     }
     if (token) localStorage.setItem(TOKEN_KEY, token);
-    applyVerifiedPlan({ verified: true, tier, exp: expires, token });
+    applyVerifiedPlan({ verified: true, tier, exp: expires, token, isAdmin });
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
     return tier;
   }
@@ -413,12 +439,14 @@
   async function fetchAdminData() {
     const token = tokenGet();
     if (!token) throw new Error('Brak klucza dostępu do konta. Otwórz Plany, aby zarejestrować konto, lub aktywuj panel kluczem administratora.');
-    const [stats, promos, redemptions, aiBudget] = await Promise.all([
+    const [stats, promos, redemptions, aiBudget, meData] = await Promise.all([
       api('/api/admin/stats', undefined, 'GET', token),
       api('/api/admin/promos', undefined, 'GET', token),
       api('/api/admin/promo-redemptions?limit=100', undefined, 'GET', token),
-      api('/api/admin/photo-budget', undefined, 'GET', token)
+      api('/api/admin/photo-budget', undefined, 'GET', token),
+      api('/api/me', undefined, 'GET', token).catch(() => null)
     ]);
+    savePlan(meData || { user: { tier: 'warsztat', role: 'admin' }, subscriptions: [] }, token);
     return {
       stats,
       promos: Array.isArray(promos.promos) ? promos.promos : [],
@@ -438,7 +466,17 @@
       '<div><small>Żądania w tym miesiącu</small><div style="font-size:16px">' + esc(String(aiBudget?.requests || 0)) + '</div></div>' +
       '</div><small style="color:var(--dim)">' + esc(aiBudget?.modelPricing || 'Limit budżetu działa po stronie serwera; analiza pozostaje domyślnie wyłączona.') + '</small></div>';
     const rows = promos.length ? promos.map(p => '<div class="entry"><b>' + esc(p.label || 'Kod promocyjny') + ' · ' + esc(String(p.code_hint || '••••')) + '</b><small>' + esc(String(p.tier || '').toUpperCase()) + ' · ' + esc(String(p.duration_days)) + ' dni · użycia: ' + esc(String(p.redemption_count)) + '/' + esc(String(p.max_redemptions)) + '<br>Ważny do: ' + esc(adminDate(p.expires_at)) + '<br>' + (Number(p.enabled) === 1 ? 'Aktywny' : 'Wyłączony') + '</small>' + (Number(p.enabled) === 1 ? '<button class="btn" type="button" onclick="window.npDisablePromo(\'' + esc(p.id) + '\')">Wyłącz kod</button>' : '') + '</div>').join('') : '<div class="empty">Nie utworzono jeszcze kodów promocyjnych.</div>';
-    root.innerHTML = '<div class="card"><h2>🛡️ Panel ADMINA</h2><p style="font-size:12px;line-height:1.5">Statystyki i kody są widoczne tylko po potwierdzeniu uprawnień przez serwer.</p><div class="grid2">' +
+    const currentPreviewTier = (verifiedLicenseState && verifiedLicenseState.isAdmin && adminTierOverride) ? adminTierOverride : 'warsztat';
+    const ownerAccessCard = '<div class="card" style="border-color:#00f57a"><h2 style="color:#00f57a">👑 Uprawnienia Właściciela — Pełny Dostęp Odblokowany</h2>' +
+      '<p style="font-size:12px;line-height:1.5">Jako <b>Właściciel / ADMIN</b> masz automatycznie odblokowane <b>wszystkie funkcje i abonamenty (AMATOR + PRO + WARSZTAT)</b> bez limitu pojazdów i bez konieczności wykupywania subskrypcji.</p>' +
+      '<div class="entry">Aktywny tryb w aplikacji: <b id="npAdminActiveTierLabel" style="color:var(--hero)">' + esc(NAMES[currentPreviewTier] + (currentPreviewTier === 'warsztat' ? ' (Pełny dostęp właściciela — wszystko odblokowane)' : ' (Podgląd widoku planu ' + NAMES[currentPreviewTier] + ')')) + '</b></div>' +
+      '<small style="color:var(--dim);display:block;margin:6px 0">Możesz też tymczasowo przełączyć widok planu, aby przetestować jak aplikacja wygląda oczami klienta:</small>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">' +
+      '<button class="btn" type="button" style="flex:1;min-width:130px;margin:0;border-color:#00f57a;color:#00f57a" onclick="window.npSetAdminPreviewTier(\'warsztat\')">🛠️ Pełny WARSZTAT + PRO</button>' +
+      '<button class="btn" type="button" style="flex:1;min-width:110px;margin:0" onclick="window.npSetAdminPreviewTier(\'pro\')">💎 Testuj widok PRO</button>' +
+      '<button class="btn" type="button" style="flex:1;min-width:110px;margin:0" onclick="window.npSetAdminPreviewTier(\'amator\')">🛵 Testuj widok AMATOR</button>' +
+      '</div></div>';
+    root.innerHTML = ownerAccessCard + '<div class="card"><h2>🛡️ Panel ADMINA</h2><p style="font-size:12px;line-height:1.5">Statystyki i kody są widoczne tylko po potwierdzeniu uprawnień przez serwer.</p><div class="grid2">' +
       metric('Zarejestrowane konta', stats.registeredAccounts, 'Dokładna liczba kont') +
       metric('Aktywne 24 godz.', stats.activeAccounts24h, 'Zalogowane konta z ruchem w tym okresie') +
       metric('Aktywne 7 dni', stats.activeAccounts7d, 'Unikalne konta zalogowane') +

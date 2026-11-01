@@ -234,7 +234,7 @@ async function authenticate(request, env) {
       SELECT 1 AS active FROM one_time_purchases WHERE user_id = ? AND expires_at > ?
       LIMIT 1
     `).bind(row.user_id, now, now, row.user_id, now, row.user_id, now).first();
-    if (!entitlement) return null;
+    if (!entitlement && !(await isAdminUser(env, row.user_id))) return null;
   }
 
   // Sliding renewal avoids expiring long-running customers' bearer tokens after one year.
@@ -436,6 +436,11 @@ async function persistSubscription(env, { userId, sub, priceInfo, statusOverride
 
 async function recalcUserTier(env, userId) {
   const now = nowSeconds();
+  if (await isAdminUser(env, userId)) {
+    await env.DB.prepare("UPDATE users SET tier = ?, updated_at = ? WHERE id = ?")
+      .bind("warsztat", now, userId).run();
+    return "warsztat";
+  }
   const { results: subscriptions = [] } = await env.DB.prepare(
     "SELECT tier, status, current_period_end, grace_until FROM subscriptions WHERE user_id = ?"
   ).bind(userId).all();
@@ -1132,12 +1137,26 @@ async function getMe(env, auth) {
   }));
   const currentTier = await recalcUserTier(env, auth.userId);
   const admin = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
-  return json({ user: { ...user, tier: currentTier, role: admin?.role || "user" }, subscriptions: [...subscriptions, ...promoEntitlements, ...oneTimeEntitlements] });
+  const isAdmin = admin?.role === "admin";
+  const adminEntitlements = isAdmin ? [{
+    tier: "warsztat",
+    status: "active",
+    billing_interval: "owner",
+    current_period_end: now + 10 * 365 * 86400,
+    cancel_at_period_end: 0,
+    grace_until: null,
+    granted_at: now
+  }] : [];
+  return json({ user: { ...user, tier: isAdmin ? "warsztat" : currentTier, role: admin?.role || "user" }, subscriptions: [...adminEntitlements, ...subscriptions, ...promoEntitlements, ...oneTimeEntitlements] });
 }
 
 async function isAdminUser(env, userId) {
-  const row = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(userId).first();
-  return row?.role === "admin";
+  try {
+    const row = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(userId).first();
+    return row?.role === "admin";
+  } catch {
+    return false;
+  }
 }
 
 function createSecureApiToken() {

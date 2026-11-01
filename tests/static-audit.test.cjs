@@ -564,3 +564,55 @@ test('APK korzysta z tych samych plików źródłowych co wersja Web i posiada s
   assert.ok(bridge.includes('window.__naprawnikWebSync = syncWithLiveWeb'));
   assert.ok(verify.includes('assets/public/assets/neon-tiles-art.jpg'));
 });
+
+
+test('konto właściciela / ADMINA otrzymuje automatycznie pełny dostęp WARSZTAT + PRO oraz przełącznik widoku abonamentu', async () => {
+  const store = new Map();
+  const rootElement = { innerHTML: '' };
+  const input = { value: 'owner-admin-token' };
+  const context = {
+    window: {},
+    document: {
+      addEventListener() {},
+      querySelector(selector) {
+        if (selector === '#screen') return rootElement;
+        if (selector === '#licKeyIn') return input;
+        return null;
+      },
+      getElementById() { return null; }
+    },
+    localStorage: {
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); }
+    },
+    fetch: async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        user: { id: 'owner-1', tier: 'amator', role: 'admin' },
+        subscriptions: []
+      })
+    }),
+    URL, URLSearchParams,
+    location: { hostname: 'turbodiesel966-eng.github.io', search: '', pathname: '/' },
+    history: { replaceState() {} },
+    alert() {}, confirm() { return true; }, console, Date, Math, JSON, setTimeout
+  };
+  context.window = context;
+  vm.runInNewContext(read('billing.js'), context, { filename: 'billing.js' });
+  await context.licActivateInput();
+  const verified = context.naprawnikGetVerifiedLicense();
+  assert.ok(verified, 'Właściciel musi mieć aktywną zweryfikowaną licencję nawet bez subskrypcji Stripe');
+  assert.equal(verified.tier, 'warsztat');
+  assert.equal(verified.isAdmin, true);
+
+  context.npSetAdminPreviewTier('pro');
+  assert.equal(context.naprawnikGetVerifiedLicense()?.tier, 'pro');
+
+  context.npSetAdminPreviewTier('amator');
+  assert.equal(context.naprawnikGetVerifiedLicense(), null);
+
+  context.npSetAdminPreviewTier('warsztat');
+  assert.equal(context.naprawnikGetVerifiedLicense()?.tier, 'warsztat');
+});
