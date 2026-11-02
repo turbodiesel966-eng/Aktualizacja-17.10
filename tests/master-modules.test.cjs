@@ -225,4 +225,55 @@ test('NAPRAWNIK MASTER — Narzędzia Tuningowe: Pinouty CDI, Stroiciel Gaźnika
   assert.ok(html.includes("pinouts:'pro'"), 'Pinouty muszą wymagać planu PRO w NAV_MIN');
 });
 
+test('NAPRAWNIK MASTER — DRUCIARSTWO ULTIMATE: Baza Patentów, Janusz 3000, Recykling i Czerwona Linia Bezpieczeństwa', () => {
+  const html = read('index.html');
+  const sw = read('sw.js');
+  const druc = read('druciarstwo.js');
+
+  // Integracja z aplikacją i Service Workerem
+  assert.ok(html.includes('<script src="./druciarstwo.js"></script>'), 'Brak załączenia druciarstwo.js w index.html');
+  assert.ok(html.includes("else if(view==='druciarstwo') renderDruciarstwo(arg);"), 'Brak obsługi widoku druciarstwo w nav()');
+  assert.ok(html.includes("druciarstwo:'DRUCIARSTWO — Kreatywne Naprawy Garażowe'"), 'Brak etykiety druciarstwo w NAV_LABEL');
+  assert.ok(sw.includes("'./druciarstwo.js'"), 'Brak druciarstwo.js w precache sw.js');
+  assert.ok(sw.includes("'./assets/tile-druciarstwo.jpg'"), 'Brak tile-druciarstwo.jpg w precache sw.js');
+
+  // Specjalny kafelek 3D na pulpicie głównym
+  assert.ok(html.includes("tile('🪛','DRUCIARSTWO','druciarstwo'"), 'Brak kafelka DRUCIARSTWO na pulpicie głównym');
+  assert.ok(html.includes("image:'./assets/tile-druciarstwo.jpg'"), 'Kafelek DRUCIARSTWO musi posiadać grafikę 3D');
+  assert.ok(fs.existsSync(path.join(root, 'assets', 'tile-druciarstwo.jpg')), 'Brak pliku grafiki assets/tile-druciarstwo.jpg');
+
+  // Baza danych i stałe
+  assert.ok(druc.includes('const LEVELS = {'), 'Brak skali poziomów LEVELS');
+  assert.ok(druc.includes('CO TU SIĘ ODPIERDALA?'), 'Brak poziomu 3 w skali druciarstwa');
+  assert.ok(druc.includes('const SAFETY = {'), 'Brak klasyfikacji bezpieczeństwa SAFETY');
+  assert.ok(druc.includes('CZERWONA LINIA / ZABRONIONE'), 'Brak poziomu danger w SAFETY');
+  assert.ok(druc.includes('const BUILTIN_PATENTS = ['), 'Brak bazy BUILTIN_PATENTS');
+  assert.ok(druc.includes('const RECYCLE_DATABASE = ['), 'Brak bazy materiałów z odzysku RECYCLE_DATABASE');
+
+  // Generator Janusz Engineering 3000
+  assert.ok(druc.includes('JANUSZ ENGINEERING 3000'), 'Brak generatora Janusz 3000');
+  assert.ok(druc.includes('handleJanuszSubmit'), 'Brak funkcji handleJanuszSubmit');
+  assert.ok(druc.includes('activateZeroCostMode'), 'Brak trybu zerowego kosztu activateZeroCostMode');
+
+  // 12 ustrukturyzowanych punktów w kartach patentów
+  assert.ok(druc.includes('1. Pomysł:'), 'Brak punktu 1 w karcie');
+  assert.ok(druc.includes('4. Instrukcja wykonania krok po kroku:'), 'Brak instrukcji krok po kroku w karcie');
+  assert.ok(druc.includes('9. Ograniczenia i czego unikać:'), 'Brak punktu o ograniczeniach');
+  assert.ok(druc.includes('12. Ocena mechaników:'), 'Brak oceniania w karcie patentu');
+
+  // Bezpieczeństwo i Czerwona Linia
+  assert.ok(druc.includes('CZERWONA LINIA BEZPIECZEŃSTWA'), 'Brak baneru Czerwonej Linii Bezpieczeństwa');
+  assert.ok(druc.includes('Hamulcach'), 'Ostrzeżenie o hamulcach');
+  assert.ok(druc.includes('Układzie kierowniczym'), 'Ostrzeżenie o kierownicy');
+  assert.ok(druc.includes('Ramie nośnej'), 'Ostrzeżenie o ramie');
+  assert.ok(druc.includes('Ciśnieniowych przewodach paliwowych'), 'Ostrzeżenie o przewodach paliwowych EFI');
+
+  // Storage i wymiana danych JSON
+  assert.ok(druc.includes("'naprawnik_druciarstwo_custom'"), 'Brak klucza storage dla własnych patentów');
+  assert.ok(druc.includes("'naprawnik_druciarstwo_favorites'"), 'Brak klucza storage dla ulubionych');
+  assert.ok(druc.includes("'naprawnik_druciarstwo_ratings'"), 'Brak klucza storage dla ocen');
+  assert.ok(druc.includes('exportDruciarstwoJson'), 'Brak eksportu JSON');
+  assert.ok(druc.includes('importDruciarstwoJson'), 'Brak importu JSON');
+});
+
 

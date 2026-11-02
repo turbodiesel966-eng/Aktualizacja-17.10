@@ -2569,7 +2569,7 @@ function renderLocked(min,label,backJs){
    '<div class="btn" onclick="nav(\'plans\')">Porównaj plany / aktywuj licencję</div></div>';
 }
 const NAV_MIN={orders:'warsztat',orderDetail:'warsztat',clients:'warsztat',log:'warsztat',checklist:'warsztat',obd:'pro',models:'pro',pinouts:'pro'};
-const NAV_LABEL={orders:'Karta Zlecenia Serwisowego',orderDetail:'Szczegóły Zlecenia',lab:'Elektroniczne Laboratorium',servicePlan:'Automatyczny Plan Serwisowy',parts:'Inteligentny dobór części',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe',obd:'Baza kodów OBD',models:'Profile konkretnych silników'};
+const NAV_LABEL={orders:'Karta Zlecenia Serwisowego',orderDetail:'Szczegóły Zlecenia',lab:'Elektroniczne Laboratorium',servicePlan:'Automatyczny Plan Serwisowy',parts:'Inteligentny dobór części',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe',obd:'Baza kodów OBD',models:'Profile konkretnych silników',druciarstwo:'DRUCIARSTWO — Kreatywne Naprawy Garażowe'};
 /* ===== Funkcje warsztatu ===== */
 function workshopInfo(){const w=load('naprawnik_workshop');return (Array.isArray(w)&&w[0])||{};}
 function editWorkshop(){
@@ -2641,6 +2641,7 @@ function renderHome(){
     ${tile('🔌','PINOUTY CDI & REGULATORÓW','pinouts',null,'Interaktywne złącza zapłonu<br>Pomiary multimetrem • Diagnoza iskry','pro',{theme:'purple',goldTitle:true,badgeLabel:'PRO',isSpecial:true,image:'./assets/tile-pinouts.jpg'})}
     ${tile('⚡','KALKULATOR SQUISH / CR','mix',null,'Prześwit tłok–głowica • Stopień sprężania<br>Presety AM6, Aerox, GY6, BigBore','',{theme:'cyan',goldTitle:true,isSpecial:true,image:'./assets/tile-squish.jpg'})}
     ${tile('📋','ZLECENIA & SKANER VIN','orders',null,'Karta zlecenia • Skaner kodów VIN<br>Wycena • Marża • Druk etykiet PDF','warsztat',{theme:'orange',goldTitle:true,badgeLabel:'WARSZTAT',isSpecial:true,image:'./assets/tile-orders.jpg'})}
+    ${tile('🪛','DRUCIARSTWO','druciarstwo',null,'Patenty garażowe • Janusz 3000<br>Naprawy 0 zł • Odzysk części','',{theme:'orange',goldTitle:true,isSpecial:true,image:'./assets/tile-druciarstwo.jpg'})}
   </div>
 
   <div class="special-section-divider" id="categorySectionDivider">
@@ -4422,6 +4423,7 @@ function nav(view, arg, restoreState){
   else if(view==='jetting') renderJettingWizard();
   else if(view==='cvt') renderCvtTuning();
   else if(view==='hud') renderWorkshopHud();
+  else if(view==='druciarstwo') renderDruciarstwo(arg);
 
   // 4. Przywróć pozycję przewijania po wyrenderowaniu widoku
   if(isBack && restoreState){
@@ -6846,6 +6848,7 @@ if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
 <script src="./katalog-techniczny.js"></script>
+<script src="./druciarstwo.js"></script>
 <script src="./billing.js?v=17"></script>
 </body>
 </html>
