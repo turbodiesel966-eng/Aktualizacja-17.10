@@ -276,4 +276,37 @@ test('NAPRAWNIK MASTER — DRUCIARSTWO ULTIMATE: Baza Patentów, Janusz 3000, Re
   assert.ok(druc.includes('importDruciarstwoJson'), 'Brak importu JSON');
 });
 
+test('NAPRAWNIK MASTER — Audyt i rozbudowa baz danych: katalog techniczny OEM, diagnostyka EFI i recykling', () => {
+  const html = read('index.html');
+  const kt = read('katalog-techniczny.js');
+  const druc = read('druciarstwo.js');
+
+  // 1. Katalog Techniczny — weryfikacja naprawy struktury i liczby rekordów
+  const vm = require('node:vm');
+  const context = { window: {} };
+  vm.runInNewContext(kt, context, { filename: 'katalog-techniczny.js' });
+  const catalog = context.window.NAPRAWNIK_KATALOG;
+  assert.ok(catalog.records.length >= 160, `Oczekiwano co najmniej 160 rekordów w katalogu, znaleziono ${catalog.records.length}`);
+
+  // Weryfikacja nowych modeli
+  assert.ok(catalog.search('PCX 125').length >= 5, 'Katalog musi zawierać specyfikację Honda PCX 125');
+  assert.ok(catalog.search('i-Get 125').length >= 3, 'Katalog musi zawierać specyfikację Piaggio/Vespa i-Get 125');
+  assert.ok(catalog.search('139FMB').length >= 4, 'Katalog musi zawierać specyfikację silnika biegowego 139FMB');
+  assert.ok(catalog.search('D50B0').length >= 4, 'Katalog musi zawierać specyfikację Derbi D50B0');
+
+  // 2. Baza Diagnostyczna — nowe karty usterkowe
+  assert.ok(html.includes('fuel-pump-strainer-efi'), 'Brak karty diagnostycznej zapchanego sitka pompy paliwa EFI');
+  assert.ok(html.includes('valve-stem-seals-4t'), 'Brak karty uszczelniaczy zaworowych');
+  assert.ok(html.includes('spark-plug-cap-puncture'), 'Brak karty przebicia fajki świecy');
+  assert.ok(html.includes('cooling-airlock-bleed-lc'), 'Brak karty zapowietrzonego układu LC');
+  assert.ok(html.includes('clutch-shoe-spring-broken'), 'Brak karty pękniętej sprężynki sprzęgła');
+  assert.ok(html.includes('vacuum-petcock-fuel-in-oil'), 'Brak karty benzyny w oleju przez kranik');
+
+  // 3. Druciarstwo — rozbudowa patentów i recyklingu
+  assert.ok(druc.includes('dtt-06'), 'Brak patentu dtt-06');
+  assert.ok(druc.includes('met-04'), 'Brak patentu met-04');
+  assert.ok(druc.includes('Stara kuchenka mikrofalowa'), 'Brak kuchenki mikrofalowej w bazie recyklingu');
+  assert.ok(druc.includes('Stary alternator samochodowy'), 'Brak alternatora w bazie recyklingu');
+});
+
 

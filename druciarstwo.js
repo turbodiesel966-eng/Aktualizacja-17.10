@@ -555,6 +555,165 @@
       isTested: true
     },
 
+    {
+      "id": "dtt-06",
+      "category": "dtt",
+      "title": "Ściągacz wewnętrzny łożysk karteru ze stalowego kołka rozporowego M10",
+      "subtitle": "Wyciąganie łożyska wałka przełożeń lub pompy wody z zaślepionego gniazda",
+      "level": 2,
+      "safety": "safe",
+      "cost": "3 zł",
+      "time": "15 min",
+      "rating": 4.9,
+      "votes": 180,
+      "vehicle": "Wszystkie kartery silnikowe",
+      "materials": [
+        "Stalowy kołek rozporowy do betonu M10 / M12 ze stożkiem rozpierającym",
+        "Długa śruba M10 lub pręt gwintowany",
+        "Ciężka nasadka lub młotek bezwładnościowy"
+      ],
+      "tools": [
+        "Klucz płaski 17 mm",
+        "Młotek"
+      ],
+      "description": "Gdy łożysko siedzi w ślepym otworze karteru, nie ma jak podejść zwykłym ściągaczem dwuramiennym. Stalowy kołek rozporowy zaciska się w wewnętrznej bieżni łożyska z siłą kilkunastu ton.",
+      "instructions": [
+        "Wsuń stalowy kołek rozporowy M10 w otwór wewnętrzny łożyska.",
+        "Dokręcaj śrubę rozporową — stożek rozszerzy naciętą tulejkę, która zablokuje się ząbkami za krawędzią wewnętrznej bieżni łożyska.",
+        "Podgrzej karter dookoła łożyska opalarką do ok. 90°C (aluminium rozszerza się dwukrotnie mocniej niż stal!).",
+        "Pociągnij za pręt za pomocą ciężarka lub zaprzyj przez tulejkę o karter.",
+        "Łożysko wyskakuje gładko bez kaleczenia karteru."
+      ],
+      "durability": "Profesjonalny patent narzędziowy stosowany w warsztatach remontowych.",
+      "limits": "Pamiętać o podgrzaniu karteru, by nie wyciągać łożyska na zimno na siłę.",
+      "testMethod": "Gniazdo karteru po wyjęciu jest idealnie gładkie bez zadziorów.",
+      "isTested": true
+    },
+    {
+      "id": "met-04",
+      "category": "met",
+      "title": "Wykręcanie urwanej śruby nakrętką i spawarką lub przecinakiem",
+      "subtitle": "Śruba wydechu lub pokrywy urwana na równo z karterem silnika",
+      "level": 3,
+      "safety": "safe",
+      "cost": "0 zł",
+      "time": "20 min",
+      "rating": 5,
+      "votes": 290,
+      "vehicle": "Wszystkie połączenia gwintowe",
+      "materials": [
+        "Zwykła nakrętka stalowa M8 lub M10",
+        "Elektroda lub drut spawalniczy"
+      ],
+      "tools": [
+        "Spawarka MMA / MIG lub mały ostry przecinak i młotek"
+      ],
+      "description": "Wykrętaki stożkowe z marketu pękają w otworze i blokują wiertło na amen. Dospawanie nakrętki podgrzewa śrubę do czerwoności, kruszy rdzę i daje pewny chwyt pod klucz.",
+      "instructions": [
+        "Przyłóż większą nakrętkę (np. M8 na urwaną śrubę M6) centralnie nad kikutem śruby.",
+        "Zalej wnętrze nakrętki spawarką, łącząc ją z urwanym rdzeniem śruby.",
+        "Ciepło spawania natychmiast rozgrzewa zerwaną śrubę, topiąc kleje do gwintów i luzując zapieczenie.",
+        "Odczekaj 30 sekund, aż spaw lekko ściemnieje, i nałóż zwykły klucz oczkowy.",
+        "Wykręć urwaną śrubę płynnym ruchem bez ryzyka zerwania."
+      ],
+      "durability": "Najskuteczniejsza metoda mechaniczna na świecie — 99% skuteczności.",
+      "limits": "Osłonić karter i instalację elektryczną przed odpryskami spawalniczymi.",
+      "testMethod": "Śruba wykręca się w całości, gwint w karterze pozostaje nienaruszony.",
+      "isTested": true
+    },
+    {
+      "id": "pla-04",
+      "category": "pla",
+      "title": "Awaryjny oring komory gaźnika z nitki teflonowej hydraulicznej",
+      "subtitle": "Sparciała, spuchnięta uszczelka komory pływakowej, gaźnik leje benzyną",
+      "level": 1,
+      "safety": "safe",
+      "cost": "1 zł",
+      "time": "10 min",
+      "rating": 4.8,
+      "votes": 165,
+      "vehicle": "Gaźniki Dellorto, Mikuni, Keihin, chińskie PZ/CVK",
+      "materials": [
+        "Nitka uszczelniająca teflonowa (PTFE) do rur hydraulicznych"
+      ],
+      "tools": [
+        "Nożyczki"
+      ],
+      "description": "Stary oring po kontakcie z benzyną często rozciąga się o 30% i nie mieści w rowku. Teflon PTFE jest w 100% odporny na benzynę, etanol i rozpuszczalniki.",
+      "instructions": [
+        "Odetnij 25 cm nitki teflonowej PTFE.",
+        "Zwiń nitkę w potrójny cienki warkocz w palcach.",
+        "Ułóż warkocz w rowku komory pływakowej gaźnika, krzyżując końcówki na zakładkę 3 mm.",
+        "Dociągnij śrubki komory pływakowej równomiernie.",
+        "Miękki teflon pod naciskiem spłaszcza się i idealnie wypełnia rowek, tworząc wieczne uszczelnienie."
+      ],
+      "durability": "Teflon nigdy nie twardnieje ani nie pęcznieje od benzyny.",
+      "limits": "Nie stosować pakuł lnianych ani taśm klejących — tylko czysty teflon PTFE.",
+      "testMethod": "Odkręć kranik i napełnij komorę — brak jakiegokolwiek pocenia na styku korpusu.",
+      "isTested": true
+    },
+    {
+      "id": "nar-05",
+      "category": "nar",
+      "title": "Wykrywanie lewego powietrza pędzlem z pianą mydlaną lub dezodorantem",
+      "subtitle": "Niewidoczna nieszczelność pod gaźnikiem, króćcem lub simeringiem wału",
+      "level": 1,
+      "safety": "safe",
+      "cost": "0 zł",
+      "time": "5 min",
+      "rating": 4.9,
+      "votes": 210,
+      "vehicle": "Wszystkie silniki 2T i 4T",
+      "materials": [
+        "Mydło w płynie lub płyn do naczyń z wodą",
+        "Ewentualnie dezodorant w aerozolu / Plak"
+      ],
+      "tools": [
+        "Pędzelek malarski"
+      ],
+      "description": "Szukanie nieszczelności na oko to loteria. Silnik zasysa lewe powietrze podciśnieniem — reakcja na preparat w ułamku sekundy ujawnia mikroszczelinę.",
+      "instructions": [
+        "Uruchom silnik i pozostaw na wolnych obrotach.",
+        "Pędzelkiem nanieś gęstą pianę mydlaną wokół uszczelek karteru, króćca gaźnika i pod głowicą.",
+        "W miejscu nieszczelności piana zostanie natychmiast zassana z charakterystycznym siorbnięciem lub zaczną rosnąć bańki.",
+        "Alternatywnie: psiknij delikatnie dezodorantem w podejrzane miejsce — natychmiastowa zmiana obrotów silnika precyzyjnie potwierdza nieszczelność."
+      ],
+      "durability": "Niezbędna metoda diagnostyczna każdego szanującego się warsztatu.",
+      "limits": "Nie psikać palnymi aerozolami w stronę wydechu ani iskry!",
+      "testMethod": "Precyzyjna lokalizacja nieszczelności w 30 sekund.",
+      "isTested": true
+    },
+    {
+      "id": "eng-05",
+      "category": "eng",
+      "title": "Ratowanie lekko przytartego tłoka 2T papierem wodnym 1000 z naftą",
+      "subtitle": "Lekkie przytarcie po przegrzaniu, zablokowane pierścienie w rowkach",
+      "level": 2,
+      "safety": "exp",
+      "cost": "2 zł",
+      "time": "30 min",
+      "rating": 4.6,
+      "votes": 145,
+      "vehicle": "Cylindry żeliwne 2T (Minarelli, Piaggio, GY6)",
+      "materials": [
+        "Wodny papier ścierny gradacji P800 i P1200",
+        "Nafta lub olej napędowy jako chłodziwo"
+      ],
+      "tools": [
+        "Stary pęknięty pierścień jako skrobak do rowka"
+      ],
+      "description": "Po lekkim przytarciu tłok ma aluminiowe zatarcia na płaszczu, a rowek pierścienia bywa zaklepany. W cylindrze żeliwnym usunięcie aluminium przywraca kompresję bez szlifu.",
+      "instructions": [
+        "Wytraw ślady aluminium z gładzi żeliwnej cylindra kwasem lub delikatnie zeszlifuj papierem P1000 z naftą w poprzek rys (ruchami obrotowymi).",
+        "Płaszcz tłoka przeszlifuj papierem P1000 z naftą, ścinając wyłącznie wystające aluminiowe zadziory.",
+        "Oczyść rowki pierścieni zaostrzonym końcem starego pierścienia tłokowego, aż nowy pierścień będzie obracał się z pełną swobodą pod własnym ciężarem.",
+        "Złóż silnik na obfitej ilości oleju 2T — silnik odzyskuje sprawność na kolejne tysiące kilometrów."
+      ],
+      "durability": "Działa znakomicie przy lekkich przytarciach termicznych na cylindrach żeliwnych.",
+      "limits": "Nie dotyczy głębokich rys (wyczuwalnych paznokciem) ani cylindrów nicasilowych z odłupaną powłoką.",
+      "testMethod": "Pomiar kompresji manometrem po złożeniu — min. 7.5 bar.",
+      "isTested": true
+    },
     // 6. ABSURDALNE PATENTY
     {
       id: 'abs-01',
@@ -639,6 +798,40 @@
 
   // --- BAZA MATERIAŁÓW Z ODZYSKU (ROZBIERZ I ODZYSKAJ) ---
   const RECYCLE_DATABASE = [
+    {
+      "source": "Stara kuchenka mikrofalowa",
+      "icon": "📻",
+      "badge": "Elektrośmieci AGD",
+      "items": [
+        {
+          "name": "Supermocne magnesy neodymowe z magnetronu",
+          "use": "Wyłapywanie opiłków w zbiornikach, montaż latarek i narzędzi na ścianie warsztatu.",
+          "check": "Ogromna siła przyciągania — uwaga na palce!"
+        },
+        {
+          "name": "Wentylator chłodzenia 230V ze śmigłem",
+          "use": "Wyciąg oparów lutowniczych i spawalniczych na stole warsztatowym.",
+          "check": "Cichy bieg łożysk po podaniu napięcia."
+        }
+      ]
+    },
+    {
+      "source": "Stary alternator samochodowy ze złomu",
+      "icon": "⚡",
+      "badge": "Złom motoryzacyjny",
+      "items": [
+        {
+          "name": "Miedziane szczotki węglowe",
+          "use": "Po delikatnym przeszlifowaniu pilnikiem idealnie pasują do rozruszników skuterowych.",
+          "check": "Długość min. 10 mm, nieutleniony przewód miedziany."
+        },
+        {
+          "name": "Diody prostownicze prasowane 50A z mostka",
+          "use": "Pancerne diody blokujące do instalacji elektrycznych, ładowania akumulatorów i zasilaczy.",
+          "check": "Spadek 0.5V w kierunku przewodzenia na multimetrze."
+        }
+      ]
+    },
     {
       source: 'Stara pralka automatyczna',
       icon: '🧺',

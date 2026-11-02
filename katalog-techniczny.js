@@ -1139,21 +1139,7 @@
     "Status weryfikacji": "Nie stosować automatycznie do każdego połączenia",
     "Źródło (URL)": "https://www.dealerinfo.net/newsitems/DERBE/DERBE_19627_Wmanualsenda1254t2005y.pdf",
     "Uwagi / ograniczenia": "Moment zależy od elementu, klasy śruby i procedury."
-  }
-];
-
-  const fields = [
-    "Rodzina",
-    "Model / kod silnika",
-    "Układ",
-    "Parametr",
-    "Wartość",
-    "Jednostka",
-    "Warunki pomiaru / zastosowania",
-    "Status weryfikacji",
-    "Źródło (URL)",
-    "Uwagi / ograniczenia"
-,
+  },
   {
     "Rodzina": "Yamaha",
     "Model / kod silnika": "Aerox 50 / Minarelli 2T LC (Silnik 5BR / 5BS)",
@@ -1682,6 +1668,332 @@
     "Źródło (URL)": "https://www.skuteryostrow.pl/strona/images/download/instrukcje_obslugi-chinskie/serwisowka2T.pdf",
     "Uwagi / ograniczenia": "Śrubę dokręcić delikatnie do oporu, a następnie cofnąć o 1.5–1.75 obrotu."
   }
+,
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu ssącego",
+    "Wartość": "0,10 ± 0,02",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik (poniżej 35°C), tłok w GMP suwu sprężania",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual PCX125)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Regulacja śrubowa z nakrętką kontrującą (klucz 9 mm). Dokręcać nakrętkę z wyczuciem (10 Nm)."
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu wydechowego",
+    "Wartość": "0,24 ± 0,02",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik (poniżej 35°C), tłok w GMP suwu sprężania",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual PCX125)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Znacznie większy luz niż na ssaniu ze względu na rozszerzalność cieplną trzonka zaworu wydechowego."
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "Układ zapłonowy",
+    "Parametr": "Świeca zapłonowa — typ i odstęp elektrod",
+    "Wartość": "NGK CPR7EA-9 (odstęp 0,8–0,9 mm)",
+    "Jednostka": "oznaczenie / mm",
+    "Warunki pomiaru / zastosowania": "Świeca standardowa wg specyfikacji fabrycznej",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Moment dokręcania świecy: 16 Nm w aluminiowej głowicy."
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "Momenty dokręcania",
+    "Parametr": "Nakrętka wariatora (przednia)",
+    "Wartość": "59",
+    "Jednostka": "Nm",
+    "Warunki pomiaru / zastosowania": "Gwint M12, czysty, suchy",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual PCX125)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Konieczna blokada koła talerzowego wariatora; nie dokręcać kluczem udarowym na oko!"
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "Momenty dokręcania",
+    "Parametr": "Nakrętka dzwonu sprzęgła (tylna)",
+    "Wartość": "49",
+    "Jednostka": "Nm",
+    "Warunki pomiaru / zastosowania": "Gwint M10, czysty",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual PCX125)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Zastosować blokadę widełkową dzwonu sprzęgła."
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "CVT / serwis",
+    "Parametr": "Szerokość paska napędowego CVT (limit zużycia)",
+    "Wartość": "20,8 (nowy: 21,8–22,2)",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Pomiar suwmiarką w najszerszym punkcie zewnętrznym",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual PCX125)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Wymiana przy osiągnięciu limitu lub co 24 000 km."
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "Serwis / płyny",
+    "Parametr": "Ilość oleju silnikowego przy wymianie",
+    "Wartość": "0,8 (0,9 po remoncie)",
+    "Jednostka": "L",
+    "Warunki pomiaru / zastosowania": "Olej 10W30 / 10W40 API SJ/SL, norma JASO MB (do suchych sprzęgieł skuterowych)",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "W skuterach CVT stosować oleje JASO MB o obniżonym tarciu (brak mokrego sprzęgła w silniku!)."
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "PCX 125 eSP (JF47 / JF57 / JK05)",
+    "Układ": "Serwis / płyny",
+    "Parametr": "Ilość oleju w przekładni końcowej",
+    "Wartość": "0,12 (0,14 po demontażu)",
+    "Jednostka": "L",
+    "Warunki pomiaru / zastosowania": "Olej silnikowy 10W30 lub przekładniowy 80W90",
+    "Status weryfikacji": "Potwierdzone OEM (Honda Service Manual)",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/honda_pcx_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Wymiana co 2 lata lub co 12 000 km."
+  },
+  {
+    "Rodzina": "Piaggio",
+    "Model / kod silnika": "i-Get 125 4T 3V (Euro 4 / Euro 5)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworów ssących (2 zawory)",
+    "Wartość": "0,10",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik (20°C), GMP suwu sprężania",
+    "Status weryfikacji": "Potwierdzone w instrukcji warsztatowej Piaggio i-Get",
+    "Źródło (URL)": "https://manuals.piaggio.com/",
+    "Uwagi / ograniczenia": "Konstrukcja 3-zaworowa: dwa zawory ssące regulowane śrubami M5 z kontrą."
+  },
+  {
+    "Rodzina": "Piaggio",
+    "Model / kod silnika": "i-Get 125 4T 3V (Euro 4 / Euro 5)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu wydechowego (1 zawór)",
+    "Wartość": "0,15",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik (20°C), GMP suwu sprężania",
+    "Status weryfikacji": "Potwierdzone w instrukcji warsztatowej Piaggio i-Get",
+    "Źródło (URL)": "https://manuals.piaggio.com/",
+    "Uwagi / ograniczenia": "Pojedynczy duży zawór wydechowy. Nie ustawiać ciaśniej niż 0.15 mm, by uniknąć podparcia na gorąco."
+  },
+  {
+    "Rodzina": "Piaggio",
+    "Model / kod silnika": "i-Get 125 4T 3V (Euro 4 / Euro 5)",
+    "Układ": "Momenty dokręcania",
+    "Parametr": "Nakrętka wariatora wału korbowego M12",
+    "Wartość": "55–60",
+    "Jednostka": "Nm",
+    "Warunki pomiaru / zastosowania": "Gwint odtłuszczony, suchy",
+    "Status weryfikacji": "Potwierdzone w instrukcji warsztatowej Piaggio",
+    "Źródło (URL)": "https://manuals.piaggio.com/",
+    "Uwagi / ograniczenia": "Zastosować nową nakrętkę lub kroplę niebieskiego kleju do gwintów średniej mocy."
+  },
+  {
+    "Rodzina": "Piaggio",
+    "Model / kod silnika": "i-Get 125 4T 3V (Euro 4 / Euro 5)",
+    "Układ": "Układ zasilania / wtrysk EFI",
+    "Parametr": "Ciśnienie robocze pompy paliwa",
+    "Wartość": "3,0 ± 0,2",
+    "Jednostka": "bar",
+    "Warunki pomiaru / zastosowania": "Manometr wpięty trójnikiem w przewód zasilający listwę wtryskiwacza na zapłonie",
+    "Status weryfikacji": "Dokumentacja diagnostyczna Piaggio EFI",
+    "Źródło (URL)": "https://manuals.piaggio.com/",
+    "Uwagi / ograniczenia": "Spadek poniżej 2.5 bar powoduje dławienie przy gwałtownym otwarciu przepustnicy."
+  },
+  {
+    "Rodzina": "Chyba / 139FMB",
+    "Model / kod silnika": "Silnik 139FMB / 147FMD (50cc – 110cc poziomy 4T)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu ssącego",
+    "Wartość": "0,05",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik, znak 'T' na magnecie zbieżny ze знаkiem karteru w suwie sprężania",
+    "Status weryfikacji": "Zweryfikowane warsztatowo / DTR Romet & Zongshen",
+    "Źródło (URL)": "https://motomanuals.pl/romet-ogar-202-manual.pdf",
+    "Uwagi / ograniczenia": "Szczelinomierz 0.05 mm ma wchodzić z lekkim oporem, 0.06 mm nie może wejść."
+  },
+  {
+    "Rodzina": "Chyba / 139FMB",
+    "Model / kod silnika": "Silnik 139FMB / 147FMD (50cc – 110cc poziomy 4T)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu wydechowego",
+    "Wartość": "0,07",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik, znak 'T' na magnecie w suwie sprężania",
+    "Status weryfikacji": "Zweryfikowane warsztatowo / DTR Romet & Zongshen",
+    "Źródło (URL)": "https://motomanuals.pl/romet-ogar-202-manual.pdf",
+    "Uwagi / ograniczenia": "Zbyt mały luz (<0.04 mm) doprowadza do wypalenia przylgni zaworowej w ciągu 500 km."
+  },
+  {
+    "Rodzina": "Chyba / 139FMB",
+    "Model / kod silnika": "Silnik 139FMB / 147FMD (50cc – 110cc poziomy 4T)",
+    "Układ": "Momenty dokręcania",
+    "Parametr": "Nakrętki kołpakowe szpilek głowicy cylindra M7",
+    "Wartość": "12–14",
+    "Jednostka": "Nm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik, dokręcanie na krzyż w 2 etapach (etap 1: 8 Nm, etap 2: 13 Nm)",
+    "Status weryfikacji": "DTR silników poziomych Honda Cub / Zongshen",
+    "Źródło (URL)": "https://motomanuals.pl/romet-ogar-202-manual.pdf",
+    "Uwagi / ograniczenia": "Zwrócić uwagę na miedzianą podkładkę uszczelniającą na dolnej prawej szpilce magistrali olejowej!"
+  },
+  {
+    "Rodzina": "Chyba / 139FMB",
+    "Model / kod silnika": "Silnik 139FMB / 147FMD (50cc – 110cc poziomy 4T)",
+    "Układ": "Elektryka / zapłon",
+    "Parametr": "Rezystancja impulsatora zapłonu (Pick-up coil)",
+    "Wartość": "130–160",
+    "Jednostka": "Ω",
+    "Warunki pomiaru / zastosowania": "20°C, pomiar między kablem niebiesko-białym a masą zieloną",
+    "Status weryfikacji": "Pomiary warsztatowe wzorcowe",
+    "Źródło (URL)": "https://motomanuals.pl/romet-ogar-202-manual.pdf",
+    "Uwagi / ograniczenia": "Brak oporności (rozwarcie) lub zwarcie do masy oznacza uszkodzenie impulsatora i brak iskry."
+  },
+  {
+    "Rodzina": "Chyba / 139FMB",
+    "Model / kod silnika": "Silnik 139FMB / 147FMD (50cc – 110cc poziomy 4T)",
+    "Układ": "Elektryka / zapłon",
+    "Parametr": "Cewka zasilająca AC-CDI w statorze",
+    "Wartość": "400–550",
+    "Jednostka": "Ω",
+    "Warunki pomiaru / zastosowania": "20°C, pomiar między kablem czarno-czerwonym a masą zieloną",
+    "Status weryfikacji": "Pomiary warsztatowe wzorcowe",
+    "Źródło (URL)": "https://motomanuals.pl/romet-ogar-202-manual.pdf",
+    "Uwagi / ograniczenia": "Dotyczy układów z modułem AC-CDI (zasilanym bezpośrednio ze statora wysokonapięciowego)."
+  },
+  {
+    "Rodzina": "Derbi",
+    "Model / kod silnika": "D50B0 / D50B1 (Senda / SX / SMT 50cc 2T)",
+    "Układ": "Mechanika / cylinder",
+    "Parametr": "Moment dokręcania nakrętek głowicy M7",
+    "Wartość": "15–18",
+    "Jednostka": "Nm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik, nakrętki dociągane na krzyż",
+    "Status weryfikacji": "Potwierdzone OEM Derbi Piaggio Group",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/derbi_d50b0_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Zawsze wymieniać 4 miedziane oringi szpilek w głowicy dwuczęściowej."
+  },
+  {
+    "Rodzina": "Derbi",
+    "Model / kod silnika": "D50B0 / D50B1 (Senda / SX / SMT 50cc 2T)",
+    "Układ": "Mechanika / tłok",
+    "Parametr": "Luz na zamku pierścienia tłokowego",
+    "Wartość": "0,15–0,30",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Pierścień włożony poziomo 15 mm od górnej krawędzi gładzi cylindra",
+    "Status weryfikacji": "Potwierdzone OEM Derbi",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/derbi_d50b0_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Limit zużycia: 0.40 mm. Przy wartości >0.40 mm pierścienie lub cylinder do wymiany."
+  },
+  {
+    "Rodzina": "Derbi",
+    "Model / kod silnika": "D50B0 / D50B1 (Senda / SX / SMT 50cc 2T)",
+    "Układ": "Serwis / skrzynia biegów",
+    "Parametr": "Pojemność oleju w skrzyni biegów",
+    "Wartość": "650",
+    "Jednostka": "ml",
+    "Warunki pomiaru / zastosowania": "Olej 10W40 do mokrych sprzęgieł motocyklowych (JASO MA2) lub SAE 75W90",
+    "Status weryfikacji": "Potwierdzone OEM Derbi",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/derbi_d50b0_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Nie stosować olejów samochodowych z modyfikatorami tarcia (spowodują ślizganie sprzęgła!)."
+  },
+  {
+    "Rodzina": "Derbi",
+    "Model / kod silnika": "D50B0 / D50B1 (Senda / SX / SMT 50cc 2T)",
+    "Układ": "Zapłon / elektryka",
+    "Parametr": "Wyprzedzenie zapłonu",
+    "Wartość": "1,2",
+    "Jednostka": "mm przed GMP",
+    "Warunki pomiaru / zastosowania": "Stator Ducati Energia 6-cewkowy lub Leonelli",
+    "Status weryfikacji": "Potwierdzone OEM Derbi",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/derbi_d50b0_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Pomiar czujnikiem zegarowym wkręconym w gniazdo świecy M14."
+  },
+  {
+    "Rodzina": "KYMCO",
+    "Model / kod silnika": "Agility 50 4T (silnik KG10 / CK50QT)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu ssącego i wydechowego",
+    "Wartość": "0,08 (oba)",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik, znak 'T' na magnecie, duże otwory zębatki wałka równolegle do krawędzi głowicy",
+    "Status weryfikacji": "Potwierdzone OEM Kymco Service Manual",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/kymco_agility_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Kymco fabrycznie zaleca 0.08 mm dla obu zaworów w silnikach 50 4T."
+  },
+  {
+    "Rodzina": "KYMCO",
+    "Model / kod silnika": "Agility 125 4T (silnik KN25)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu ssącego i wydechowego 125cc",
+    "Wartość": "0,12 (oba)",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik (poniżej 30°C)",
+    "Status weryfikacji": "Potwierdzone OEM Kymco Service Manual",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/kymco_agility_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Dla wersji 125cc Kymco stosuje symetryczny luz 0.12 mm."
+  },
+  {
+    "Rodzina": "Yamaha",
+    "Model / kod silnika": "YBR 125 / XT 125 (silnik E399E / 154FMI)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu ssącego",
+    "Wartość": "0,08–0,12",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik (20°C), tłok w GMP",
+    "Status weryfikacji": "Potwierdzone OEM Yamaha YBR125 Service Manual",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/yamaha_ybr125_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Najlepsza cicha praca przy ustawieniu na 0.10 mm."
+  },
+  {
+    "Rodzina": "Yamaha",
+    "Model / kod silnika": "YBR 125 / XT 125 (silnik E399E / 154FMI)",
+    "Układ": "Mechanika / zawory",
+    "Parametr": "Luz zaworu wydechowego",
+    "Wartość": "0,10–0,14",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik (20°C)",
+    "Status weryfikacji": "Potwierdzone OEM Yamaha YBR125 Service Manual",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/yamaha_ybr125_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Zalecane warsztatowo: 0.12 mm."
+  },
+  {
+    "Rodzina": "Yamaha",
+    "Model / kod silnika": "YBR 125 / XT 125 (silnik E399E / 154FMI)",
+    "Układ": "Momenty dokręcania",
+    "Parametr": "Szpilki głowicy cylindra M8",
+    "Wartość": "22",
+    "Jednostka": "Nm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik, dokręcanie na krzyż",
+    "Status weryfikacji": "Potwierdzone OEM Yamaha Service Manual",
+    "Źródło (URL)": "https://scootergrisen.org/scooterhjemmeside/download/yamaha_ybr125_servicemanual.pdf",
+    "Uwagi / ograniczenia": "Szpilki M8 w stalowych nakrętkach kołpakowych."
+  }
+  ];
+
+  const fields = [
+    "Rodzina",
+    "Model / kod silnika",
+    "Układ",
+    "Parametr",
+    "Wartość",
+    "Jednostka",
+    "Warunki pomiaru / zastosowania",
+    "Status weryfikacji",
+    "Źródło (URL)",
+    "Uwagi / ograniczenia"
   ];
 
   function normalize(value) {
