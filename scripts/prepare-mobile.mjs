@@ -43,6 +43,7 @@ const requiredFiles = [
   "index.html",
   "billing.js",
   "katalog-techniczny.js",
+  "druciarstwo.js",
   "sw.js",
   "manifest.webmanifest"
 ];
@@ -53,14 +54,26 @@ for (const file of requiredFiles) {
   await cp(path.join(root, file), path.join(webDir, file));
 }
 await mkdir(path.join(webDir, "assets"), { recursive: true });
-for (const file of ["naprawnik-icon.svg", "naprawnik-icon-192.svg", "naprawnik-icon-512.svg", "neon-tiles-art.jpg"]) {
+for (const file of [
+  "naprawnik-icon.svg",
+  "naprawnik-icon-192.svg",
+  "naprawnik-icon-512.svg",
+  "neon-tiles-art.jpg",
+  "tile-hud.jpg",
+  "tile-jetting.jpg",
+  "tile-cvt.jpg",
+  "tile-pinouts.jpg",
+  "tile-squish.jpg",
+  "tile-orders.jpg",
+  "tile-druciarstwo.jpg"
+]) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
 }
 
 // Instrument only the generated Android copy. The published web/PWA source is unchanged.
 const mobileIndexPath = path.join(webDir, "index.html");
 let mobileHtml = await readFile(mobileIndexPath, "utf8");
-const navMarker = "function nav(view, arg){";
+const navMarker = "function nav(view, arg, restoreState){";
 if (mobileHtml.split(navMarker).length - 1 !== 1) {
   throw new Error("Could not uniquely locate NAPRAWNIK navigation function for the Android back button.");
 }
@@ -92,11 +105,11 @@ const nativeCacheName = sourceCacheMatch[1] + "-native";
 
 const nativeSwContent = `const CACHE='${nativeCacheName}';
 const WEB_LIVE_BASE='https://turbodiesel966-eng.github.io/Aktualizacja-17.10';
-const PRECACHE=['./index.html','./native-bridge.js','./billing.js?v=17','./katalog-techniczny.js','./manifest.webmanifest','./assets/naprawnik-icon.svg','./assets/naprawnik-icon-192.svg','./assets/naprawnik-icon-512.svg','./assets/neon-tiles-art.jpg'];
+const PRECACHE=['./index.html','./native-bridge.js','./billing.js?v=17','./katalog-techniczny.js','./druciarstwo.js','./manifest.webmanifest','./assets/naprawnik-icon.svg','./assets/naprawnik-icon-192.svg','./assets/naprawnik-icon-512.svg','./assets/neon-tiles-art.jpg'];
 function instrumentNativeHtml(html){
   if(typeof html!=='string'||!html.includes('const APP_VERSION'))return null;
   let out=html;
-  const navMarker='function nav(view, arg){';
+  const navMarker='function nav(view, arg, restoreState){';
   if(!out.includes('window.__naprawnikView')&&out.includes(navMarker)){
     out=out.replace(navMarker,navMarker+'\\n  window.__naprawnikView = String(view || "home");');
   }
