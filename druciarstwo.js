@@ -793,6 +793,550 @@
       limits: 'Wężyk musi być certyfikowany do benzyny (nie może zżółknąć ani stwardnieć po miesiącu).',
       testMethod: 'Dolej 1 litr paliwa do pustego baku — słup cieczy w wężyku natychmiast podnosi się proporcjonalnie.',
       isTested: true
+    },
+// --- NOWE ROZSZERZONE PATENTY WARSZTATOWE (v5.29) ---
+    {
+      id: 'dtt-07',
+      category: 'dtt',
+      title: 'Awaryjna fajka świecy z koszulki termokurczliwej i konektora',
+      subtitle: 'Przebicie iskry na fajce świecy podczas deszczu lub pęknięta ceramika',
+      level: 2,
+      safety: 'temp',
+      cost: '1 zł',
+      time: '10 min',
+      rating: 4.8,
+      votes: 89,
+      vehicle: 'Wszystkie silniki 2T i 4T',
+      materials: ['Konektor oczkowy lub zaciskany 4 mm', 'Koszulka termokurczliwa gruba (2-3 warstwy)', 'Taśma samowulkanizująca lub izolacyjna'],
+      tools: ['Kombinerki / zaciskarka', 'Zapalniczka do obkurczenia'],
+      description: 'Gdy pęknie bakelitowa fajka świecy, wysokie napięcie (15-25 kV) przeskakuje na wilgotną głowicę i silnik gaśnie w każdej kałuży. Trzy warstwy termokurcza izolują do 30 kV.',
+      instructions: [
+        'Odetnij uszkodzoną fajkę z kabla wysokiego napięcia, odsłaniając 10 mm miedzianego rdzenia.',
+        'Zaciśnij konektor oczkowy na rdzeniu kabla (oczko musi ciasno nachodzić na gwint M4 świecy zapłonowej).',
+        'Nasuń pierwszą warstwę koszulki termokurczliwej zachodzącą 2 cm na kabel i obkurcz zapalniczką.',
+        'Nasuń drugą i trzecią warstwę termokurcza dla pełnej izolacji dielektrycznej.',
+        'Wciśnij oczko na świecę i zabezpiecz opaską zaciskową lub taśmą. Zero przebić nawet w ulewie!'
+      ],
+      durability: 'Spokojny dojazd do bazy (100–300 km) w ulewnym deszczu.',
+      limits: 'Nie dotykać bezpośrednio rozgrzanego żebra głowicy.',
+      testMethod: 'Spryskaj zrobioną fajkę atomizerem z wodą na wolnych obrotach — silnik nie może zgasnąć.',
+      isTested: true
+    },
+    {
+      id: 'dtt-08',
+      category: 'dtt',
+      title: 'Kołek opony bezdętkowej z wkręta do płyt GK z gumą i klejem',
+      subtitle: 'Przebita opona bezdętkowa w lesie / trasie z dala od wulkanizacji',
+      level: 2,
+      safety: 'temp',
+      cost: '0.50 zł',
+      time: '5 min',
+      rating: 4.7,
+      votes: 164,
+      vehicle: 'Koła bezdętkowe (Tubeless)',
+      materials: ['Wkręt do płyt gipsowo-kartonowych (czarny, z drobnym gwintem)', 'Pasek gumy z dętki lub uszczelki', 'Klej cyjanoakrylowy (Kropelka)'],
+      tools: ['Śrubokręt krzyżakowy', 'Pompka lub nabój CO2'],
+      description: 'Gdy w oponie bezdętkowej tkwi gwóźdź i uchodzi powietrze, wkręt o stożkowym gwincie owinięty gumą z klejem trwale zatyka otwór bieżnika od zewnątrz.',
+      instructions: [
+        'Zlokalizuj nieszczelność (posłuchaj syczenia lub polej wodą).',
+        'Owiń wkręt cienkim paskiem gumy z dętki nasączonym klejem cyjanoakrylowym.',
+        'Wkręć wkręt śrubokrętem bezpośrednio w otwór przebicia w czole bieżnika, aż łeb zrówna się z gumą.',
+        'Odczekaj 2 minuty na związanie kleju i napompuj koło do nominalnego ciśnienia (ok. 2.0 bar).'
+      ],
+      durability: 'Umożliwia przejechanie kilkudziesięciu kilometrów do serwisu oponiarskiego.',
+      limits: 'STOSOWAĆ TYLKO NA CZÓŁKU BIEŻNIKA! Bezwzględny zakaz wkręcania w bok (ściankę) opony.',
+      testMethod: 'Polej miejsce wkręta śliną lub wodą — brak pęcherzyków powietrza.',
+      isTested: true
+    },
+    {
+      id: 'dtt-09',
+      category: 'dtt',
+      title: 'Uszczelnienie pękniętego baku tworzywowego zgrzewem z siatką mosiężną',
+      subtitle: 'Pęknięcie plastikowego zbiornika paliwa (PE/PP) po upadku',
+      level: 3,
+      safety: 'exp',
+      cost: '2 zł',
+      time: '30 min',
+      rating: 4.5,
+      votes: 72,
+      vehicle: 'Zbiorniki tworzywowe cross/skuter',
+      materials: ['Drobna mosiężna lub stalowa siatka filtracyjna', 'Pasek tworzywa z takiego samego baku lub bańki po płynie do spryskiwaczy'],
+      tools: ['Lutownica kolbowa min. 60W'],
+      description: 'Klej do plastiku odpada od benzyny. Jedyną trwałą metodą na polietylen (PE) i polipropylen (PP) jest zbrojony zgrzew termiczny lutownicą.',
+      instructions: [
+        'BEZWZGLĘDNIE OPRÓŻNIJ ZBIORNIK, wypłucz wodą z detergentem i przedmuchaj sprężonym powietrzem (brak oparów benzyny!).',
+        'Odtłuść pęknięcie zmywaczem i zmatów papierem ściernym.',
+        'Przyłóż siatkę mosiężną w poprzek pęknięcia i rozgrzaną lutownicą wtop ją w strukturę tworzywa na głębokość 1 mm.',
+        'Na wtopioną siatkę nałóż pasek tworzywa z bańki PE/PP i roztop go grotu lutownicy, tworząc jednolitą spoinę.',
+        'Po ostygnięciu spoina jest elastyczna i w 100% odporna na benzynę.'
+      ],
+      durability: 'Trzyma latami, wytrzymuje wibracje i uderzenia w terenie.',
+      limits: 'NIGDY NIE ZGRZEWAĆ ZBIORNIKA Z OPARAMI BENZYNY! Zawsze najpierw wentylacja i płukanie wodą.',
+      testMethod: 'Zalej zbiornik do pełna wodą i postaw na suchym kartonie na 2 godziny.',
+      isTested: true
+    },
+    {
+      id: 'met-05',
+      category: 'met',
+      title: 'Wykręcanie obrobionego imbusa/torxa wbitym bitem spline lub nacięciem',
+      subtitle: 'Zjechane gniazdo śruby zacisku hamulcowego, pokrywy lub wariatora',
+      level: 2,
+      safety: 'safe',
+      cost: '0 zł',
+      time: '15 min',
+      rating: 4.9,
+      votes: 210,
+      vehicle: 'Każdy pojazd mechaniczny',
+      materials: ['Odrdzewiacz penetrujący (nafta / MoS2 / WD-40)'],
+      tools: ['Młotek', 'Bit Torx lub Spline (XZN) o rozmiar większy', 'Brzeszczot do metalu'],
+      description: 'Tanie miękkie śruby imbusowe łatwo obrobić na okrągło. Wbicie twardszego bitu z ostrymi krawędziami tworzy nowe mikrorowki przenoszące pełny moment obrotowy.',
+      instructions: [
+        'Obficie spryskaj gwint penetratorem i uderz 3 razy czołowo w łeb śruby przez przedłużkę (udar odpręża gwint).',
+        'Dobierz bit Torx lub wielowypust Spline o pół rozmiaru większy niż wyrobione gniazdo imbusa.',
+        'Wbij bit prostopadle młotkiem w gniazdo śruby, aż ostre zęby wbiją się w ścianki metalu.',
+        'Załóż grzechotkę i zdecydowanym, mocnym ruchem dociskając narzędzie osiowo, wykręć śrubę.',
+        'Alternatywa: natnij łeb brzeszczotem i użyj płaskiego śrubokręta udarowego.'
+      ],
+      durability: 'Standardowa sprawdzona procedura warsztatowa.',
+      limits: 'Uderzać z wyczuciem w cienkościenne kartery aluminiowe.',
+      testMethod: 'Śruba wykręca się bez uszkodzenia karteru.',
+      isTested: true
+    },
+    {
+      id: 'met-06',
+      category: 'met',
+      title: 'Dorabianie kluczyka regulacji zaworów ze spiłowanego gwoździa',
+      subtitle: 'Kwadratowy trzonek śruby zaworowej 3 mm lub 3.5 mm w silnikach 4T GY6 / 139FMB',
+      level: 1,
+      safety: 'safe',
+      cost: '0 zł',
+      time: '15 min',
+      rating: 4.7,
+      votes: 130,
+      vehicle: 'Silniki 4T (GY6, 139FMB, CG125)',
+      materials: ['Gruby gwóźdź ciesielski lub śruba M6 / rurka stalowa'],
+      tools: ['Pilnik do metalu (iglaki)', 'Kombinerki'],
+      description: 'Śruby regulacyjne zaworów mają miniaturowy kwadrat 3x3 mm. Używanie kombinerek niszczy kwadrat. Dorobiony klucz z gwoździa daje precyzyjną kontrolę kąta obrotu.',
+      instructions: [
+        'Odetnij łeb gwoździa ciesielskiego.',
+        'Na czole gwoździa natnij rowek pilnikiem iglakiem lub wywierć otwór 2.5 mm i uformuj kwadratowe gniazdo 3x3 mm.',
+        'Alternatywnie: spiłuj pręt w kształt rączki z kwadratowym nacięciem poprzecznym.',
+        'Zagnij drugi koniec pod kątem 90 stopni, tworząc wygodną rękojeść w kształcie litery L.',
+        'Pozwala ustawić luz zaworowy ze szczelinomierzem z dokładnością do 0.01 mm bez przekręcania nakrętki kontrującej!'
+      ],
+      durability: 'Wielorazowe narzędzie służące latami w domowym warsztacie.',
+      limits: 'Hartowanie nie jest konieczne — moment oporu śruby regulacyjnej jest znikomy.',
+      testMethod: 'Kluczyk pewnie trzyma kwadrat bez luzu bocznego.',
+      isTested: true
+    },
+    {
+      id: 'met-07',
+      category: 'met',
+      title: 'Ratowanie luźnego łożyska w wyrobionym karterze (punktak + Loctite 638)',
+      subtitle: 'Łożysko wału lub przekładni luźno obraca się w gnieździe aluminiowym karteru',
+      level: 3,
+      safety: 'exp',
+      cost: '15 zł',
+      time: '40 min',
+      rating: 4.6,
+      votes: 115,
+      vehicle: 'Kartery aluminiowe 2T / 4T',
+      materials: ['Klej anaerobowy do połączeń współosiowych (Loctite 638 lub 648)', 'Zmywacz do hamulców'],
+      tools: ['Punktak stalowy zaostrzony', 'Młotek 200g'],
+      description: 'Gdy zatopione łożysko wybiło aluminiowe gniazdo o 0.05-0.15 mm, nowy karter kosztuje setki złotych. Gęste punktakowanie tworzy mikrowypukłości centrujące, a klej anaerobowy wypełnia szczelinę i przenosi obciążenia ścinające do 30 MPa.',
+      instructions: [
+        'Odtłuść gniazdo karteru zmywaczem do idealnej czystości.',
+        'Punktakiem wykonaj gęstą siatkę nakłuć (co 2-3 mm) po całym obwodzie gniazda karteru — metal lekko spęcznieje wokół każdego punktu.',
+        'Nanieś klej Loctite 638/648 na obwód gniazda i zewnętrzną bieżnię nowego łożyska.',
+        'Wciśnij łożysko równomiernie na zimno lub po delikatnym podgrzaniu karteru do 60°C.',
+        'Pozostaw do pełnego utwardzenia na 24 godziny w temperaturze pokojowej.'
+      ],
+      durability: 'Trzyma bez problemu 5 000–15 000 km przy luzach do 0.15 mm.',
+      limits: 'Nie stosować przy pękniętym karterze lub luzie większym niż 0.25 mm.',
+      testMethod: 'Brak osiowego i promieniowego luzu łożyska pod naciskiem kciuka.',
+      isTested: true
+    },
+    {
+      id: 'met-08',
+      category: 'met',
+      title: 'Prasa śrubowa do sworznia tłoka z nasadek 1/4 cala i śruby M8',
+      subtitle: 'Zapieczony sworzeń tłokowy — bez bicia młotkiem w korbowód!',
+      level: 2,
+      safety: 'safe',
+      cost: '0 zł',
+      time: '15 min',
+      rating: 4.9,
+      votes: 198,
+      vehicle: 'Wszystkie silniki spalinowe',
+      materials: ['Długa śruba stalowa M8 (min. klasa 8.8) z nakrętką', 'Grube podkładki stalowe'],
+      tools: ['Nasadka 10 mm 1/4 (popychacz)', 'Nasadka 17 lub 19 mm 1/2 (tuleja odbiorcza)', 'Dwa klucze płaskie'],
+      description: 'Wbijanie sworznia młotkiem gnie korbowód i niszczy łożysko igiełkowe! Prasa śrubowa generuje płynną, osiową siłę bez grama udaru.',
+      instructions: [
+        'Wyjmij oba zabezpieczenia sworznia tłokowego (druciki C/G).',
+        'Przełóż śrubę M8 przez sworzeń.',
+        'Z jednej strony załóż nasadkę 10 mm (jej średnica musi być mniejsza niż sworzeń, by go wypychać).',
+        'Z drugiej strony tłoka załóż dużą nasadkę 17 mm (sworzeń musi swobodnie wpaść do jej wnętrza).',
+        'Nakręć nakrętkę z podkładką i kręć kluczem — sworzeń wysuwa się gładko i bez wysiłku prosto w dużą nasadkę!'
+      ],
+      durability: 'Złota zasada każdego profesjonalnego mechanika.',
+      limits: 'Zawsze sprawdzić, czy wyjęto oba pierścienie zabezpieczające!',
+      testMethod: 'Sworzeń wysunięty, korbowód w 100% prosty.',
+      isTested: true
+    },
+    {
+      id: 'pla-05',
+      category: 'pla',
+      title: 'Zszywanie pękniętych owiewek w stylu Drift Stitch (szwy trytytkowe)',
+      subtitle: 'Pęknięty błotnik, pług lub osłona nóg po uderzeniu lub szlifie',
+      level: 1,
+      safety: 'safe',
+      cost: '2 zł',
+      time: '20 min',
+      rating: 4.8,
+      votes: 245,
+      vehicle: 'Wszystkie owiewki motocyklowe i skuterowe',
+      materials: ['Czarne opaski zaciskowe UV 2.5 mm lub 3.6 mm'],
+      tools: ['Wkrętarka lub wiertarka', 'Wiertło 3 mm lub 4 mm'],
+      description: 'Zamiast szpachli, która pęka od wibracji, precyzyjnie wykonane "szwy chirurgiczne" z czarnych trytytek tworzą elastyczne i odporne na pękanie połączenie w kultowym stylu japońskiego driftingu.',
+      instructions: [
+        'Złóż pęknięte krawędzie plastiku do idealnego styku.',
+        'Nawierć pary otworów wiertłem 3 mm w odległości 8 mm od linii pęknięcia, co 15-20 mm wzdłuż całego pęknięcia.',
+        'Przewlecz opaskę zaciskową przez oba otwory od spodu ku górze (krzyżowo jak sznurówki lub równolegle).',
+        'Zaciśnij opaski z jednakową siłą, dociągając pęknięcie.',
+        'Odetnij nadmiar pasków kombinerkami przy samej główce zamka.'
+      ],
+      durability: 'Praktycznie niezniszczalne — plastik może dalej wibrować bez pękania.',
+      limits: 'Zastosowanie wyłącznie estetyczno-ochronne, nie stosować jako mocowanie ramy.',
+      testMethod: 'Szarpnij mocno owiewkę — szew trzyma pewnie i nie rozchodzi się.',
+      isTested: true
+    },
+    {
+      id: 'pla-06',
+      category: 'pla',
+      title: 'Odbudowa ułamanego ucha montażowego owiewki z nakrętki i Poxipolu',
+      subtitle: 'Wyrwane ucho na śrubę pod spodem owiewki skuterowej',
+      level: 2,
+      safety: 'safe',
+      cost: '4 zł',
+      time: '25 min',
+      rating: 4.7,
+      votes: 112,
+      vehicle: 'Owiewki ABS / PP',
+      materials: ['Nakrętka stalowa M5 lub M6', 'Kawałek siateczki miedzianej lub zszywki', 'Klej dwuskładnikowy epoksydowy (Poxipol)'],
+      tools: ['Pilnik / papier ścierny', 'Szpachelka do kleju'],
+      description: 'Plastikowe ucha pękają przy każdym demontażu. Zatopienie metalowej nakrętki w zbrojonym kompozycie epoksydowym tworzy mocowanie mocniejsze niż fabryczny plastik.',
+      instructions: [
+        'Zmatów papierem ściernym okolice wyłamanego ucha na powierzchni min. 2 cm².',
+        'Uformuj szkielet z kawałka zgiętego drutu lub siateczki miedzianej połączony z nakrętką M5.',
+        'Zabezpiecz gwint nakrętki kroplą oleju lub woskiem (by klej nie wpłynął w zwoje gwintu!).',
+        'Wymieszaj Poxipol 1:1 i uformuj solidną bryłę wokół nakrętki i siatki na owiewce.',
+        'Po 30 minutach klej staje się twardy jak kamień — możesz wkręcać fabryczną śrubę.'
+      ],
+      durability: 'Wytrzymuje wielokrotny montaż i demontaż.',
+      limits: 'Pamiętać o nasmarowaniu gwintu śruby przed klejeniem, by nie skleić gwintu na stałe.',
+      testMethod: 'Dokręć śrubę z normalną siłą ręki — nakrętka nie obraca się.',
+      isTested: true
+    },
+    {
+      id: 'pla-07',
+      category: 'pla',
+      title: 'Polerowanie zmatowiałego reflektora pastą do zębów z sodą',
+      subtitle: 'Żółty, matowy klosz lampy przedniej, słaby strumień światła w nocy',
+      level: 1,
+      safety: 'safe',
+      cost: '0 zł',
+      time: '20 min',
+      rating: 4.6,
+      votes: 140,
+      vehicle: 'Reflektory poliwęglanowe (wszystkie skutery i motocykle)',
+      materials: ['Biała pasta do zębów (najlepiej z mikrodrobinkami lub wybielająca)', 'Szczypta sody oczyszczonej', 'Wosk samochodowy lub lakier bezbarwny'],
+      tools: ['Ściereczka z mikrofibry lub wacik bawełniany'],
+      description: 'Promienie UV utleniają wierzchnią warstwę poliwęglanu, tworząc żółty nalot pochłaniający do 60% światła żarówki. Drobny ścierniwo pasty z sodą zdejmuje utlenioną warstwę bez rys.',
+      instructions: [
+        'Umyj reflektor wodą z szamponem i osusz.',
+        'Oklej taśmą lakierniczą plastikowe owiewki wokół klosza, by ich nie porysować.',
+        'Nałóż solidną porcję pasty do zębów wymieszanej ze szczyptą sody na mikrofibrę.',
+        'Poleruj kolistymi ruchami z mocnym dociskiem przez 5-8 minut.',
+        'Zmyj pastę wilgotną ściereczką — klosz staje się krystalicznie przezroczysty!',
+        'Na koniec wetrzyj twardy wosk lub lakier z filtrem UV, by zabezpieczyć przed ponownym żółknięciem.'
+      ],
+      durability: 'Efekt utrzymuje się przez 6–12 miesięcy.',
+      limits: 'Nie stosować past żelowych (brak ścierniwa).',
+      testMethod: 'Znacznie jaśniejsza i wyraźniejsza granica światła i cienia na ścianie.',
+      isTested: true
+    },
+    {
+      id: 'nar-06',
+      category: 'nar',
+      title: 'Ściągacz koła magnesowego (magneta) z grubej podkładki i śrub M6',
+      subtitle: 'Brak fabrycznego ściągacza lewoskrętnego M24/M27 w niedzielę w garażu',
+      level: 2,
+      safety: 'safe',
+      cost: '0–3 zł',
+      time: '25 min',
+      rating: 4.8,
+      votes: 175,
+      vehicle: 'Koła magnesowe z otworami technologicznymi (GY6, Minarelli, Statory)',
+      materials: ['Gruby płaskownik stalowy min. 5 mm lub duża podkładka M12', 'Śruba centralna M10 z nakrętką', '2 lub 3 śruby M6 twardości 8.8'],
+      tools: ['Wiertarka', 'Klucze płaskie'],
+      description: 'Zdejmowanie koła magnesowego łapkami lub młotkiem krzywi wał korbowy i rozmagnesowuje magnesy! Trzypunktowy ściągacz ze śrub M6 zdejmuje koło w osi wału.',
+      instructions: [
+        'Większość kół magnesowych ma 2 lub 3 gwintowane otwory M6 przeznaczone na wentylator chłodzenia.',
+        'W płaskowniku wywierć otwór centralny na śrubę M10 oraz 2 otwory boczne pasujące do rozstawu śrub wentylatora.',
+        'Wkręć śruby M6 przez płaskownik w magneto na głębokość 6-8 mm (uwaga: nie za głęboko, by nie zgnieść cewek statora!).',
+        'Śrubę centralną M10 oprzyj o czop wału korbowego (załóż nakrętkę ochronną na gwint wału).',
+        'Dokręcaj śrubę centralną — koło zeskoczy ze stożka wału z głośnym trzaskiem, w 100% bezpiecznie dla łożysk.'
+      ],
+      durability: 'Narzędzie wielorazowe do wielokrotnych remontów.',
+      limits: 'NIGDY NIE WKRĘCAĆ ŚRUB M6 ZA GŁĘBOKO (max 8 mm) — ryzyko uszkodzenia miedzianych zwojów iskrownika!',
+      testMethod: 'Koło magnesowe zdjęte bez użycia młotka i bez bicia wału.',
+      isTested: true
+    },
+    {
+      id: 'nar-07',
+      category: 'nar',
+      title: 'Garażowy wakuometr z butelek i rurki igielitowej z olejem 2T',
+      subtitle: 'Precyzyjna synchronizacja przepustnic gaźników w silnikach 2-cylindrowych',
+      level: 3,
+      safety: 'safe',
+      cost: '5 zł',
+      time: '30 min',
+      rating: 4.9,
+      votes: 122,
+      vehicle: 'Silniki wielocylindrowe / 2T i 4T z dwoma gaźnikami',
+      materials: ['5 metrów przezroczystego wężyka igielitowego 5 mm', 'Deska pionowa 1 metr', 'Olej silnikowy 2T (czerwony/niebieski — dobrze widoczny)'],
+      tools: ['Taśma lub zszywacz stolarski'],
+      description: 'Tanie zegary wakuometrów z Allegro mają błędy wskazań do 10%. Waga cieczowa U-rurkowa z oleju jest 10-krotnie dokładniejsza i nie wymaga kalibracji.',
+      instructions: [
+        'Przymocuj wężyk do deski w kształcie litery U (dwa pionowe ramiona o wysokości 80 cm).',
+        'Nalej do wężyka 30 ml kolorowego oleju 2T — poziom w obu ramionach ustawi się idealnie równo.',
+        'Podłącz końce wężyka do króćców podciśnieniowych obu gaźników.',
+        'Odpal silnik na wolnych obrotach — różnica podciśnień natychmiast przesuwa słup oleju.',
+        'Reguluj śrubę synchronizacji między gaźnikami, aż poziomy oleju w obu rurkach zrównają się co do milimetra!'
+      ],
+      durability: 'Dokładniejszy niż zegary laboratoryjne za 400 zł.',
+      limits: 'Nigdy nie wlewać rtęci ani wody! Olej 2T jest bezpieczny, bo nawet w razie zassania silnik po prostu go przepali.',
+      testMethod: 'Idealnie równa praca obu cylindrów i natychmiastowa reakcja na gaz.',
+      isTested: true
+    },
+    {
+      id: 'nar-08',
+      category: 'nar',
+      title: 'Przyrząd do montażu uszczelniaczy zaworowych z nasadki 10 mm i taśmy',
+      subtitle: 'Montaż małych gumowych uszczelniaczy na trzonki zaworów bez ścięcia krawędzi',
+      level: 2,
+      safety: 'safe',
+      cost: '0 zł',
+      time: '10 min',
+      rating: 4.8,
+      votes: 95,
+      vehicle: 'Głowice 4T (GY6, 139FMB, CBF, YBR)',
+      materials: ['Taśma teflonowa hydrauliczna lub pasek gładkiej folii', 'Kropla czystego oleju silnikowego'],
+      tools: ['Długa nasadka 10 mm 1/4 cala'],
+      description: 'Ostre rowki zamków zaworowych na trzonku tną wargę nowego uszczelniacza przy wsuwaniu, powodując dymienie na niebiesko po remoncie. Osłona z teflonu chroni gumę.',
+      instructions: [
+        'Owiń końcówkę zaworu (rowki zamków) 2 zwojami gładkiej taśmy teflonowej.',
+        'Zwilż uszczelniacz i trzonek zaworu kroplą świeżego oleju silnikowego.',
+        'Wsuń uszczelniacz palcami przez zabezpieczone rowki na prowadnicę zaworową.',
+        'Nasuń długą nasadkę 10 mm na uszczelniacz (nasadka opiera się o metalowy kołnierz uszczelniacza, nie o gumę!).',
+        'Dociśnij kciukiem lub delikatnie stuknij dłonią — uszczelniacz zatrzaśnie się na prowadnicy z charakterystycznym klikiem.'
+      ],
+      durability: 'Gwarancja 100% szczelności głowicy bez dymienia.',
+      limits: 'Nie używać młotka — ryzyko skrzywienia blaszki uszczelniacza.',
+      testMethod: 'Uszczelniacz siedzi prosto i nie zsuwa się przy suwie zaworu.',
+      isTested: true
+    },
+    {
+      id: 'nar-09',
+      category: 'nar',
+      title: 'Odpowietrzanie hamulców dużą strzykawką od dołu (metoda odwrócona)',
+      subtitle: 'Pusta pompa hamulcowa po wymianie płynu / klamka wpada w kierownicę',
+      level: 1,
+      safety: 'safe',
+      cost: '3 zł',
+      time: '10 min',
+      rating: 4.9,
+      votes: 280,
+      vehicle: 'Wszystkie układy hydrauliczne hamulców tarczowych',
+      materials: ['Duża strzykawka medyczna 60 ml lub 100 ml (tzw. żaneta)', 'Kawałek wężyka igielitowego 4-5 mm', 'Płyn hamulcowy DOT 4'],
+      tools: ['Klucz płaski 8 mm lub 10 mm do odpowietrznika'],
+      description: 'Pęcherzyki powietrza naturalnie wędrują do góry. Pompowanie klamką z góry w dół walczy z fizyką! Wtłaczanie płynu strzykawką od zacisku w górę wypycha 100% powietrza w 60 sekund.',
+      instructions: [
+        'Odkręć korek zbiorniczka płynu na kierownicy i odessij stary brudny płyn.',
+        'Napełnij strzykawkę 60 ml świeżego płynu DOT 4 i odpowietrz wężyk (brak bąbli w strzykawce).',
+        'Załóż wężyk na odpowietrznik zacisku hamulcowego.',
+        'Odkręć odpowietrznik o 1/2 obrotu kluczem płaskim.',
+        'Powoli i płynnie wtłaczaj płyn strzykawką od dołu — bąble powietrza natychmiast uciekają do zbiorniczka na kierownicy.',
+        'Gdy w zbiorniczku pojawi się czysty płyn bez bąbli, zakręć odpowietrznik i zdejmij strzykawkę. Klamka jest twarda jak skała!'
+      ],
+      durability: 'Najszybsza i najbardziej niezawodna metoda serwisowa na świecie.',
+      limits: 'Płyn hamulcowy niszczy lakier — zabezpiecz owiewki szmatą.',
+      testMethod: 'Klamka hamulca bierze natychmiast po 5 mm skoku, zero miękkości.',
+      isTested: true
+    },
+    {
+      id: 'eng-06',
+      category: 'eng',
+      title: 'Awaryjny filtr paliwa w kraniku z torebki herbaty piramidki / nylonu',
+      subtitle: 'Zgnita, rozpuszczona fabryczna siatka w kraniku baku — rdza leci do gaźnika',
+      level: 2,
+      safety: 'temp',
+      cost: '0 zł',
+      time: '15 min',
+      rating: 4.7,
+      votes: 110,
+      vehicle: 'Każdy pojazd z gaźnikiem',
+      materials: ['Nylonowa torebka po herbacie piramidce lub kawałek rajstopy nylonowej', 'Cienka miedziana nitka drucika'],
+      tools: ['Nożyczki', 'Klucz do kranika'],
+      description: 'Siatka nylonowa z herbaty piramidki ma mikropory o wielkości 50 mikronów, jest w 100% odporna na benzynę i zatrzymuje najdrobniejszą rdzę z baku.',
+      instructions: [
+        'Wyjmij kranik ze zbiornika paliwa.',
+        'Rozetnij torebkę herbaty piramidki, wysyp susz i dokładnie przedmuchaj nylonową siatkę.',
+        'Naciągnij siatkę na rurkę zasysającą kranika tworząc kapturek.',
+        'Obwiąż u nasady cienkim drucikiem miedzianym ze skręconej linki elektrycznej.',
+        'Wsuń kranik do baku i dokręć — gaźnik jest w 100% chroniony przed opiłkami i rdzą.'
+      ],
+      durability: 'Wytrzymuje kilka miesięcy do czasu zakupu fabrycznego kranika.',
+      limits: 'Stosować wyłącznie torebki syntetyczne/nylonowe (piramidki), nigdy papierowe!',
+      testMethod: 'Swobodny przepływ benzyny przy odkręconym kraniku.',
+      isTested: true
+    },
+    {
+      id: 'eng-07',
+      category: 'eng',
+      title: 'Odblokowanie zapieczonych pierścieni tłokowych miksturą nafty i acetonu',
+      subtitle: 'Silnik po wieloletnim postoju w stodole, zerowa kompresja, pierścienie sklejone nagarem',
+      level: 2,
+      safety: 'safe',
+      cost: '8 zł',
+      time: '12 godz. (noc)',
+      rating: 4.9,
+      votes: 230,
+      vehicle: 'Silniki 2T i 4T po długim postoju',
+      materials: ['Nafta oświetleniowa 50 ml', 'Czysty aceton techniczny 50 ml', 'Kilka kropel oleju silnikowego'],
+      tools: ['Strzykawka', 'Klucz do świecy'],
+      description: 'Aceton rozpuszcza laki i żywice nagaru, a nafta ma znakomitą pełzliwość kapilarną. Ta mikstura (tzw. ATF-Acetone mix) penetruje szczeliny rzędu mikrometrów.',
+      instructions: [
+        'Wykręć świecę zapłonową.',
+        'Ustaw tłok w połowie suwu (ani nie w GMP, ani w DMP).',
+        'Wymieszaj naftę z acetonem w proporcji 1:1 i wstrzyknij 30–50 ml przez otwór świecy do cylindra.',
+        'Wkręć luźno starą świecę i pozostaw na całą noc (12-16 godzin).',
+        'Rano wykręć świecę, połóż szmatę na otworze i zakręć wałem rozrusznikiem/kopnikiem — rozpuszczony nagar zostanie wyrzucony.',
+        'Wstrzyknij 5 ml świeżego oleju silnikowego na gładź cylindra i sprawdź kompresję — pierścienie odzyskują pełną sprężystość!'
+      ],
+      durability: 'Uratowało tysiące silników przed niepotrzebnym rozbieraniem.',
+      limits: 'Po odpaleniu silnik będzie dymił przez 5 minut na biało — to normalne.',
+      testMethod: 'Pomiar kompresji manometrem — skok z 3 barów do 9–11 barów.',
+      isTested: true
+    },
+    {
+      id: 'eng-08',
+      category: 'eng',
+      title: 'Test szczelności przylgni zaworów głowicy 4T benzyną ekstrakcyjną',
+      subtitle: 'Weryfikacja szczelności głowicy po dotarciu zaworów lub przed montażem',
+      level: 1,
+      safety: 'safe',
+      cost: '1 zł',
+      time: '10 min',
+      rating: 4.8,
+      votes: 160,
+      vehicle: 'Głowice 4T (wszystkie modele)',
+      materials: ['Benzyna ekstrakcyjna lub nafta (50 ml)'],
+      tools: ['Płaski stół warsztatowy', 'Latarka'],
+      description: 'Złożenie silnika z nieszczelnym zaworem to zmarnowane godziny pracy. Benzyna ekstrakcyjna ma małe napięcie powierzchniowe i natychmiast przenika przez szczelinę nawet 0.005 mm.',
+      instructions: [
+        'Złóż zawory ze sprężynami w czystej głowicy.',
+        'Ułóż głowicę komorą spalania do góry.',
+        'Nalej benzyny ekstrakcyjnej do kanału ssącego, aż będzie pełny.',
+        'Obserwuj komorę spalania wokół talerzyka zaworu przez 3-5 minut.',
+        'Prawidłowy wynik: grzybek zaworu pozostaje całkowicie suchy.',
+        'Jeśli pojawia się wilgotna plama lub krople — zawór wymaga ponownego dotarcia pastą diamentową.'
+      ],
+      durability: 'Niezbędny test w każdym remoncie silnika 4T.',
+      limits: 'Głowica musi być całkowicie sucha przed wlaniem paliwa testowego.',
+      testMethod: 'Komora sucha przez min. 3 minuty = 100% pewności kompresji.',
+      isTested: true
+    },
+    {
+      id: 'abs-04',
+      category: 'abs',
+      title: 'Myjka wibracyjna do dysz gaźnika z puszki na szlifierce oscylacyjnej',
+      subtitle: 'Zakamienione, zapieczone dysze gaźnika, gdy brak myjki ultradźwiękowej za 300 zł',
+      level: 3,
+      safety: 'safe',
+      cost: '0 zł',
+      time: '15 min',
+      rating: 4.7,
+      votes: 185,
+      vehicle: 'Dysze i drobnica gaźnikowa',
+      materials: ['Puszka metalowa po rybkach / paście z pokrywką', 'Ocet lub zmywacz do gaźników / nafta', 'Dwie trytytki'],
+      tools: ['Szlifierka oscylacyjna lub polerka wibracyjna'],
+      description: 'Drgania o częstotliwości 10 000–20 000 oscylacji na minutę rozbijają skamieniały osad paliwowy (osad żywiczny i zielony tlenek mosiądzu) z mikroskopijnych kanalików dysz.',
+      instructions: [
+        'Wrzuć zdemontowane mosiężne dysze gaźnika do puszki.',
+        'Zalej naftą z dodatkiem 20% octu lub zmywaczem do gaźników.',
+        'Zamknij szczelnie puszkę i przymocuj ją mocno dwiema opaskami zaciskowymi do stopy szlifierki oscylacyjnej.',
+        'Włącz szlifierkę na 10 minut — potężne mikrowibracje mechaniczne wybijają brud ze środka dysz szybciej niż myjka ultradźwiękowa!',
+        'Przedmuchaj dysze pompką — lśnią jak fabrycznie nowe.'
+      ],
+      durability: 'Czystość dysz z dokładnością do 0.01 mm.',
+      limits: 'Nie stosować kwasów na części ze znalu i aluminium — tylko do mosiądzu!',
+      testMethod: 'Spojrzenie pod światło przez dyszę — idealnie okrągły, czysty otwór.',
+      isTested: true
+    },
+    {
+      id: 'abs-05',
+      category: 'abs',
+      title: 'Kalibrowany bezpiecznik awaryjny ze skręconej miedzianej żyłki kabla',
+      subtitle: 'Spalony bezpiecznik główny 10A/15A w trasie w nocy, brak zapasowego',
+      level: 2,
+      safety: 'temp',
+      cost: '0 zł',
+      time: '5 min',
+      rating: 4.6,
+      votes: 140,
+      vehicle: 'Instalacje elektryczne 12V',
+      materials: ['Stary kawałek wielożyłowego przewodu miedzianego (np. linka głośnikowa)'],
+      tools: ['Nożyk', 'Kombinerki'],
+      description: 'Zasada fizyki: pojedyncza miedziana żyłka o średnicy 0.15 mm przepala się precyzyjnie przy prądzie ok. 5–6 A, a żyłka 0.20 mm przy ok. 10–12 A. Daje to realną ochronę instalacji przed spaleniem w odróżnieniu od gwoździa!',
+      instructions: [
+        'Zdejmij izolację ze starego przewodu miedzianego.',
+        'Rozpleć linkę i wyciągnij POJEDYNCZY, CIENKI drucik miedziany (nie cały pęczek!).',
+        'Nawiń drucik wokół nóżek spalonego bezpiecznika płaskiego.',
+        'Włóż bezpiecznik z powrotem do gniazda.',
+        'W razie ponownego zwarcia cienki drucik natychmiast wyparuje, ratując instalację przed pożarem.'
+      ],
+      durability: 'TYMCZASOWY DOJAZD DO STACJI BENZYNOWEJ! Jak najszybciej kupić fabryczny bezpiecznik topikowy.',
+      limits: 'BEZWZGLĘDNY ZAKAZ WKŁADANIA GWOŹDZI, FOLII ALUMINIOWEJ I GRUBYCH DRUTÓW! Stosować wyłącznie 1 cienką żyłkę.',
+      testMethod: 'Światła i zapłon działają bez dymienia z wiązki.',
+      isTested: true
+    },
+    {
+      id: 'abs-06',
+      category: 'abs',
+      title: 'Stabilny podnośnik wahacza i karteru z lewarka trapezowego i klocka',
+      subtitle: 'Demontaż tylnego koła lub silnika w skuterze bez stopki centralnej',
+      level: 1,
+      safety: 'safe',
+      cost: '0 zł',
+      time: '5 min',
+      rating: 4.8,
+      votes: 110,
+      vehicle: 'Wszystkie jednoślady',
+      materials: ['Klocek drewniany sosnowy 10x10 cm lub gruba deska', 'Stary lewarek trapezowy samochodowy'],
+      tools: ['Klucz do lewarka'],
+      description: 'Podpieranie skutera na pustakach czy cegłach grozi wywrotką i połamaniem plastików. Lewarek trapezowy z drewnianym klockiem dopasowanym do żeber karteru daje stabilną regulację wysokości co do milimetra.',
+      instructions: [
+        'Postaw pojazd na stopce bocznej na równym podłożu.',
+        'Wytnij w klocku drewnianym małe wgłębienie na łeb lewarka (by klocek się nie ześlizgnął).',
+        'Podłóż lewarek z klockiem pod mocowanie amortyzatora lub spód karteru silnika.',
+        'Kręć korbą lewarka — tylne koło unosi się w powietrze na pożądaną wysokość, a pojazd stabilnie opiera się na przednim kole i stopce bocznej.',
+        'Koło zdejmuje się bez walki z ciężarem maszyny.'
+      ],
+      durability: 'Niezbędny patent każdego domowego warsztatu bez profesjonalnego podnośnika.',
+      limits: 'Zawsze zablokować przedni hamulec gumką lub opaską na klamce, by pojazd nie odjechał do przodu!',
+      testMethod: 'Stabilne podparcie — pojazd nie buja się przy odkręcaniu śrub.',
+      isTested: true
     }
   ];
 
@@ -892,6 +1436,45 @@
         { name: 'Przelotowy filtr paliwa ze spiekiem', use: 'Dodatkowy filtr paliwa w skuterze chroniący dyszę gaźnika.', check: 'Czysty wkład bez mułu.' },
         { name: 'Sprężyny powrotne przepustnicy', use: 'Sprężyny odbijające kopki, stopki bocznej lub przepustnicy.', check: 'Wysoka sprężystość.' }
       ]
+    },
+{
+      source: 'Stary amortyzator samochodowy',
+      icon: '🚗',
+      badge: 'Złom warsztatowy',
+      items: [
+        { name: 'Tłoczysko ze stali chromowanej utwardzanej (18-22 mm)', use: 'Najwyższej klasy wybijaki do łożysk, sworzni i przecinaki — nie pęka i nie spęcza się od młotka.', check: 'Idealnie gładka powierzchnia bez wżerów korozyjnych.' },
+        { name: 'Czysty olej amortyzatorowy hydrauliczny', use: 'Olej o lepkości ok. 5W-10W z dodatkami przeciwpiennymi do lag motocyklowych.', check: 'Przezroczysty płyn bez szlamu i wody.' },
+        { name: 'Tuleje metalowo-gumowe (silentblocki) z ucha', use: 'Tłumiki drgań wydechu, mocowania silnika i podnóżków.', check: 'Sprężysta guma niewyprasowana ze stalowej tulei.' }
+      ]
+    },
+    {
+      source: 'Stara parasolka składana',
+      icon: '☂️',
+      badge: 'Odpady domowe',
+      items: [
+        { name: 'Żeberka ze stali sprężynowej płaskiej i okrągłej', use: 'Idealne wyciory do przetykania zagiętych kanalików gaźnika, awaryjne spinki zawleczek.', check: 'Sprężysty drut powracający do prostego kształtu.' },
+        { name: 'Rurka teleskopowa cienkościenna', use: 'Tulejki dystansowe manetek, prowadnice linek, miniaturowe lejki do oleju.', check: 'Brak zgnieceń ścianki.' }
+      ]
+    },
+    {
+      source: 'Zużyty puszkowy filtr oleju',
+      icon: '🛢️',
+      badge: 'Odpad warsztatowy',
+      items: [
+        { name: 'Płaski gumowy oring uszczelniający o dużej średnicy', use: 'Uszczelka pokryw dekli, amortyzacja pod akumulator, odbojniki.', check: 'Guma olejoodporna NBR bez spękań.' },
+        { name: 'Zawór przeciwzwrotny gumowy (antidrain)', use: 'Membrana zaworu jednokierunkowego do odpowietrzania skrzyni korbowej lub hamulców.', check: 'Czysta, miękka warga silikonowa.' },
+        { name: 'Mocna sprężyna dociskowa wkładu', use: 'Sprężyna stopki bocznej, powrotu hamulca bębnowego.', check: 'Wysoka siła powrotna.' }
+      ]
+    },
+    {
+      source: 'Stary twardy dysk komputerowy (HDD 3.5 cala)',
+      icon: '💾',
+      badge: 'Elektroodpady PC',
+      items: [
+        { name: 'Pancerne magnesy neodymowe N52 w kształcie bumerangu', use: 'Wyłapywanie opiłków w misce olejowej, mocowanie kluczy na ścianie, magnetyczna miska na śrubki.', check: 'Ogromna siła trzymania — odrywać przez zsuwanie!' },
+        { name: 'Talerze aluminiowe polerowane na lustro', use: 'Lusterka inspekcyjne do zaglądania pod karter i podglądu squish/rozrządu.', check: 'Płaskość optyczna, odporność na temperaturę.' },
+        { name: 'Precyzyjne śrubki Torx T6-T9 ze stali nierdzewnej', use: 'Niezastąpione mikrośrubki do liczników cyfrowych, mocowań czujników i gaźników.', check: 'Nienaruszone gniazda gwiazdkowe.' }
+      ]
     }
   ];
 
@@ -902,6 +1485,181 @@
   let activeFilterLevel = 0;
   let activeFilterZeroCost = false;
   let patentSearchQuery = '';
+
+// --- 12 ŚWIĘTYCH ARTEFAKTÓW DRUCIARZA (NIEZBĘDNIK GARAŻOWY) ---
+  const ARTIFACTS_LIST = [
+    {
+      id: 'art-01',
+      name: 'Trytytki czarne UV (Opaski zaciskowe)',
+      icon: '🪢',
+      tier: 'BOSKIE SPOIWO',
+      color: '#06b6d4',
+      motto: '„Co nie trzyma na 2 trytytki, utrzyma na 4.”',
+      roles: ['Mocowanie wiązek i linek', 'Zszywanie pękniętych owiewek (Drift Stitch)', 'Podwieszanie osłon i błotników', 'Awaryjne łańcuchy na śnieg i lód'],
+      proTip: 'Zawsze kupuj CZARNE z filtrem UV. Białe/przezroczyste na słońcu kruszeją po 2 miesiącach!',
+      donts: 'NIGDY nie mocuj trytytką rury wydechowej bezpośrednio (stopi się w 15 sekund).'
+    },
+    {
+      id: 'art-02',
+      name: 'Szara taśma naprawcza (Duct Tape / Powertape)',
+      icon: '🩶',
+      tier: 'TKANINA WSZECHŚWIATA',
+      color: '#94a3b8',
+      motto: '„Jeśli coś się rusza, a nie powinno — użyj taśmy.”',
+      roles: ['Tymczasowe łatanie dolotów powietrza', 'Zabezpieczanie pękniętych kanap i kloszy', 'Usztywnianie złamanych klamek w szynie', 'Wygłuszanie brzęczących plastików'],
+      proTip: 'Przed naklejeniem odtłuść powierzchnię benzyną ekstrakcyjną lub zmywaczem — trzyma 5x mocniej.',
+      donts: 'Nie owijaj rur z gorącym płynem chłodniczym pod ciśnieniem (klej puści po rozgrzaniu).'
+    },
+    {
+      id: 'art-03',
+      name: 'Puszka aluminiowa po napoju',
+      icon: '🥫',
+      tier: 'PRECYZYJNY MATERIAŁ 0.15 MM',
+      color: '#ef4444',
+      motto: '„Pijesz napój, a reszta idzie na uszczelkę wydechu.”',
+      roles: ['Uszczelka i tulejka redukcyjna na łączenie tłumika', 'Podkładki pod cylinder do precyzyjnego strojenia Squish', 'Osłona termiczna kabli nad cylindrem', 'Wypływka pod gaźnik'],
+      proTip: 'Grubość ścianki puszki to dokładnie 0.10–0.15 mm. Trzy warstwy dają idealne 0.35 mm skasowania luzu.',
+      donts: 'Uważaj na ostre krawędzie po rozcięciu blachy — tnie skórę jak skalpel.'
+    },
+    {
+      id: 'art-04',
+      name: 'Kropelka / Super Glue + Soda oczyszczona',
+      icon: '🧪',
+      tier: 'SPAWANIE CHEMICZNE W 3 SEKUNDY',
+      color: '#10b981',
+      motto: '„Twardsze niż chiński plastik, wiąże zanim mrugniesz.”',
+      roles: ['Odbudowa wyłamanych zaczepów owiewek', 'Zalewanie pęknięć karterów od zewnątrz', 'Naprawa obudów liczników i przełączników', 'Wypełnianie wyszczerbionych rowków'],
+      proTip: 'Zasyp pęknięcie sodą, a potem wpuść kroplę kleju cyjanoakrylowego. Zachodzi gwałtowna polimeryzacja egzotermiczna — spoina staje się twarda jak ceramika w ułamku sekundy!',
+      donts: 'Wydziela drażniące opary — nie nachylaj twarzy bezpośrednio nad spoinę.'
+    },
+    {
+      id: 'art-05',
+      name: 'Stara dętka rowerowa (butyl)',
+      icon: '🚴',
+      tier: 'WIECZNY TŁUMIK DRGAŃ',
+      color: '#f59e0b',
+      motto: '„Guma odporna na wodę, mróz i warsztatowe wibracje.”',
+      roles: ['Podkładki antywibracyjne pod mocowania owiewek i silnika', 'Opaski zabezpieczające kable o ramę', 'Awaryjne uszczelnienia króćca dolotowego', 'Kołki do opon bezdętkowych w trasie'],
+      proTip: 'Dętka butylowa nie starzeje się i nie twardnieje na mrozie tak szybko jak guma naturalna.',
+      donts: 'Nie używaj w bezpośrednim kontakcie z czystą benzyną — butyl po kilku dniach pęcznieje.'
+    },
+    {
+      id: 'art-06',
+      name: 'Drut stalowy wiązałkowy / wieszak z pralni',
+      icon: '🪡',
+      tier: 'RUSZTOWANIE NOŚNE',
+      color: '#a855f7',
+      motto: '„Trzyma wydechy w całej Europie Wschodniej od 1980 roku.”',
+      roles: ['Awaryjne podwieszenie urwanego tłumika', 'Dorabianie zawleczek i zabezpieczeń', 'Przetykanie zapchanych rurek odpowietrzenia', 'Ściąganie sprężyn hamulcowych'],
+      proTip: 'Skręcaj końce warkoczem za pomocą kombinerek — daje to wstępne napięcie jak śruba rzymska.',
+      donts: 'Nie zostawiaj ostrych końców sterczących w stronę opony lub przewodów hamulcowych.'
+    },
+    {
+      id: 'art-07',
+      name: 'Poxipol / Płynny metal epoksydowy',
+      icon: '🧱',
+      tier: 'GARAŻOWA ODLEWNIA',
+      color: '#ec4899',
+      motto: '„Ulepisz z tego nowe ucho, gwint i pół silnika.”',
+      roles: ['Odbudowa pourywanych uszu karteru', 'Zalewanie dziur w pokrywach przekładni i alternatora', 'Wtapianie nakrętek w połamane plastiki', 'Sklejanie pękniętych króćców'],
+      proTip: 'Przed nałożeniem zmatuj aluminium grubym papierem P60 i odtłuść zmywaczem. Po 10 minutach możesz w nim wiercić i gwintować!',
+      donts: 'Nie stosuj w miejscach o temperaturze stałej powyżej 130°C (np. przy oknie wydechowym cylindra).'
+    },
+    {
+      id: 'art-08',
+      name: 'Karton TetraPak po soku lub mleku',
+      icon: '🧃',
+      tier: 'NIEZNISZCZALNA USZCZELKA',
+      color: '#3b82f6',
+      motto: '„Aluminium od środka, polietylen na zewnątrz — kartery to kochają.”',
+      roles: ['Wykrawanie uszczelek pod cylinder, karter i membranę', 'Uszczelka komory pływakowej gaźnika', 'Podkładki pod pokrywę napędu CVT'],
+      proTip: 'Strona z warstwą aluminium ma idealną odporność termiczną i olejową, a warstwy celulozy kompensują nierówności przylgni.',
+      donts: 'Nie stosuj zwykłego kartonu falistego — tylko wielowarstwowy laminat TetraPak.'
+    },
+    {
+      id: 'art-09',
+      name: 'WD-40 & Zmywacz do hamulców',
+      icon: '💦',
+      tier: 'ŚWIĘTY DUET PŁYNÓW',
+      color: '#14b8a6',
+      motto: '„Jeden odkręca i smaruje, drugi odtłuszcza i gasi wątpliwości.”',
+      roles: ['Odkręcanie zapieczonych śrub wydechu i karteru', 'Czyszczenie tarcz i klocków hamulcowych', 'Wykrywanie nieszczelności lewego powietrza', 'Błyskawiczne odtłuszczanie pod kleje'],
+      proTip: 'Zmywacz do hamulców natychmiast odparowuje do sucha bez pozostawiania tłustego filmu.',
+      donts: 'NIGDY nie psikaj WD-40 na tarcze lub klocki hamulcowe!'
+    },
+    {
+      id: 'art-10',
+      name: 'Strzykawka 100 ml + wężyk igielitowy',
+      icon: '💉',
+      tier: 'POMPA ODWRÓCONEGO CIŚNIENIA',
+      color: '#fbbf24',
+      motto: '„Odpowietrzysz hamulce w 60 sekund bez pompowania klamką.”',
+      roles: ['Odpowietrzanie hamulców od dołu (wtłaczanie płynu przez zacisk)', 'Odsysanie nadmiaru oleju z lag i przekładni', 'Precyzyjne odmierzanie oleju do mieszanki 2T', 'Płukanie kanalików gaźnika'],
+      proTip: 'Kup w aptece strzykawkę z końcówką cewnikową (tzw. żaneta) — ma szeroki stożek idealny na wężyk 5 mm.',
+      donts: 'Płyn hamulcowy DOT 4 po kilku tygodniach niszczy gumowy tłoczek strzykawki — po pracy wypłucz ją wodą.'
+    },
+    {
+      id: 'art-11',
+      name: 'Pręt gwintowany M8/M10 + nakrętki',
+      icon: '🔩',
+      tier: 'UNIWERSALNY ŚCIĄGACZ I PRASA',
+      color: '#6366f1',
+      motto: '„Po co kupować prasę hydrauliczną za 1000 zł?”',
+      roles: ['Wciskanie i wyciskanie sworzni tłoka bez bicia młotkiem', 'Ściskacz sprężyny centralnej sprzęgła CVT', 'Wciąganie łożysk w kartery na zimno', 'Ściągacz kół magnesowych'],
+      proTip: 'Zawsze stosuj grube podkładki poszerzane i nasmaruj gwint smarem stałym — zmniejsza opór o 60%.',
+      donts: 'Nie używaj miękkich marketowych prętów klasy 4.8 do wyciągania zapieczonych łożysk — szukaj klasy 8.8.'
+    },
+    {
+      id: 'art-12',
+      name: 'Szlifierka kątowa „Diax” (125 mm)',
+      icon: '⚡',
+      tier: 'ROZSTRZYGACZ SPORÓW',
+      color: '#e11d48',
+      motto: '„Nie ma śruby, która oparłaby się tarczy do cięcia.”',
+      roles: ['Obcinanie zapieczonych nakrętek wydechu', 'Nacinanie rowków pod śrubokręt w obrobionych śrubach', 'Dorabianie płaskowników, blokad i uchwytów', 'Dopasowywanie niefabrycznych mocowań'],
+      proTip: 'Cienka tarcza 1.0 mm do stali nierdzewnej tnie metal jak masło i nie nagrzewa otaczającego karteru.',
+      donts: 'BEZWZGLĘDNIE ZAKŁADAJ OKULARY OCHRONNE! Opiłki metalu w oku to koniec zabawy w garażu.'
+    }
+  ];
+
+  // --- LISTA POZYCJI KALKULATORA OSZCZĘDNOŚCI JANUSZA ---
+  const SAVINGS_LIST = [
+    { id: 'sav-01', patentId: 'dtt-01', name: 'Pancerz tłumika z puszki zamiast nowego wydechu OEM', savedPln: 180, hours: 1.5 },
+    { id: 'sav-02', patentId: 'dtt-03', name: 'Szyna klamki z imbusa zamiast lawety z trasy', savedPln: 220, hours: 2.0 },
+    { id: 'sav-03', patentId: 'dtt-04', name: 'Awaryjna linka ze struny zamiast nowej linki z ASO i postoju', savedPln: 90, hours: 1.0 },
+    { id: 'sav-04', patentId: 'dtt-08', name: 'Kołek z wkręta w oponie bezdętkowej w trasie zamiast holowania', savedPln: 160, hours: 1.5 },
+    { id: 'sav-05', patentId: 'met-01', name: 'Klin magneta dopiłowany z podkładki zamiast zamawiania z Włoch', savedPln: 45, hours: 0.5 },
+    { id: 'sav-06', patentId: 'met-03', name: 'Ratowanie wielowypustu kopnika wkrętem zamiast nowego wałka', savedPln: 120, hours: 2.0 },
+    { id: 'sav-07', patentId: 'met-07', name: 'Punktak + Loctite 638 w wyrobionym karterze zamiast zakupu połówek', savedPln: 450, hours: 4.0 },
+    { id: 'sav-08', patentId: 'met-08', name: 'Prasa ze śruby M8 i nasadek zamiast zgiętego korbowodu od młotka', savedPln: 350, hours: 3.0 },
+    { id: 'sav-09', patentId: 'pla-01', name: 'Zgrzewanie owiewek ze zszywkami zamiast zakupu nowych plastików', savedPln: 280, hours: 2.5 },
+    { id: 'sav-10', patentId: 'pla-02', name: 'Spawanie chemiczne Kropelka + Soda zamiast spawacza tworzyw', savedPln: 90, hours: 1.0 },
+    { id: 'sav-11', patentId: 'pla-06', name: 'Odbudowa ucha owiewki z Poxipolu zamiast nowej osłony licznika', savedPln: 140, hours: 1.0 },
+    { id: 'sav-12', patentId: 'nar-01', name: 'Ściągacz simeringów z wkrętów zamiast rozpoławiania karteru', savedPln: 300, hours: 4.0 },
+    { id: 'sav-13', patentId: 'nar-02', name: 'Ścisk sprężyny centralnej z desek zamiast narzędzia Buzzetti', savedPln: 85, hours: 1.0 },
+    { id: 'sav-14', patentId: 'nar-03', name: 'Blokada wariatora z płaskownika zamiast klucza pneumatycznego', savedPln: 70, hours: 0.5 },
+    { id: 'sav-15', patentId: 'nar-07', name: 'Wakuometr z rurki i oleju zamiast zegarów synchronizatora', savedPln: 190, hours: 1.5 },
+    { id: 'sav-16', patentId: 'nar-09', name: 'Odpowietrzenie hamulców strzykawką od dołu zamiast serwisu', savedPln: 80, hours: 0.5 },
+    { id: 'sav-17', patentId: 'eng-01', name: 'Uszczelki z kartonu TetraPak zamiast kompletu uszczelek z przesyłką', savedPln: 65, hours: 1.0 },
+    { id: 'sav-18', patentId: 'eng-04', name: 'Docieranie zaworów pastą z popiołem i wkrętarką zamiast szlifierza', savedPln: 150, hours: 2.0 },
+    { id: 'sav-19', patentId: 'eng-07', name: 'Odblokowanie pierścieni naftą i acetonem zamiast nowego cylindra', savedPln: 280, hours: 3.0 },
+    { id: 'sav-20', patentId: 'abs-02', name: 'Odpalanie silnika wkrętarką akumulatorową na stole diagnostycznym', savedPln: 110, hours: 1.0 }
+  ];
+
+  const STORAGE_SAVINGS = 'naprawnik_druciarstwo_savings';
+
+  function getSavings() {
+    try {
+      const raw = localStorage.getItem(STORAGE_SAVINGS);
+      return raw ? JSON.parse(raw) : [];
+    } catch (_) { return []; }
+  }
+
+  function saveSavingsList(list) {
+    try {
+      localStorage.setItem(STORAGE_SAVINGS, JSON.stringify(list));
+    } catch (_) {}
+  }
 
   // Klucze LocalStorage
   const STORAGE_CUSTOM = 'naprawnik_druciarstwo_custom';
@@ -1191,6 +1949,9 @@
     let tabContentHtml = '';
     if (activeTab === 'janusz') tabContentHtml = renderJanuszTabHtml();
     else if (activeTab === 'baza') tabContentHtml = renderBazaTabHtml();
+    else if (activeTab === 'meter') tabContentHtml = renderMeterTabHtml();
+    else if (activeTab === 'artefakty') tabContentHtml = renderArtifactsTabHtml();
+    else if (activeTab === 'quiz') tabContentHtml = renderQuizTabHtml();
     else if (activeTab === 'recycle') tabContentHtml = renderRecycleTabHtml();
     else if (activeTab === 'custom') tabContentHtml = renderCustomTabHtml();
     else if (activeTab === 'fav') tabContentHtml = renderFavoritesTabHtml();
@@ -1225,11 +1986,20 @@
           <button class="druc-tab-btn ${activeTab==='baza'?'active':''}" onclick="window.setDruciarstwoTab('baza')">
             📚 Baza Patentów (${getAllPatents().length})
           </button>
+          <button class="druc-tab-btn ${activeTab==='meter'?'active':''}" onclick="window.setDruciarstwoTab('meter')">
+            💰 Janusz Meter
+          </button>
+          <button class="druc-tab-btn ${activeTab==='artefakty'?'active':''}" onclick="window.setDruciarstwoTab('artefakty')">
+            🏆 12 Artefaktów
+          </button>
+          <button class="druc-tab-btn ${activeTab==='quiz'?'active':''}" onclick="window.setDruciarstwoTab('quiz')">
+            🚦 Quiz Zjazdu
+          </button>
           <button class="druc-tab-btn ${activeTab==='recycle'?'active':''}" onclick="window.setDruciarstwoTab('recycle')">
-            ♻️ Rozbierz i Odzyskaj
+            ♻️ Rozbierz i Odzyskaj (${RECYCLE_DATABASE.length})
           </button>
           <button class="druc-tab-btn ${activeTab==='custom'?'active':''}" onclick="window.setDruciarstwoTab('custom')">
-            ⭐ Moje Patenty & Kreator
+            ⭐ Moje Patenty
           </button>
           <button class="druc-tab-btn ${activeTab==='fav'?'active':''}" onclick="window.setDruciarstwoTab('fav')">
             ❤️ Ulubione (${getFavorites().length})
@@ -1598,6 +2368,215 @@
             <input type="file" accept=".json" style="display:none;" onchange="window.importDruciarstwoJson(this)">
           </label>
         </div>
+      </div>
+    `;
+  }
+
+// --- ZAKŁADKA: JANUSZ METER (KALKULATOR OSZCZĘDNOŚCI GARAŻOWYCH) ---
+  function renderMeterTabHtml() {
+    const savedIds = getSavings();
+    let totalPln = 0;
+    let totalHours = 0;
+
+    SAVINGS_LIST.forEach(s => {
+      if (savedIds.includes(s.id)) {
+        totalPln += s.savedPln;
+        totalHours += s.hours;
+      }
+    });
+
+    // Rangi wtajemniczenia
+    let rank = { name: 'Początkujący Trytytkarz', icon: '🪢', color: '#94a3b8', next: 150 };
+    if (totalPln >= 1500) rank = { name: 'Arcymistrz Zakonu Szlifierki i Drutu', icon: '🏆⚡', color: '#ffd700', next: null };
+    else if (totalPln >= 700) rank = { name: 'Profesor Garażowej Magii', icon: '🧙‍♂️', color: '#a855f7', next: 1500 };
+    else if (totalPln >= 300) rank = { name: 'Mistrz Poxipolu i Sody', icon: '🧪', color: '#10b981', next: 700 };
+    else if (totalPln >= 150) rank = { name: 'Czeladnik Brzeszczota', icon: '🪚', color: '#3b82f6', next: 300 };
+
+    // Przeliczniki humorystyczne
+    const kebabs = Math.floor(totalPln / 24);
+    const pb95Liters = (totalPln / 6.50).toFixed(1);
+    const browary = Math.floor(totalPln / 4.0);
+
+    return `
+      <div class="janusz-box" style="border-color:#10b981; background:linear-gradient(180deg, #064e3b 0%, #0f172a 100%);">
+        <div style="text-align:center; padding:10px 0 16px;">
+          <div style="font-size:12px; font-weight:800; color:#34d399; letter-spacing:1px; text-transform:uppercase;">Twój Wynik Finansowy</div>
+          <div style="font-size:42px; font-weight:900; color:#ffd700; text-shadow:0 0 25px rgba(255,215,0,0.6); margin:4px 0;">
+            ${totalPln} PLN
+          </div>
+          <div style="font-size:13px; color:#cbd5e1;">zaoszczędzone dzięki garażowemu kombinowaniu zamiast ASO!</div>
+          
+          <div style="display:inline-flex; align-items:center; gap:8px; margin-top:12px; background:rgba(0,0,0,0.5); padding:8px 16px; border-radius:20px; border:1px solid ${rank.color};">
+            <span style="font-size:20px;">${rank.icon}</span>
+            <span style="font-weight:800; color:${rank.color}; font-size:14px;">Tytuł: ${rank.name}</span>
+          </div>
+        </div>
+
+        <!-- PRZELICZNIKI HUMORYSTYCZNE -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:16px;">
+          <div style="background:#1e293b; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:20px;">🌯</div>
+            <div style="font-size:15px; font-weight:800; color:#fff;">${kebabs} szt.</div>
+            <div style="font-size:11px; color:#94a3b8;">dużych kebabów</div>
+          </div>
+          <div style="background:#1e293b; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:20px;">⛽</div>
+            <div style="font-size:15px; font-weight:800; color:#fff;">${pb95Liters} L</div>
+            <div style="font-size:11px; color:#94a3b8;">benzyny PB95</div>
+          </div>
+          <div style="background:#1e293b; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:20px;">🍻</div>
+            <div style="font-size:15px; font-weight:800; color:#fff;">${browary} szt.</div>
+            <div style="font-size:11px; color:#94a3b8;">złocistego napoju</div>
+          </div>
+          <div style="background:#1e293b; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:20px;">⏱️</div>
+            <div style="font-size:15px; font-weight:800; color:#fff;">${totalHours.toFixed(1)} h</div>
+            <div style="font-size:11px; color:#94a3b8;">własnej satysfakcji</div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="font-size:14px; color:#ffd700; margin:0;">ZAZNACZ PATENTY, KTÓRE WYKONAŁEŚ:</h3>
+          <button class="filter-chip" onclick="window.resetSavingsList()">Zresetuj</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${SAVINGS_LIST.map(s => {
+            const isChecked = savedIds.includes(s.id);
+            return `
+              <label style="display:flex; align-items:center; justify-content:space-between; background:#1e293b; border:1px solid ${isChecked ? '#10b981' : '#334155'}; border-radius:8px; padding:10px 12px; cursor:pointer; transition:all 0.15s ease;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="window.toggleSavingItem('${s.id}')" style="accent-color:#10b981; width:18px; height:18px;">
+                  <div>
+                    <div style="font-size:13px; font-weight:700; color:#fff;">${escapeHtml(s.name)}</div>
+                    <div style="font-size:11px; color:#94a3b8;">Czas pracy w garażu: ~${s.hours} godz.</div>
+                  </div>
+                </div>
+                <div style="font-weight:900; color:#34d399; font-size:14px; white-space:nowrap; margin-left:8px;">
+                  +${s.savedPln} zł
+                </div>
+              </label>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- ZAKŁADKA: 12 ŚWIĘTYCH ARTEFAKTÓW DRUCIARZA ---
+  function renderArtifactsTabHtml() {
+    return `
+      <div style="margin-bottom:16px;">
+        <h2 style="font-size:18px; color:#ffd700; margin:0 0 6px;">🏆 12 ŚWIĘTYCH ARTEFAKTÓW DRUCIARZA</h2>
+        <div style="font-size:13px; color:#94a3b8;">
+          Kanon garażowego przetrwania. Mając te 12 rzeczy w szafce, jesteś w stanie naprawić 95% usterek w skuterze i motocyklu bez wizyty w sklepie.
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+        ${ARTIFACTS_LIST.map((art, idx) => `
+          <div class="patent-card" style="border-top: 3px solid ${art.color}; margin-bottom:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:24px;">${art.icon}</span>
+              <span class="badge-druc" style="background:#1e293b; color:${art.color}; border:1px solid ${art.color};">
+                #${idx + 1} ${art.tier}
+              </span>
+            </div>
+
+            <h3 style="font-size:15px; font-weight:800; color:#fff; margin:0 0 4px;">${escapeHtml(art.name)}</h3>
+            <div style="font-size:12px; font-style:italic; color:#cbd5e1; margin-bottom:10px;">${escapeHtml(art.motto)}</div>
+
+            <div style="background:#1e293b; border-radius:6px; padding:8px 10px; margin-bottom:8px; font-size:12px;">
+              <div style="font-weight:700; color:#ffd700; margin-bottom:4px;">Główne zastosowania:</div>
+              <ul style="margin:0 0 0 14px; padding:0; color:#cbd5e1;">
+                ${art.roles.map(r => `<li style="margin-bottom:2px;">${escapeHtml(r)}</li>`).join('')}
+              </ul>
+            </div>
+
+            <div style="font-size:11px; color:#6ee7b7; margin-bottom:4px; line-height:1.4;">
+              <b>💡 PRO-TIP:</b> ${escapeHtml(art.proTip)}
+            </div>
+
+            <div style="font-size:11px; color:#fca5a5; line-height:1.4;">
+              <b>⛔ CZEGO NIE ROBIĆ:</b> ${escapeHtml(art.donts)}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // --- ZAKŁADKA: QUIZ ZJAZDU AWARYJNEGO (CZERWONA LINIA) ---
+  function renderQuizTabHtml() {
+    return `
+      <div class="janusz-box" style="border-color:#ef4444; background:linear-gradient(180deg, rgba(185,28,28,0.2) 0%, #0f172a 100%);">
+        <div class="janusz-title" style="color:#ef4444;">
+          <span>🚦 AUDYT BEZPIECZEŃSTWA: CZY MOŻESZ WYJECHAĆ NA DROGĘ?</span>
+        </div>
+        <div style="font-size:13px; color:#cbd5e1; margin-bottom:14px;">
+          Zrobiłeś garażową prowizorkę i chcesz zjechać do domu? Odpowiedz szczerze na 5 pytań, aby sprawdzić, czy twoja konstrukcja nie skończy się wypadkiem.
+        </div>
+
+        <form id="safetyQuizForm" onsubmit="window.handleSafetyQuizSubmit(event)">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="background:#1e293b; padding:12px; border-radius:8px;">
+              <div style="font-weight:700; color:#fff; font-size:13px; margin-bottom:6px;">
+                1. Czy patent ingeruje bezpośrednio w układ hamulcowy (klamka przednia, tarcza, przewód hydrauliczny pod ciśnieniem)?
+              </div>
+              <div style="display:flex; gap:14px;">
+                <label style="color:#fca5a5; cursor:pointer;"><input type="radio" name="q1" value="yes" required> TAK (Dotyczy hamulców)</label>
+                <label style="color:#86efac; cursor:pointer;"><input type="radio" name="q1" value="no"> NIE (Hamulce są fabryczne)</label>
+              </div>
+            </div>
+
+            <div style="background:#1e293b; padding:12px; border-radius:8px;">
+              <div style="font-weight:700; color:#fff; font-size:13px; margin-bottom:6px;">
+                2. Czy dorobione mocowanie lub zwisający drut może wkręcić się w koło, łańcuch, pasek lub wariator podczas jazdy?
+              </div>
+              <div style="display:flex; gap:14px;">
+                <label style="color:#fca5a5; cursor:pointer;"><input type="radio" name="q2" value="yes" required> TAK (Jest ryzyko wkręcenia)</label>
+                <label style="color:#86efac; cursor:pointer;"><input type="radio" name="q2" value="no"> NIE (Zabezpieczone, brak kontaktu)</label>
+              </div>
+            </div>
+
+            <div style="background:#1e293b; padding:12px; border-radius:8px;">
+              <div style="font-weight:700; color:#fff; font-size:13px; margin-bottom:6px;">
+                3. Czy elementy palne (plastik, guma z dętki, taśma) dotykają bezpośrednio rury wydechowej lub cylindra?
+              </div>
+              <div style="display:flex; gap:14px;">
+                <label style="color:#fca5a5; cursor:pointer;"><input type="radio" name="q3" value="yes" required> TAK (Dotyka gorącego wydechu)</label>
+                <label style="color:#86efac; cursor:pointer;"><input type="radio" name="q3" value="no"> NIE (Jest dystans / blacha ochronna)</label>
+              </div>
+            </div>
+
+            <div style="background:#1e293b; padding:12px; border-radius:8px;">
+              <div style="font-weight:700; color:#fff; font-size:13px; margin-bottom:6px;">
+                4. Czy kierownica ma pełny, swobodny zakres skrętu od oporu do oporu bez naciągania dorobionej linki / kabli?
+              </div>
+              <div style="display:flex; gap:14px;">
+                <label style="color:#86efac; cursor:pointer;"><input type="radio" name="q4" value="yes" required> TAK (Pełny swobodny skręt)</label>
+                <label style="color:#fca5a5; cursor:pointer;"><input type="radio" name="q4" value="no"> NIE (Kierownica haczy lub dodaje gazu!)</label>
+              </div>
+            </div>
+
+            <div style="background:#1e293b; padding:12px; border-radius:8px;">
+              <div style="font-weight:700; color:#fff; font-size:13px; margin-bottom:6px;">
+                5. Czy instalacja elektryczna / awaryjny przewód jest zaizolowany przed zwarciem do gołej ramy?
+              </div>
+              <div style="display:flex; gap:14px;">
+                <label style="color:#86efac; cursor:pointer;"><input type="radio" name="q5" value="yes" required> TAK (W 100% zaizolowane)</label>
+                <label style="color:#fca5a5; cursor:pointer;"><input type="radio" name="q5" value="no"> NIE (Gołe druty dotykają ramy)</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="janusz-btn-calc" style="background:linear-gradient(135deg, #ef4444, #991b1b); color:#fff; margin-top:16px;">
+            🔍 PRZEPROWADŹ AUDYT BEZPIECZEŃSTWA
+          </button>
+        </form>
+
+        <div id="quizResultBox" style="margin-top:16px;"></div>
       </div>
     `;
   }
@@ -2003,6 +2982,71 @@
     }
   }
 
+global.toggleSavingItem = function(id) {
+    let list = getSavings();
+    if (list.includes(id)) list = list.filter(x => x !== id);
+    else list.push(id);
+    saveSavingsList(list);
+    renderDruciarstwo();
+  };
+
+  global.resetSavingsList = function() {
+    if (!confirm('Czy na pewno chcesz zresetować listę zaoszczędzonych napraw?')) return;
+    localStorage.removeItem(STORAGE_SAVINGS);
+    renderDruciarstwo();
+  };
+
+  global.handleSafetyQuizSubmit = function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+    const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+    const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+    const q4 = document.querySelector('input[name="q4"]:checked')?.value;
+    const q5 = document.querySelector('input[name="q5"]:checked')?.value;
+
+    const res = document.getElementById('quizResultBox');
+    if (!res) return;
+
+    const isDanger = (q1 === 'yes' || q2 === 'yes' || q3 === 'yes' || q4 === 'no' || q5 === 'no');
+
+    if (isDanger) {
+      res.innerHTML = `
+        <div style="background:#7f1d1d; border:2px solid #ef4444; border-radius:10px; padding:16px; color:#fff; animation:fadeIn 0.3s ease;">
+          <div style="font-size:18px; font-weight:900; color:#fca5a5; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+            <span>⛔ CZERWONA LINIA PRZEKROCZONA! NIE WYJEŻDŻAJ NA DROGĘ!</span>
+          </div>
+          <div style="font-size:13px; line-height:1.5;">
+            Twoja prowizorka stwarza bezpośrednie zagrożenie wypadkiem lub pożarem:<br>
+            ${q1==='yes' ? '• Ingerencja w hamulce grozi ich nagłą utratą przy prędkości!<br>' : ''}
+            ${q2==='yes' ? '• Ryzyko wkręcenia elementu w koło/napęd grozi natychmiastowym zablokowaniem osi!<br>' : ''}
+            ${q3==='yes' ? '• Kontakt gumy/plastiku z gorącym wydechem wywoła pożar po 2 km jazdy!<br>' : ''}
+            ${q4==='no' ? '• Ograniczony skręt kierownicy doprowadzi do natychmiastowej wywrotki na pierwszym zakręcie!<br>' : ''}
+            ${q5==='no' ? '• Zwarcie instalacji spali moduł CDI lub podpali wiązkę elektryczną!<br>' : ''}
+            <br><b>Zalecenie:</b> Popraw mocowanie zgodnie z wytycznymi lub zadzwoń po przyczepkę.
+          </div>
+        </div>
+      `;
+    } else {
+      res.innerHTML = `
+        <div style="background:#064e3b; border:2px solid #10b981; border-radius:10px; padding:16px; color:#fff; animation:fadeIn 0.3s ease;">
+          <div style="font-size:18px; font-weight:900; color:#6ee7b7; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+            <span>🟢 ZIELONE ŚWIATŁO: AWARYJNY ZJAZD DO BAZY DOZWOLONY</span>
+          </div>
+          <div style="font-size:13px; line-height:1.5;">
+            Patent spełnia podstawowe normy garażowego bezpieczeństwa:<br>
+            • Hamulce i kierownica są w pełni sprawne.<br>
+            • Brak ryzyka wkręcenia w elementy wirujące.<br>
+            • Bezpieczny dystans od rozgrzanego wydechu.<br>
+            <br><b>Zasady jazdy awaryjnej:</b><br>
+            1. Prędkość maksymalna: <b>do 40 km/h</b>.<br>
+            2. Trzymaj się prawego pobocza i włącz światła awaryjne/mijania.<br>
+            3. Zatrzymaj się po 3 km i sprawdź dłonią, czy mocowanie trzyma pewnie.
+          </div>
+        </div>
+      `;
+    }
+  };
+
   // Eksport główny
   global.renderDruciarstwo = renderDruciarstwo;
   global.handleJanuszSubmit = handleJanuszSubmit;
@@ -2010,6 +3054,8 @@
   global.DRUCIARSTWO_RECYCLE = RECYCLE_DATABASE;
   global.DRUCIARSTWO_LEVELS = LEVELS;
   global.DRUCIARSTWO_SAFETY = SAFETY;
+  global.DRUCIARSTWO_SAVINGS = SAVINGS_LIST;
+  global.DRUCIARSTWO_ARTIFACTS = ARTIFACTS_LIST;
 
   console.log('✓ Moduł DRUCIARSTWO ULTIMATE zainicjalizowany.');
 })(typeof window !== 'undefined' ? window : this);

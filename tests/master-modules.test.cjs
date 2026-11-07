@@ -309,4 +309,66 @@ test('NAPRAWNIK MASTER — Audyt i rozbudowa baz danych: katalog techniczny OEM,
   assert.ok(druc.includes('Stary alternator samochodowy'), 'Brak alternatora w bazie recyklingu');
 });
 
+test('NAPRAWNIK MASTER — Rozbudowa Druciarstwa Ultimate i Bazy Danych v5.29', () => {
+  const html = read('index.html');
+  const kt = read('katalog-techniczny.js');
+  const druc = read('druciarstwo.js');
+
+  // 1. Rozbudowa modułu Druciarstwo Ultimate
+  const vm = require('node:vm');
+  const drucContext = { window: {}, console };
+  vm.runInNewContext(druc, drucContext);
+  assert.ok(drucContext.window.DRUCIARSTWO_DATABASE.length >= 45, `Oczekiwano co najmniej 45 patentów w Druciarstwie, znaleziono ${drucContext.window.DRUCIARSTWO_DATABASE.length}`);
+  assert.ok(drucContext.window.DRUCIARSTWO_RECYCLE.length >= 12, `Oczekiwano co najmniej 12 źródeł recyklingu, znaleziono ${drucContext.window.DRUCIARSTWO_RECYCLE.length}`);
+  assert.ok(drucContext.window.DRUCIARSTWO_ARTIFACTS.length === 12, 'Oczekiwano 12 Świętych Artefaktów Druciarza');
+  assert.ok(drucContext.window.DRUCIARSTWO_SAVINGS.length >= 20, 'Oczekiwano co najmniej 20 pozycji w kalkulatorze oszczędności');
+  assert.ok(druc.includes('handleSafetyQuizSubmit'), 'Brak obsługi quizu bezpieczeństwa handleSafetyQuizSubmit');
+  assert.ok(druc.includes('toggleSavingItem'), 'Brak funkcji toggleSavingItem');
+
+  // 2. Rozbudowa Katalogu Technicznego OEM
+  const ktContext = { window: {} };
+  vm.runInNewContext(kt, ktContext, { filename: 'katalog-techniczny.js' });
+  const catalog = ktContext.window.NAPRAWNIK_KATALOG;
+  assert.ok(catalog.records.length >= 190, `Oczekiwano co najmniej 190 rekordów w katalogu, znaleziono ${catalog.records.length}`);
+  assert.ok(catalog.search('Junak').length >= 4, 'Brak specyfikacji Junak 121/M12');
+  assert.ok(catalog.search('Zontes').length >= 4, 'Brak specyfikacji Zontes 125');
+  assert.ok(catalog.search('Simson').length >= 3, 'Brak specyfikacji Simson S51 M541');
+  assert.ok(catalog.search('WSK').length >= 2, 'Brak specyfikacji WSK 125');
+
+  // 3. Rozbudowa Bazy Diagnostycznej w index.html
+  assert.ok(html.includes('ground_strap_voltage_drop'), 'Brak karty diagnostycznej spadku napięcia na masie');
+  assert.ok(html.includes('cv_carb_membrane_pinhole'), 'Brak karty uszkodzonej membrany gaźnika CV');
+  assert.ok(html.includes('variator_sliders_wear'), 'Brak karty zużycia ślizgów wariatora');
+  assert.ok(html.includes('reed_valve_petal_frayed_2t'), 'Brak karty zaworu membranowego 2T');
+  assert.ok(html.includes('water_pump_mechanical_seal_leak'), 'Brak karty uszczelniacza pompy wody');
+  assert.ok(html.includes('pickup_coil_gap_fault'), 'Brak karty szczeliny impulsatora');
+  assert.ok(html.includes('bearings-minarelli-6204'), 'Brak łożysk Minarelli w PARTS_DATABASE');
+  assert.ok(html.includes('cvt-belts-master-table'), 'Brak tabeli pasków CVT w PARTS_DATABASE');
+});
+
+test('NAPRAWNIK v5.18 — Przebudowa Strony Głównej na 6 Głównych Modułów, Podkategorie i Szybkie Akcje', () => {
+  const html = read('index.html');
+
+  // 1. Weryfikacja 6 głównych modułów
+  assert.ok(html.includes('const MAIN_MODULES = ['), 'Brak definicji MAIN_MODULES');
+  assert.ok(html.includes("id: 'mod_clients'") && html.includes("title: 'KLIENCI I POJAZDY'"), 'Brak Modułu 1: KLIENCI I POJAZDY');
+  assert.ok(html.includes("id: 'mod_orders'") && html.includes("title: 'ZLECENIA WARSZTATOWE'"), 'Brak Modułu 2: ZLECENIA WARSZTATOWE');
+  assert.ok(html.includes("id: 'mod_diag'") && html.includes("title: 'DIAGNOSTYKA'"), 'Brak Modułu 3: DIAGNOSTYKA');
+  assert.ok(html.includes("id: 'mod_electric'") && html.includes("title: 'ELEKTRYKA I POMIARY'"), 'Brak Modułu 4: ELEKTRYKA I POMIARY');
+  assert.ok(html.includes("id: 'mod_tech'") && html.includes("title: 'BAZA TECHNICZNA'"), 'Brak Modułu 5: BAZA TECHNICZNA');
+  assert.ok(html.includes("id: 'mod_tools'") && html.includes("title: 'KALKULATORY I NARZĘDZIA'"), 'Brak Modułu 6: KALKULATORY I NARZĘDZIA');
+
+  // 2. Weryfikacja widoku podkategorii modułu i filtrowania wewnątrz modułu
+  assert.ok(html.includes('function renderModuleView(modId)'), 'Brak funkcji renderModuleView');
+  assert.ok(html.includes('function filterModuleView(rawQuery)'), 'Brak funkcji filterModuleView');
+  assert.ok(html.includes("else if(view==='module') renderModuleView(arg);"), 'Brak obsługi widoku module w nav()');
+
+  // 3. Weryfikacja szybkich akcji, ostatniej aktywności, przypomnień i ulubionych na stronie głównej
+  assert.ok(html.includes('id="homeQuickActions"'), 'Brak sekcji Szybkie akcje na stronie głównej');
+  assert.ok(html.includes('Nowe zlecenie') && html.includes('Dodaj pojazd') && html.includes('Szybka diagnostyka'), 'Brak wymaganych przycisków Szybkich akcji');
+  assert.ok(html.includes('function renderHomeRecentWidget()') && html.includes('function recordRecentActivity(view, arg)'), 'Brak obsługi Ostatniej aktywności');
+  assert.ok(html.includes('function renderHomeRemindersWidget()'), 'Brak widżetu Przypomnień na stronie głównej');
+  assert.ok(html.includes('function renderHomeFavoritesWidget()') && html.includes('function toggleFavoriteTool(itemId, ev)'), 'Brak widżetu Ulubionych funkcji');
+});
+
 

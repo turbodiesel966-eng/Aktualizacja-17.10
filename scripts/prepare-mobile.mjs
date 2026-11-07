@@ -1,6 +1,5 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 
 const root = process.cwd();
 const webDir = path.join(root, "www");
@@ -16,28 +15,32 @@ if (foregroundSvg === iconSvg1024) {
   throw new Error("Could not derive the transparent NAPRAWNIK launcher foreground from the SVG icon.");
 }
 
-// Generate the official Capacitor asset inputs from the existing vector logo.
-// These PNGs are build assets, not runtime app data, and are recreated on every build.
-await sharp(Buffer.from(iconSvg1024)).resize(1024, 1024).png().toFile(path.join(sourceAssets, "icon-only.png"));
-await sharp(Buffer.from(foregroundSvg)).resize(1024, 1024).png().toFile(path.join(sourceAssets, "icon-foreground.png"));
-await sharp({
-  create: { width: 1024, height: 1024, channels: 4, background: "#0a0a14" }
-}).png().toFile(path.join(sourceAssets, "icon-background.png"));
-
-const splashTitle = Buffer.from(`
-<svg xmlns="http://www.w3.org/2000/svg" width="2732" height="340" viewBox="0 0 2732 340">
-  <text x="1366" y="145" text-anchor="middle" fill="#ff8c1a" font-family="Courier New, monospace" font-size="146" font-weight="700" letter-spacing="8">NAPRAWNIK</text>
-  <text x="1366" y="245" text-anchor="middle" fill="#22d3ee" font-family="Courier New, monospace" font-size="54" font-weight="700" letter-spacing="5">WARSZTAT • DIAGNOSTYKA • NAPRAWY</text>
-</svg>`);
-const splashForeground = await sharp(Buffer.from(foregroundSvg)).resize(1080, 1080).png().toBuffer();
-for (const name of ["splash.png", "splash-dark.png"]) {
+try {
+  const { default: sharp } = await import("sharp");
+  // Generate the official Capacitor asset inputs from the existing vector logo.
+  // These PNGs are build assets, not runtime app data, and are recreated on every build.
+  await sharp(Buffer.from(iconSvg1024)).resize(1024, 1024).png().toFile(path.join(sourceAssets, "icon-only.png"));
+  await sharp(Buffer.from(foregroundSvg)).resize(1024, 1024).png().toFile(path.join(sourceAssets, "icon-foreground.png"));
   await sharp({
-    create: { width: 2732, height: 2732, channels: 4, background: "#0a0a14" }
-  }).composite([
-    { input: splashForeground, left: 826, top: 560 },
-    { input: splashTitle, left: 0, top: 1760 }
-  ]).png().toFile(path.join(sourceAssets, name));
-}
+    create: { width: 1024, height: 1024, channels: 4, background: "#0a0a14" }
+  }).png().toFile(path.join(sourceAssets, "icon-background.png"));
+
+  const splashTitle = Buffer.from(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="2732" height="340" viewBox="0 0 2732 340">
+    <text x="1366" y="145" text-anchor="middle" fill="#ff8c1a" font-family="Courier New, monospace" font-size="146" font-weight="700" letter-spacing="8">NAPRAWNIK</text>
+    <text x="1366" y="245" text-anchor="middle" fill="#22d3ee" font-family="Courier New, monospace" font-size="54" font-weight="700" letter-spacing="5">WARSZTAT • DIAGNOSTYKA • NAPRAWY</text>
+  </svg>`);
+  const splashForeground = await sharp(Buffer.from(foregroundSvg)).resize(1080, 1080).png().toBuffer();
+  for (const name of ["splash.png", "splash-dark.png"]) {
+    await sharp({
+      create: { width: 2732, height: 2732, channels: 4, background: "#0a0a14" }
+    }).composite([
+      { input: splashForeground, left: 826, top: 560 },
+      { input: splashTitle, left: 0, top: 1760 }
+    ]).png().toFile(path.join(sourceAssets, name));
+  }
+
+} catch (_) {}
 
 const requiredFiles = [
   "index.html",
@@ -107,7 +110,7 @@ const nativeSwContent = `const CACHE='${nativeCacheName}';
 const WEB_LIVE_BASE='https://turbodiesel966-eng.github.io/Aktualizacja-17.10';
 const PRECACHE=['./index.html','./native-bridge.js','./billing.js?v=17','./katalog-techniczny.js','./druciarstwo.js','./manifest.webmanifest','./assets/naprawnik-icon.svg','./assets/naprawnik-icon-192.svg','./assets/naprawnik-icon-512.svg','./assets/neon-tiles-art.jpg'];
 function instrumentNativeHtml(html){
-  if(typeof html!=='string'||!html.includes('const APP_VERSION'))return null;
+  if(typeof html!=='string'||!html.includes('const APP_VERSION')||!html.includes('const MAIN_MODULES'))return null;
   let out=html;
   const navMarker='function nav(view, arg, restoreState){';
   if(!out.includes('window.__naprawnikView')&&out.includes(navMarker)){
@@ -159,6 +162,10 @@ self.addEventListener('fetch',e=>{
     return;
   }
   if(['script','style','image','manifest'].includes(e.request.destination)){
+    e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request)));
+    return;
+  }
+  if(false){
     e.respondWith((async()=>{
       try{
         const relPath=u.pathname.replace(/^\\/+/, '');
@@ -180,4 +187,7 @@ self.addEventListener('fetch',e=>{
 
 await writeFile(mobileSwPath, nativeSwContent, "utf8");
 
+const rawBridge = await readFile(path.join(root, "scripts", "native-bridge.js"), "utf8");
+const iifeBridge = "(function(){\nconst Capacitor = window.Capacitor || { isNativePlatform: () => false, Plugins: {} };\nconst { App, Browser, Filesystem, Share, StatusBar } = Capacitor.Plugins || {};\nconst Directory = { Cache: \"CACHE\" };\nconst Style = { Light: \"LIGHT\" };\n" + rawBridge.replace(/^import\s+.*$/gm, "") + "\n})();\n";
+await writeFile(path.join(webDir, "native-bridge.js"), iifeBridge, "utf8");
 console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge, live OTA web-sync and offline precache prepared.");

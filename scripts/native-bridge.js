@@ -207,7 +207,7 @@ if (Capacitor.isNativePlatform()) {
   }
 
   function instrumentHtml(html) {
-    if (typeof html !== "string" || !html.includes("const APP_VERSION")) return null;
+    if (typeof html !== "string" || !html.includes("const APP_VERSION") || !html.includes("const MAIN_MODULES")) return null;
     let out = html;
     const navMarker = "function nav(view, arg){";
     if (!out.includes("window.__naprawnikView") && out.includes(navMarker)) {

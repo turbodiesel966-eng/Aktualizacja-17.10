@@ -838,6 +838,372 @@ body{
   margin-top:4px;
 }
 
+/* ===== NAPRAWNIK v5.18 — PANEL WARSZTATOWY: 6 GŁÓWNYCH MODUŁÓW ===== */
+@media (min-width:1024px){
+  .frame{max-width:1040px;padding:16px 20px 14px}
+}
+.workshop-panel-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:10px 0 8px;
+  padding:8px 12px;
+  border-radius:12px;
+  background:linear-gradient(90deg,rgba(19,24,38,.95),rgba(28,19,46,.92));
+  border:1px solid rgba(139,92,246,.42);
+}
+.workshop-panel-title{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:1.1px;
+  text-transform:uppercase;
+  color:#f8fafc;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.workshop-panel-badge{
+  font-size:10px;
+  font-weight:800;
+  padding:3px 9px;
+  border-radius:999px;
+  background:rgba(255,153,31,.15);
+  border:1px solid rgba(255,153,31,.55);
+  color:#ffb74d;
+  letter-spacing:.6px;
+}
+.modules-6-grid, #mainTileGrid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin:8px 0 16px !important;
+}
+@media (max-width:350px){
+  .modules-6-grid, #mainTileGrid{
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+}
+@media (min-width:760px){
+  .modules-6-grid, #mainTileGrid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:14px !important;
+  }
+}
+.mod6-card{
+  --mod-accent:#8b5cf6;
+  --mod-accent-soft:rgba(139,92,246,.22);
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-height:198px;
+  padding:14px 13px 12px;
+  border-radius:18px;
+  border:2px solid var(--mod-accent);
+  background:
+    radial-gradient(circle at 85% 15%,var(--mod-accent-soft) 0%,transparent 58%),
+    linear-gradient(180deg,rgba(18,22,36,.97) 0%,rgba(10,12,22,.99) 100%);
+  box-shadow:0 6px 20px rgba(0,0,0,.65),0 0 14px var(--mod-accent-soft),inset 0 1px 0 rgba(255,255,255,.14);
+  cursor:pointer;
+  user-select:none;
+  text-align:left;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.mod6-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 26px rgba(0,0,0,.8),0 0 22px var(--mod-accent-soft),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.mod6-card:active{
+  transform:scale(.98);
+}
+.mod6-card[data-theme="cyan"]{--mod-accent:#00e5ff;--mod-accent-soft:rgba(0,229,255,.24)}
+.mod6-card[data-theme="orange"]{--mod-accent:#ff991f;--mod-accent-soft:rgba(255,153,31,.25)}
+.mod6-card[data-theme="purple"]{--mod-accent:#a855f7;--mod-accent-soft:rgba(168,85,247,.26)}
+.mod6-card[data-theme="blue"]{--mod-accent:#38bdf8;--mod-accent-soft:rgba(56,189,248,.24)}
+.mod6-card[data-theme="red"]{--mod-accent:#fb7185;--mod-accent-soft:rgba(251,113,133,.24)}
+.mod6-card[data-theme="green"]{--mod-accent:#10b981;--mod-accent-soft:rgba(16,185,129,.24)}
+.mod6-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  margin-bottom:8px;
+}
+.mod6-icon-wrap{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--mod-accent);
+  box-shadow:inset 0 0 10px var(--mod-accent-soft);
+}
+.mod6-num{
+  font-size:9.5px;
+  font-weight:900;
+  letter-spacing:.9px;
+  text-transform:uppercase;
+  padding:3px 8px;
+  border-radius:999px;
+  background:rgba(15,23,42,.9);
+  border:1px solid var(--mod-accent);
+  color:#f8fafc;
+}
+.mod6-title{
+  font-size:clamp(13px,2.2vw,15.5px);
+  font-weight:900;
+  color:#ffffff;
+  letter-spacing:.4px;
+  line-height:1.2;
+  margin:0 0 5px;
+  text-transform:uppercase;
+}
+.mod6-desc{
+  font-size:11px;
+  line-height:1.38;
+  color:#cbd5e1;
+  margin:0 0 9px;
+}
+.mod6-pills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:auto;
+}
+.mod6-pill{
+  font-size:9.5px;
+  font-weight:700;
+  padding:2px 7px;
+  border-radius:6px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  color:#e2e8f0;
+  white-space:nowrap;
+}
+.mod6-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:10px;
+  padding-top:7px;
+  border-top:1px solid rgba(255,255,255,.09);
+  font-size:10.5px;
+  font-weight:800;
+  color:#ffae2b;
+}
+.quick-actions-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:6px 0 14px;
+}
+@media (max-width:480px){
+  .quick-actions-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+.quick-action-btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 12px;
+  border-radius:14px;
+  border:1.5px solid rgba(255,153,31,.55);
+  background:linear-gradient(135deg,rgba(30,22,48,.95),rgba(15,18,30,.98));
+  color:#fff;
+  cursor:pointer;
+  text-align:left;
+  box-shadow:0 4px 12px rgba(0,0,0,.5);
+  transition:transform .14s ease,border-color .14s ease;
+}
+.quick-action-btn:hover{
+  transform:translateY(-2px);
+  border-color:#00e5ff;
+}
+.quick-action-icon{
+  font-size:22px;
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,153,31,.15);
+  flex-shrink:0;
+}
+.quick-action-text strong{
+  display:block;
+  font-size:12px;
+  font-weight:900;
+  color:#ffe066;
+  letter-spacing:.3px;
+}
+.quick-action-text small{
+  display:block;
+  font-size:10px;
+  color:#cbd5e1;
+  margin-top:1px;
+}
+.home-dash-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:12px;
+  margin:8px 0 14px;
+}
+@media (min-width:760px){
+  .home-dash-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+.dash-panel{
+  border-radius:16px;
+  border:1.5px solid rgba(139,92,246,.38);
+  background:rgba(15,18,30,.92);
+  padding:12px 13px;
+  box-shadow:0 4px 16px rgba(0,0,0,.55);
+}
+.dash-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+  padding-bottom:6px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.dash-panel-head h3{
+  margin:0;
+  font-size:12.5px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  color:#00e5ff;
+}
+.dash-list-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:7px 9px;
+  margin:5px 0;
+  border-radius:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  cursor:pointer;
+  font-size:11.5px;
+  transition:background .14s ease,border-color .14s ease;
+}
+.dash-list-item:hover{
+  background:rgba(0,229,255,.09);
+  border-color:rgba(0,229,255,.4);
+}
+.module-sub-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  margin:8px 0 16px;
+}
+@media (min-width:640px){
+  .module-sub-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+.mod-sub-card{
+  position:relative;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  padding:12px 13px;
+  border-radius:15px;
+  border:1.5px solid rgba(139,92,246,.42);
+  background:linear-gradient(145deg,rgba(20,24,40,.96),rgba(11,13,24,.98));
+  cursor:pointer;
+  transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease;
+}
+.mod-sub-card:hover{
+  transform:translateY(-2px);
+  border-color:#00e5ff;
+  box-shadow:0 6px 18px rgba(0,229,255,.16);
+}
+.mod-sub-icon{
+  width:42px;
+  height:42px;
+  border-radius:11px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:21px;
+  flex-shrink:0;
+}
+.mod-sub-body{
+  flex:1;
+  min-width:0;
+}
+.mod-sub-title{
+  font-size:12.5px;
+  font-weight:900;
+  color:#fff;
+  line-height:1.25;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.mod-sub-desc{
+  font-size:11px;
+  color:#cbd5e1;
+  line-height:1.38;
+  margin-top:3px;
+}
+.mod-fav-btn{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:8px;
+  width:30px;
+  height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  cursor:pointer;
+  color:#94a3b8;
+  flex-shrink:0;
+}
+.mod-fav-btn.active{
+  color:#ffcc00;
+  border-color:rgba(255,204,0,.55);
+  background:rgba(255,204,0,.12);
+}
+.mod-switcher-bar{
+  display:flex;
+  overflow-x:auto;
+  gap:6px;
+  padding:4px 0 8px;
+  margin-bottom:8px;
+}
+.mod-switcher-pill{
+  padding:6px 11px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(15,18,30,.9);
+  color:#cbd5e1;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.mod-switcher-pill.active{
+  border-color:#ff991f;
+  background:rgba(255,153,31,.18);
+  color:#ffe066;
+}
 </style>
 </head>
 <body>
@@ -1924,36 +2290,61 @@ function searchSymptoms(){
   const clrBtn = document.getElementById('clearHomeSearch');
   if (clrBtn) clrBtn.style.display = raw ? 'inline-flex' : 'none';
   const countEl = document.getElementById('homeTileCount');
-  if (countEl) countEl.textContent = q ? `Widoczne kafelki: ${visibleMain} / ${totalMain}` : '';
+  if (countEl) countEl.textContent = q ? `Pasujące moduły: ${visibleMain} / ${totalMain}` : '';
   const res = $('#symptomResults');
   if (!res) return;
   if (q.length < 2){ res.innerHTML=''; return; }
+
+  // 1) Subcategories & tools across the 6 modules
+  const subHits = (typeof getAllModuleItems === 'function' ? getAllModuleItems() : [])
+    .filter(it => normalizeSearchText(it.title + ' ' + it.desc + ' ' + it.modTitle + ' ' + it.groupTitle).includes(q))
+    .slice(0, 5);
+
+  // 2) Diagnostic symptoms tree
   const matches = diagLeaves
     .map((x,idx)=>({...x, idx}))
     .filter(x => normalizeSearchText(x.path.join(' ')).includes(q) || x.node.causes.some(c=>normalizeSearchText(c).includes(q)))
-    .slice(0,6);
-  res.innerHTML = matches.length===0
-    ? '<div class="empty">Brak trafień — spróbuj innego słowa.</div>'
-    : matches.map(m=>`<div class="entry symptom-hit" data-idx="${m.idx}" style="cursor:pointer"><b>${escapeHtml(m.path[m.path.length-1])}</b><small>${escapeHtml(m.path.slice(0,-1).join(' › '))}</small></div>`).join('');
+    .slice(0, 4);
+
+  // 3) Diagnostic knowledge cases (152 cases)
   const kHits = (typeof knowledgeCases !== 'undefined' ? knowledgeCases : [])
     .filter(c => normalizeSearchText(c.title + ' ' + c.tags + ' ' + c.areas.map(a => a.join(' ')).join(' ')).includes(q))
-    .slice(0, 3);
+    .slice(0, 4);
+
+  // 4) Electrical schematics & multimeter procedures
   const sHits = (typeof scooterSchematics !== 'undefined' ? scooterSchematics : [])
     .filter(s => normalizeSearchText(s.name + ' ' + s.sub + ' ' + s.type + ' ' + s.notes).includes(q))
-    .slice(0, 2);
+    .slice(0, 3);
   const mHits = (typeof multimeterProcedures !== 'undefined' ? multimeterProcedures : [])
     .filter(m => normalizeSearchText(m.title + ' ' + m.expected).includes(q))
-    .slice(0, 2);
-  const extraHtml = [
-    ...kHits.map(c => `<div class="entry home-know-hit" data-kid="${escapeHtml(c.id)}" style="cursor:pointer;border-left:3px solid #00e5ff;padding-left:8px"><b>🧭 Karta usterki: ${escapeHtml(c.title)}</b><small>Diagnostyka łączona · ${escapeHtml(c.tags)}</small></div>`),
+    .slice(0, 3);
+
+  // 5) Parts database
+  const pHits = (typeof PARTS_DATABASE !== 'undefined' ? PARTS_DATABASE : [])
+    .filter(p => normalizeSearchText(p.title + ' ' + p.keywords + ' ' + p.partNumber + ' ' + p.scope).includes(q))
+    .slice(0, 3);
+
+  // 6) Technical vehicle catalog (196 models)
+  const catList = (typeof window !== 'undefined' && Array.isArray(window.NAPRAWNIK_KATALOG)) ? window.NAPRAWNIK_KATALOG : [];
+  const cHits = catList
+    .filter(v => normalizeSearchText((v.marka||'') + ' ' + (v.model||'') + ' ' + (v.kod_silnika||'') + ' ' + (v.kategoria||'')).includes(q))
+    .slice(0, 3);
+
+  const itemsHtml = [
+    ...subHits.map(it => {
+      const clickAttr = it.customClick ? `onclick="${escapeHtml(it.customClick)}"` : `onclick="nav('${escapeHtml(it.view)}'${it.arg ? `,'${escapeHtml(it.arg)}'` : ''})"`;
+      return `<div class="entry" ${clickAttr} style="cursor:pointer;border-left:3px solid #ff991f;padding-left:8px"><b>${it.icon} Funkcja / Narzędzie: ${escapeHtml(it.title)}</b><small>${escapeHtml(it.modNum)} — ${escapeHtml(it.modTitle)} · ${escapeHtml(it.desc)}</small></div>`;
+    }),
+    ...matches.map(m => `<div class="entry symptom-hit" data-idx="${m.idx}" style="cursor:pointer;border-left:3px solid #a855f7;padding-left:8px"><b>🔍 Objaw: ${escapeHtml(m.path[m.path.length-1])}</b><small>${escapeHtml(m.path.slice(0,-1).join(' › '))}</small></div>`),
+    ...kHits.map(c => `<div class="entry home-know-hit" data-kid="${escapeHtml(c.id)}" style="cursor:pointer;border-left:3px solid #00e5ff;padding-left:8px"><b>🧭 Karta usterki: ${escapeHtml(c.title)}</b><small>Diagnostyka · ${escapeHtml(c.tags)}</small></div>`),
     ...sHits.map(s => `<div class="entry home-schem-hit" data-sname="${escapeHtml(s.name)}" style="cursor:pointer;border-left:3px solid #b388ff;padding-left:8px"><b>🔌 Schemat: ${escapeHtml(s.name)}</b><small>${escapeHtml(s.sub)}</small></div>`),
-    ...mHits.map(m => `<div class="entry home-mtr-hit" data-mtitle="${escapeHtml(m.title)}" style="cursor:pointer;border-left:3px solid #00f57a;padding-left:8px"><b>📏 Multimetr: ${escapeHtml(m.title)}</b><small>Procedura pomiarowa krok po kroku</small></div>`)
+    ...mHits.map(m => `<div class="entry home-mtr-hit" data-mtitle="${escapeHtml(m.title)}" style="cursor:pointer;border-left:3px solid #00f57a;padding-left:8px"><b>📏 Multimetr: ${escapeHtml(m.title)}</b><small>Procedura pomiarowa · ${escapeHtml(m.expected)}</small></div>`),
+    ...pHits.map(p => `<div class="entry" onclick="nav('parts')" style="cursor:pointer;border-left:3px solid #ffd43b;padding-left:8px"><b>⚙️ Część OEM/Zamiennik: ${escapeHtml(p.title)}</b><small>${escapeHtml(p.partNumber)}</small></div>`),
+    ...cHits.map(v => `<div class="entry" onclick="nav('catalog')" style="cursor:pointer;border-left:3px solid #fb7185;padding-left:8px"><b>🛵 Dane techniczne OEM: ${escapeHtml(v.marka)} ${escapeHtml(v.model)}</b><small>Silnik: ${escapeHtml(v.kod_silnika || v.typ_silnika || '—')} · Świeca: ${escapeHtml(v.swieca || '—')}</small></div>`)
   ].join('');
-  if (matches.length === 0 && extraHtml) {
-    res.innerHTML = extraHtml;
-  } else if (extraHtml) {
-    res.innerHTML += extraHtml;
-  }
+
+  res.innerHTML = itemsHtml || '<div class="empty">Brak trafień — spróbuj innego słowa (np. gaźnik, iskra, Aerox, rolki, VIN).</div>';
+
   res.querySelectorAll('.symptom-hit').forEach(el=>{
     el.addEventListener('click', ()=>{
       const leaf = diagLeaves[Number(el.dataset.idx)];
@@ -2463,6 +2854,51 @@ const PARTS_DATABASE = [
     ],
     caution:'Nie używaj wirnika przeznaczonego do starszego Aeroxa bez potwierdzenia cross-reference i wymiarów. Uszkodzenie klinu, stożka lub magnesów wymaga oględzin; nie uderzaj bezpośrednio w wirnik i stosuj właściwy ściągacz.'
   }
+,
+{
+    id: 'bearings-minarelli-6204', priority: 1,
+    title: 'Łożyska i uszczelniacze wału — Minarelli 2T 50cc (Aerox, Neos, Jog, SR50)',
+    keywords: 'lozyska walu minarelli 6204 c4 c3 skf ntn fag uszczelniacze simmering 20x42x8 20x30x6 korteco athena stage6',
+    scope: 'Silniki Minarelli poziome i pionowe 50cc 2T AC / LC (Yamaha, MBK, Aprilia, Malaguti).',
+    partNumber: 'Łożyska wału: 6204 C4 (wymiary 20 × 47 × 14 mm). Uszczelniacz strona wariatora: 20 × 42 × 8 mm. Uszczelniacz strona zapłonu: 20 × 30 × 6 mm.',
+    dimensions: 'Łożyska: 20 × 47 × 14 mm. Uszczelniacze: 20×42×8 (napęd), 20×30×6 (zapłon).',
+    confidence: 'BARDZO WYSOKI',
+    sourceUrl: 'https://scootergrisen.org/scooterhjemmeside/download/yamaha_aerox_servicemanual.pdf',
+    description: 'Do silników seryjnych luz C3, do cylindrów sportowych 70cc o obrotach powyżej 10 000 rpm bezwzględnie luz C4 z koszykiem poliamidowym TN9 lub metalowym.'
+  },
+  {
+    id: 'bearings-piaggio-hiper2', priority: 1,
+    title: 'Łożyska i uszczelniacze wału — Piaggio Hi-Per2 50cc 2T (Zip, NRG, Runner, Typhoon)',
+    keywords: 'lozyska walu piaggio hiper2 zip nrg runner 6204 c4 b17 uszczelniacze simmering 19x30x6.5 18x28x7',
+    scope: 'Silniki Piaggio / Gilera Hi-Per2 50cc 2T chłodzone powietrzem (AC) i cieczą (LC).',
+    partNumber: 'Łożysko strona wariatora: 6204 C4 (20 × 47 × 14 mm). Łożysko strona zapłonu: 20 × 52 × 12 mm (specjalne Piaggio OEM z rowkiem). Uszczelniacze: 19 × 30 × 6.5 mm (napęd) oraz 18 × 28 × 7 mm (zapłon).',
+    dimensions: 'Strona wariatora: 20×47×14 mm; strona magneta: 20×52×12 mm.',
+    confidence: 'BARDZO WYSOKI',
+    sourceUrl: 'https://www.49ccscoot.com/manuals/Piaggio-NRG-Power-Purejet_Shop_Manual.pdf',
+    description: 'Uwaga na asymetryczny wał Piaggio — łożysko od strony magneta ma średnicę zewnętrzną 52 mm!'
+  },
+  {
+    id: 'bearings-gy6-50-139qmb', priority: 1,
+    title: 'Łożyska i uszczelniacze wału — Silnik 4T GY6 50cc (139QMB / 139QMA)',
+    keywords: 'lozyska walu gy6 50 139qmb 139qma 4t skuter chinski uszczelniacze simmering 19.8x30x5 16.4x30x5 6304 6006',
+    scope: 'Skutery 4T z silnikiem GY6 50cc (Barton, Romet, Junak, Kymco Agility 50 4T, Zipp, Toros).',
+    partNumber: 'Łożyska wału fabrycznie zaprasowane na czopach: 6304 (20 × 52 × 15 mm). Uszczelniacz strona wariatora: 19.8 × 30 × 5 mm. Uszczelniacz strona magneta: 16.4 × 30 × 5 mm.',
+    dimensions: 'Uszczelniacze: 19.8×30×5 mm (lewy), 16.4×30×5 mm (prawy).',
+    confidence: 'BARDZO WYSOKI',
+    sourceUrl: 'https://www.49ccscoot.com/manuals/GY6_50cc_Manual.pdf',
+    description: 'W silnikach 139QMB łożyska wału wymienia się razem z wałem korbowym, natomiast uszczelniacze wału można wymienić od zewnątrz bez rozpoławiania karteru.'
+  },
+  {
+    id: 'cvt-belts-master-table', priority: 1,
+    title: 'Wymiary i zamienniki pasków napędowych CVT — Tabela referencyjna',
+    keywords: 'pasek cvt wymiary zamienniki bando gates dayco malossi bando 669 729 743 751 738 816 835',
+    scope: 'Główne rodziny skuterów 50cc–125cc (Minarelli, Piaggio, GY6, Honda PCX).',
+    partNumber: 'Tabela zamienników OEM / Bando / Gates / Dayco.',
+    dimensions: 'Minarelli krótki: 738 × 16.5 mm; Minarelli długi: 751 × 16.5 mm; GY6 10 cali: 669 × 18 × 30°; GY6 12 cali: 729 × 17.7 × 30°; GY6 125cc: 835 × 20 × 30°; Honda PCX 125: 816 × 22 × 30° Bando.',
+    confidence: 'BARDZO WYSOKI',
+    sourceUrl: 'https://scootergrisen.org/scooterhjemmeside/download/yamaha_aerox_servicemanual.pdf',
+    description: 'Pasek zużyty o więcej niż 1.2 mm szerokości powoduje spadek prędkości maksymalnej o 10–15 km/h z powodu braku możliwości wejścia na najwyższy promień wariatora.'
+  }
 ];
 
 
@@ -2601,6 +3037,429 @@ function exportCsv(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='NAPRAWNIK-warsztat-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
+const MAIN_MODULES = [
+  {
+    id: 'mod_clients',
+    num: 'MODUŁ 1',
+    icon: '🛵',
+    title: 'KLIENCI I POJAZDY',
+    shortTitle: 'Klienci i Pojazdy',
+    theme: 'cyan',
+    desc: 'Kartoteka pojazdów, baza klientów warsztatu, skaner numerów VIN, historia obsługi, Czarna Skrzynka oraz automatyczny plan serwisowy.',
+    pills: ['Kartoteka pojazdów', 'Baza klientów', 'Skaner VIN', 'Czarna Skrzynka', 'Plan serwisowy'],
+    groups: [
+      {
+        groupTitle: '🛵 Pojazdy, Garaż i Identyfikacja VIN',
+        items: [
+          { id: 'item_vehicles', icon: '🗂️', title: 'Kartoteka Pojazdów (Moje Pojazdy)', desc: 'Pełna baza obsługiwanych skuterów i motocykli: dane techniczne, przebieg, historia napraw i wydruk karty PDF.', view: 'vehicles', arg: null, min: '' },
+          { id: 'item_vin_scan', icon: '📷', title: 'Skaner Numerów VIN (Kamera)', desc: 'Automatyczny odczyt numeru nadwozia VIN z tabliczki znamionowej lub dowodu rejestracyjnego.', view: 'vehicles', arg: 'scan_vin', min: '', customClick: "startVinCameraScan(function(v){nav('vehicles');setTimeout(function(){var el=document.getElementById('vVin');if(el)el.value=v;},80);})" },
+          { id: 'item_service_plan', icon: '📅', title: 'Automatyczny Plan Serwisowy', desc: 'Harmonogram czynności obsługowych wyliczany automatycznie na podstawie przebiegu (km) oraz czasu.', view: 'servicePlan', arg: null, min: '' }
+        ]
+      },
+      {
+        groupTitle: '👥 Klienci, Historia VIN i Dokumentacja',
+        items: [
+          { id: 'item_clients', icon: '🗄️', title: 'Klienci Warsztatu', desc: 'Baza właścicieli pojazdów, dane kontaktowe, przypisane maszyny oraz pełna historia wizyt w serwisie.', view: 'clients', arg: null, min: 'warsztat' },
+          { id: 'item_blackbox', icon: '🏍️', title: 'Czarna Skrzynka (Historia VIN)', desc: 'Rejestr wpisów serwisowych, powracających błędów i ostrzeżeń przypisanych do konkretnego numeru VIN.', view: 'log', arg: null, min: 'warsztat' },
+          { id: 'item_export_csv', icon: '📤', title: 'Eksport Kartoteki do CSV', desc: 'Pobierz zestawienie wszystkich pojazdów, klientów, wykonanych napraw i kosztów do arkusza kalkulacyjnego.', view: 'vehicles', arg: 'export_csv', min: 'warsztat', customClick: 'exportCsv()' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'mod_orders',
+    num: 'MODUŁ 2',
+    icon: '📋',
+    title: 'ZLECENIA WARSZTATOWE',
+    shortTitle: 'Zlecenia Warsztatowe',
+    theme: 'orange',
+    desc: 'Obsługa zleceń serwisowych, kosztorysy z marżą, checklisty przed i po naprawie, przypomnienia o przeglądach, notatki i dokumentacja zdjęciowa.',
+    pills: ['Karty zleceń', 'Nowe zlecenie', 'Checklisty', 'Przypomnienia', 'Notatnik'],
+    groups: [
+      {
+        groupTitle: '📋 Obsługa Zleceń i Kontrola Jakości',
+        items: [
+          { id: 'item_orders', icon: '📋', title: 'Zlecenia Serwisowe & Wycena', desc: 'Zarządzanie kartami zleceń, statusy napraw, rozliczenie części z marżą, robocizna oraz druk zleceń i etykiet PDF.', view: 'orders', arg: null, min: 'warsztat' },
+          { id: 'item_orders_new', icon: '➕', title: 'Nowe Zlecenie Warsztatowe', desc: 'Szybkie przyjęcie pojazdu na warsztat — utwórz nową kartę zlecenia z odczytem VIN i zakresem prac.', view: 'orders', arg: 'new', min: 'warsztat' },
+          { id: 'item_checklists', icon: '✅', title: 'Checklisty Warsztatowe', desc: 'Profesjonalne listy kontrolne przyjęcia pojazdu, weryfikacji w trakcie naprawy oraz odbioru po serwisie.', view: 'checklist', arg: null, min: 'warsztat' }
+        ]
+      },
+      {
+        groupTitle: '⏰ Terminy, Notatki i Dokumentacja Prac',
+        items: [
+          { id: 'item_reminders', icon: '📅', title: 'Przeglądy i Przypomnienia', desc: 'Terminarz zaplanowanych przeglądów, wymian oleju i odbiorów z automatycznym alertem po terminie.', view: 'reminders', arg: null, min: '' },
+          { id: 'item_notes', icon: '📝', title: 'Notatnik Warsztatowy', desc: 'Szybkie notatki robocze, wyniki pomiarów i ustalenia z klientem przypisane do pojazdu lub VIN.', view: 'notes', arg: null, min: '' },
+          { id: 'item_photo_logs', icon: '📷', title: 'Logi / Asystent Zdjęć Offline', desc: 'Dokumentacja fotograficzna stanu podzespołów przed i po naprawie zapisywana lokalnie w bazie urządzenia.', view: 'photoAssistant', arg: null, min: '' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'mod_diag',
+    num: 'MODUŁ 3',
+    icon: '🔍',
+    title: 'DIAGNOSTYKA',
+    shortTitle: 'Diagnostyka',
+    theme: 'purple',
+    desc: 'Interaktywne drzewa diagnostyczne po objawach, ścieżki decyzyjne TAK/NIE, diagnostyka silników 2T i 4T, baza 152 przypadków usterek oraz kody OBD.',
+    pills: ['Drzewo objawów', 'Ścieżki TAK/NIE', '152 usterki', 'Usterki 2T/4T', 'Kody OBD'],
+    groups: [
+      {
+        groupTitle: '🌳 Interaktywne Systemy Diagnostyczne',
+        items: [
+          { id: 'item_diag_tree', icon: '🔍', title: 'Drzewo Objawów (2T / 4T)', desc: 'Wskaż objaw (nie odpala, gaśnie na ciepło, dławi się, ślizga) i przejdź do listy przyczyn oraz procedury naprawy.', view: 'diag', arg: null, min: '' },
+          { id: 'item_diag_flow', icon: '🧪', title: 'Diagnostyka Krok po Kroku (TAK / NIE)', desc: 'Interaktywna checklista decyzyjna prowadząca mechanika pytaniami kontrolnymi wprost do źródła awarii.', view: 'diagFlow', arg: null, min: '' },
+          { id: 'item_knowledge', icon: '🧭', title: 'Baza Przypadków Diagnostycznych (152 Usterki)', desc: 'Kompleksowe karty usterek łączonych: objawy, weryfikacja warsztatowa, naprawa i powiązane podzespoły.', view: 'knowledge', arg: null, min: '' }
+        ]
+      },
+      {
+        groupTitle: '🔩 Diagnostyka Silnikowa i Kody Błędów',
+        items: [
+          { id: 'item_diag_2t', icon: '🛵', title: 'Diagnostyka Usterek Silników 2T (Dwusuw)', desc: 'Karty diagnostyczne dwusuwów: zatarcia, lewe powietrze, uszczelniacze wału, zawór membranowy i układ paliwowy 2T.', view: 'knowledge', arg: '2T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 2T';filterKnowledge();}},40)" },
+          { id: 'item_diag_4t', icon: '🏍️', title: 'Diagnostyka Usterek Silników 4T (Czterosuw)', desc: 'Karty diagnostyczne czterosuwów: luzy zaworowe, rozrząd, spalanie oleju, głowica i gaźniki podciśnieniowe CVK.', view: 'knowledge', arg: '4T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 4T';filterKnowledge();}},40)" },
+          { id: 'item_obd', icon: '🧾', title: 'Baza Kodów Błędów OBD / EFI Blink', desc: 'Kody usterek wtrysku paliwa EFI (standard OBD-II oraz kody błyskowe kontrolki MIL) z opisem pomiarów.', view: 'obd', arg: null, min: 'pro' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'mod_electric',
+    num: 'MODUŁ 4',
+    icon: '⚡',
+    title: 'ELEKTRYKA I POMIARY',
+    shortTitle: 'Elektryka i Pomiary',
+    theme: 'blue',
+    desc: 'Elektroniczne Laboratorium, interaktywne pinouty modułów CDI i regulatorów, schematy elektryczne, procedury pomiarowe multimetrem i baza wiązek.',
+    pills: ['Elektroniczne Lab', 'Pinouty CDI', 'Multimetr', 'Schematy', 'Baza wiązek'],
+    groups: [
+      {
+        groupTitle: '📟 Pomiary Multimetrem i Laboratorium',
+        items: [
+          { id: 'item_lab', icon: '⚡', title: 'Elektroniczne Laboratorium', desc: 'Wpisz zmierzone napięcia i rezystancje — system porówna je z wartościami wzorcowymi i wskaże uszkodzony element.', view: 'lab', arg: null, min: '' },
+          { id: 'item_pinouts', icon: '🔌', title: 'Pinouty CDI & Regulatorów Napięcia', desc: 'Rozpiski pinów modułów AC-CDI, DC-CDI oraz regulatorów 4/5/6-pinowych wraz z punktami przyłożenia sond.', view: 'pinouts', arg: null, min: 'pro' },
+          { id: 'item_multimeter', icon: '📟', title: 'Multimetr — Procedury Pomiarowe', desc: 'Instrukcje krok po kroku: badanie impulsu cewki, statora, ładowania, poboru prądu spoczynkowego i ciągłości masy.', view: 'multimeter', arg: null, min: '' }
+        ]
+      },
+      {
+        groupTitle: '📘 Schematy, Instalacje i Kolory Przewodów',
+        items: [
+          { id: 'item_schematics', icon: '📘', title: 'Schematy Elektryczne', desc: 'Przejrzyste schematy obwodów zapłonu, ładowania, rozrusznika, świateł i kierunkowskazów dla 2T i 4T.', view: 'schematics', arg: null, min: '' },
+          { id: 'item_electrical_db', icon: '🔋', title: 'Baza Instalacji Elektrycznych', desc: 'Szczegółowa architektura instalacji wg rodzin pojazdów, lokalizacja przekaźników i typowe punkty przetarć wiązki.', view: 'electricalDb', arg: null, min: 'pro', customClick: "activeElectricalSection=null;nav('electricalDb')" },
+          { id: 'item_electric_check', icon: '✅', title: 'Checklista Układu Elektrycznego', desc: 'Szybka ścieżka kontroli akumulatora, bezpieczników, stacyjki, przekaźnika rozrusznika i masy silnikowej.', view: 'electric', arg: null, min: '' },
+          { id: 'item_wiring_colors', icon: '🎨', title: 'Kolory Przewodów wg Producentów', desc: 'Tabela kodowania barwnego przewodów w instalacjach Yamaha/Minarelli, Honda, Piaggio/Gilera, GY6, Kymco i Peugeot.', view: 'wiring', arg: '2T', min: '' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'mod_tech',
+    num: 'MODUŁ 5',
+    icon: '📘',
+    title: 'BAZA TECHNICZNA',
+    shortTitle: 'Baza Techniczna',
+    theme: 'red',
+    desc: 'Katalog 196 modeli pojazdów OEM, profile silników, gaźniki, napęd CVT, dobór części i zamienników, momenty dokręcania, płyny, serwisówki i Druciarstwo.',
+    pills: ['196 modeli OEM', 'Profile silników', 'Napęd CVT', 'Dobór części', 'Serwisówki'],
+    groups: [
+      {
+        groupTitle: '🛵 Katalogi Pojazdów, Silników i Części',
+        items: [
+          { id: 'item_catalog', icon: '🛵', title: 'Katalog Pojazdów i Danych Serwisowych (196 Modeli)', desc: 'Dane fabryczne OEM dla 196 skuterów, motorowerów i motocykli 50–125cc: świeca, dysza, rolki, pasek, luzy zaworowe.', view: 'catalog', arg: null, min: '' },
+          { id: 'item_models', icon: '⏱️', title: 'Profile Konkretnych Silników', desc: 'Karty techniczne popularnych jednostek (Minarelli, Piaggio, GY6 139QMB, AM6, D50B0, 152QMI, Simson M541).', view: 'models', arg: null, min: 'pro' },
+          { id: 'item_parts', icon: '⚙️', title: 'Inteligentny Dobór Części OEM i Zamienników', desc: 'Zweryfikowane numery katalogowe OEM, dokładne wymiary części, zamienniki oraz linki do katalogów.', view: 'parts', arg: null, min: 'pro' },
+          { id: 'item_manuals', icon: '📘', title: 'Instrukcje Serwisowe i Manuale', desc: 'Procedury naprawcze krok po kroku oraz zweryfikowane odnośniki do oficjalnych instrukcji i serwisówek.', view: 'manuals', arg: null, min: '' }
+        ]
+      },
+      {
+        groupTitle: '🔩 Silniki, Napęd CVT i Specyfikacje Warsztatowe',
+        items: [
+          { id: 'item_tech_2t', icon: '🔩', title: 'Silniki 2T — Budowa, Regulacja i Remonty', desc: 'Kompendium techniczne dwusuwów: pasowanie tłoka, pierścienie, łożyska wału, gaźniki Dellorto/PWK i dyfuzory.', view: 'engine', arg: '2T', min: '' },
+          { id: 'item_tech_4t', icon: '⚙️', title: 'Silniki 4T — Rozrząd, Głowica i Smarowanie', desc: 'Kompendium techniczne czterosuwów: znaki rozrządu, napinacz łańcuszka, docieranie zaworów i odma.', view: 'engine', arg: '4T', min: '' },
+          { id: 'item_tech_cvt', icon: '🔄', title: 'Napęd CVT — Wariator, Pasek i Sprzęgło', desc: 'Zasada działania przekładni bezstopniowej, pomiary zużycia tulei wariatora, okładzin sprzęgła i korektora momentu.', view: 'engine', arg: 'CVT', min: '' },
+          { id: 'item_torque', icon: '🔧', title: 'Momenty Dokręcania Śrub (Nm)', desc: 'Zestawienie momentów dokręcania nakrętek głowicy, wariatora, dzwonu sprzęgła, koła magnesowego i osi kół.', view: 'torque', arg: '2T', min: '' },
+          { id: 'item_fluids', icon: '🛢️', title: 'Płyny Eksploatacyjne i Oleje', desc: 'Specyfikacje i ilości oleju silnikowego, przekładniowego (przekładnia końcowa), płynu hamulcowego DOT i chłodniczego.', view: 'fluids', arg: '2T', min: '' },
+          { id: 'item_intervals', icon: '⏳', title: 'Interwały Wymian Eksploatacyjnych', desc: 'Wzorcowe przebiegi między wymianami paska napędowego, rolek, świecy, filtra powietrza i oleju.', view: 'intervals', arg: '2T', min: '' }
+        ]
+      },
+      {
+        groupTitle: '🪛 Kreatywne Naprawy Garażowe i Patenty',
+        items: [
+          { id: 'item_druciarstwo', icon: '🪛', title: 'DRUCIARSTWO Ultimate — Baza 47 Patentów i Recykling', desc: 'Encyklopedia przetestowanych patentów garażowych, katalog materiałów z odzysku i naprawy budżetowe 0 zł.', view: 'druciarstwo', arg: 'baza', min: '' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'mod_tools',
+    num: 'MODUŁ 6',
+    icon: '🛠️',
+    title: 'KALKULATORY I NARZĘDZIA',
+    shortTitle: 'Kalkulatory i Narzędzia',
+    theme: 'green',
+    desc: 'Tryb Warsztatowy HUD, Stroiciel Gaźnika, Kalkulator Tuningu CVT, Kalkulator Squish/CR i mieszanki 2T, Cennik części, Janusz 3000 oraz Ustawienia.',
+    pills: ['Tryb HUD', 'Stroiciel gaźnika', 'Tuning CVT', 'Squish / CR / 2T', 'Janusz 3000'],
+    groups: [
+      {
+        groupTitle: '⭐ Eksperckie Kalkulatory i Symulatory Warsztatowe',
+        items: [
+          { id: 'item_hud', icon: '👓', title: 'Tryb Warsztatowy HUD (Duży Ekran)', desc: 'Wysokokontrastowy panel nad stół podnośnikowy: szybki podgląd momentów Nm, luzów zaworowych, przelicznik jednostek i stoper.', view: 'hud', arg: null, min: '' },
+          { id: 'item_jetting', icon: '🫁', title: 'Stroiciel Gaźnika (Dobór Dysz i Iglicy)', desc: 'Oblicz bazową dyszę główną, dyszę wolnych obrotów i zapinkę iglicy pod pojemność 50/70/80cc, filtr i wydech.', view: 'jetting', arg: null, min: '' },
+          { id: 'item_cvt', icon: '⚙️', title: 'Kalkulator Tuningu Napędu CVT', desc: 'Dobór wagi rolek wariatora, twardości sprężyny centralnej i sprężynek sprzęgła pod charakterystykę silnika.', view: 'cvt', arg: null, min: '' },
+          { id: 'item_mix', icon: '⚡', title: 'Kalkulator Squish / CR & Mieszanka 2T', desc: 'Obliczanie prześwitu tłok–głowica (Squish), stopnia sprężania (CR) z presetami silników oraz dawki oleju do paliwa 2T.', view: 'mix', arg: null, min: '' },
+          { id: 'item_shop', icon: '🪙', title: 'Cennik Części i Kalkulator Kosztorysu', desc: 'Porównanie cen części w wariantach Budżet / Standard / Premium oraz szybkie sumowanie kosztu naprawy z robocizną.', view: 'shop', arg: null, min: '' }
+        ]
+      },
+      {
+        groupTitle: '🧰 Generator Patentów, Kalkulator Oszczędności i Ustawienia',
+        items: [
+          { id: 'item_janusz_gen', icon: '🤖', title: 'Generator Patentów Janusz Engineering 3000', desc: 'Interaktywny generator niekonwencjonalnych rozwiązań naprawczych na podstawie posiadanych materiałów i narzędzi.', view: 'druciarstwo', arg: 'janusz', min: '' },
+          { id: 'item_druciarstwo_tools', icon: '🧮', title: 'Janusz Meter & Quiz Bezpieczeństwa', desc: 'Kalkulator zaoszczędzonej gotówki na naprawach garażowych, 12 Świętych Artefaktów i test zjazdu awaryjnego.', view: 'druciarstwo', arg: 'meter', min: '' },
+          { id: 'item_contact', icon: '🔗', title: 'Kontakt, Wsparcie i Społeczność', desc: 'Informacje o projekcie NAPRAWNIK, kanały kontaktu, zgłaszanie propozycji oraz wsparcie rozwoju aplikacji.', view: 'contact', arg: null, min: '' },
+          { id: 'item_settings', icon: '⚙️', title: 'Ustawienia Aplikacji i Licencja', desc: 'Zarządzanie planem AMATOR / PRO / WARSZTAT, aktywacja kodów promocyjnych, blokada PIN i dane warsztatu.', view: 'settings', arg: null, min: '' }
+        ]
+      }
+    ]
+  }
+];
+
+function getAllModuleItems(){
+  const list = [];
+  MAIN_MODULES.forEach(mod => {
+    mod.groups.forEach(grp => {
+      grp.items.forEach(it => {
+        list.push({ ...it, modId: mod.id, modTitle: mod.title, modNum: mod.num, modIcon: mod.icon, groupTitle: grp.groupTitle });
+      });
+    });
+  });
+  return list;
+}
+
+const DEFAULT_FAV_TOOLS = ['item_hud', 'item_jetting', 'item_cvt', 'item_multimeter', 'item_druciarstwo', 'item_catalog'];
+
+function getFavoriteToolIds(){
+  try {
+    const raw = localStorage.getItem('naprawnik_fav_tools');
+    if (!raw) return [...DEFAULT_FAV_TOOLS];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [...DEFAULT_FAV_TOOLS];
+  } catch (e) {
+    return [...DEFAULT_FAV_TOOLS];
+  }
+}
+
+function toggleFavoriteTool(itemId, ev){
+  if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  const favs = getFavoriteToolIds();
+  const idx = favs.indexOf(itemId);
+  if (idx >= 0) favs.splice(idx, 1);
+  else favs.unshift(itemId);
+  try { localStorage.setItem('naprawnik_fav_tools', JSON.stringify(favs.slice(0, 12))); } catch (e) {}
+  if (currentNavState && currentNavState.view === 'module') renderModuleView(currentNavState.arg);
+  else if (currentNavState && currentNavState.view === 'home') renderHome();
+}
+
+function recordRecentActivity(view, arg){
+  if (!view || ['home', 'module', 'plans', 'legal'].includes(view)) return;
+  try {
+    const allItems = getAllModuleItems();
+    const match = allItems.find(it => it.view === view && (it.arg || null) === (arg || null)) || allItems.find(it => it.view === view);
+    const label = match ? match.title : (NAV_LABEL[view] || view);
+    const icon = match ? match.icon : '🔧';
+    const modTitle = match ? match.modTitle : 'Warsztat';
+    const raw = localStorage.getItem('naprawnik_recent_activity');
+    let list = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(list)) list = [];
+    list = list.filter(x => !(x && x.view === view && (x.arg || null) === (arg || null)));
+    list.unshift({ view, arg: arg || null, label, icon, modTitle, ts: Date.now() });
+    localStorage.setItem('naprawnik_recent_activity', JSON.stringify(list.slice(0, 6)));
+  } catch (e) {}
+}
+
+function getRecentActivity(){
+  try {
+    const raw = localStorage.getItem('naprawnik_recent_activity');
+    const list = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(list) && list.length > 0) return list;
+  } catch (e) {}
+  return [
+    { view: 'diag', arg: null, label: 'Drzewo Objawów (2T / 4T)', icon: '🔍', modTitle: 'DIAGNOSTYKA' },
+    { view: 'catalog', arg: null, label: 'Katalog Pojazdów i Danych OEM', icon: '🛵', modTitle: 'BAZA TECHNICZNA' },
+    { view: 'multimeter', arg: null, label: 'Multimetr — Procedury Pomiarowe', icon: '📟', modTitle: 'ELEKTRYKA I POMIARY' },
+    { view: 'hud', arg: null, label: 'Tryb Warsztatowy HUD', icon: '👓', modTitle: 'KALKULATORY I NARZĘDZIA' }
+  ];
+}
+
+function renderModuleCard(mod){
+  const totalItems = mod.groups.reduce((acc, g) => acc + g.items.length, 0);
+  const searchStr = escapeHtml(normalizeSearchText(
+    mod.num + ' ' + mod.title + ' ' + mod.desc + ' ' + mod.pills.join(' ') + ' ' +
+    mod.groups.map(g => g.groupTitle + ' ' + g.items.map(i => i.title + ' ' + i.desc).join(' ')).join(' ')
+  ));
+  return `<div class="tile mod6-card" data-theme="${mod.theme}" data-search="${searchStr}" role="button" tabindex="0" onclick="nav('module','${mod.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+    <div>
+      <div class="mod6-top">
+        <div class="mod6-icon-wrap" aria-hidden="true">${mod.icon}</div>
+        <span class="mod6-num">${mod.num}</span>
+      </div>
+      <div class="tile-label mod6-title">${escapeHtml(mod.title)}</div>
+      <div class="tile-desc mod6-desc">${escapeHtml(mod.desc)}</div>
+    </div>
+    <div>
+      <div class="mod6-pills">
+        ${mod.pills.map(p => `<span class="mod6-pill">${escapeHtml(p)}</span>`).join('')}
+      </div>
+      <div class="mod6-footer">
+        <span>📂 ${totalItems} funkcji w module</span>
+        <span>Otwórz moduł →</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderHomeRemindersWidget(){
+  const rem = load('naprawnik_reminders');
+  const d = new Date();
+  const today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const sorted = Array.isArray(rem) ? [...rem].sort((a, b) => String(a.date || '').localeCompare(String(b.date || ''))).slice(0, 4) : [];
+  return `<div class="dash-panel" id="homeRemindersBox">
+    <div class="dash-panel-head">
+      <h3>📅 Przypomnienia serwisowe</h3>
+      <span class="mod6-pill" style="cursor:pointer;color:#00e5ff" onclick="nav('reminders')">Wszystkie (${Array.isArray(rem) ? rem.length : 0}) →</span>
+    </div>
+    ${sorted.length ? sorted.map(r => {
+      const isOver = r.date && r.date < today;
+      return `<div class="dash-list-item" onclick="nav('reminders')">
+        <div>
+          <strong style="color:${isOver ? '#ff6b6b' : '#f8fafc'}">${isOver ? '⚠️ ' : '🗓️ '}${escapeHtml(r.desc || 'Przegląd serwisowy')}</strong>
+          <div style="font-size:10px;color:var(--dim)">VIN/Pojazd: ${escapeHtml(r.vin || '—')}</div>
+        </div>
+        <span class="mod6-pill" style="border-color:${isOver ? '#ff6b6b' : 'rgba(255,255,255,.15)'};color:${isOver ? '#ff8787' : '#ffe066'}">${escapeHtml(r.date || 'Brak daty')}</span>
+      </div>`;
+    }).join('') : `<div style="font-size:11px;color:var(--dim);padding:6px 2px">Brak zaplanowanych przypomnień. Dodaj termin przeglądu lub wymiany oleju w module Zlecenia Warsztatowe.</div>`}
+    <div class="btn" style="margin-top:8px;padding:7px 10px;font-size:11px" onclick="nav('reminders')">➕ Zarządzaj przypomnieniami</div>
+  </div>`;
+}
+
+function renderHomeRecentWidget(){
+  const recents = getRecentActivity().slice(0, 4);
+  return `<div class="dash-panel" id="homeRecentActivity">
+    <div class="dash-panel-head">
+      <h3>⏱️ Ostatnia aktywność</h3>
+      <span style="font-size:10px;color:var(--dim)">Szybki powrót</span>
+    </div>
+    ${recents.map(r => {
+      const clickCall = r.arg ? `nav('${r.view}','${r.arg}')` : `nav('${r.view}')`;
+      return `<div class="dash-list-item" onclick="${clickCall}">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          <span style="font-size:17px">${r.icon || '🔧'}</span>
+          <div style="min-width:0">
+            <strong style="color:#fff;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.label)}</strong>
+            <span style="font-size:10px;color:var(--dim)">${escapeHtml(r.modTitle || '')}</span>
+          </div>
+        </div>
+        <span style="color:#00e5ff;font-weight:900">→</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderHomeFavoritesWidget(){
+  const favIds = getFavoriteToolIds();
+  const allItems = getAllModuleItems();
+  const favItems = favIds.map(id => allItems.find(it => it.id === id)).filter(Boolean).slice(0, 6);
+  return `<div class="dash-panel" id="homeFavoritesBox" style="margin-bottom:14px">
+    <div class="dash-panel-head">
+      <h3>⭐ Ulubione funkcje warsztatowe</h3>
+      <span style="font-size:10px;color:var(--dim)">Przypinaj gwiazdką ⭐ wewnątrz modułów</span>
+    </div>
+    <div class="module-sub-grid" style="margin:6px 0 2px">
+      ${favItems.map(it => {
+        const clickJs = it.customClick || `nav('${it.view}'${it.arg ? `,'${it.arg}'` : ''})`;
+        const badge = it.min && !hasPlan(it.min) ? `<span class="tile-tier-pill">${PLAN_NAMES[it.min]}</span>` : '';
+        return `<div class="mod-sub-card" onclick="${clickJs}">
+          <div class="mod-sub-icon">${it.icon}</div>
+          <div class="mod-sub-body">
+            <div class="mod-sub-title">${escapeHtml(it.title)} ${badge}</div>
+            <div class="mod-sub-desc">${escapeHtml(it.modTitle)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderModuleView(modId){
+  const mod = MAIN_MODULES.find(m => m.id === modId) || MAIN_MODULES[0];
+  const favIds = getFavoriteToolIds();
+  const totalCount = mod.groups.reduce((s, g) => s + g.items.length, 0);
+
+  let featuredHtml = '';
+  if (mod.id === 'mod_tech' || mod.id === 'mod_tools') {
+    featuredHtml = `
+      <div class="special-section-divider" style="margin:16px 0 10px"><span>WYRÓŻNIONE NARZĘDZIA EKSPERCKIE</span></div>
+      <div class="neon-grid special-grid" id="expertTileGrid">
+        ${mod.id === 'mod_tools' ? `
+          ${tile('👓','TRYB WARSZTATOWY HUD','hud',null,'Duży ekran HUD • Momenty dokręcania<br>Luzy zaworowe • Squish silnika','',{theme:'green',goldTitle:true,isSpecial:true,image:'./assets/tile-hud.jpg'})}
+          ${tile('🫁','STROICIEL GAŹNIKA','jetting',null,'Dobór dyszy głównej i iglicy<br>50cc / 70cc / Filtr stożkowy','',{theme:'orange',goldTitle:true,isSpecial:true,image:'./assets/tile-jetting.jpg'})}
+          ${tile('⚙️','TUNING NAPĘDU CVT','cvt',null,'Waga rolek • Sprężyna centralna<br>Sprzęgło • Obroty mocy silnika','',{theme:'red',goldTitle:true,isSpecial:true,image:'./assets/tile-cvt.jpg'})}
+          ${tile('⚡','KALKULATOR SQUISH / CR','mix',null,'Prześwit tłok–głowica • Stopień sprężania<br>Presety AM6, Aerox, GY6, BigBore','',{theme:'cyan',goldTitle:true,isSpecial:true,image:'./assets/tile-squish.jpg'})}
+        ` : ''}
+        ${tile('🪛','DRUCIARSTWO','druciarstwo',null,'Patenty garażowe • Janusz 3000<br>Naprawy 0 zł • Odzysk części','',{theme:'orange',goldTitle:true,isSpecial:true,image:'./assets/tile-druciarstwo.jpg'})}
+      </div>
+    `;
+  }
+
+  screen.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+      <div class="btn back" style="margin:0;flex:1" onclick="nav('home')">← Strona główna (6 modułów)</div>
+    </div>
+    <div class="mod-switcher-bar" aria-label="Przełącznik modułów">
+      ${MAIN_MODULES.map(m => `<button type="button" class="mod-switcher-pill${m.id === mod.id ? ' active' : ''}" onclick="nav('module','${m.id}')">${m.icon} ${escapeHtml(m.shortTitle)}</button>`).join('')}
+    </div>
+    <div class="card" style="border-color:var(--cyan);background:linear-gradient(135deg,rgba(19,24,42,.96),rgba(11,13,24,.98))">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+        <span class="mod6-num">${mod.num}</span>
+        <span style="font-size:11px;color:var(--dim)">Dostępne narzędzia i podkategorie: <b>${totalCount}</b></span>
+      </div>
+      <h2 style="margin:0 0 6px;font-size:18px;color:#fff">${mod.icon} ${escapeHtml(mod.title)}</h2>
+      <p style="margin:0 0 10px;font-size:12px;color:#cbd5e1;line-height:1.45">${escapeHtml(mod.desc)}</p>
+      <input id="moduleSearchInput" placeholder="🔍 Szukaj podkategorii lub narzędzia w tym module..." oninput="filterModuleView(this.value)" style="margin-bottom:0">
+    </div>
+    <div id="moduleGroupsContainer">
+      ${mod.groups.map(grp => `
+        <div class="mod-group-block">
+          <div class="section-label" style="margin:14px 0 8px">${escapeHtml(grp.groupTitle)}</div>
+          <div class="module-sub-grid">
+            ${grp.items.map(it => {
+              const clickJs = it.customClick || `nav('${it.view}'${it.arg ? `,'${it.arg}'` : ''})`;
+              const isFav = favIds.includes(it.id);
+              const lockBadge = it.min ? `<span class="tile-badge-row">${!hasPlan(it.min) ? '<span class="tile-lock-icon">🔒</span>' : ''}<span class="tile-tier-pill">${PLAN_NAMES[it.min]}</span></span>` : '';
+              const searchKey = escapeHtml(normalizeSearchText(it.title + ' ' + it.desc + ' ' + grp.groupTitle));
+              return `<div class="mod-sub-card" data-mod-search="${searchKey}" role="button" tabindex="0" onclick="${clickJs}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                <div class="mod-sub-icon" aria-hidden="true">${it.icon}</div>
+                <div class="mod-sub-body">
+                  <div class="mod-sub-title">${escapeHtml(it.title)} ${lockBadge}</div>
+                  <div class="mod-sub-desc">${escapeHtml(it.desc)}</div>
+                </div>
+                <button type="button" class="mod-fav-btn${isFav ? ' active' : ''}" title="${isFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych na ekranie głównym'}" onclick="toggleFavoriteTool('${it.id}', event)">${isFav ? '⭐' : '☆'}</button>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    ${featuredHtml}
+  `;
+}
+
+function filterModuleView(rawQuery){
+  const q = normalizeSearchText(rawQuery || '');
+  document.querySelectorAll('#moduleGroupsContainer .mod-sub-card').forEach(card => {
+    const hay = card.getAttribute('data-mod-search') || '';
+    card.style.display = (!q || hay.includes(q)) ? '' : 'none';
+  });
+}
+
 function renderHome(){
   screen.innerHTML = `
   <div class="brand-hero" style="margin-bottom:6px">
@@ -2621,61 +3480,60 @@ function renderHome(){
       <div class="app-sub"><span class="sub-powered">POWERED BY</span> <span class="sub-turbo">TURBO DIESEL</span></div>
     </div>
   </div>
+
   <div class="home-search-bar">
     <div class="home-search-input-wrap">
-      <input id="symptomQuery" placeholder="🔍 Szukaj kafelka lub wpisz objaw (np. części, ślizga, gaśnie, elektryka)..." oninput="searchSymptoms()">
+      <input id="symptomQuery" placeholder="🔍 Globalna wyszukiwarka: moduł, narzędzie, objaw, część, model, pomiar..." oninput="searchSymptoms()">
       <button type="button" id="clearHomeSearch" class="home-search-clear" onclick="clearHomeSearch()" title="Wyczyść wyszukiwanie" aria-label="Wyczyść wyszukiwanie">✕</button>
     </div>
     <div class="home-search-meta"><span id="homeTileCount"></span></div>
     <div id="symptomResults"></div>
   </div>
-  <div class="special-section-header" id="expertSectionHeader">
-    <div class="special-section-badge">⭐ FUNKCJE SPECJALNE</div>
-    <div class="special-section-title">NARZĘDZIA EKSPERCKIE</div>
-    <div class="special-section-sub">Najbardziej zaawansowane moduły warsztatowe, kalkulatory precyzyjne i interaktywna diagnostyka</div>
+
+  <div class="workshop-panel-header">
+    <div class="workshop-panel-title">⚡ SZYBKIE AKCJE WARSZTATOWE</div>
+    <span class="workshop-panel-badge">NATYCHMIASTOWY DOSTĘP</span>
   </div>
-  <div class="neon-grid special-grid" id="expertTileGrid">
-    ${tile('👓','TRYB WARSZTATOWY HUD','hud',null,'Duży ekran HUD • Momenty dokręcania<br>Luzy zaworowe • Squish silnika','',{theme:'green',goldTitle:true,isSpecial:true,image:'./assets/tile-hud.jpg'})}
-    ${tile('🫁','STROICIEL GAŹNIKA','jetting',null,'Dobór dyszy głównej i iglicy<br>50cc / 70cc / Filtr stożkowy','',{theme:'orange',goldTitle:true,isSpecial:true,image:'./assets/tile-jetting.jpg'})}
-    ${tile('⚙️','TUNING NAPĘDU CVT','cvt',null,'Waga rolek • Sprężyna centralna<br>Sprzęgło • Obroty mocy silnika','',{theme:'red',goldTitle:true,isSpecial:true,image:'./assets/tile-cvt.jpg'})}
-    ${tile('🔌','PINOUTY CDI & REGULATORÓW','pinouts',null,'Interaktywne złącza zapłonu<br>Pomiary multimetrem • Diagnoza iskry','pro',{theme:'purple',goldTitle:true,badgeLabel:'PRO',isSpecial:true,image:'./assets/tile-pinouts.jpg'})}
-    ${tile('⚡','KALKULATOR SQUISH / CR','mix',null,'Prześwit tłok–głowica • Stopień sprężania<br>Presety AM6, Aerox, GY6, BigBore','',{theme:'cyan',goldTitle:true,isSpecial:true,image:'./assets/tile-squish.jpg'})}
-    ${tile('📋','ZLECENIA & SKANER VIN','orders',null,'Karta zlecenia • Skaner kodów VIN<br>Wycena • Marża • Druk etykiet PDF','warsztat',{theme:'orange',goldTitle:true,badgeLabel:'WARSZTAT',isSpecial:true,image:'./assets/tile-orders.jpg'})}
-    ${tile('🪛','DRUCIARSTWO','druciarstwo',null,'Patenty garażowe • Janusz 3000<br>Naprawy 0 zł • Odzysk części','',{theme:'orange',goldTitle:true,isSpecial:true,image:'./assets/tile-druciarstwo.jpg'})}
+  <div class="quick-actions-grid" id="homeQuickActions">
+    <button type="button" class="quick-action-btn" onclick="nav('orders','new')">
+      <span class="quick-action-icon">📋</span>
+      <span class="quick-action-text">
+        <strong>Nowe zlecenie</strong>
+        <small>Przyjęcie pojazdu i wycena</small>
+      </span>
+    </button>
+    <button type="button" class="quick-action-btn" onclick="nav('vehicles')">
+      <span class="quick-action-icon">🛵</span>
+      <span class="quick-action-text">
+        <strong>Dodaj pojazd</strong>
+        <small>Kartoteka garażu i VIN</small>
+      </span>
+    </button>
+    <button type="button" class="quick-action-btn" onclick="resetDiagFlow()">
+      <span class="quick-action-icon">🔍</span>
+      <span class="quick-action-text">
+        <strong>Szybka diagnostyka</strong>
+        <small>Ścieżka TAK/NIE po objawach</small>
+      </span>
+    </button>
   </div>
 
-  <div class="special-section-divider" id="categorySectionDivider">
-    <span>KATEGORIE I BAZA WIEDZY</span>
+  <div class="workshop-panel-header">
+    <div class="workshop-panel-title">🧭 GŁÓWNE MODUŁY SYSTEMU (6 SEKCJI)</div>
+    <span class="workshop-panel-badge">PANEL WARSZTATOWY v5.18</span>
   </div>
-
   <div class="neon-grid" id="mainTileGrid">
-    ${tile('🔍','DIAGNOSTYKA','diag',null,'Objawy • Przyczyny<br>Rozwiązania','',{theme:'purple',sublabel:'2T / 4T',subIcon:'⚙️',spriteIdx:0})}
-    ${tile('⚙️','CZĘŚCI','parts',null,'Ceny • Zamienniki<br>Linki','pro',{theme:'orange',subIcon:'🔩',hideBadge:true,spriteIdx:1})}
-    ${tile('📘','INSTRUKCJE','manuals',null,'Krok po kroku<br>Serwis • Naprawa','',{theme:'cyan',subIcon:'🔧',spriteIdx:2})}
-    ${tile('🛵','SKUTERY','catalog',null,'Modele • Dane<br>Specyfikacja','',{theme:'red',subIcon:'🏁',spriteIdx:3})}
-    ${tile('📋','CHECKLISTA','diagFlow',null,'Przeglądy • Serwis<br>Notatki','',{theme:'green',subIcon:'✅',spriteIdx:4})}
-    ${tile('🔋','ELEKTRYKA','electric',null,'Schematy • Diagnostyka<br>Pomiary • Porady','',{theme:'orange',subIcon:'⚡',spriteIdx:5})}
-    ${tile('🔩','SILNIK','engine','2T','Budowa • Regulacja<br>Remonty • Modyfikacje','',{theme:'red',subIcon:'⚙️',spriteIdx:6})}
-    ${tile('🛠️','NARZĘDZIA','mix',null,'Kalkulatory • Tabele<br>Ustawienia','',{theme:'cyan',subIcon:'🧪',spriteIdx:7})}
-    ${tile('📓','LOGI / NOTATKI','photoAssistant',null,'Historia napraw<br>Zdjęcia • Wpisy','',{theme:'purple',subIcon:'✒️',spriteIdx:8})}
-    ${tile('🛵','MOJE POJAZDY','vehicles',null,'Garaż • Profil<br>Przypomnienia','',{theme:'cyan',subIcon:'🏠',spriteIdx:9})}
-    ${tile('⚡','ELEKTRONICZNE LAB','lab',null,'Pomiary • Wartości wzorcowe<br>Automatyczna diagnoza','',{theme:'blue',goldTitle:true,subIcon:'🔬',spriteIdx:14})}
-    ${tile('📅','PLAN SERWISOWY','servicePlan',null,'Obsługa wg km i daty<br>Automatyczne interwały','',{theme:'pink',goldTitle:true,subIcon:'🗓️',spriteIdx:12})}
-    ${tile('🗄️','KLIENCI','clients',null,'Lista klientów • Dane<br>Historia obsługi','warsztat',{theme:'orange',subIcon:'👥',hideBadge:true,spriteIdx:10})}
-    ${tile('🗂️','KARTOTEKA POJAZDÓW','vehicles',null,'Twoje skutery, dane<br>techniczne, historia napraw','',{theme:'purple',goldTitle:true,subIcon:'🛵',spriteIdx:11})}
-    ${tile('📅','PRZEGLĄDY','reminders',null,'Terminy serwisów<br>Przypomnienia • Czynności','',{theme:'pink',goldTitle:true,sublabel:overdueRemindersLabel(),subIcon:'🔧',spriteIdx:12})}
-    ${tile('📘','SCHEMATY ELEKTRYCZNE','schematics',null,'Kolory przewodów<br>Podłączenia • Układy','',{theme:'blue',goldTitle:true,subIcon:'⚡',spriteIdx:13})}
-    ${tile('📟','MULTIMETR','multimeter',null,'Procedury pomiarów<br>Poradniki • Wartości','',{theme:'orange',subIcon:'📏',spriteIdx:14})}
-    ${tile('🔌','BAZA INSTALACJI ELEKTRYCZNYCH','electricalDb',null,hasPlan('pro')?'Pełna baza PRO':'Część PRO','pro',{theme:'purple',goldTitle:true,inlineLock:true,subIcon:'⚡',spriteIdx:15,customClick:'activeElectricalSection=null;nav(\'electricalDb\')'})}
-    ${tile('🏍️','CZARNA SKRZYNKA','log',null,'Wpisy serwisowe<br>Błędy • VIN • Historia','warsztat',{theme:'orange',badgeLabel:'WARSZTAT',subIcon:'🛡️',spriteIdx:16})}
-    ${tile('📋','CHECKLISTY WARSZTATOWE','checklist',null,'Listy kontrolne<br>Przed i po serwisie','warsztat',{theme:'green',goldTitle:true,badgeLabel:'WARSZTAT',subIcon:'🔧',spriteIdx:17})}
-    ${tile('⏱️','PROFILE KONKRETNYCH SILNIKÓW','models',null,'Ustawienia • Modyfikacje<br>Osiągi • Rekomendacje','pro',{theme:'red',goldTitle:true,badgeLabel:'WARSZTAT',subIcon:'⚙️',spriteIdx:18})}
-    ${tile('📝','NOTATNIK','notes',null,'Szybkie notatki<br>Obserwacje • Własne wpisy','',{theme:'blue',subIcon:'🖊️',spriteIdx:19})}
-    ${tile('🪙','CENY CZĘŚCI','shop',null,'Ceny • Zamienniki<br>Porównywanie kosztów','',{theme:'orange',subIcon:'🧮',spriteIdx:20})}
-    ${tile('🔗','KONTAKT I SPOŁECZNOŚĆ','contact',null,'Wsparcie • Projekt<br>Aktualizacje • Linki','',{theme:'blue',goldTitle:true,subIcon:'📡',spriteIdx:21})}
-    ${tile('📁','INNE','knowledge',null,'Dodatkowe funkcje<br>Ustawienia • Różne','',{theme:'purple',subIcon:'🧭',spriteIdx:22})}
-    ${tile('⚙️','USTAWIENIA','settings',null,'Profil • Preferencje<br>Wygląd • Dane','',{theme:'cyan',goldTitle:true,subIcon:'🔐',spriteIdx:23})}
+    ${MAIN_MODULES.map(mod => renderModuleCard(mod)).join('')}
   </div>
+
+  ${renderHomeFavoritesWidget()}
+
+  <div class="home-dash-grid">
+    ${renderHomeRecentWidget()}
+    ${renderHomeRemindersWidget()}
+  </div>
+
+  <div class="diag-card" style="border-color:var(--hero)"><h2>💎 Twój plan: ${PLAN_NAMES[curPlan()]}</h2><div class="diag-sub">${curPlan()==='amator'?'Bezpłatnie: pełna diagnostyka, katalog modeli, kalkulatory i checklisty. PRO i WARSZTAT: rozszerzona elektryka i dane wg rodziny silnika; analiza zdjęć AI jest chwilowo wyłączona.':curPlan()==='pro'?'PRO aktywne: pełna elektryka i dobór części. Analiza zdjęć AI jest chwilowo wyłączona; WARSZTAT dodaje klientów i karty serwisowe.':'WARSZTAT aktywny: wszystkie funkcje aplikacji.'}</div><div class="btn" onclick="nav('plans')">${curPlan()==='warsztat'?'Zarządzaj licencją':'Zobacz plany i funkcje'}</div></div>
 
   <a class="support-cta" href="https://buycoffee.to/turbodieesel96-" target="_blank" rel="noopener noreferrer" aria-label="Wesprzyj NAPRAWNIK na BuyCoffee">
     <span class="support-cta-icon" aria-hidden="true">☕</span>
@@ -2688,18 +3546,6 @@ function renderHome(){
 
   ${renderAndroidApkCard()}
 
-  <div class="diag-card catalog-entry-card">
-    <h2>📚 Katalog modeli i danych serwisowych</h2>
-    <div class="diag-sub">${SCOOTER_CATALOG.length} wpisów rodzin pojazdów • profile jednostek • źródła i status weryfikacji</div>
-    <div class="btn" onclick="nav('catalog')">Otwórz katalog producentów</div>
-  </div>
-
-  <div class="diag-card">
-    <h2>🔩 Dobór części OEM i zamienników</h2>
-    <div class="diag-sub">Numery części • katalog zgodności • oferty zakupu • poziom pewności</div>
-    <div class="btn" onclick="nav('parts')">${lk('pro')}Otwórz katalog doboru części</div>
-  </div>
-
   <div class="diag-card" style="border-color:#ff8c1a">
     <h2>🎨 Lakiery i zaprawki samochodowe</h2>
     <div class="diag-sub">Motolak • lakiery samochodowe, zaprawki i produkty do prac lakierniczych. Otwórz katalog dostawcy i dobierz produkt do koloru oraz zakresu naprawy.</div>
@@ -2707,59 +3553,7 @@ function renderHome(){
     <small style="display:block;color:var(--dim);font-size:10px;line-height:1.4">Link afiliacyjny WebePartners. Jeśli dokonasz zakupu po przejściu z tego linku, możemy otrzymać prowizję — bez dodatkowych kosztów dla Ciebie.</small>
   </div>
 
-  <div class="diag-card" style="border-color:var(--hero)"><h2>💎 Twój plan: ${PLAN_NAMES[curPlan()]}</h2><div class="diag-sub">${curPlan()==='amator'?'Bezpłatnie: pełna diagnostyka, katalog modeli, kalkulatory i checklisty. PRO i WARSZTAT: rozszerzona elektryka i dane wg rodziny silnika; analiza zdjęć AI jest chwilowo wyłączona.':curPlan()==='pro'?'PRO aktywne: pełna elektryka i dobór części. Analiza zdjęć AI jest chwilowo wyłączona; WARSZTAT dodaje klientów i karty serwisowe.':'WARSZTAT aktywny: wszystkie funkcje aplikacji.'}</div><div class="btn" onclick="nav('plans')">${curPlan()==='warsztat'?'Zarządzaj licencją':'Zobacz plany i funkcje'}</div></div>
-
-  <div class="card" style="border-color:var(--cyan)"><h2>🔧 Garażowa prawda dnia</h2><p style="font-size:11px;line-height:1.5">Paliwo w baku i iskra na świecy to nie wszystko, jeśli pod kopułą wiatr. ⚡ Zanim wymienisz połowę skuterka lub motocykla metodą „na chybił trafił”, weź miernik do ręki i sprawdź masę. Fizyki nie oszukasz — zwłaszcza oporu elektrycznego i własnej leniwej diagnozy. 😎</p></div>
-  <div class="diag-card">
-    <h2>🔍 Diagnoza</h2>
-    <div class="diag-sub">Objawy • pytania • test • przyczyna</div>
-    <div class="btn" onclick="nav('diag')">🌳 Drzewo objawów</div>
-    <div class="btn" onclick="resetDiagFlow()">🧪 Krok po kroku (TAK/NIE)</div>
-  </div>
-
-  <div class="diag-card" style="border-color:#8b5cf6">
-    <h2 style="color:#c4b5fd">📷 Asystent zdjęć offline</h2>
-    <div class="diag-sub">Zapis zdjęć części, checklisty i historia lokalna. Analiza AI wróci po konfiguracji.</div>
-    <div class="btn" onclick="nav('photoAssistant')">📷 Otwórz asystenta zdjęć offline</div>
-  </div>
-
   <div class="alert"><b>⚠️ PRACA OFFLINE</b><br>Funkcje lokalne działają offline po pierwszym wejściu online. Analiza zdjęć AI jest chwilowo wyłączona; wróci po konfiguracji osobnego budżetu API.</div>
-  <details class="more-shortcuts">
-    <summary>📂 Dodatkowe skróty tekstowe (Silniki 2T/4T/CVT, Diagnostyka, Elektryka, Warsztat)</summary>
-    <div class="section-label" style="margin-top:10px">Silniki i przekładnie (szybki wybór)</div>
-  <div class="grid2">
-    ${tile('🔩','Dwusuw 2T','engine','2T','Budowa silnika, typowe usterki i kontrola podzespołów.')}
-    ${tile('⚙️','Czterosuw 4T','engine','4T','Zawory, rozrząd, kompresja, smarowanie i objawy awarii.')}
-    ${tile('🔄','CVT (Skutery)','engine','CVT','Wariator, rolki, pasek, sprzęgło i przeniesienie napędu.')}
-    ${tile('🧪','Kalkulator 2T','mix',null,'Oblicz proporcje oleju do paliwa dla mieszanki.')}
-  </div>
-
-  <div class="section-label">Diagnostyka powiązana</div>
-  <div class="grid2">
-    ${tile('🧭','Diagnoza łączona','knowledge',null,`${knowledgeCases.length} kart przypadków: silnik, paliwo, elektryka, bezpieczeństwo i CVT.`)}
-    ${tile('🛠️','CVT — diagnostyka mechaniczna','knowledge',null,'Pasek, rolki, wariator, sprzęgło, sprężyny, montaż i pomiary.')}
-  </div>
-  <div class="section-label">Diagnostyka</div>
-  <div class="btn" onclick="nav('obd')">${lk('pro')}🧾 Baza diagnostyczna (kody OBD)</div><div class="btn" onclick="nav('models')">${lk('pro')}🔧 Profile konkretnych silników</div>
-
-  <div class="section-label">Elektryka</div>
-  <div class="grid2">${tile('⚡','Elektryka — checklista','electric',null,'Kontrola akumulatora, bezpieczników, ładowania i zapłonu.')}${tile('🔌','Schematy elektryczne','schematics',null,'Kolory przewodów, połączenia i podstawowe układy skutera.')}</div>
-  <div class="btn" onclick="nav('multimeter')">📏 Multimetr — procedury</div><div class="btn" onclick="activeElectricalSection=null;nav('electricalDb')">🔌 Baza instalacji elektrycznych (${hasPlan('pro')?'pełna':'część PRO'})</div>
-
-  <div class="section-label">Pojazdy i warsztat</div>
-  <div class="grid2">
-    ${tile('🛵','Kartoteka pojazdów','vehicles',null,'Twoje skutery, dane techniczne, historia napraw i notatki.')}
-    ${tile('⏰','Przeglądy','reminders',null,'Terminy serwisów, przypomnienia i planowane czynności.')}
-    ${tile('📝','Notatnik','notes',null,'Szybkie notatki, obserwacje i własne wpisy.')}
-    ${tile('👤','Klienci','clients',null,'Lista klientów, dane kontaktowe oraz historia obsługi.','warsztat')}${tile('🛡️','Czarna Skrzynka','log',null,'Wpisy serwisowe, historia błędów, VIN i ważne informacje.','warsztat')}${tile('✅','Checklisty warsztatowe','checklist',null,'Listy kontrolne przed naprawą, w trakcie pracy i po serwisie.','warsztat')}
-  </div>
-
-  <div class="section-label">Inne</div>
-  <div class="grid2">
-    ${tile('💰','Cennik części','shop',null,'Ceny części, zamienniki i porównywanie kosztów.')}
-    ${tile('📡','Kontakt i społeczność','contact',null,'Wsparcie projektu, aktualizacje i przydatne linki.')}
-  </div>
-  </details>
   `;
 }
 function overdueRemindersLabel(){
@@ -4380,7 +5174,9 @@ function nav(view, arg, restoreState){
   }
 
   if(NAV_MIN[view] && !hasPlan(NAV_MIN[view])){ renderLocked(NAV_MIN[view], NAV_LABEL[view]||view); return; }
+  recordRecentActivity(view, arg);
   if(view==='plans') renderPlans();
+  else if(view==='module') renderModuleView(arg);
   else if(view==='home') renderHome();
   else if(view==='orders') renderOrders(arg);
   else if(view==='orderDetail') renderOrderDetail(arg);
@@ -4853,6 +5649,139 @@ const knowledgeCases = [
   {"id":"head-gasket-hydro-lock","title":"Wydmuchana uszczelka pod głowicą LC — płyn chłodniczy w cylindrze, zablokowany wał (hydro-lock)","tags":"uszczelka głowicy płyn chłodniczy hydro-lock zablokowany rozrusznik nie kręci biały dym","category":"Silnik / chłodzenie","evidence":"confirmed","related":["coolant-loss","compression-low"],"areas":[["Objaw zablokowania obrotu","Rozrusznik po nocy robi pół obrotu i staje z głuchym uderzeniem, kopniak jest twardy jak zaspawany. Po wykręceniu świecy z otworu tryska fontanna płynu chłodniczego, a wał natychmiast zaczyna obracać się lekko."],["Zjawisko hydro-locka","Ciecz jest nieściśliwa. Gdy przez uszkodzoną uszczelkę płyn chłodniczy napełni komorę spalania na postoju, tłok idący w górę zapiera się o słup wody, co grozi wygięciem korbowodu przy próbach odpalania na siłę!"],["Dodatkowe objawy podczas pracy","Potężne kłęby gęstego, słodko pachnącego białego dymu z rury wydechowej oraz wyrzucanie płynu przez korek zbiorniczka wyrównawczego pod wpływem ciśnienia sprężania."],["Naprawa","Wymiana uszczelki głowicy oraz obowiązkowe splanowanie przylgni głowicy na płycie traserskiej z papierem ściernym."]]},
   {"id":"clogged-tank-vent-vacuum","title":"Zatkane odpowietrzenie korka wlewu paliwa — silnik gaśnie po 2 km, głośny syk przy otwieraniu baku","tags":"odpowietrzenie korek paliwa podciśnienie w baku gaśnie po 2 km syk kranik","category":"Paliwo i gaźnik","evidence":"confirmed","related":["fuel-starvation","fuel-starvation-high-rpm"],"areas":[["Charakterystyczny objaw dystansu","Pojazd rusza z pełną mocą, jedzie idealnie przez około 1.5–3 km, po czym zaczyna słabnąć, dławić się i gaśnie. Po 5 minutach postoju znów odpala na dotyk i gaśnie po kolejnych 2 kilometrach."],["Zjawisko próżni w zbiorniku","W miarę zużywania benzyny w szczelnym zbiorniku bez odpowietrzenia powstaje podciśnienie. Gdy siła podciśnienia zrówna się z ciśnieniem hydrostatycznym słupa paliwa, benzyna przestaje spływać do gaźnika mimo pełnego baku."],["Błyskawiczny test diagnostyczny","W chwili gdy silnik zgaśnie na trasie, natychmiast otwórz korek wlewu paliwa. Jeśli usłyszysz głośny, wyraźny syk zasysanego powietrza (jak przy otwieraniu puszki kawy próżniowej), a silnik po zakręceniu od razu zapali — diagnoza jest w 100% pewna."],["Rozwiązanie","Udrożnij zaworek labiryntowy w korku wlewu paliwa lub przedmuchaj gumowy wężyk odpowietrzenia biegnący pod owiewkami."]]},
   {"id":"killswitch_safety_diode","title":"Dioda logiczna obwodu rozruchu uszkodzona — rozrusznik kręci tylko na biegu","tags":"dioda instalacja neutral luz klamka stacyjka zabezpieczenie","areas":[["Rola diody separującej w instalacji","W skuterach i motocyklach z manualną skrzynią (np. TZR, RS, Senda) w wiązce elektrycznej znajduje się mała dioda prostownicza (Interlock Diode) w obudowie bezpiecznika lub pod taśmą wiązki. Oddziela ona obwód czujnika biegu jałowego (luz N), czujnika sprzęgła i stopki bocznej, aby masa z jednego czujnika nie wracała na inne kontrolki."],["Dziwne zachowanie instalacji","Gdy dioda ulegnie przebiciu (zwarcie w obie strony) lub przepaleniu: rozrusznik kręci tylko przy wciśniętym sprzęgle mimo wrzuconego luzu, kontrolka luzu żarzy się przy wciskaniu sprzęgła lub silnik gaśnie po wrzuceniu jedynki mimo złożonej stopki bocznej."],["Test multimetrem","Znajdź diodę blokad w skrzynce bezpieczników lub przy module. Przełącz multimetr w tryb testu diody. W jednym kierunku miernik powinien pokazać spadek napięcia 0.5–0.7 V, a po odwróceniu sond nieskończoność (OL). Jakikolwiek inny wynik (0.00 V zwarcie lub OL w obie strony) oznacza uszkodzenie diody."]]}
+,
+{
+    id: "ground_strap_voltage_drop",
+    title: "Spadek napięcia na głównej masie silnika — rozrusznik wolno kręci, żarzenie kontrolek, zaniki iskry",
+    tags: "masa plecionka karter spadek napiecia rozrusznik ladowanie multimetr akumulator przewod ujemny",
+    areas: [
+      ["Objawy w warsztacie", "Rozrusznik kręci ciężko i powoli, jakby akumulator był rozładowany, mimo że na klemach jest 12.8 V. Podczas próby rozruchu kontrolki na liczniku przygasają prawie do zera, a przewód ssania lub linka gazu robi się gorąca (prąd rozruchowy 40A szuka alternatywnej drogi masowej przez pancerz linki!)."],
+      ["Przyczyna usterki", "Silnik skutera zawieszony jest na gumowych tulejach (silentblockach), które izolują go elektrycznie od ramy. Jedynym połączeniem masowym jest przewód oczkowy lub miedziana plecionka przykręcona do karteru. Wypłukanie smaru, sól drogowa i korozja śruby powodują oporność styku rzędu 0.5–2 Ω, co przy prądzie rozruchu generuje spadek nawet 8–10 V!"],
+      ["Procedura pomiaru multimetrem (Test spadku napięcia)", "Ustaw multimetr na zakres 20 V DC. Czarną sondę przyłóż do ujemnego bieguna akumulatora, a czerwoną bezpośrednio do czystego metalu bloku silnika (np. śruba pokrywy wariatora). Wciśnij przycisk rozrusznika. Odczyt: spadek napięcia podczas kręcenia nie może przekraczać 0.20–0.30 V. Jeśli miernik wskazuje 1.5 V, 3.0 V lub więcej — masa silnika jest skorodowana lub urwana."],
+      ["Rozwiązanie", "Odkręć kabel masowy, przeszlifuj oczko i gniazdo w karterze papierem ściernym do czystego aluminium, przesmaruj wazeliną techniczną lub smarem miedzianym i mocno dokręć. Najlepsza praktyka warsztatowa: dołożenie dodatkowego przewodu masowego 4–6 mm² bezpośrednio z minusa akumulatora pod śrubę rozrusznika."]
+    ]
+  },
+  {
+    id: "cv_carb_membrane_pinhole",
+    title: "Mikropęknięcie membrany podciśnieniowej w gaźniku CV — brak wkręcania się na obroty, dławienie powyżej 40 km/h",
+    tags: "gaznik cv membrana podcisnienie przepustnica dlawienie 4t gy6 iglica guma spadek mocy",
+    areas: [
+      ["Objawy w warsztacie", "Silnik odpala idealnie na dotyk i pracuje równo na biegu jałowym. Reaguje na lekkie dodanie gazu, ale po otwarciu manetki powyżej 1/3 zaczyna buczeć basowym dźwiękiem z filtra powietrza, dławi się i nie przekracza 40–50 km/h."],
+      ["Mechanizm działania gaźnika CV", "W gaźnikach stałopodciśnieniowych (Constant Velocity - Keihin CVK, chińskie GY6 4T) linka gazu otwiera tylko przepustnicę motylkową. Główna przepustnica tłoczkowa z iglicą unosi się pod wpływem podciśnienia wytwarzanego nad gumową membraną. Gdy w gumie pojawi się mikrodziurka o średnicy 0.5 mm, podciśnienie ucieka i tłoczek z iglicą nie podnosi się w górę, nie dawkując paliwa z dyszy głównej."],
+      ["Weryfikacja uszkodzenia", "Odkręć górny czarny/metalowy dekielek gaźnika (uważaj na sprężynę powrotną). Wyjmij membranę z tłoczkiem. Rozciągnij delikatnie gumę palcami i obejrzyj ją pod mocne światło lampy warsztatowej. Szukaj pęknięć w załamaniach fałdy. Drugi test: wsuń tłoczek palcem do góry i zatkaj palcem górny otwór podciśnieniowy na wlocie gaźnika — sprawny tłoczek powinien opadać powoli z oporem poduszki powietrznej."],
+      ["Rozwiązanie", "Wymiana membrany na nową (koszt 15–25 zł). Upewnij się, że występ ustalający (języczek) membrany idealnie leży w rowku korpusu gaźnika przed dokręceniem dekielka — przycięcie rantu to najczęstszy błąd montażowy."]
+    ]
+  },
+  {
+    id: "variator_sliders_wear",
+    title: "Zużycie ślizgów wariatora (trójkątów) — szarpanie przy ruszaniu, metaliczne dzwonienie na wolnych obrotach",
+    tags: "slizgi wariator cvt trojkaty dzwonienie naped pasek szarpanie luz plytka dociskowa",
+    areas: [
+      ["Objawy usterki", "Metaliczny grzechot lub stukanie dochodzące z przedniej części pokrywy napędu na wolnych obrotach, które natychmiast cichnie po dodaniu gazu. Przy ruszaniu z miejsca wyczuwalne szarpnięcie lub skokowa zmiana przełożenia."],
+      ["Przyczyna", "Trzy plastikowe ślizgi (prowadnice trójkątne) stabilizują stalową płytkę dociskową wariatora na aluminiowych prowadnicach korpusu. Po przebiegu 5000–8000 km plastik wyciera się, tworząc luz roboczy. Płytka zaczyna dzwonić o krawędzie wariatora, a pod obciążeniem kosi się i zacina, blokując płynny ruch rolek."],
+      ["Weryfikacja", "Zdejmij pokrywę napędu. Chwyć dłonią za wariator i spróbuj obrócić płytkę dociskową względem korpusu wariatora. Luz obrotowy nie powinien przekraczać 0.2 mm. Jeśli płytka klekocze o 1–2 mm, ślizgi są do natychmiastowej wymiany. Zignorowanie problemu prowadzi do wyfrezowania aluminiowych słupków wariatora i zniszczenia całego podzespołu."],
+      ["Rozwiązanie", "Wymiana kompletu 3 ślizgów (koszt 8–15 zł). Przy montażu nie stosować żadnego smaru (wariator pracuje na sucho, smar przyciąga pył z paska tworząc pastę ścierną)."]
+    ]
+  },
+  {
+    id: "reed_valve_petal_frayed_2t",
+    title: "Wyszczerbiony lub nieszczelny zawór membranowy w 2T — plucie paliwem do filtra, problem z wolnymi obrotami",
+    tags: "zawor membranowy membrana 2t reed valve listki karbon plytki plucie filtrem minarelli piaggio",
+    areas: [
+      ["Objawy w warsztacie", "Silnik 2T (Minarelli, Piaggio, Peugeot) ma ogromne problemy z rozruchem, zwłaszcza po krótkim postoju. Z wlotu gaźnika cofa się mgła paliwowa, która zalewa wkład filtra powietrza czarną mieszanką benzyny z olejem. Brak stabilnych obrotów jałowych — silnik albo gaśnie, albo wymaga wkręcenia śruby obrotów do oporu."],
+      ["Przyczyna", "Zawór membranowy (zawór płytkowy) pełni rolę jednokierunkowego zaworu ssącego silnika dwusuwowego. Wskutek zmęczenia materiału płytki (stalowe, z włókna szklanego lub karbonowe) odkształcają się, pękają na krawędzi lub tracą sprężystość, pozostawiając szczelinę 0.2–0.5 mm w stanie spoczynku. Podczas ruchu tłoka w dół sprężana w karterze mieszanka cofa się z powrotem przez gaźnik do filtra."],
+      ["Test szczelności zaworu", "Zdemontuj króciec i wyjmij zawór membranowy. Spójrz przez niego pod mocne światło lampy — między płytkami a gumowanym korpusem nie może być ANI JEDNEJ szczeliny świetlnej! Drugi test: przyłóż usta do wlotu zaworu i zaciągnij powietrze — zawór powinien natychmiast się przyssać i utrzymać podciśnienie."],
+      ["Naprawa", "Wymiana płytek membranowych (karbonowe Stage6/Malossi 0.30 lub 0.35 mm dla serii i sportu). Obrócenie wygiętej płytki na drugą stronę to patent wyłącznie na awaryjny dojazd, gdyż odwrócone naprężenia doprowadzą do jej odłamania i wpadnięcia fragmentu pod tłok."]
+    ]
+  },
+  {
+    id: "starter_bendix_clutch_jammed",
+    title: "Zacięty lub wyrobiony bendix rozrusznika — rozrusznik wyje z dużą prędkością, ale silnik nie obraca się",
+    tags: "bendix rozrusznik wieniec sprzeglo rozrusznika zabki krecenie slizganie gy6 minarelli",
+    areas: [
+      ["Objawy usterki", "Po wciśnięciu przycisku START słychać głośny, wysoki świst silnika elektrycznego rozrusznika, ale wał korbowy nie wykonuje ani jednego obrotu. Czasami bendix zazębia dopiero po 3–4 próbach z głośnym metalicznym zgrzytem."],
+      ["Zasada działania i usterka", "Bendix rozrusznika (zespół sprzęgający) działa bezwładnościowo: spiralny wielowypust pod wpływem nagłego obrotu wirnika wyrzuca zębatkę w stronę wieńca zębatego wariatora. Wewnątrz znajduje się sprzęgło jednokierunkowe rolkowe chroniące rozrusznik przed obrotami odpalanego silnika. Nagromadzony pył ze startego paska napędowego miesza się ze smarem, tworząc gęstą maź blokującą wyrzut zębatki na osi."],
+      ["Diagnostyka w warsztacie", "Zdejmij pokrywę napędu. Wyjmij bendix i sprawdź ręką, czy zębatka wysuwa się płynnie i bez zacięć po energicznym skręceniu palcami. Następnie chwyć za małą zębatkę kombinerkami: w jedną stronę powinna obracać się ze stałym oporem, a w drugą blokować na sztywno bez najmniejszego uślizgu. Jeśli ślizga się w obie strony — rolki wewnętrznego sprzęgła jednokierunkowego są zatarte lub popękały ich sprężynki."],
+      ["Rozwiązanie", "Umyj bendix w nafcie lub zmywaczu, a oś nasmaruj KROPLĄ rzadkiego oleju maszynowego (nigdy gęstym smarem stałym!). W przypadku wyrobienia sprzęgła jednokierunkowego — wymiana bendixu na nowy (koszt 25–45 zł)."]
+    ]
+  },
+  {
+    id: "water_pump_mechanical_seal_leak",
+    title: "Uszkodzenie uszczelniacza mechanicznego pompy wody — płyn chłodzący w oleju przekładniowym ('masło')",
+    tags: "pompa wody uszczelniacz simmering maslo pod korkiem plyn chlodniczy chlodzenie lc piaggio aerox",
+    areas: [
+      ["Objawy w warsztacie", "Ubytek płynu chłodniczego ze zbiorniczka wyrównawczego bez widocznych wycieków zewnętrznych pod silnikiem. Po odkręceniu korka wlewu oleju przekładniowego (lub silnikowego w 4T) widać biało-szarą emulsję przypominającą majonez/masło. Pienienie się oleju."],
+      ["Przyczyna", "Pompa wody w silnikach LC (np. Minarelli LC, Piaggio 2T/4T LC) uszczelniona jest za pomocą ceramiczno-węglowego uszczelniacza mechanicznego (Mechanical Seal). Po przegrzaniu, jeździe na czystej wodzie z kranu (kamień kotłowy) lub zużyciu łożysk wałka pompy, ceramiczne pierścienie ślizgowe pękają, a płyn pod ciśnieniem 1.0 bara przedostaje się wzdłuż wałka wprost do karteru."],
+      ["Procedura weryfikacji", "Większość karterów posiada mały otworek drenażowy (Weep Hole) pod pompą wody. Jeśli z otworka sączy się płyn chłodniczy lub wiszą niebieskie/zielone kryształki wyschniętego glikolu — uszczelniacz mechaniczny jest nieszczelny."],
+      ["Rozwiązanie", "Wymiana kompletnego zestawu naprawczego pompy wody (wałek, łożyska, uszczelniacz mechaniczny). Do wciskania uszczelniacza ceramicznego BEZWZGLĘDNIE używać dedykowanej tulei montażowej opierającej się wyłącznie o metalowy kołnierz — uderzenie w grafitową przylgnię natychmiast ją kruszy! Płukanie skrzyni świeżym olejem."]
+    ]
+  },
+  {
+    id: "pickup_coil_gap_fault",
+    title: "Zbyt duża szczelina impulsatora zapłonu — silnik pali tylko z kopnika, brak iskry z rozrusznika",
+    tags: "impulsator pickup szczelina stator iskrownik cewka iskra czujnik polozenia walu cdi",
+    areas: [
+      ["Objawy", "Silnik odpala z kopniaka za 1–2 razem z energicznego kopnięcia, ale kręcąc rozrusznikiem elektrycznym nie ma ani jednej iskry lub iskra pojawia się sporadycznie dopiero w chwili puszczenia przycisku rozrusznika."],
+      ["Fizyka zjawiska", "Impulsator (Pick-up coil) jest czujnikiem reluktancyjnym generującym impuls napięcia zmiennego w chwili przejścia wypustki na kole magnesowym. Napięcie generowane przez impulsator zależy wprost proporcjonalnie od prędkości obrotowej i odległości czujnika od wypustki. Przy rozruchu z rozrusznika wał kręci się wolno (ok. 350–450 rpm). Gdy szczelina jest zbyt duża (>0.8 mm), wygenerowany impuls ma zaledwie 0.3 V — moduł CDI go nie wykrywa. Kopniak daje chwilowo 800 rpm i wyższy impuls 1.2 V, dlatego odpala."],
+      ["Pomiar szczelinomierzem", "Zdejmij osłonę magneta. Obróć wał tak, by metalowy wypust (znacznik) koła magnesowego znalazł się dokładnie naprzeciw rdzenia impulsatora. Wsuń niemagnetyczny szczelinomierz listkowy. Prawidłowa szczelina: 0.35–0.50 mm. Jeśli szczelina wynosi 0.9–1.2 mm, impulsator jest odsunięty."],
+      ["Korekta", "Poluzuj 2 śrubki mocujące czujnik impulsatora i delikatnie dopchnij go do wypustki koła opierając na listku szczelinomierza 0.40 mm, po czym dokręć śruby. Silnik zaczyna palić z rozrusznika od pierwszego dotknięcia!"]
+    ]
+  },
+  {
+    id: "fuel_needle_valve_stuck_overflow",
+    title: "Zacięty zaworek iglicowy pływaka — wyciek benzyny wężykiem przelewowym lub zalewanie silnika",
+    tags: "zaworek iglicowy plywak przelanie benzyna gaznik rurka przelewowa gniazdo poziom paliwa",
+    areas: [
+      ["Objawy w warsztacie", "Kałuża benzyny pod pojazdem po kilku minutach od zgaszenia silnika (paliwo kapie ciągłym strumieniem z dolnego wężyka przelewowego komory pływakowej). W pojazdach z automatycznym kranikiem podciśnieniowym: zalany cylinder benzyną, silnik zablokowany hydraulicznie (nie można przekręcić wału rozrusznikiem ani kopnikiem)."],
+      ["Przyczyna", "Pływak gaźnika unosi się wraz z poziomem paliwa i za pośrednictwem małego zaworka iglicowego z gumowym stożkiem (Viton) zamyka dopływ benzyny z baku. Zacięcie następuje wskutek: 1. Ziarenka piasku lub rdzy ze zbiornika, które wpadło w gniazdo zaworka, 2. Odkształcenia gumowego stożka iglicy (rowek wytarty od drgań), 3. Rozszczelnienia plastikowego pływaka (paliwo wlewa się do środka pływaka i tonie na dnie komory)."],
+      ["Test szczelności iglicy", "Zdejmij komorę pływakową gaźnika. Obróć gaźnik do góry nogami — pływak opadnie pod własnym ciężarem, dociskając zaworek iglicowy. Załóż czysty wężyk na króciec paliwowy i dmuchnij ustami. Powinieneś poczuć całkowity opór (100% szczelności). Jeśli powietrze ucieka z sykiem — iglica lub gniazdo nie trzyma."],
+      ["Naprawa", "Przedmuchaj gniazdo zmywaczem do gaźników. Wymień zaworek iglicowy na nowy. Obowiązkowo załóż przelotowy filtr paliwa z papierowym wkładem przed gaźnikiem."]
+    ]
+  },
+  {
+    id: "secondary_air_pair_sas_valve",
+    title: "Nieszczelny zawór dopalacza spalin (SAS / PAIR) — głośne strzały w wydech przy puszczaniu manetki",
+    tags: "sas pair dopalacz spalin strzaly wydech podcisnienie zawor odciecia deceleracja euro2 euro3",
+    areas: [
+      ["Objawy", "Silnik pracuje normalnie podczas przyspieszania, ale przy każdym gwałtownym puszczeniu gazu z wydechu dochodzą głośne, pojedyncze lub seryjne wystrzały (jak z pistoletu), a końcówka wydechu nagrzewa się do czerwoności."],
+      ["Zasada działania SAS/PAIR", "Układ Secondary Air System (SAS / PAIR) wdmuchuje świeże powietrze z filtra do kanału wydechowego głowicy, aby dopalić niespalone węglowodory (HC) pod kątem norm emisji spalin. W momencie gwałtownego hamowania silnikiem podciśnienie w dolocie powinno ZAMKNĄĆ membranowy zawór odcięcia powietrza (Air Cut-off Valve). Gdy sparciała membrana pęknie, świeże powietrze jest zasysane do wydechu w sposób ciągły. Wzbogacona mieszanka przy puszczeniu gazu w kontakcie z tlenem gwałtownie eksploduje w kolanku wydechu."],
+      ["Weryfikacja", "Zaciśnij szczypcami zaciskowymi (lub zagnij) gumowy przewód doprowadzający powietrze z filtra do zaworu SAS na głowicy i wykonaj jazdę próbną. Jeśli strzały w wydech natychmiast ustały — przyczyną jest uszkodzony zawór SAS."],
+      ["Rozwiązanie", "Wymiana zaworu odcinającego lub w zastosowaniach sportowych/garażowych: zaślepienie króćca w głowicy dedykowaną aluminiową płytką zaślepiającą (tzw. SAS Block-Off Plate) oraz zaślepienie króćca w filtrze powietrza."]
+    ]
+  },
+  {
+    id: "efi_engine_temp_sensor_ect",
+    title: "Uszkodzenie czujnika temperatury silnika ECT w układzie wtryskowym — trudny rozruch na zimno, błąd FI",
+    tags: "ect czujnik temperatury wtrysk efi check engine mil blink kod opornosc ntc honda pcx piaggio iget",
+    areas: [
+      ["Objawy w warsztacie", "Skuter z wtryskiem paliwa (np. Honda PCX, Piaggio i-Get, chińskie EFI Delphi/Rongmao) bardzo ciężko odpala po nocy na zimno, zalewa świecę benzyną lub po odpaleniu natychmiast gaśnie z powodu braku ssania. Po rozgrzaniu silnik chodzi poprawnie. Kontrolka Check Engine (MIL) mruga kod błędu lub pali się stale."],
+      ["Działanie czujnika ECT", "Czujnik temperatury silnika/cieczy (Engine Coolant Temperature) jest termistorem NTC (Negative Temperature Coefficient) — jego rezystancja maleje wraz ze wzrostem temperatury. Gdy czujnik zawiesi się na stałej wartości np. 80°C (zwarcie wewnętrzne), sterownik ECU myśli, że silnik jest gorący i nie zwiększa dawki rozruchowej ani kąta wyprzedzenia zapłonu na zimno."],
+      ["Pomiary multimetrem (Tabela oporności)", "Odłącz 2-pinową wtyczkę czujnika wkręconego w cylinder lub głowicę. Zmierz oporność między pinami czujnika: przy 20°C (zimny silnik) rezystancja powinna wynosić 2.0–3.0 kΩ. Podgrzej końcówkę czujnika gorącą wodą (80°C) — oporność powinna płynnie spaść do 200–400 Ω. Jeśli miernik wskazuje 0 Ω (zwarcie) lub nieskończoność OL (przerwa) — czujnik jest uszkodzony."],
+      ["Rozwiązanie", "Wymiana czujnika ECT na nowy (gwint M10 lub M12 z podkładką miedzianą, moment 12 Nm). Po wymianie skasować kody usterek w sterowniku ECU."]
+    ]
+  },
+  {
+    id: "exhaust_stud_broken_in_cylinder",
+    title: "Urwana szpilka wydechu w cylindrze — nieszczelność wydechu, głośny ryk i procedura bezpiecznego wykręcenia",
+    tags: "szpilka wydech cylinder gwint urwana szpilka wykretak m6 m7 spawanie karter",
+    areas: [
+      ["Objawy i problem", "Podczas odkręcania zardzewiałej nakrętki wydechu szpilka M6 pęka przy samej płaszczyźnie cylindra żeliwnego lub aluminiowego. Tłumik wisi na jednej szpilce, spaliny ryczą pod podłogą, a silnik traci kompresję wydechową."],
+      ["Dlaczego szpilki się urywają", "Wysoka temperatura gazów spalinowych (do 600°C) oraz woda z solą drogową powodują zapieczenie stali w aluminium (zjawisko korozji galwanicznej). Próba odkręcenia na sucho bez udaru niemal zawsze ścina gwint."],
+      ["Sprawdzona procedura warsztatowa", "1. Wariant z wystającym fragmentem (min. 3 mm): Nałóż nakrętkę M8 na wystający kikut szpilki M6 i zalej spawarką MIG/MAG przez otwór nakrętki. Ciepło spawania (czerwony żar) natychmiast odpręża zapieczony gwint! Po ostygnięciu do 100°C wykręć kluczem. 2. Wariant ucięty na gładko w cylindrze: Wypunktuj idealny środek szpilki punktakiem. Rozwierć wiertłem lewoskrętnym 3.2 mm (często podczas wiercenia w lewo szpilka sama się wykręca). Wbij bit Torx T20 lub użyj wykrętaka stożkowego."],
+      ["Zabezpieczenie na przyszłość", "Wkręć nową szpilkę ze stali nierdzewnej lub miedziowaną na obfitej ilości smaru ceramicznego lub miedzianego (odpornego do 1100°C). Nakrętki stosować wyłącznie mosiężne kołpakowe M6 — mosiądz nigdy nie zapiecze się na stalowej szpilce!"]
+    ]
+  },
+  {
+    id: "stator_charging_phase_grounded",
+    title: "Zwarcie jednej fazy stojana alternatora do masy — akumulator rozładowuje się po 2 dniach jazdy",
+    tags: "stator alternator ladowanie cewki trjfazowy regulator napiecia opornosc faz miernik ladowania",
+    areas: [
+      ["Objawy w warsztacie", "Nowy akumulator po naładowaniu prostownikiem kręci jak szalony, ale po 2–3 dniach dojazdów do pracy pada do zera. Napięcie ładowania na zaciskach akumulatora przy 5000 rpm wynosi 12.6–12.9 V zamiast prawidłowych 14.2–14.6 V."],
+      ["Przyczyna", "W układach trójfazowych (statory 8, 11 i 12-cewkowe z trzema żółtymi przewodami) napięcie generowane jest między fazami w układzie gwiazdy lub trójkąta. Żadne uzwojenie stojana roboczego nie może mieć kontaktu z masą (karterem!). Wskutek wibracji i temperatury lakier izolacyjny na jednym z karkasów przeciera się i dotyka żelaznego rdzenia stojana. Powoduje to zwarcie jednej trzeciej mocy prądnicy i przegrzewanie regulatora napięcia."],
+      ["Procedura pomiaru multimetrem (Test faz stojana)", "1. Rozepnij 3-pinową kostkę z trzema żółtymi kablami ze stojana. 2. Ustaw multimetr na test ciągłości obwodu / omomierz. 3. Zmierz oporność między każdą parą kabli (1-2, 2-3, 1-3) — powinna być równa i wynosić 0.4–1.2 Ω. 4. KLUCZOWY TEST: Czarną sondę przyłóż do masy silnika, a czerwoną do każdego z trzech żółtych pinów po kolei. Miernik musi pokazać stan rozwarcia / nieskończoność (OL). Jeśli na którymkolwiek kablu miernik zapiszczy lub pokaże opór poniżej 100 kΩ — stojan ma przebicie fazy do masy i nadaje się do wymiany."],
+      ["Rozwiązanie", "Wymiana statora alternatora. Sprawdzenie stanu regulatora napięcia (często ulega przebiciu dioda w mostku prostowniczym)."]
+    ]
+  }
 ];
 const KNOW_LINKS={'fuel-pump-strainer-efi':['schematics',''],'valve-stem-seals-4t':['engine','4T'],'spark-plug-cap-puncture':['wiring','2T'],'manifold-false-air-leak':['engine','2T'],'cooling-airlock-bleed-lc':['fluids','4T'],'starter-bendix-grind':['engine','CVT'],'clutch-pads-glazed-cvt':['engine','CVT'],'clutch-shoe-spring-broken':['engine','CVT'],'drive-chain-shark-teeth':['diag',''],'vacuum-petcock-fuel-in-oil':['fluids','4T'],'wheel-bearing-hub-play':['diag',''],'stator-charge-coil-ground-short':['schematics',''],'throttle-cable-frayed-sticking':['diagFlow',''],'head-gasket-hydro-lock':['fluids','4T'],'clogged-tank-vent-vacuum':['diagFlow',''],revs_no_speed:['engine','CVT'],vibration_noise:['engine','CVT'],belt_break:['engine','CVT'],charging:['schematics',''],low_power:['engine','CVT'],'cvt-no-engage':['engine','CVT'],'clutch-bell-blue':['engine','CVT'],'variator-flatspots':['engine','CVT'],'two-stroke-seizure':['engine','2T'],'two-stroke-air-leak':['engine','2T'],'intake-high-idle':['engine','2T'],'four-stroke-valves':['engine','4T'],'oil-smoke':['engine','4T'],'vibration-rpm':['engine','4T'],'gear-jumps':['engine','4T'],'clutch-drag':['engine','4T'],stall_hot:['wiring','2T'],no_start:['wiring','2T'],'weak-spark':['wiring','2T'],'intermittent-lights':['wiring','2T'],'intake-backfire':['wiring','4T'],'exhaust-backfire':['wiring','4T'],'starter-spins':['wiring','4T'],'starter-stays':['wiring','4T'],'battery-drain':['wiring','4T'],overcharge:['wiring','4T'],'fan-not-working':['wiring','4T'],'coolant-loss':['fluids','4T'],'auto-choke-ptc-fault':['schematics',''],'vacuum-petcock-diaphragm':['diagFlow',''],'cvk-diaphragm-tear':['engine','4T'],'torque-driver-grooves':['engine','CVT'],'cvt-clutch-bearing-noise':['engine','CVT'],'final-drive-seal-leak':['fluids','CVT'],'crankcase-breather-oil':['fluids','4T'],'timing-chain-tensioner-4t':['engine','4T'],'burnt-exhaust-valve-4t':['engine','4T'],'exhaust-clogged-carbon-2t':['engine','2T'],'reed-valve-petals-2t':['engine','2T'],'crankshaft-bearings-play':['engine','2T'],'flywheel-woodruff-key':['wiring','2T'],'ignition-switch-short-rain':['schematics',''],'sidestand-switch-cutout':['schematics',''],'ballast-resistor-ac-lights':['schematics',''],'seized-variator-rear-spline':['engine','CVT'],'speedometer-drive-vss':['schematics',''],'warped-brake-disc-pulsing':['diag',''],'gearbox-oil-emulsion':['fluids','CVT'],'decompressor-4t-hot-crank':['engine','4T'],'kickstarter-ratchet-jam':['engine','CVT'],'oil-pump-2t-air-bubble':['fluids','2T'],'lean-angle-sensor-no-start':['wiring','4T'],'flasher-relay-led-hyperflash':['schematics','']};
 const KNOW_CATEGORY_BY_ID={'fuel-pump-strainer-efi':'Wtrysk paliwa EFI','valve-stem-seals-4t':'Silnik 4T','spark-plug-cap-puncture':'Elektryka i zapłon','manifold-false-air-leak':'Paliwo i gaźnik','cooling-airlock-bleed-lc':'Chłodzenie','starter-bendix-grind':'Elektryka i rozruch','clutch-pads-glazed-cvt':'CVT i napęd','clutch-shoe-spring-broken':'CVT i napęd','drive-chain-shark-teeth':'Napęd łańcuchowy','vacuum-petcock-fuel-in-oil':'Paliwo i gaźnik','wheel-bearing-hub-play':'Podwozie i hamulce','stator-charge-coil-ground-short':'Elektryka i ładowanie','throttle-cable-frayed-sticking':'Paliwo i gaźnik','head-gasket-hydro-lock':'Silnik / chłodzenie','clogged-tank-vent-vacuum':'Paliwo i gaźnik',revs_no_speed:'CVT i napęd',low_power:'Diagnostyka ogólna',stall_hot:'Rozruch i zapłon',no_start:'Rozruch i zapłon',vibration_noise:'CVT i napęd',charging:'Elektryka i ładowanie',belt_break:'CVT i napęd','two-stroke-seizure':'Silnik 2T','two-stroke-air-leak':'Silnik 2T','four-stroke-valves':'Silnik 4T','fuel-overflow':'Paliwo i gaźnik','fuel-starvation':'Paliwo i gaźnik','intake-backfire':'Silnik / spalanie','exhaust-backfire':'Silnik / spalanie','starter-spins':'Elektryka i rozruch','starter-stays':'Elektryka i rozruch','battery-drain':'Elektryka i ładowanie',overcharge:'Elektryka i ładowanie', 'intermittent-lights':'Elektryka i ładowanie','weak-spark':'Rozruch i zapłon','oil-smoke':'Silnik 4T','coolant-loss':'Chłodzenie','fan-not-working':'Chłodzenie','brakes-pull':'Podwozie i hamulce','brake-soft':'Podwozie i hamulce','chain-noise':'Napęd łańcuchowy','clutch-drag':'Sprzęgło i skrzynia','gear-jumps':'Sprzęgło i skrzynia','wheel-bearing':'Podwozie i hamulce','fork-leak':'Podwozie i hamulce','steering-head':'Podwozie i hamulce','tire-pressure':'Podwozie i hamulce','vibration-rpm':'Silnik / wibracje','clutch-bell-blue':'CVT i napęd','variator-flatspots':'CVT i napęd','cvt-no-engage':'CVT i napęd','intake-high-idle':'Silnik 2T','carb-overflow-detailed':'Paliwo i gaźnik','carb-bogging':'Paliwo i gaźnik',"charging-no-rise":"Elektryka i ładowanie","charging-overvoltage":"Elektryka i ładowanie","starter-clicks":"Elektryka i rozruch","starter-spins-no-crank":"Elektryka i rozruch","carb-fuel-overflow":"Paliwo i gaźnik","fuel-starvation-high-rpm":"Paliwo i gaźnik","idle-hangs-two-stroke":"Silnik 2T","two-stroke-overheat":"Silnik 2T","four-stroke-hard-start-valves":"Silnik 4T","lights-intermittent":"Elektryka i ładowanie","spark-intermittent-bumps":"Elektryka i zapłon","rear-wheel-binding":"CVT i napęd","brake-overheating":"Hamulce i bezpieczeństwo","coolant-overheating":"Chłodzenie","oil-leak-crankcase":"Smarowanie","fuel-smell-leak":"Paliwo i bezpieczeństwo","efi-idle-surge":"Paliwo i sterowanie","engine-noise-sudden":"Diagnostyka ogólna","compression-low":"Diagnostyka ogólna","engine-dies-after-wash":"Elektryka i zapłon"};
@@ -6704,7 +7633,7 @@ function zoomPhoto(dataUrl){
 
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
-const CURRENT_APP_VERSION = "5.28.0";
+const CURRENT_APP_VERSION = "5.29.0";
 const CURRENT_APP_BUILD = 1730572000000;
 let isAppUpdateAvailable = false;
 let initialAppETag = null;

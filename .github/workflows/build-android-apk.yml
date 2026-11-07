@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - fix/mobile-admin-access-capacitor-apk-20261026
+      - feature/homepage-6-modules-redesign
   pull_request:
     branches:
       - main
