@@ -47,6 +47,8 @@ const requiredFiles = [
   "billing.js",
   "katalog-techniczny.js",
   "druciarstwo.js",
+  "motocykle-multi-data.js",
+  "motocykle-multi.js",
   "sw.js",
   "manifest.webmanifest"
 ];
@@ -102,9 +104,8 @@ mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
 
 // The native bridge must be available on first launch, including when offline.
-// In addition, when online, the native Service Worker transparently syncs the latest
-// index.html, billing.js, katalog-techniczny.js and assets from the live GitHub Pages
-// deployment so any change to the Web app immediately updates the installed APK too.
+// The APK is completely isolated from the production Web PWA and uses only local
+// pre-packaged assets in www, ensuring 100% reliable offline operation with zero remote OTA fetching.
 const mobileSwPath = path.join(webDir, "sw.js");
 let mobileSw = await readFile(mobileSwPath, "utf8");
 const sourceCacheMatch = mobileSw.match(/^const CACHE='(naprawnik-v5-\d+)';$/m);
@@ -114,81 +115,72 @@ if (!sourceCacheMatch || mobileSw.match(/^const CACHE=/gm)?.length !== 1) {
 const nativeCacheName = sourceCacheMatch[1] + "-native";
 
 const nativeSwContent = `const CACHE='${nativeCacheName}';
-const WEB_LIVE_BASE='https://turbodiesel966-eng.github.io/Aktualizacja-17.10';
-const PRECACHE=['./index.html','./native-bridge.js','./billing.js?v=17','./katalog-techniczny.js','./druciarstwo.js','./manifest.webmanifest','./assets/naprawnik-icon.svg','./assets/naprawnik-icon-192.svg','./assets/naprawnik-icon-512.svg','./assets/neon-tiles-art.jpg','./assets/workshop-bg.jpg','./assets/mod-clients.jpg','./assets/mod-orders.jpg','./assets/mod-diag.jpg','./assets/mod-electric.jpg','./assets/mod-tech.jpg','./assets/mod-tools.jpg'];
-function instrumentNativeHtml(html){
-  if(typeof html!=='string'||!html.includes('const APP_VERSION')||!html.includes('const MAIN_MODULES'))return null;
-  let out=html;
-  const navMarker='function nav(view, arg, restoreState){';
-  if(!out.includes('window.__naprawnikView')&&out.includes(navMarker)){
-    out=out.replace(navMarker,navMarker+'\\n  window.__naprawnikView = String(view || "home");');
-  }
-  if(!out.includes('./native-bridge.js')){
-    const idx=out.lastIndexOf('</body>');
-    if(idx>=0)out=out.slice(0,idx)+'  <script src="./native-bridge.js"></script>\\n'+out.slice(idx);
-  }
-  return out;
-}
-async function fetchLiveWithTimeout(url,ms){
-  const ctl=new AbortController();
-  const t=setTimeout(()=>ctl.abort(),ms||4000);
-  try{
-    return await fetch(url,{cache:'no-cache',mode:'cors',credentials:'omit',signal:ctl.signal});
-  }finally{
-    clearTimeout(t);
-  }
-}
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(PRECACHE)).then(()=>self.skipWaiting()));});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('naprawnik-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
-self.addEventListener('fetch',e=>{
-  const u=new URL(e.request.url);
-  if(e.request.method!=='GET'||u.origin!==location.origin||u.pathname.startsWith('/.netlify/'))return;
-  if(e.request.mode==='navigate'||u.pathname==='/'||u.pathname.endsWith('/index.html')){
-    e.respondWith((async()=>{
-      try{
-        const liveRes=await fetchLiveWithTimeout(WEB_LIVE_BASE+'/index.html?v='+Date.now(),4000);
-        if(liveRes&&liveRes.ok){
-          const rawHtml=await liveRes.text();
-          const patched=instrumentNativeHtml(rawHtml);
-          if(patched){
-            const resp=new Response(patched,{status:200,headers:{'Content-Type':'text/html;charset=utf-8'}});
-            const c=await caches.open(CACHE);
-            await c.put('./index.html',resp.clone());
-            return resp;
-          }
-        }
-      }catch(_){}
-      const cached=await caches.match('./index.html');
-      if(cached)return cached;
-      return fetch(e.request);
-    })());
+const PRECACHE=[
+  './index.html',
+  './native-bridge.js',
+  './billing.js?v=17',
+  './katalog-techniczny.js',
+  './druciarstwo.js',
+  './motocykle-multi-data.js',
+  './motocykle-multi.js',
+  './manifest.webmanifest',
+  './assets/naprawnik-icon.svg',
+  './assets/naprawnik-icon-192.svg',
+  './assets/naprawnik-icon-512.svg',
+  './assets/workshop-bg.jpg',
+  './assets/mod-clients.jpg',
+  './assets/mod-orders.jpg',
+  './assets/mod-diag.jpg',
+  './assets/mod-electric.jpg',
+  './assets/mod-tech.jpg',
+  './assets/mod-tools.jpg',
+  './assets/neon-tiles-art.jpg',
+  './assets/tile-hud.jpg',
+  './assets/tile-jetting.jpg',
+  './assets/tile-cvt.jpg',
+  './assets/tile-pinouts.jpg',
+  './assets/tile-squish.jpg',
+  './assets/tile-orders.jpg',
+  './assets/tile-druciarstwo.jpg'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(ks =>
+      Promise.all(
+        ks.filter(k => k.startsWith('naprawnik-') && k.endsWith('-native') && k !== CACHE)
+          .map(k => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.action === 'skipWaiting') self.skipWaiting();
+});
+
+self.addEventListener('fetch', e => {
+  const u = new URL(e.request.url);
+  if (e.request.method !== 'GET' || u.origin !== location.origin || u.pathname.startsWith('/.netlify/')) return;
+
+  if (e.request.mode === 'navigate' || u.pathname === '/' || u.pathname.endsWith('/index.html')) {
+    e.respondWith(
+      caches.match('./index.html').then(cached => cached || fetch(e.request))
+    );
     return;
   }
-  if(u.pathname.endsWith('/native-bridge.js')){
-    e.respondWith(caches.match('./native-bridge.js').then(r=>r||fetch(e.request)));
-    return;
-  }
-  if(['script','style','image','manifest'].includes(e.request.destination)){
-    e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request)));
-    return;
-  }
-  if(false){
-    e.respondWith((async()=>{
-      try{
-        const relPath=u.pathname.replace(/^\\/+/, '');
-        const liveUrl=WEB_LIVE_BASE+'/'+relPath+(u.search||'');
-        const liveRes=await fetchLiveWithTimeout(liveUrl,4000);
-        if(liveRes&&liveRes.ok){
-          const c=await caches.open(CACHE);
-          await c.put(e.request,liveRes.clone());
-          return liveRes;
-        }
-      }catch(_){}
-      const cached=await caches.match(e.request);
-      if(cached)return cached;
-      return fetch(e.request).then(r=>{if(r.ok){const cp=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cp));}return r;});
-    })());
-  }
+
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request))
+  );
 });
 `;
 
@@ -197,4 +189,4 @@ await writeFile(mobileSwPath, nativeSwContent, "utf8");
 const rawBridge = await readFile(path.join(root, "scripts", "native-bridge.js"), "utf8");
 const iifeBridge = "(function(){\nconst Capacitor = window.Capacitor || { isNativePlatform: () => false, Plugins: {} };\nconst { App, Browser, Filesystem, Share, StatusBar } = Capacitor.Plugins || {};\nconst Directory = { Cache: \"CACHE\" };\nconst Style = { Light: \"LIGHT\" };\n" + rawBridge.replace(/^import\s+.*$/gm, "") + "\n})();\n";
 await writeFile(path.join(webDir, "native-bridge.js"), iifeBridge, "utf8");
-console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge, live OTA web-sync and offline precache prepared.");
+console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge and isolated offline precache prepared.");

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify that a built Android APK contains the full NAPRAWNIK app and branding."""
+"""Verify that a built Android APK contains the full NAPRAWNIK app, multicylinder modules, offline assets and complete PWA isolation."""
 import re
 import struct
 import sys
@@ -17,6 +17,9 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/index.html",
         "assets/public/billing.js",
         "assets/public/katalog-techniczny.js",
+        "assets/public/druciarstwo.js",
+        "assets/public/motocykle-multi-data.js",
+        "assets/public/motocykle-multi.js",
         "assets/public/sw.js",
         "assets/public/manifest.webmanifest",
         "assets/public/native-bridge.js",
@@ -31,6 +34,13 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/assets/mod-tech.jpg",
         "assets/public/assets/mod-tools.jpg",
         "assets/public/assets/neon-tiles-art.jpg",
+        "assets/public/assets/tile-hud.jpg",
+        "assets/public/assets/tile-jetting.jpg",
+        "assets/public/assets/tile-cvt.jpg",
+        "assets/public/assets/tile-pinouts.jpg",
+        "assets/public/assets/tile-squish.jpg",
+        "assets/public/assets/tile-orders.jpg",
+        "assets/public/assets/tile-druciarstwo.jpg",
     ]
     missing = [name for name in required if name not in names]
     if missing:
@@ -41,6 +51,29 @@ with zipfile.ZipFile(apk) as bundle:
     catalog = bundle.read("assets/public/katalog-techniczny.js").decode("utf-8")
     service_worker = bundle.read("assets/public/sw.js").decode("utf-8")
     manifest = bundle.read("assets/public/manifest.webmanifest").decode("utf-8")
+    native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
+    multi_data = bundle.read("assets/public/motocykle-multi-data.js").decode("utf-8")
+    multi_logic = bundle.read("assets/public/motocykle-multi.js").decode("utf-8")
+
+    # Weryfikacja obecności i inicjalizacji modułu motocykli wielocylindrowych
+    if "NAPRAWNIK_MULTICYL_DATA" not in multi_data:
+        raise SystemExit("Multicylinder motorcycle data module is present but NAPRAWNIK_MULTICYL_DATA is missing.")
+    if "NAPRAWNIK_MULTICYL" not in multi_logic or "renderMulticyl" not in multi_logic:
+        raise SystemExit("Multicylinder motorcycle logic module is present but NAPRAWNIK_MULTICYL is missing.")
+    if "./motocykle-multi-data.js" not in html or "./motocykle-multi.js" not in html:
+        raise SystemExit("Packaged APK index.html does not load multicylinder motorcycle scripts.")
+    if "./motocykle-multi-data.js" not in service_worker or "./motocykle-multi.js" not in service_worker:
+        raise SystemExit("Packaged APK service worker does not precache multicylinder motorcycle modules.")
+
+    # Weryfikacja pełnej izolacji od produkcyjnego PWA i braku mechanizmu OTA
+    blocked_terms = ["WEB_LIVE_BASE", "turbodiesel966-eng.github.io", "fetchLiveWithTimeout", "__naprawnikWebSync", "OTA_HASH_KEY"]
+    for blocked in blocked_terms:
+        if blocked in service_worker:
+            raise SystemExit(f"APK service worker violates isolation: found {blocked}")
+        if blocked in native_bridge:
+            raise SystemExit(f"APK native bridge violates isolation: found {blocked}")
+        if blocked in html:
+            raise SystemExit(f"APK HTML violates isolation: found {blocked}")
 
     try:
         case_block = html.split("const knowledgeCases = [", 1)[1].split("const KNOW_LINKS={", 1)[0]
@@ -66,7 +99,6 @@ with zipfile.ZipFile(apk) as bundle:
         raise SystemExit("Native Stripe Checkout / one-time / Billing Portal bridge is not connected from billing.js.")
     if "./billing.js?v=17" not in service_worker or "./native-bridge.js" not in service_worker or not re.search(r"naprawnik-v5-\d+-native", service_worker) or "NAPRAWNIK" not in manifest:
         raise SystemExit("The packaged PWA/service-worker branding or billing version is inconsistent.")
-    native_bridge = bundle.read("assets/public/native-bridge.js").decode("utf-8")
     for marker in ["backButton", "toolbarColor", "setBackgroundColor", "writeFile", "__naprawnikNativeCheckout", "browserFinished"]:
         if marker not in native_bridge:
             raise SystemExit(f"Android-native integration missing from packaged bridge: {marker}")
@@ -93,6 +125,7 @@ with zipfile.ZipFile(apk) as bundle:
 
 print(
     f"OK: {apk.name}; {len(case_ids)} unique diagnostic cases; "
+    f"multicylinder motorcycle modules, complete PWA isolation (zero OTA), "
     f"backup/import, assistant photo/history, billing/admin, catalogue, "
     f"{len(launcher_paths)} launcher densities and {len(splash_paths)} splash sizes verified."
 )

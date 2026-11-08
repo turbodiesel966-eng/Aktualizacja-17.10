@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>NAPRAWNIK</title>
+  <rect width="512" height="512" rx="112" fill="#0a0a14"/>
+  <rect x="24" y="24" width="464" height="464" rx="92" fill="none" stroke="#33334d" stroke-width="10"/>
+  <path d="M123 363V149h58l121 142V149h59v214h-55L182 219v144z" fill="#ff8c1a"/>
+  <path d="M360 105h53l-39 79h41L331 327l21-103h-43z" fill="#22d3ee" stroke="#0a0a14" stroke-linejoin="round" stroke-width="7"/>
+  <path d="M96 401h320" stroke="#ff8c1a" stroke-linecap="round" stroke-width="7" opacity=".8"/>
+</svg>

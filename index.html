@@ -3276,7 +3276,7 @@ function renderLocked(min,label,backJs){
    '<div class="btn" onclick="nav(\'plans\')">Porównaj plany / aktywuj licencję</div></div>';
 }
 const NAV_MIN={orders:'warsztat',orderDetail:'warsztat',clients:'warsztat',log:'warsztat',checklist:'warsztat',obd:'pro',models:'pro',pinouts:'pro'};
-const NAV_LABEL={orders:'Karta Zlecenia Serwisowego',orderDetail:'Szczegóły Zlecenia',lab:'Elektroniczne Laboratorium',servicePlan:'Automatyczny Plan Serwisowy',parts:'Inteligentny dobór części',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe',obd:'Baza kodów OBD',models:'Profile konkretnych silników',druciarstwo:'DRUCIARSTWO — Kreatywne Naprawy Garażowe'};
+const NAV_LABEL={orders:'Karta Zlecenia Serwisowego',orderDetail:'Szczegóły Zlecenia',lab:'Elektroniczne Laboratorium',servicePlan:'Automatyczny Plan Serwisowy',parts:'Inteligentny dobór części',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe',obd:'Baza kodów OBD',models:'Profile konkretnych silników',druciarstwo:'DRUCIARSTWO — Kreatywne Naprawy Garażowe',multicyl:'MOTOCYKLE 3–4 CYLINDRY (400–650 cm³)'};
 /* ===== Funkcje warsztatu ===== */
 function workshopInfo(){const w=load('naprawnik_workshop');return (Array.isArray(w)&&w[0])||{};}
 function editWorkshop(){
@@ -3402,6 +3402,8 @@ const MAIN_MODULES = [
         items: [
           { id: 'item_diag_2t', icon: '🛵', theme: 'red', spriteIdx: 6, title: 'Diagnostyka Usterek Silników 2T (Dwusuw)', desc: 'Zatarcia, lewe powietrze, uszczelniacze wału, membrana i gaźnik 2T.', view: 'knowledge', arg: '2T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 2T';filterKnowledge();}},40)" },
           { id: 'item_diag_4t', icon: '🏍️', theme: 'orange', spriteIdx: 18, title: 'Diagnostyka Usterek Silników 4T (Czterosuw)', desc: 'Luzy zaworowe, rozrząd, spalanie oleju, głowica i gaźniki CVK.', view: 'knowledge', arg: '4T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 4T';filterKnowledge();}},40)" },
+          { id: 'item_multicyl_trees', icon: '🔥', theme: 'orange', spriteIdx: 18, title: 'Motocykle 3–4 Cylindry (400–650 cm³) — 12 Drzew Diagnostycznych', desc: 'R3 / R4 / V4 • 12 drzew po objawach (8 punktów) • Nie pracuje 1 cylinder, synchronizacja, zapłon.', view: 'multicyl', arg: 'drzewa', min: '' },
+          { id: 'item_multicyl_dzialy', icon: '🔧', theme: 'purple', spriteIdx: 0, title: 'Motocykle 3–4 Cylindry — 6 Działów Diagnostyki (A–F)', desc: 'Mechanika, Gaźniki/EFI, Zapłon Wasted Spark/COP, Chłodzenie, Elektryka i Skrzynia.', view: 'multicyl', arg: 'dzialy', min: '' },
           { id: 'item_obd', icon: '🧾', theme: 'blue', spriteIdx: 15, title: 'Baza Kodów Błędów OBD / EFI Blink', desc: 'Kody usterek wtrysku paliwa EFI (OBD-II oraz kody błyskowe MIL).', view: 'obd', arg: null, min: 'pro' }
         ]
       }
@@ -3435,7 +3437,8 @@ const MAIN_MODULES = [
           { id: 'item_schematics', icon: '📘', theme: 'blue', spriteIdx: 13, title: 'Schematy Elektryczne', desc: 'Kolory przewodów • Podłączenia • Układy zapłonu, ładowania i świateł.', view: 'schematics', arg: null, min: '' },
           { id: 'item_electrical_db', icon: '🔋', theme: 'purple', spriteIdx: 15, title: 'Baza Instalacji Elektrycznych', desc: 'Architektura instalacji wg rodzin pojazdów i punkty przetarć wiązki.', view: 'electricalDb', arg: null, min: 'pro', customClick: "activeElectricalSection=null;nav('electricalDb')" },
           { id: 'item_electric_check', icon: '✅', theme: 'orange', spriteIdx: 5, title: 'Checklista Układu Elektrycznego', desc: 'Schematy • Diagnostyka akumulatora, bezpieczników, stacyjki i masy.', view: 'electric', arg: null, min: '' },
-          { id: 'item_wiring_colors', icon: '🎨', theme: 'cyan', spriteIdx: 13, title: 'Kolory Przewodów wg Producentów', desc: 'Tabela kodowania barwnego Yamaha/Minarelli, Honda, Piaggio, GY6.', view: 'wiring', arg: '2T', min: '' }
+          { id: 'item_wiring_colors', icon: '🎨', theme: 'cyan', spriteIdx: 13, title: 'Kolory Przewodów wg Producentów', desc: 'Tabela kodowania barwnego Yamaha/Minarelli, Honda, Piaggio, GY6.', view: 'wiring', arg: '2T', min: '' },
+          { id: 'item_multicyl_schematy', icon: '📐', theme: 'cyan', spriteIdx: 13, title: 'Motocykle 3–4 Cylindry — Schematy Zapłonu, Ładowania i EFI', desc: '7 interaktywnych schematów SVG z Zoomem: Wasted Spark 1-4/2-3, 4× COP, Stojan 3~, Synchronizacja.', view: 'multicyl', arg: 'schematy', min: '' }
         ]
       }
     ]
@@ -3458,6 +3461,7 @@ const MAIN_MODULES = [
         groupTitle: 'Katalogi Pojazdów, Silników i Części',
         items: [
           { id: 'item_catalog', icon: '🛵', theme: 'red', spriteIdx: 3, title: 'Katalog Pojazdów i Danych Serwisowych (196 Modeli)', desc: 'Modele • Dane fabryczne OEM • Świeca, dysza, rolki, pasek, luzy.', view: 'catalog', arg: null, min: '' },
+          { id: 'item_multicyl_katalog', icon: '🏍️', theme: 'orange', spriteIdx: 18, title: 'Katalog Motocykli 3–4 Cylindry (400–650 cm³) i Parametry', desc: '10 marek • 95 modeli • 86 silników (Honda, Yamaha, Suzuki, Kawasaki, Triumph, Ducati, MV Agusta).', view: 'multicyl', arg: 'katalog', min: '' },
           { id: 'item_models', icon: '⏱️', theme: 'red', spriteIdx: 18, title: 'Profile Konkretnych Silników', desc: 'Ustawienia • Modyfikacje • Minarelli, Piaggio, GY6, AM6, D50B0.', view: 'models', arg: null, min: 'pro' },
           { id: 'item_parts', icon: '⚙️', theme: 'orange', spriteIdx: 1, title: 'Inteligentny Dobór Części OEM i Zamienników', desc: 'Numery katalogowe OEM • Dokładne wymiary • Zamienniki i linki.', view: 'parts', arg: null, min: 'pro' },
           { id: 'item_manuals', icon: '📘', theme: 'cyan', spriteIdx: 2, title: 'Instrukcje Serwisowe i Manuale', desc: 'Krok po kroku • Serwis • Naprawa • Baza oficjalnych serwisówek.', view: 'manuals', arg: null, min: '' }
@@ -3500,6 +3504,7 @@ const MAIN_MODULES = [
         groupTitle: 'Eksperckie Kalkulatory i Symulatory Warsztatowe',
         items: [
           { id: 'item_hud', icon: '👓', theme: 'green', image: './assets/tile-hud.jpg', spriteIdx: 7, title: 'Tryb Warsztatowy HUD (Duży Ekran)', desc: 'Duży ekran HUD • Momenty dokręcania • Luzy zaworowe • Squish silnika.', view: 'hud', arg: null, min: '' },
+          { id: 'item_multicyl_cylindry', icon: '📊', theme: 'green', spriteIdx: 7, title: 'Porównanie Cylindrów 1–4 (R3/R4) & Kalkulator Płytek Zaworowych', desc: 'Karta pomiarowa Cyl 1–3 / 1–4 (kompresja, Leak Down, podciśnienia, temp.) + Shim Calculator.', view: 'multicyl', arg: 'cylindry', min: '' },
           { id: 'item_jetting', icon: '🫁', theme: 'orange', image: './assets/tile-jetting.jpg', spriteIdx: 6, title: 'Stroiciel Gaźnika (Dobór Dysz i Iglicy)', desc: 'Dobór dyszy głównej i iglicy • 50cc / 70cc / Filtr stożkowy.', view: 'jetting', arg: null, min: '' },
           { id: 'item_cvt', icon: '⚙️', theme: 'red', image: './assets/tile-cvt.jpg', spriteIdx: 3, title: 'Kalkulator Tuningu Napędu CVT', desc: 'Waga rolek • Sprężyna centralna • Sprzęgło • Obroty mocy silnika.', view: 'cvt', arg: null, min: '' },
           { id: 'item_mix', icon: '⚡', theme: 'cyan', image: './assets/tile-squish.jpg', spriteIdx: 7, title: 'Kalkulator Squish / CR & Mieszanka 2T', desc: 'Prześwit tłok–głowica • Stopień sprężania • Presety AM6, Aerox, GY6.', view: 'mix', arg: null, min: '' },
@@ -3815,6 +3820,7 @@ function renderHome(){
       <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('gaśnie na ciepło')">🔥 Gaśnie na ciepło</button>
       <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('wariator pasek')">⚙️ Szarpie CVT</button>
       <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('zalewa gaźnik')">🫁 Zalewa gaźnik</button>
+      <button type="button" class="symptom-chip" onclick="nav('multicyl','katalog')">🏍️ 3–4 Cylindry (400–650)</button>
       <button type="button" class="symptom-chip" onclick="nav('druciarstwo','baza')">🪛 Druciarstwo 0 zł</button>
     </div>
     <div class="home-search-meta"><span id="homeTileCount"></span></div>
@@ -5552,6 +5558,7 @@ function nav(view, arg, restoreState){
   else if(view==='cvt') renderCvtTuning();
   else if(view==='hud') renderWorkshopHud();
   else if(view==='druciarstwo') renderDruciarstwo(arg);
+  else if(view==='multicyl') renderMulticyl(arg);
 
   // 4. Przywróć pozycję przewijania po wyrenderowaniu widoku
   if(isBack && restoreState){
@@ -8125,6 +8132,8 @@ if(pin){ showLock(); } else { nav('home'); }
 </script>
 <script src="./katalog-techniczny.js"></script>
 <script src="./druciarstwo.js"></script>
+<script src="./motocykle-multi-data.js"></script>
+<script src="./motocykle-multi.js"></script>
 <script src="./billing.js?v=17"></script>
 </body>
 </html>

@@ -384,3 +384,137 @@ test('NAPRAWNIK v5.18 — Przebudowa Strony Głównej na 6 Głównych Modułów,
 });
 
 
+
+test('NAPRAWNIK — Moduł Motocykli 3–4 Cylindry (400–650 cm³): Katalog, 6 Działów A–F, 12 Drzew (8 pkt), Porównanie Cylindrów R3/R4 i 7 Schematów SVG', () => {
+  const html = read('index.html');
+  const sw = read('sw.js');
+  const dataSrc = read('motocykle-multi-data.js');
+  const uiSrc = read('motocykle-multi.js');
+
+  // 1. Integracja z index.html oraz Service Workerem
+  assert.ok(html.includes('<script src="./motocykle-multi-data.js"></script>'), 'Brak motocykle-multi-data.js w index.html');
+  assert.ok(html.includes('<script src="./motocykle-multi.js"></script>'), 'Brak motocykle-multi.js w index.html');
+  assert.ok(html.includes("else if(view==='multicyl') renderMulticyl(arg);"), 'Brak routingu widoku multicyl w nav()');
+  assert.ok(html.includes("multicyl:'MOTOCYKLE 3–4 CYLINDRY (400–650 cm³)'"), 'Brak etykiety multicyl w NAV_LABEL');
+  assert.ok(sw.includes("'./motocykle-multi-data.js'") && sw.includes("'./motocykle-multi.js'"), 'Brak plików modułu 3-4 cyl w precache sw.js');
+
+  // 2. Uruchomienie warstwy danych i silnika UI w sandboxie VM
+  const vm = require('node:vm');
+  const fakeContainer = { innerHTML: '' };
+  const fakeStorage = {};
+  const sandbox = {
+    window: {},
+    globalThis: {},
+    localStorage: {
+      getItem: k => (k in fakeStorage ? fakeStorage[k] : null),
+      setItem: (k, v) => { fakeStorage[k] = String(v); }
+    },
+    document: {
+      activeElement: null, getElementById: id => (id === 'screen' ? fakeContainer : ({ 'mc-param-in-compression': { value: '12.8 bar (A)' }, 'mc-new-brand': { value: 'Kove' }, 'mc-new-model': { value: '450RR' } }[id] || null))
+    },
+    console
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+
+  vm.runInNewContext(dataSrc, sandbox, { filename: 'motocykle-multi-data.js' });
+  vm.runInNewContext(uiSrc, sandbox, { filename: 'motocykle-multi.js' });
+
+  const data = sandbox.NAPRAWNIK_MULTICYL_DATA;
+  const api = sandbox.NAPRAWNIK_MULTICYL;
+  assert.ok(data, 'Brak obiektu NAPRAWNIK_MULTICYL_DATA');
+  assert.ok(api, 'Brak obiektu NAPRAWNIK_MULTICYL');
+
+  // 3. Walidacja bazy danych — 0 błędów, 10 marek, >=90 modeli, >=80 silników, 30 parametrów
+  const validationErrors = data.validate();
+  assert.strictEqual(validationErrors.length, 0, 'Walidacja danych wykryła błędy: ' + validationErrors.join('; '));
+
+  const norm = api.getData();
+  const requiredBrands = ['Honda', 'Yamaha', 'Suzuki', 'Kawasaki', 'Triumph', 'BMW', 'Ducati', 'Aprilia', 'Benelli', 'MV Agusta'];
+  for (const b of requiredBrands) {
+    assert.ok(norm.MANUFACTURERS.some(m => m.name === b), `Brak wymaganej marki: ${b}`);
+  }
+  const brandsWithSerial400to650Multi = ['Honda', 'Yamaha', 'Suzuki', 'Kawasaki', 'Triumph', 'Benelli', 'MV Agusta'];
+  for (const b of brandsWithSerial400to650Multi) {
+    assert.ok(norm.MODELS.some(m => m.brand === b), `Brak modeli 400–650 cm³ dla marki: ${b}`);
+  }
+  assert.ok(norm.MODELS.length >= 90, `Oczekiwano >= 90 modeli w katalogu, znaleziono ${norm.MODELS.length}`);
+  assert.ok(Object.keys(norm.ENGINES).length >= 80, `Oczekiwano >= 80 profili silników, znaleziono ${Object.keys(norm.ENGINES).length}`);
+  assert.strictEqual(Object.keys(norm.PARAM_KEYS).length, 30, 'Oczekiwano 30 kluczy parametrów serwisowych');
+
+  // Sprawdzenie obecności silników 3-cylindrowych i 4-cylindrowych, R3/R4/V4, gaźnikowych i EFI, powietrzem/olejem/cieczą
+  assert.ok(norm.MODELS.some(m => m.cylinders === 3 && m.layout === 'R3'), 'Brak modeli 3-cylindrowych R3');
+  assert.ok(norm.MODELS.some(m => m.cylinders === 4 && m.layout === 'R4'), 'Brak modeli 4-cylindrowych R4');
+  assert.ok(norm.MODELS.some(m => m.cylinders === 4 && m.layout === 'V4'), 'Brak modeli 4-cylindrowych V4');
+  assert.ok(norm.MODELS.some(m => m.fuelSystem === 'carb'), 'Brak modeli gaźnikowych');
+  assert.ok(norm.MODELS.some(m => m.fuelSystem === 'efi'), 'Brak modeli EFI');
+  assert.ok(norm.MODELS.some(m => m.cooling === 'air'), 'Brak modeli chłodzonych powietrzem');
+  assert.ok(norm.MODELS.some(m => m.cooling === 'air-oil'), 'Brak modeli chłodzonych powietrzem i olejem');
+  assert.ok(norm.MODELS.some(m => m.cooling === 'liquid'), 'Brak modeli chłodzonych cieczą');
+
+  // 4. Weryfikacja 6 działów diagnostycznych A–F
+  assert.strictEqual(api.DIAGNOSTIC_SECTIONS.length, 6, 'Oczekiwano 6 działów diagnostycznych A–F');
+  assert.deepStrictEqual([...api.DIAGNOSTIC_SECTIONS.map(s => s.id)], ['A', 'B', 'C', 'D', 'E', 'F']);
+  const totalProcs = api.DIAGNOSTIC_SECTIONS.reduce((acc, s) => acc + s.procedures.length, 0);
+  assert.ok(totalProcs >= 50, `Oczekiwano co najmniej 50 procedur w działach A–F, znaleziono ${totalProcs}`);
+
+  // 5. Weryfikacja 12 inteligentnych drzew diagnostycznych × 8 obowiązkowych punktów na każdy krok
+  const sampleModel = norm.MODELS[0];
+  const sampleEngine = norm.ENGINES[sampleModel.engineId];
+  const trees = api.buildDiagnosticTrees({ model: sampleModel, engine: sampleEngine, params: sampleEngine.params });
+  assert.strictEqual(trees.length, 12, 'Oczekiwano dokładnie 12 drzew objawowych');
+  for (const t of trees) {
+    const stepValues = Object.values(t.steps);
+    assert.ok(stepValues.length >= 3, `Drzewo ${t.id} musi posiadać co najmniej 3 kroki`);
+    for (const st of stepValues) {
+      for (const reqField of ['check', 'how', 'tool', 'expected', 'abnormal', 'nextText', 'causes', 'repair']) {
+        assert.ok(typeof st[reqField] === 'string' && st[reqField].length > 10, `Brak pola ${reqField} w drzewie ${t.id}`);
+      }
+    }
+  }
+
+  // 6. Weryfikacja diagnostyki porównawczej cylindrów (R3 = 3 kolumny, R4 = 4 kolumny) oraz Kalkulatora Płytek
+  const sheetR3 = api.getMeasurementSheetForModel('triumph-street-triple-675-d67ld', 3);
+  assert.strictEqual(sheetR3.cylinders.length, 3, 'Dla silnika R3 karta musi mieć 3 kolumny cylindrów');
+  const sheetR4 = api.getMeasurementSheetForModel('honda-cbr600rr-pc37', 4);
+  assert.strictEqual(sheetR4.cylinders.length, 4, 'Dla silnika R4 karta musi mieć 4 kolumny cylindrów');
+
+  const compCheck = api.analyzeNumericRow(['12.8', '12.6', '9.1', '12.7'], 'bar', 1.5, 8.5);
+  assert.strictEqual(compCheck.ready, true);
+  assert.strictEqual(compCheck.status, 'warn', 'Rozrzut > 1.5 bar musi generować ostrzeżenie');
+  assert.strictEqual(compCheck.deviations[3].warn, true, 'Cylinder 3 z kompresją 9.1 bar musi być oznaczony ostrzeżeniem');
+
+  const shimCheck = api.calculateShim('0.10', '0.16', '0.20', '1.90');
+  assert.strictEqual(shimCheck.valid, true);
+  assert.strictEqual(shimCheck.inSpec, false);
+  assert.strictEqual(shimCheck.exactNewShim, '1.820');
+
+  // 7. Weryfikacja 7 schematów technicznych SVG i renderowania wszystkich 5 zakładek
+  assert.strictEqual(api.TECHNICAL_SCHEMATICS.length, 7, 'Oczekiwano 7 autorskich schematów SVG');
+  for (const tab of ['katalog', 'drzewa', 'cylindry', 'dzialy', 'schematy']) {
+    sandbox.renderMulticyl(tab);
+    assert.ok(fakeContainer.innerHTML.includes('NAPRAWNIK — MOTOCYKLE 3–4 CYLINDRY'), `Renderowanie zakładki ${tab} nie powiodło się`);
+  }
+  api.selectModel('s_gt550');
+  api.setTab('cylindry');
+  assert.ok(fakeContainer.innerHTML.includes('CYLINDER 3') && !fakeContainer.innerHTML.includes('CYLINDER 4'), 'R3 musi renderowac 3 kolumny');
+  api.selectModel('h_cbr600rr_37');
+  api.setTab('cylindry');
+  assert.ok(fakeContainer.innerHTML.includes('CYLINDER 4'), 'R4 musi renderowac 4 kolumny');
+  api.loadDemoMeasurements();
+  assert.ok(fakeContainer.innerHTML.includes('Podparty zawór wydechowy na Cyl 3!'));
+  api.clearMeasurements();
+  api.setTab('katalog');
+  api.saveCustomParam('compression');
+  assert.ok(fakeContainer.innerHTML.includes('12.8 bar (A)') && fakeContainer.innerHTML.includes('POZIOM A • ZWERYFIKOWANE'));
+  const countBefore = api.getData().MODELS.length;
+  api.addCustomModel();
+  assert.strictEqual(api.getData().MODELS.length, countBefore + 1);
+  api.selectTree('no_spark');
+  api.goToTreeStep('step_2');
+  assert.ok(fakeContainer.innerHTML.includes('KROK 2: Pomiar czujnika położenia wału korbowego'));
+  api.setTab('schematy');
+  api.selectSchematic('sch_sync');
+  api.zoomSchematic(25);
+  assert.ok(fakeContainer.innerHTML.includes('125%'));
+});

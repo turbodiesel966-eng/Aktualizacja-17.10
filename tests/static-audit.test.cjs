@@ -552,16 +552,18 @@ test('siatka kafelków neonowych i filtrowanie kart diagnostycznych obsługują 
   assert.equal(mockCards[2].style.display, '');
 });
 
-test('APK korzysta z tych samych plików źródłowych co wersja Web i posiada synchronizację OTA na żywo', () => {
+test('APK jest całkowicie odizolowane od produkcyjnego PWA, działa 100% offline i nie wykonuje zapytań OTA', () => {
   const prep = read('scripts/prepare-mobile.mjs');
   const bridge = read('scripts/native-bridge.js');
   const verify = read('scripts/verify-apk.py');
 
   assert.ok(prep.includes('"neon-tiles-art.jpg"'));
-  assert.ok(prep.includes("const WEB_LIVE_BASE='https://turbodiesel966-eng.github.io/Aktualizacja-17.10'"));
-  assert.ok(prep.includes('function instrumentNativeHtml(html)'));
-  assert.ok(bridge.includes('https://turbodiesel966-eng.github.io/Aktualizacja-17.10'));
-  assert.ok(bridge.includes('window.__naprawnikWebSync = syncWithLiveWeb'));
+  assert.ok(!prep.includes('WEB_LIVE_BASE'), 'prepare-mobile.mjs nie może definiować WEB_LIVE_BASE');
+  assert.ok(!prep.includes('turbodiesel966-eng.github.io'), 'prepare-mobile.mjs nie może pobierać danych z GitHub Pages');
+  assert.ok(!bridge.includes('WEB_LIVE_BASE'), 'native-bridge.js nie może definiować WEB_LIVE_BASE');
+  assert.ok(!bridge.includes('turbodiesel966-eng.github.io'), 'native-bridge.js nie może pobierać danych z GitHub Pages');
+  assert.ok(!bridge.includes('__naprawnikWebSync'), 'native-bridge.js nie może zawierać synchronizacji webowej OTA');
+  assert.ok(prep.includes('-native'), 'Service Worker APK musi używać dedykowanego izolowanego cache -native');
   assert.ok(verify.includes('assets/public/assets/neon-tiles-art.jpg'));
 });
 
