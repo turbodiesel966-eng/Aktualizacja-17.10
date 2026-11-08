@@ -23,6 +23,13 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
+        "assets/public/assets/workshop-bg.jpg",
+        "assets/public/assets/mod-clients.jpg",
+        "assets/public/assets/mod-orders.jpg",
+        "assets/public/assets/mod-diag.jpg",
+        "assets/public/assets/mod-electric.jpg",
+        "assets/public/assets/mod-tech.jpg",
+        "assets/public/assets/mod-tools.jpg",
         "assets/public/assets/neon-tiles-art.jpg",
     ]
     missing = [name for name in required if name not in names]

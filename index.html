@@ -838,217 +838,576 @@ body{
   margin-top:4px;
 }
 
-/* ===== NAPRAWNIK v5.18 — PANEL WARSZTATOWY: 6 GŁÓWNYCH MODUŁÓW ===== */
-@media (min-width:1024px){
-  .frame{max-width:1040px;padding:16px 20px 14px}
+/* ===== NAPRAWNIK v5.18 — CAŁKOWITY REDESIGN HOME WORKSHOP UI (3D CYBER-WORKSHOP) ===== */
+:root{
+  --nap-grad-purple-orange:linear-gradient(96deg,rgba(62,16,118,.96) 0%,rgba(142,34,158,.92) 48%,rgba(248,118,12,.96) 100%);
+  --nap-grad-cta:linear-gradient(92deg,#6b21a8 0%,#b832c8 44%,#ff7a00 84%,#ffd43b 100%);
+  --nap-grad-subcard:linear-gradient(180deg,rgba(18,12,34,.96) 0%,rgba(8,6,15,.99) 62%,rgba(20,10,26,.99) 100%);
+  --nap-grad-panel:linear-gradient(145deg,rgba(22,12,42,.94) 0%,rgba(9,6,18,.97) 62%,rgba(36,14,12,.94) 100%);
 }
+
+/* Full-bleed 3D Workshop Wallpaper Background with High-Contrast Dark Vignette */
+body{
+  background:
+    radial-gradient(circle at 18% 12%,rgba(184,69,255,.22) 0%,transparent 42%),
+    radial-gradient(circle at 82% 16%,rgba(255,145,26,.20) 0%,transparent 42%),
+    radial-gradient(circle at 50% 85%,rgba(0,225,255,.16) 0%,transparent 48%),
+    linear-gradient(180deg,rgba(5,4,12,.52) 0%,rgba(8,6,18,.64) 50%,rgba(4,3,9,.72) 100%),
+    url('./assets/workshop-bg.jpg') center center / cover no-repeat fixed !important;
+  background-attachment:fixed !important;
+}
+body:before{
+  background:
+    radial-gradient(ellipse at 50% 25%,rgba(192,72,255,.12) 0%,rgba(5,4,12,.38) 85%) !important;
+}
+.frame{
+  background:
+    linear-gradient(180deg,rgba(10,7,20,.52) 0%,rgba(6,4,13,.64) 100%) !important;
+  backdrop-filter:blur(2px) !important;
+  border:1.5px solid rgba(184,69,255,.42) !important;
+  box-shadow:0 0 44px rgba(0,0,0,.92),0 0 26px rgba(184,69,255,.18) !important;
+}
+@media (min-width:1024px){
+  .frame{max-width:1080px;padding:16px 22px 16px}
+}
+
+/* Search Bar & Quick Symptom Chips */
+.home-search-bar{
+  margin:8px 0 14px;
+  padding:10px 11px;
+  border-radius:16px;
+  border:2px solid #b845ff;
+  background:linear-gradient(115deg,rgba(28,11,56,.94) 0%,rgba(10,7,20,.97) 55%,rgba(62,22,8,.90) 100%);
+  box-shadow:0 0 16px rgba(184,69,255,.32),0 0 24px rgba(255,122,0,.15),inset 0 1px 1px rgba(255,255,255,.25);
+}
+.home-search-bar input{
+  border:1.8px solid #ff991f !important;
+  background:rgba(7,4,15,.95) !important;
+  box-shadow:0 0 12px rgba(255,153,31,.28),inset 0 0 12px rgba(0,0,0,.85) !important;
+  font-weight:600;
+}
+.home-search-bar input:focus{
+  border-color:#00e5ff !important;
+  box-shadow:0 0 18px rgba(0,229,255,.55),inset 0 0 12px rgba(0,0,0,.85) !important;
+}
+.symptom-chips-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  overflow-x:auto;
+  padding:7px 1px 2px;
+  scrollbar-width:none;
+}
+.symptom-chips-row::-webkit-scrollbar{display:none}
+.symptom-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 11px;
+  border-radius:999px;
+  border:1.2px solid rgba(255,174,43,.72);
+  background:linear-gradient(95deg,rgba(76,22,138,.94) 0%,rgba(196,68,16,.92) 100%);
+  color:#fff;
+  font-size:10.5px;
+  font-weight:800;
+  white-space:nowrap;
+  cursor:pointer;
+  text-shadow:0 1px 2px #000;
+  box-shadow:0 0 10px rgba(192,72,255,.28);
+  transition:transform .12s ease,border-color .12s ease,filter .12s ease;
+}
+.symptom-chip:hover,.symptom-chip:active{
+  transform:scale(.97);
+  border-color:#00e5ff;
+  filter:brightness(1.15);
+}
+
+/* Section Headers matching the video (⭐ FUNKCJE SPECJALNE / NARZĘDZIA EKSPERCKIE style) */
 .workshop-panel-header{
+  position:relative;
+  overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:space-between;
   flex-wrap:wrap;
   gap:8px;
-  margin:10px 0 8px;
-  padding:8px 12px;
-  border-radius:12px;
-  background:linear-gradient(90deg,rgba(19,24,38,.95),rgba(28,19,46,.92));
-  border:1px solid rgba(139,92,246,.42);
+  margin:14px 0 10px;
+  padding:9px 14px;
+  border-radius:14px;
+  background:var(--nap-grad-purple-orange);
+  border:1.8px solid #ffae2b;
+  box-shadow:0 0 16px rgba(192,72,255,.38),0 0 18px rgba(255,122,0,.28),inset 0 1px 1px rgba(255,255,255,.38);
 }
 .workshop-panel-title{
   font-size:12px;
   font-weight:900;
   letter-spacing:1.1px;
   text-transform:uppercase;
-  color:#f8fafc;
+  color:#ffffff;
+  text-shadow:0 1px 3px #000,0 0 10px rgba(255,212,59,.55);
   display:flex;
   align-items:center;
   gap:7px;
 }
 .workshop-panel-badge{
-  font-size:10px;
-  font-weight:800;
-  padding:3px 9px;
-  border-radius:999px;
-  background:rgba(255,153,31,.15);
-  border:1px solid rgba(255,153,31,.55);
-  color:#ffb74d;
-  letter-spacing:.6px;
-}
-.modules-6-grid, #mainTileGrid{
-  display:grid !important;
-  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-  gap:12px !important;
-  margin:8px 0 16px !important;
-}
-@media (max-width:350px){
-  .modules-6-grid, #mainTileGrid{
-    grid-template-columns:minmax(0,1fr) !important;
-  }
-}
-@media (min-width:760px){
-  .modules-6-grid, #mainTileGrid{
-    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-    gap:14px !important;
-  }
-}
-.mod6-card{
-  --mod-accent:#8b5cf6;
-  --mod-accent-soft:rgba(139,92,246,.22);
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  min-height:198px;
-  padding:14px 13px 12px;
-  border-radius:18px;
-  border:2px solid var(--mod-accent);
-  background:
-    radial-gradient(circle at 85% 15%,var(--mod-accent-soft) 0%,transparent 58%),
-    linear-gradient(180deg,rgba(18,22,36,.97) 0%,rgba(10,12,22,.99) 100%);
-  box-shadow:0 6px 20px rgba(0,0,0,.65),0 0 14px var(--mod-accent-soft),inset 0 1px 0 rgba(255,255,255,.14);
-  cursor:pointer;
-  user-select:none;
-  text-align:left;
-  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
-}
-.mod6-card:hover{
-  transform:translateY(-3px);
-  box-shadow:0 10px 26px rgba(0,0,0,.8),0 0 22px var(--mod-accent-soft),inset 0 1px 0 rgba(255,255,255,.25);
-}
-.mod6-card:active{
-  transform:scale(.98);
-}
-.mod6-card[data-theme="cyan"]{--mod-accent:#00e5ff;--mod-accent-soft:rgba(0,229,255,.24)}
-.mod6-card[data-theme="orange"]{--mod-accent:#ff991f;--mod-accent-soft:rgba(255,153,31,.25)}
-.mod6-card[data-theme="purple"]{--mod-accent:#a855f7;--mod-accent-soft:rgba(168,85,247,.26)}
-.mod6-card[data-theme="blue"]{--mod-accent:#38bdf8;--mod-accent-soft:rgba(56,189,248,.24)}
-.mod6-card[data-theme="red"]{--mod-accent:#fb7185;--mod-accent-soft:rgba(251,113,133,.24)}
-.mod6-card[data-theme="green"]{--mod-accent:#10b981;--mod-accent-soft:rgba(16,185,129,.24)}
-.mod6-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:6px;
-  margin-bottom:8px;
-}
-.mod6-icon-wrap{
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--mod-accent);
-  box-shadow:inset 0 0 10px var(--mod-accent-soft);
-}
-.mod6-num{
   font-size:9.5px;
   font-weight:900;
-  letter-spacing:.9px;
-  text-transform:uppercase;
-  padding:3px 8px;
+  padding:3px 10px;
   border-radius:999px;
-  background:rgba(15,23,42,.9);
-  border:1px solid var(--mod-accent);
-  color:#f8fafc;
-}
-.mod6-title{
-  font-size:clamp(13px,2.2vw,15.5px);
-  font-weight:900;
-  color:#ffffff;
-  letter-spacing:.4px;
-  line-height:1.2;
-  margin:0 0 5px;
+  background:rgba(10,6,22,.9);
+  border:1.5px solid #ffd43b;
+  color:#ffe066;
+  letter-spacing:.75px;
   text-transform:uppercase;
+  box-shadow:0 0 10px rgba(255,212,59,.38);
 }
-.mod6-desc{
-  font-size:11px;
-  line-height:1.38;
-  color:#cbd5e1;
-  margin:0 0 9px;
-}
-.mod6-pills{
-  display:flex;
-  flex-wrap:wrap;
-  gap:4px;
-  margin-top:auto;
-}
-.mod6-pill{
-  font-size:9.5px;
-  font-weight:700;
-  padding:2px 7px;
-  border-radius:6px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
-  color:#e2e8f0;
-  white-space:nowrap;
-}
-.mod6-footer{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-top:10px;
-  padding-top:7px;
-  border-top:1px solid rgba(255,255,255,.09);
-  font-size:10.5px;
-  font-weight:800;
-  color:#ffae2b;
-}
+
+/* Quick Actions Grid — 3D Illustrated Cards (No simple icon boxes!) */
 .quick-actions-grid{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:8px;
-  margin:6px 0 14px;
-}
-@media (max-width:480px){
-  .quick-actions-grid{
-    grid-template-columns:minmax(0,1fr);
-  }
+  gap:10px;
+  margin:6px 0 16px;
 }
 .quick-action-btn{
+  position:relative;
+  overflow:hidden;
   display:flex;
+  flex-direction:column;
   align-items:center;
-  gap:10px;
-  padding:11px 12px;
-  border-radius:14px;
-  border:1.5px solid rgba(255,153,31,.55);
-  background:linear-gradient(135deg,rgba(30,22,48,.95),rgba(15,18,30,.98));
+  justify-content:flex-start;
+  padding:0;
+  border-radius:16px;
+  border:2px solid #ff991f;
+  background:
+    radial-gradient(circle at 50% 25%,rgba(192,72,255,.32) 0%,transparent 70%),
+    linear-gradient(180deg,rgba(20,12,38,.98) 0%,rgba(8,6,15,.99) 100%);
   color:#fff;
   cursor:pointer;
-  text-align:left;
-  box-shadow:0 4px 12px rgba(0,0,0,.5);
-  transition:transform .14s ease,border-color .14s ease;
+  text-align:center;
+  box-shadow:0 5px 16px rgba(0,0,0,.78),0 0 14px rgba(255,153,31,.38),inset 0 1px 1px rgba(255,255,255,.42);
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease,filter .15s ease;
 }
 .quick-action-btn:hover{
   transform:translateY(-2px);
   border-color:#00e5ff;
+  box-shadow:0 8px 22px rgba(0,0,0,.88),0 0 20px rgba(0,229,255,.55);
+  filter:brightness(1.08);
 }
-.quick-action-icon{
-  font-size:22px;
-  width:36px;
-  height:36px;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(255,153,31,.15);
-  flex-shrink:0;
+.quick-action-btn:active{
+  transform:scale(.975);
+}
+.quick-action-art{
+  position:relative;
+  width:100%;
+  height:68px;
+  background-image:url('./assets/neon-tiles-art.jpg');
+  background-size:400% 600%;
+  background-repeat:no-repeat;
+  filter:saturate(1.2) contrast(1.08);
+}
+@media (min-width:760px){
+  .quick-action-art{height:84px}
+}
+.quick-action-art::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(9,7,18,.88) 88%,rgba(9,7,18,1) 100%);
+}
+.quick-action-text{
+  position:relative;
+  z-index:2;
+  padding:2px 6px 9px;
+  margin-top:-4px;
 }
 .quick-action-text strong{
   display:block;
-  font-size:12px;
+  font-size:clamp(10.5px,1.9vw,12.5px);
   font-weight:900;
-  color:#ffe066;
-  letter-spacing:.3px;
+  text-transform:uppercase;
+  color:#ffcc00;
+  letter-spacing:.35px;
+  line-height:1.15;
+  text-shadow:0 2px 4px #000,0 0 10px rgba(255,204,0,.45);
 }
 .quick-action-text small{
   display:block;
-  font-size:10px;
-  color:#cbd5e1;
-  margin-top:1px;
+  font-size:9.8px;
+  font-weight:600;
+  color:#f4f3ff;
+  margin-top:2px;
+  line-height:1.2;
+  text-shadow:0 1px 2px #000;
 }
+
+/* ===== 6 MAIN MODULES GRID — EXACT 3D TILE VISUAL LANGUAGE FROM VIDEO ===== */
+.modules-6-grid, #mainTileGrid{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:13px !important;
+  margin:8px 0 18px !important;
+}
+@media (min-width:480px){
+  .modules-6-grid, #mainTileGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:12px !important;
+  }
+}
+@media (min-width:860px){
+  .modules-6-grid, #mainTileGrid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:15px !important;
+  }
+}
+
+.tile.mod6-card{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  min-height:262px;
+  padding:0 !important;
+  border-radius:20px !important;
+  border:2.5px solid var(--tile-color) !important;
+  background:
+    radial-gradient(circle at 50% 25%,var(--tile-glow-soft) 0%,transparent 70%),
+    linear-gradient(180deg,rgba(16,12,30,.98) 0%,rgba(6,4,12,.99) 55%,rgba(8,6,16,.99) 100%) !important;
+  box-shadow:
+    0 0 14px var(--tile-glow),
+    0 0 28px var(--tile-glow-soft),
+    inset 0 0 16px var(--tile-glow-inset),
+    inset 0 1px 1.5px rgba(255,255,255,.5) !important;
+  text-align:center !important;
+  cursor:pointer;
+  user-select:none;
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+.tile.mod6-card:hover{
+  transform:translateY(-3px);
+  box-shadow:
+    0 0 20px var(--tile-glow),
+    0 0 38px var(--tile-glow),
+    inset 0 0 22px var(--tile-glow-inset),
+    inset 0 1px 2px rgba(255,255,255,.65) !important;
+  filter:brightness(1.07);
+}
+.tile.mod6-card:active{
+  transform:scale(.975);
+}
+
+/* Pure, Unobstructed Full-Bleed 3D Illustration Header */
+.tile.mod6-card .tile-visual.mod6-visual{
+  position:relative;
+  width:100%;
+  height:168px;
+  border-radius:17px 17px 0 0;
+  overflow:hidden;
+  background-color:#070510;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  filter:saturate(1.18) contrast(1.06);
+}
+.tile.mod6-card .mod6-img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+}
+@media (min-width:480px){
+  .tile.mod6-card{
+    min-height:256px;
+  }
+  .tile.mod6-card .tile-visual.mod6-visual{
+    height:152px;
+  }
+}
+@media (min-width:860px){
+  .tile.mod6-card{
+    min-height:282px;
+  }
+  .tile.mod6-card .tile-visual.mod6-visual{
+    height:174px;
+  }
+}
+.tile.mod6-card .tile-visual.mod6-visual::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,0) 68%,rgba(8,6,15,.82) 90%,rgba(8,6,15,1) 100%) !important;
+  pointer-events:none;
+}
+.mod6-corner-pill{
+  position:absolute;
+  top:8px;
+  right:8px;
+  z-index:3;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+  padding:3px 9px;
+  border-radius:999px;
+  background:rgba(10,6,22,.88);
+  border:1.5px solid var(--tile-color);
+  color:#ffe066;
+  text-shadow:0 1px 2px #000;
+  box-shadow:0 2px 8px rgba(0,0,0,.85),0 0 10px var(--tile-glow-soft);
+  pointer-events:none;
+}
+
+/* Centered Neon Console Body Matching Video Special Tiles */
+.tile.mod6-card .tile-body.mod6-body{
+  position:relative;
+  z-index:2;
+  width:100%;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center !important;
+  justify-content:flex-start;
+  padding:2px 12px 12px !important;
+  margin-top:-2px !important;
+  text-align:center !important;
+}
+.tile.mod6-card .mod6-title{
+  font-size:clamp(15px,2.5vw,17.5px) !important;
+  font-weight:900 !important;
+  color:#ffcc00 !important;
+  letter-spacing:.45px !important;
+  line-height:1.18 !important;
+  margin:0 0 5px !important;
+  text-transform:uppercase !important;
+  text-shadow:0 0 12px rgba(255,204,0,.5),0 2px 4px #000 !important;
+}
+.tile.mod6-card .mod6-desc{
+  color:#f5f3ff !important;
+  font-size:clamp(12px,1.9vw,13.2px) !important;
+  font-weight:600 !important;
+  line-height:1.38 !important;
+  margin:0 0 10px !important;
+  text-shadow:0 1px 3px #000,0 1px 2px #000 !important;
+}
+.mod6-cta-bar{
+  margin-top:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  padding:7px 12px;
+  border-radius:11px;
+  background:var(--nap-grad-purple-orange);
+  border:1.5px solid #ffd43b;
+  color:#ffffff;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+  text-shadow:0 1px 2px #000;
+  box-shadow:0 0 12px rgba(255,153,31,.38),inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+/* ===== SUBCATEGORY VIEW — 3D NEON TILES GRID (MATCHING VIDEO KATEGORIE I BAZA WIEDZY) ===== */
+.mod-view-hero{
+  position:relative;
+  overflow:hidden;
+  border-radius:20px;
+  border:2.5px solid #ff991f;
+  background:
+    radial-gradient(circle at 18% 30%,rgba(192,72,255,.35) 0%,transparent 55%),
+    linear-gradient(125deg,rgba(22,12,42,.96) 0%,rgba(8,6,16,.98) 56%,rgba(38,14,10,.96) 100%);
+  padding:14px 14px 13px;
+  margin-bottom:12px;
+  box-shadow:0 0 18px rgba(255,153,31,.45),0 0 28px rgba(192,72,255,.32),inset 0 1px 1.5px rgba(255,255,255,.42);
+}
+.mod-view-hero-art{
+  position:absolute;
+  top:0;
+  right:0;
+  bottom:0;
+  width:48%;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  opacity:.52;
+  filter:saturate(1.2) contrast(1.08);
+  -webkit-mask-image:linear-gradient(270deg,rgba(0,0,0,1) 0%,rgba(0,0,0,.75) 55%,rgba(0,0,0,0) 100%);
+  mask-image:linear-gradient(270deg,rgba(0,0,0,1) 0%,rgba(0,0,0,.75) 55%,rgba(0,0,0,0) 100%);
+  pointer-events:none;
+}
+.mod-view-hero-content{
+  position:relative;
+  z-index:2;
+}
+.mod-group-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:14px 0 10px;
+  padding:7px 12px;
+  border-radius:11px;
+  background:var(--nap-grad-purple-orange);
+  border:1.5px solid #ffd43b;
+  color:#ffffff;
+  font-size:11.5px;
+  font-weight:900;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  text-shadow:0 1px 2px #000;
+  box-shadow:0 0 12px rgba(192,72,255,.32);
+}
+.module-sub-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:8px 0 16px;
+}
+@media (min-width:760px){
+  .module-sub-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:13px;
+  }
+}
+.mod-sub-card{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  min-height:208px;
+  padding:0;
+  border-radius:20px;
+  border:2.5px solid var(--tile-color,#b845ff);
+  background:
+    radial-gradient(circle at 50% 35%,var(--tile-glow-soft,rgba(184,69,255,.34)) 0%,transparent 65%),
+    linear-gradient(180deg,rgba(18,13,34,.98) 0%,rgba(8,6,15,.99) 58%,rgba(12,9,22,.99) 100%);
+  box-shadow:
+    0 0 12px var(--tile-glow,rgba(184,69,255,.78)),
+    0 0 24px var(--tile-glow-soft,rgba(184,69,255,.34)),
+    inset 0 0 16px var(--tile-glow-inset,rgba(184,69,255,.28)),
+    inset 0 1px 1px rgba(255,255,255,.42);
+  text-align:center;
+  cursor:pointer;
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+.mod-sub-card:hover{
+  transform:translateY(-3px);
+  filter:brightness(1.07);
+}
+.mod-sub-card:active{
+  transform:scale(.975);
+}
+.mod-sub-thumb{
+  position:relative;
+  width:100%;
+  height:118px;
+  border-radius:17px 17px 0 0;
+  overflow:hidden;
+  background-color:#080612;
+  background-image:url('./assets/neon-tiles-art.jpg');
+  background-size:400% 600%;
+  background-repeat:no-repeat;
+  filter:saturate(1.16) contrast(1.06);
+}
+.mod-sub-thumb::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 56%,rgba(9,7,18,.84) 86%,rgba(9,7,18,1) 100%);
+  pointer-events:none;
+}
+.mod-sub-body{
+  position:relative;
+  z-index:2;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:2px;
+  flex:1;
+  padding:0 8px 11px;
+  margin-top:-6px;
+}
+.mod-sub-title{
+  font-size:clamp(11.8px,2vw,14px);
+  font-weight:900;
+  color:#ffcc00;
+  text-transform:uppercase;
+  letter-spacing:.35px;
+  line-height:1.15;
+  text-shadow:0 2px 4px #000,0 0 10px rgba(255,204,0,.45);
+  display:block;
+}
+.mod-sub-desc{
+  font-size:10.5px;
+  color:#e8e6f4;
+  line-height:1.28;
+  margin-top:3px;
+  text-shadow:0 1px 3px #000,0 1px 2px #000;
+}
+.mod-fav-btn{
+  position:absolute;
+  top:7px;
+  right:7px;
+  z-index:4;
+  background:rgba(10,6,22,.86);
+  border:1.5px solid rgba(255,212,59,.65);
+  border-radius:9px;
+  width:28px;
+  height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  cursor:pointer;
+  color:#cbd5e1;
+  box-shadow:0 2px 6px rgba(0,0,0,.85);
+}
+.mod-fav-btn.active{
+  color:#ffd43b;
+  border-color:#ffd43b;
+  background:linear-gradient(135deg,rgba(124,38,168,.92),rgba(235,112,12,.92));
+  box-shadow:0 0 10px rgba(255,212,59,.6);
+}
+.mod-switcher-bar{
+  display:flex;
+  overflow-x:auto;
+  gap:7px;
+  padding:4px 1px 9px;
+  margin-bottom:8px;
+  scrollbar-width:none;
+}
+.mod-switcher-bar::-webkit-scrollbar{display:none}
+.mod-switcher-pill{
+  padding:7px 12px;
+  border-radius:999px;
+  border:1.5px solid rgba(192,72,255,.55);
+  background:linear-gradient(110deg,rgba(28,12,54,.95),rgba(12,8,24,.98));
+  color:#f3e8ff;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.65);
+}
+.mod-switcher-pill.active{
+  border-color:#ffd43b;
+  background:var(--nap-grad-purple-orange);
+  color:#ffffff;
+  text-shadow:0 1px 2px #000;
+  box-shadow:0 0 14px rgba(255,153,31,.55),0 0 18px rgba(192,72,255,.45);
+}
+
+/* Dashboard Panels (Favorites, Recent Activity, Reminders) */
 .home-dash-grid{
   display:grid;
   grid-template-columns:minmax(0,1fr);
@@ -1061,148 +1420,60 @@ body{
   }
 }
 .dash-panel{
-  border-radius:16px;
-  border:1.5px solid rgba(139,92,246,.38);
-  background:rgba(15,18,30,.92);
-  padding:12px 13px;
-  box-shadow:0 4px 16px rgba(0,0,0,.55);
+  position:relative;
+  overflow:hidden;
+  border-radius:18px;
+  border:2px solid #b845ff;
+  background:var(--nap-grad-panel);
+  padding:13px 13px;
+  box-shadow:0 6px 20px rgba(0,0,0,.78),0 0 16px rgba(184,69,255,.26),inset 0 1px 1px rgba(255,255,255,.28);
+}
+.dash-panel::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:3px;
+  background:linear-gradient(90deg,#00e5ff,#c048ff,#ff991f,#ffd43b);
 }
 .dash-panel-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  margin-bottom:8px;
-  padding-bottom:6px;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  margin-bottom:9px;
+  padding-bottom:7px;
+  border-bottom:1px solid rgba(255,153,31,.35);
 }
 .dash-panel-head h3{
   margin:0;
   font-size:12.5px;
   font-weight:900;
   text-transform:uppercase;
-  letter-spacing:.6px;
-  color:#00e5ff;
+  letter-spacing:.7px;
+  color:#ffe066;
+  text-shadow:0 1px 2px #000,0 0 10px rgba(255,174,43,.5);
 }
 .dash-list-item{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:8px;
-  padding:7px 9px;
-  margin:5px 0;
-  border-radius:10px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.09);
+  gap:9px;
+  padding:8px 10px;
+  margin:6px 0;
+  border-radius:12px;
+  background:linear-gradient(100deg,rgba(46,16,86,.88) 0%,rgba(16,10,32,.95) 62%,rgba(92,36,12,.82) 100%);
+  border:1.5px solid rgba(192,72,255,.45);
   cursor:pointer;
   font-size:11.5px;
-  transition:background .14s ease,border-color .14s ease;
-}
-.dash-list-item:hover{
-  background:rgba(0,229,255,.09);
-  border-color:rgba(0,229,255,.4);
-}
-.module-sub-grid{
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  gap:10px;
-  margin:8px 0 16px;
-}
-@media (min-width:640px){
-  .module-sub-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-  }
-}
-.mod-sub-card{
-  position:relative;
-  display:flex;
-  align-items:flex-start;
-  gap:11px;
-  padding:12px 13px;
-  border-radius:15px;
-  border:1.5px solid rgba(139,92,246,.42);
-  background:linear-gradient(145deg,rgba(20,24,40,.96),rgba(11,13,24,.98));
-  cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.55);
   transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease;
 }
-.mod-sub-card:hover{
-  transform:translateY(-2px);
-  border-color:#00e5ff;
-  box-shadow:0 6px 18px rgba(0,229,255,.16);
-}
-.mod-sub-icon{
-  width:42px;
-  height:42px;
-  border-radius:11px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.14);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:21px;
-  flex-shrink:0;
-}
-.mod-sub-body{
-  flex:1;
-  min-width:0;
-}
-.mod-sub-title{
-  font-size:12.5px;
-  font-weight:900;
-  color:#fff;
-  line-height:1.25;
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:6px;
-}
-.mod-sub-desc{
-  font-size:11px;
-  color:#cbd5e1;
-  line-height:1.38;
-  margin-top:3px;
-}
-.mod-fav-btn{
-  background:transparent;
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:8px;
-  width:30px;
-  height:30px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:14px;
-  cursor:pointer;
-  color:#94a3b8;
-  flex-shrink:0;
-}
-.mod-fav-btn.active{
-  color:#ffcc00;
-  border-color:rgba(255,204,0,.55);
-  background:rgba(255,204,0,.12);
-}
-.mod-switcher-bar{
-  display:flex;
-  overflow-x:auto;
-  gap:6px;
-  padding:4px 0 8px;
-  margin-bottom:8px;
-}
-.mod-switcher-pill{
-  padding:6px 11px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(15,18,30,.9);
-  color:#cbd5e1;
-  font-size:11px;
-  font-weight:800;
-  white-space:nowrap;
-  cursor:pointer;
-}
-.mod-switcher-pill.active{
+.dash-list-item:hover{
+  transform:translateX(2px);
   border-color:#ff991f;
-  background:rgba(255,153,31,.18);
-  color:#ffe066;
+  box-shadow:0 0 14px rgba(255,153,31,.38);
 }
 </style>
 </head>
@@ -3037,204 +3308,240 @@ function exportCsv(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='NAPRAWNIK-warsztat-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
+const MOD_SVG_ICONS = {};
+
 const MAIN_MODULES = [
   {
     id: 'mod_clients',
-    num: 'MODUŁ 1',
+    num: 'MODUŁ 01',
     icon: '🛵',
     title: 'KLIENCI I POJAZDY',
     shortTitle: 'Klienci i Pojazdy',
+    sublabel: 'GARAŻ • SKANER VIN • FLOTA',
     theme: 'cyan',
+    spriteIdx: 9,
+    image: './assets/mod-clients.jpg',
+    shortDesc: 'Kartoteka pojazdów • Baza klientów<br>Skaner VIN • Czarna Skrzynka • Plan',
     desc: 'Kartoteka pojazdów, baza klientów warsztatu, skaner numerów VIN, historia obsługi, Czarna Skrzynka oraz automatyczny plan serwisowy.',
     pills: ['Kartoteka pojazdów', 'Baza klientów', 'Skaner VIN', 'Czarna Skrzynka', 'Plan serwisowy'],
     groups: [
       {
-        groupTitle: '🛵 Pojazdy, Garaż i Identyfikacja VIN',
+        groupTitle: 'Pojazdy, Garaż i Identyfikacja VIN',
         items: [
-          { id: 'item_vehicles', icon: '🗂️', title: 'Kartoteka Pojazdów (Moje Pojazdy)', desc: 'Pełna baza obsługiwanych skuterów i motocykli: dane techniczne, przebieg, historia napraw i wydruk karty PDF.', view: 'vehicles', arg: null, min: '' },
-          { id: 'item_vin_scan', icon: '📷', title: 'Skaner Numerów VIN (Kamera)', desc: 'Automatyczny odczyt numeru nadwozia VIN z tabliczki znamionowej lub dowodu rejestracyjnego.', view: 'vehicles', arg: 'scan_vin', min: '', customClick: "startVinCameraScan(function(v){nav('vehicles');setTimeout(function(){var el=document.getElementById('vVin');if(el)el.value=v;},80);})" },
-          { id: 'item_service_plan', icon: '📅', title: 'Automatyczny Plan Serwisowy', desc: 'Harmonogram czynności obsługowych wyliczany automatycznie na podstawie przebiegu (km) oraz czasu.', view: 'servicePlan', arg: null, min: '' }
+          { id: 'item_vehicles', icon: '🗂️', theme: 'purple', spriteIdx: 11, title: 'Kartoteka Pojazdów (Moje Pojazdy)', desc: 'Twoje skutery, dane techniczne, przebieg, historia napraw i wydruk PDF.', view: 'vehicles', arg: null, min: '' },
+          { id: 'item_vin_scan', icon: '📷', theme: 'cyan', spriteIdx: 9, title: 'Skaner Numerów VIN (Kamera)', desc: 'Automatyczny odczyt numeru nadwozia VIN z tabliczki lub dowodu.', view: 'vehicles', arg: 'scan_vin', min: '', customClick: "startVinCameraScan(function(v){nav('vehicles');setTimeout(function(){var el=document.getElementById('vVin');if(el)el.value=v;},80);})" },
+          { id: 'item_service_plan', icon: '📅', theme: 'pink', spriteIdx: 12, title: 'Automatyczny Plan Serwisowy', desc: 'Obsługa wg km i daty • Automatyczne interwały serwisowe.', view: 'servicePlan', arg: null, min: '' }
         ]
       },
       {
-        groupTitle: '👥 Klienci, Historia VIN i Dokumentacja',
+        groupTitle: 'Klienci, Historia VIN i Dokumentacja',
         items: [
-          { id: 'item_clients', icon: '🗄️', title: 'Klienci Warsztatu', desc: 'Baza właścicieli pojazdów, dane kontaktowe, przypisane maszyny oraz pełna historia wizyt w serwisie.', view: 'clients', arg: null, min: 'warsztat' },
-          { id: 'item_blackbox', icon: '🏍️', title: 'Czarna Skrzynka (Historia VIN)', desc: 'Rejestr wpisów serwisowych, powracających błędów i ostrzeżeń przypisanych do konkretnego numeru VIN.', view: 'log', arg: null, min: 'warsztat' },
-          { id: 'item_export_csv', icon: '📤', title: 'Eksport Kartoteki do CSV', desc: 'Pobierz zestawienie wszystkich pojazdów, klientów, wykonanych napraw i kosztów do arkusza kalkulacyjnego.', view: 'vehicles', arg: 'export_csv', min: 'warsztat', customClick: 'exportCsv()' }
+          { id: 'item_clients', icon: '🗄️', theme: 'orange', spriteIdx: 10, title: 'Klienci Warsztatu', desc: 'Lista klientów • Dane kontaktowe • Historia obsługi pojazdów.', view: 'clients', arg: null, min: 'warsztat' },
+          { id: 'item_blackbox', icon: '🏍️', theme: 'orange', spriteIdx: 16, title: 'Czarna Skrzynka (Historia VIN)', desc: 'Wpisy serwisowe • Błędy • Ostrzeżenia przypisane do VIN.', view: 'log', arg: null, min: 'warsztat' },
+          { id: 'item_export_csv', icon: '📤', theme: 'blue', spriteIdx: 21, title: 'Eksport Kartoteki do CSV', desc: 'Pobierz zestawienie pojazdów, klientów i kosztów do arkusza.', view: 'vehicles', arg: 'export_csv', min: 'warsztat', customClick: 'exportCsv()' }
         ]
       }
     ]
   },
   {
     id: 'mod_orders',
-    num: 'MODUŁ 2',
+    num: 'MODUŁ 02',
     icon: '📋',
     title: 'ZLECENIA WARSZTATOWE',
     shortTitle: 'Zlecenia Warsztatowe',
+    sublabel: 'KARTY ZLECEŃ • WYCENA • PDF',
     theme: 'orange',
+    spriteIdx: 17,
+    image: './assets/mod-orders.jpg',
+    shortDesc: 'Karty zleceń • Kosztorysy z marżą<br>Checklisty • Przypomnienia • Notatki',
     desc: 'Obsługa zleceń serwisowych, kosztorysy z marżą, checklisty przed i po naprawie, przypomnienia o przeglądach, notatki i dokumentacja zdjęciowa.',
     pills: ['Karty zleceń', 'Nowe zlecenie', 'Checklisty', 'Przypomnienia', 'Notatnik'],
     groups: [
       {
-        groupTitle: '📋 Obsługa Zleceń i Kontrola Jakości',
+        groupTitle: 'Obsługa Zleceń i Kontrola Jakości',
         items: [
-          { id: 'item_orders', icon: '📋', title: 'Zlecenia Serwisowe & Wycena', desc: 'Zarządzanie kartami zleceń, statusy napraw, rozliczenie części z marżą, robocizna oraz druk zleceń i etykiet PDF.', view: 'orders', arg: null, min: 'warsztat' },
-          { id: 'item_orders_new', icon: '➕', title: 'Nowe Zlecenie Warsztatowe', desc: 'Szybkie przyjęcie pojazdu na warsztat — utwórz nową kartę zlecenia z odczytem VIN i zakresem prac.', view: 'orders', arg: 'new', min: 'warsztat' },
-          { id: 'item_checklists', icon: '✅', title: 'Checklisty Warsztatowe', desc: 'Profesjonalne listy kontrolne przyjęcia pojazdu, weryfikacji w trakcie naprawy oraz odbioru po serwisie.', view: 'checklist', arg: null, min: 'warsztat' }
+          { id: 'item_orders', icon: '📋', theme: 'orange', image: './assets/tile-orders.jpg', spriteIdx: 17, title: 'Zlecenia Serwisowe & Wycena', desc: 'Karta zlecenia • Wycena • Marża • Druk etykiet i protokołów PDF.', view: 'orders', arg: null, min: 'warsztat' },
+          { id: 'item_orders_new', icon: '➕', theme: 'green', spriteIdx: 4, title: 'Nowe Zlecenie Warsztatowe', desc: 'Szybkie przyjęcie pojazdu na warsztat — nowa karta z odczytem VIN.', view: 'orders', arg: 'new', min: 'warsztat' },
+          { id: 'item_checklists', icon: '✅', theme: 'green', spriteIdx: 17, title: 'Checklisty Warsztatowe', desc: 'Listy kontrolne przyjęcia pojazdu oraz odbioru przed i po serwisie.', view: 'checklist', arg: null, min: 'warsztat' }
         ]
       },
       {
-        groupTitle: '⏰ Terminy, Notatki i Dokumentacja Prac',
+        groupTitle: 'Terminy, Notatki i Dokumentacja Prac',
         items: [
-          { id: 'item_reminders', icon: '📅', title: 'Przeglądy i Przypomnienia', desc: 'Terminarz zaplanowanych przeglądów, wymian oleju i odbiorów z automatycznym alertem po terminie.', view: 'reminders', arg: null, min: '' },
-          { id: 'item_notes', icon: '📝', title: 'Notatnik Warsztatowy', desc: 'Szybkie notatki robocze, wyniki pomiarów i ustalenia z klientem przypisane do pojazdu lub VIN.', view: 'notes', arg: null, min: '' },
-          { id: 'item_photo_logs', icon: '📷', title: 'Logi / Asystent Zdjęć Offline', desc: 'Dokumentacja fotograficzna stanu podzespołów przed i po naprawie zapisywana lokalnie w bazie urządzenia.', view: 'photoAssistant', arg: null, min: '' }
+          { id: 'item_reminders', icon: '📅', theme: 'pink', spriteIdx: 12, title: 'Przeglądy i Przypomnienia', desc: 'Terminy serwisów • Przypomnienia o przeglądach i wymianie oleju.', view: 'reminders', arg: null, min: '' },
+          { id: 'item_notes', icon: '📝', theme: 'blue', spriteIdx: 19, title: 'Notatnik Warsztatowy', desc: 'Szybkie notatki robocze • Obserwacje • Własne wpisy przypisane do VIN.', view: 'notes', arg: null, min: '' },
+          { id: 'item_photo_logs', icon: '📷', theme: 'purple', spriteIdx: 8, title: 'Logi / Asystent Zdjęć Offline', desc: 'Historia napraw ze zdjęciami • Dokumentacja przed i po naprawie.', view: 'photoAssistant', arg: null, min: '' }
         ]
       }
     ]
   },
   {
     id: 'mod_diag',
-    num: 'MODUŁ 3',
+    num: 'MODUŁ 03',
     icon: '🔍',
     title: 'DIAGNOSTYKA',
     shortTitle: 'Diagnostyka',
+    sublabel: 'DRZEWA 2T/4T • 152 USTERKI',
     theme: 'purple',
+    spriteIdx: 0,
+    image: './assets/mod-diag.jpg',
+    shortDesc: 'Drzewo objawów 2T/4T • Ścieżki TAK/NIE<br>152 przypadki usterek • Kody OBD/EFI',
     desc: 'Interaktywne drzewa diagnostyczne po objawach, ścieżki decyzyjne TAK/NIE, diagnostyka silników 2T i 4T, baza 152 przypadków usterek oraz kody OBD.',
     pills: ['Drzewo objawów', 'Ścieżki TAK/NIE', '152 usterki', 'Usterki 2T/4T', 'Kody OBD'],
     groups: [
       {
-        groupTitle: '🌳 Interaktywne Systemy Diagnostyczne',
+        groupTitle: 'Interaktywne Systemy Diagnostyczne',
         items: [
-          { id: 'item_diag_tree', icon: '🔍', title: 'Drzewo Objawów (2T / 4T)', desc: 'Wskaż objaw (nie odpala, gaśnie na ciepło, dławi się, ślizga) i przejdź do listy przyczyn oraz procedury naprawy.', view: 'diag', arg: null, min: '' },
-          { id: 'item_diag_flow', icon: '🧪', title: 'Diagnostyka Krok po Kroku (TAK / NIE)', desc: 'Interaktywna checklista decyzyjna prowadząca mechanika pytaniami kontrolnymi wprost do źródła awarii.', view: 'diagFlow', arg: null, min: '' },
-          { id: 'item_knowledge', icon: '🧭', title: 'Baza Przypadków Diagnostycznych (152 Usterki)', desc: 'Kompleksowe karty usterek łączonych: objawy, weryfikacja warsztatowa, naprawa i powiązane podzespoły.', view: 'knowledge', arg: null, min: '' }
+          { id: 'item_diag_tree', icon: '🔍', theme: 'purple', spriteIdx: 0, title: 'Drzewo Objawów (2T / 4T)', desc: 'Objawy • Przyczyny • Rozwiązania prowadzące do procedury naprawy.', view: 'diag', arg: null, min: '' },
+          { id: 'item_diag_flow', icon: '🧪', theme: 'green', spriteIdx: 4, title: 'Diagnostyka Krok po Kroku (TAK / NIE)', desc: 'Interaktywna ścieżka decyzyjna prowadząca pytaniami do źródła awarii.', view: 'diagFlow', arg: null, min: '' },
+          { id: 'item_knowledge', icon: '🧭', theme: 'purple', spriteIdx: 22, title: 'Baza Przypadków Diagnostycznych (152 Usterki)', desc: 'Kompleksowe karty usterek łączonych: silnik, elektryka i napęd CVT.', view: 'knowledge', arg: null, min: '' }
         ]
       },
       {
-        groupTitle: '🔩 Diagnostyka Silnikowa i Kody Błędów',
+        groupTitle: 'Diagnostyka Silnikowa i Kody Błędów',
         items: [
-          { id: 'item_diag_2t', icon: '🛵', title: 'Diagnostyka Usterek Silników 2T (Dwusuw)', desc: 'Karty diagnostyczne dwusuwów: zatarcia, lewe powietrze, uszczelniacze wału, zawór membranowy i układ paliwowy 2T.', view: 'knowledge', arg: '2T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 2T';filterKnowledge();}},40)" },
-          { id: 'item_diag_4t', icon: '🏍️', title: 'Diagnostyka Usterek Silników 4T (Czterosuw)', desc: 'Karty diagnostyczne czterosuwów: luzy zaworowe, rozrząd, spalanie oleju, głowica i gaźniki podciśnieniowe CVK.', view: 'knowledge', arg: '4T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 4T';filterKnowledge();}},40)" },
-          { id: 'item_obd', icon: '🧾', title: 'Baza Kodów Błędów OBD / EFI Blink', desc: 'Kody usterek wtrysku paliwa EFI (standard OBD-II oraz kody błyskowe kontrolki MIL) z opisem pomiarów.', view: 'obd', arg: null, min: 'pro' }
+          { id: 'item_diag_2t', icon: '🛵', theme: 'red', spriteIdx: 6, title: 'Diagnostyka Usterek Silników 2T (Dwusuw)', desc: 'Zatarcia, lewe powietrze, uszczelniacze wału, membrana i gaźnik 2T.', view: 'knowledge', arg: '2T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 2T';filterKnowledge();}},40)" },
+          { id: 'item_diag_4t', icon: '🏍️', theme: 'orange', spriteIdx: 18, title: 'Diagnostyka Usterek Silników 4T (Czterosuw)', desc: 'Luzy zaworowe, rozrząd, spalanie oleju, głowica i gaźniki CVK.', view: 'knowledge', arg: '4T', min: '', customClick: "nav('knowledge');setTimeout(function(){var s=document.getElementById('knowledgeCategory');if(s){s.value='Silnik 4T';filterKnowledge();}},40)" },
+          { id: 'item_obd', icon: '🧾', theme: 'blue', spriteIdx: 15, title: 'Baza Kodów Błędów OBD / EFI Blink', desc: 'Kody usterek wtrysku paliwa EFI (OBD-II oraz kody błyskowe MIL).', view: 'obd', arg: null, min: 'pro' }
         ]
       }
     ]
   },
   {
     id: 'mod_electric',
-    num: 'MODUŁ 4',
+    num: 'MODUŁ 04',
     icon: '⚡',
     title: 'ELEKTRYKA I POMIARY',
     shortTitle: 'Elektryka i Pomiary',
+    sublabel: 'PINOUTY CDI • MULTIMETR • LAB',
     theme: 'blue',
+    spriteIdx: 14,
+    image: './assets/mod-electric.jpg',
+    shortDesc: 'Elektroniczne Lab • Pinouty CDI/Reg<br>Procedury multimetrem • Schematy',
     desc: 'Elektroniczne Laboratorium, interaktywne pinouty modułów CDI i regulatorów, schematy elektryczne, procedury pomiarowe multimetrem i baza wiązek.',
     pills: ['Elektroniczne Lab', 'Pinouty CDI', 'Multimetr', 'Schematy', 'Baza wiązek'],
     groups: [
       {
-        groupTitle: '📟 Pomiary Multimetrem i Laboratorium',
+        groupTitle: 'Pomiary Multimetrem i Laboratorium',
         items: [
-          { id: 'item_lab', icon: '⚡', title: 'Elektroniczne Laboratorium', desc: 'Wpisz zmierzone napięcia i rezystancje — system porówna je z wartościami wzorcowymi i wskaże uszkodzony element.', view: 'lab', arg: null, min: '' },
-          { id: 'item_pinouts', icon: '🔌', title: 'Pinouty CDI & Regulatorów Napięcia', desc: 'Rozpiski pinów modułów AC-CDI, DC-CDI oraz regulatorów 4/5/6-pinowych wraz z punktami przyłożenia sond.', view: 'pinouts', arg: null, min: 'pro' },
-          { id: 'item_multimeter', icon: '📟', title: 'Multimetr — Procedury Pomiarowe', desc: 'Instrukcje krok po kroku: badanie impulsu cewki, statora, ładowania, poboru prądu spoczynkowego i ciągłości masy.', view: 'multimeter', arg: null, min: '' }
+          { id: 'item_lab', icon: '⚡', theme: 'blue', spriteIdx: 14, title: 'Elektroniczne Laboratorium', desc: 'Pomiary • Wartości wzorcowe • Automatyczna diagnoza podzespołów.', view: 'lab', arg: null, min: '' },
+          { id: 'item_pinouts', icon: '🔌', theme: 'purple', image: './assets/tile-pinouts.jpg', spriteIdx: 15, title: 'Pinouty CDI & Regulatorów Napięcia', desc: 'Interaktywne złącza zapłonu • Pomiary multimetrem • Diagnoza iskry.', view: 'pinouts', arg: null, min: 'pro' },
+          { id: 'item_multimeter', icon: '📟', theme: 'orange', spriteIdx: 14, title: 'Multimetr — Procedury Pomiarowe', desc: 'Procedury pomiarów krok po kroku • Stator, impulsator, ładowanie.', view: 'multimeter', arg: null, min: '' }
         ]
       },
       {
-        groupTitle: '📘 Schematy, Instalacje i Kolory Przewodów',
+        groupTitle: 'Schematy, Instalacje i Kolory Przewodów',
         items: [
-          { id: 'item_schematics', icon: '📘', title: 'Schematy Elektryczne', desc: 'Przejrzyste schematy obwodów zapłonu, ładowania, rozrusznika, świateł i kierunkowskazów dla 2T i 4T.', view: 'schematics', arg: null, min: '' },
-          { id: 'item_electrical_db', icon: '🔋', title: 'Baza Instalacji Elektrycznych', desc: 'Szczegółowa architektura instalacji wg rodzin pojazdów, lokalizacja przekaźników i typowe punkty przetarć wiązki.', view: 'electricalDb', arg: null, min: 'pro', customClick: "activeElectricalSection=null;nav('electricalDb')" },
-          { id: 'item_electric_check', icon: '✅', title: 'Checklista Układu Elektrycznego', desc: 'Szybka ścieżka kontroli akumulatora, bezpieczników, stacyjki, przekaźnika rozrusznika i masy silnikowej.', view: 'electric', arg: null, min: '' },
-          { id: 'item_wiring_colors', icon: '🎨', title: 'Kolory Przewodów wg Producentów', desc: 'Tabela kodowania barwnego przewodów w instalacjach Yamaha/Minarelli, Honda, Piaggio/Gilera, GY6, Kymco i Peugeot.', view: 'wiring', arg: '2T', min: '' }
+          { id: 'item_schematics', icon: '📘', theme: 'blue', spriteIdx: 13, title: 'Schematy Elektryczne', desc: 'Kolory przewodów • Podłączenia • Układy zapłonu, ładowania i świateł.', view: 'schematics', arg: null, min: '' },
+          { id: 'item_electrical_db', icon: '🔋', theme: 'purple', spriteIdx: 15, title: 'Baza Instalacji Elektrycznych', desc: 'Architektura instalacji wg rodzin pojazdów i punkty przetarć wiązki.', view: 'electricalDb', arg: null, min: 'pro', customClick: "activeElectricalSection=null;nav('electricalDb')" },
+          { id: 'item_electric_check', icon: '✅', theme: 'orange', spriteIdx: 5, title: 'Checklista Układu Elektrycznego', desc: 'Schematy • Diagnostyka akumulatora, bezpieczników, stacyjki i masy.', view: 'electric', arg: null, min: '' },
+          { id: 'item_wiring_colors', icon: '🎨', theme: 'cyan', spriteIdx: 13, title: 'Kolory Przewodów wg Producentów', desc: 'Tabela kodowania barwnego Yamaha/Minarelli, Honda, Piaggio, GY6.', view: 'wiring', arg: '2T', min: '' }
         ]
       }
     ]
   },
   {
     id: 'mod_tech',
-    num: 'MODUŁ 5',
+    num: 'MODUŁ 05',
     icon: '📘',
     title: 'BAZA TECHNICZNA',
     shortTitle: 'Baza Techniczna',
+    sublabel: '196 MODELI OEM • SILNIKI • CZĘŚCI',
     theme: 'red',
+    spriteIdx: 6,
+    image: './assets/mod-tech.jpg',
+    shortDesc: 'Katalog 196 modeli • Profile silników<br>Dobór części OEM • CVT • Druciarstwo',
     desc: 'Katalog 196 modeli pojazdów OEM, profile silników, gaźniki, napęd CVT, dobór części i zamienników, momenty dokręcania, płyny, serwisówki i Druciarstwo.',
     pills: ['196 modeli OEM', 'Profile silników', 'Napęd CVT', 'Dobór części', 'Serwisówki'],
     groups: [
       {
-        groupTitle: '🛵 Katalogi Pojazdów, Silników i Części',
+        groupTitle: 'Katalogi Pojazdów, Silników i Części',
         items: [
-          { id: 'item_catalog', icon: '🛵', title: 'Katalog Pojazdów i Danych Serwisowych (196 Modeli)', desc: 'Dane fabryczne OEM dla 196 skuterów, motorowerów i motocykli 50–125cc: świeca, dysza, rolki, pasek, luzy zaworowe.', view: 'catalog', arg: null, min: '' },
-          { id: 'item_models', icon: '⏱️', title: 'Profile Konkretnych Silników', desc: 'Karty techniczne popularnych jednostek (Minarelli, Piaggio, GY6 139QMB, AM6, D50B0, 152QMI, Simson M541).', view: 'models', arg: null, min: 'pro' },
-          { id: 'item_parts', icon: '⚙️', title: 'Inteligentny Dobór Części OEM i Zamienników', desc: 'Zweryfikowane numery katalogowe OEM, dokładne wymiary części, zamienniki oraz linki do katalogów.', view: 'parts', arg: null, min: 'pro' },
-          { id: 'item_manuals', icon: '📘', title: 'Instrukcje Serwisowe i Manuale', desc: 'Procedury naprawcze krok po kroku oraz zweryfikowane odnośniki do oficjalnych instrukcji i serwisówek.', view: 'manuals', arg: null, min: '' }
+          { id: 'item_catalog', icon: '🛵', theme: 'red', spriteIdx: 3, title: 'Katalog Pojazdów i Danych Serwisowych (196 Modeli)', desc: 'Modele • Dane fabryczne OEM • Świeca, dysza, rolki, pasek, luzy.', view: 'catalog', arg: null, min: '' },
+          { id: 'item_models', icon: '⏱️', theme: 'red', spriteIdx: 18, title: 'Profile Konkretnych Silników', desc: 'Ustawienia • Modyfikacje • Minarelli, Piaggio, GY6, AM6, D50B0.', view: 'models', arg: null, min: 'pro' },
+          { id: 'item_parts', icon: '⚙️', theme: 'orange', spriteIdx: 1, title: 'Inteligentny Dobór Części OEM i Zamienników', desc: 'Numery katalogowe OEM • Dokładne wymiary • Zamienniki i linki.', view: 'parts', arg: null, min: 'pro' },
+          { id: 'item_manuals', icon: '📘', theme: 'cyan', spriteIdx: 2, title: 'Instrukcje Serwisowe i Manuale', desc: 'Krok po kroku • Serwis • Naprawa • Baza oficjalnych serwisówek.', view: 'manuals', arg: null, min: '' }
         ]
       },
       {
-        groupTitle: '🔩 Silniki, Napęd CVT i Specyfikacje Warsztatowe',
+        groupTitle: 'Silniki, Napęd CVT i Specyfikacje Warsztatowe',
         items: [
-          { id: 'item_tech_2t', icon: '🔩', title: 'Silniki 2T — Budowa, Regulacja i Remonty', desc: 'Kompendium techniczne dwusuwów: pasowanie tłoka, pierścienie, łożyska wału, gaźniki Dellorto/PWK i dyfuzory.', view: 'engine', arg: '2T', min: '' },
-          { id: 'item_tech_4t', icon: '⚙️', title: 'Silniki 4T — Rozrząd, Głowica i Smarowanie', desc: 'Kompendium techniczne czterosuwów: znaki rozrządu, napinacz łańcuszka, docieranie zaworów i odma.', view: 'engine', arg: '4T', min: '' },
-          { id: 'item_tech_cvt', icon: '🔄', title: 'Napęd CVT — Wariator, Pasek i Sprzęgło', desc: 'Zasada działania przekładni bezstopniowej, pomiary zużycia tulei wariatora, okładzin sprzęgła i korektora momentu.', view: 'engine', arg: 'CVT', min: '' },
-          { id: 'item_torque', icon: '🔧', title: 'Momenty Dokręcania Śrub (Nm)', desc: 'Zestawienie momentów dokręcania nakrętek głowicy, wariatora, dzwonu sprzęgła, koła magnesowego i osi kół.', view: 'torque', arg: '2T', min: '' },
-          { id: 'item_fluids', icon: '🛢️', title: 'Płyny Eksploatacyjne i Oleje', desc: 'Specyfikacje i ilości oleju silnikowego, przekładniowego (przekładnia końcowa), płynu hamulcowego DOT i chłodniczego.', view: 'fluids', arg: '2T', min: '' },
-          { id: 'item_intervals', icon: '⏳', title: 'Interwały Wymian Eksploatacyjnych', desc: 'Wzorcowe przebiegi między wymianami paska napędowego, rolek, świecy, filtra powietrza i oleju.', view: 'intervals', arg: '2T', min: '' }
+          { id: 'item_tech_2t', icon: '🔩', theme: 'red', spriteIdx: 6, title: 'Silniki 2T — Budowa, Regulacja i Remonty', desc: 'Budowa • Regulacja • Remonty • Tłok, cylinder, membrana i gaźnik.', view: 'engine', arg: '2T', min: '' },
+          { id: 'item_tech_4t', icon: '⚙️', theme: 'orange', spriteIdx: 18, title: 'Silniki 4T — Rozrząd, Głowica i Smarowanie', desc: 'Znaki rozrządu • Napinacz łańcuszka • Luzy zaworowe i odma.', view: 'engine', arg: '4T', min: '' },
+          { id: 'item_tech_cvt', icon: '🔄', theme: 'red', image: './assets/tile-cvt.jpg', spriteIdx: 3, title: 'Napęd CVT — Wariator, Pasek i Sprzęgło', desc: 'Przekładnia bezstopniowa • Tuleja wariatora, pasek, sprzęgło i dzwon.', view: 'engine', arg: 'CVT', min: '' },
+          { id: 'item_torque', icon: '🔧', theme: 'cyan', spriteIdx: 7, title: 'Momenty Dokręcania Śrub (Nm)', desc: 'Momenty dokręcania głowicy, wariatora, sprzęgła, magneta i osi.', view: 'torque', arg: '2T', min: '' },
+          { id: 'item_fluids', icon: '🛢️', theme: 'orange', spriteIdx: 6, title: 'Płyny Eksploatacyjne i Oleje', desc: 'Specyfikacje oleju silnikowego, przekładniowego, DOT i chłodniczego.', view: 'fluids', arg: '2T', min: '' },
+          { id: 'item_intervals', icon: '⏳', theme: 'pink', spriteIdx: 12, title: 'Interwały Wymian Eksploatacyjnych', desc: 'Wzorcowe przebiegi wymian paska, rolek, świecy, filtra i oleju.', view: 'intervals', arg: '2T', min: '' }
         ]
       },
       {
-        groupTitle: '🪛 Kreatywne Naprawy Garażowe i Patenty',
+        groupTitle: 'Kreatywne Naprawy Garażowe i Patenty',
         items: [
-          { id: 'item_druciarstwo', icon: '🪛', title: 'DRUCIARSTWO Ultimate — Baza 47 Patentów i Recykling', desc: 'Encyklopedia przetestowanych patentów garażowych, katalog materiałów z odzysku i naprawy budżetowe 0 zł.', view: 'druciarstwo', arg: 'baza', min: '' }
+          { id: 'item_druciarstwo', icon: '🪛', theme: 'orange', image: './assets/tile-druciarstwo.jpg', spriteIdx: 7, title: 'DRUCIARSTWO Ultimate — Baza 47 Patentów i Recykling', desc: 'Patenty garażowe • Janusz 3000 • Naprawy 0 zł • Odzysk części.', view: 'druciarstwo', arg: 'baza', min: '' }
         ]
       }
     ]
   },
   {
     id: 'mod_tools',
-    num: 'MODUŁ 6',
+    num: 'MODUŁ 06',
     icon: '🛠️',
     title: 'KALKULATORY I NARZĘDZIA',
     shortTitle: 'Kalkulatory i Narzędzia',
+    sublabel: 'HUD • GAŹNIK • CVT • SQUISH',
     theme: 'green',
+    spriteIdx: 7,
+    image: './assets/mod-tools.jpg',
+    shortDesc: 'Tryb HUD • Stroiciel gaźnika • Tuning CVT<br>Kalkulator Squish/CR • Cennik • Janusz',
     desc: 'Tryb Warsztatowy HUD, Stroiciel Gaźnika, Kalkulator Tuningu CVT, Kalkulator Squish/CR i mieszanki 2T, Cennik części, Janusz 3000 oraz Ustawienia.',
     pills: ['Tryb HUD', 'Stroiciel gaźnika', 'Tuning CVT', 'Squish / CR / 2T', 'Janusz 3000'],
     groups: [
       {
-        groupTitle: '⭐ Eksperckie Kalkulatory i Symulatory Warsztatowe',
+        groupTitle: 'Eksperckie Kalkulatory i Symulatory Warsztatowe',
         items: [
-          { id: 'item_hud', icon: '👓', title: 'Tryb Warsztatowy HUD (Duży Ekran)', desc: 'Wysokokontrastowy panel nad stół podnośnikowy: szybki podgląd momentów Nm, luzów zaworowych, przelicznik jednostek i stoper.', view: 'hud', arg: null, min: '' },
-          { id: 'item_jetting', icon: '🫁', title: 'Stroiciel Gaźnika (Dobór Dysz i Iglicy)', desc: 'Oblicz bazową dyszę główną, dyszę wolnych obrotów i zapinkę iglicy pod pojemność 50/70/80cc, filtr i wydech.', view: 'jetting', arg: null, min: '' },
-          { id: 'item_cvt', icon: '⚙️', title: 'Kalkulator Tuningu Napędu CVT', desc: 'Dobór wagi rolek wariatora, twardości sprężyny centralnej i sprężynek sprzęgła pod charakterystykę silnika.', view: 'cvt', arg: null, min: '' },
-          { id: 'item_mix', icon: '⚡', title: 'Kalkulator Squish / CR & Mieszanka 2T', desc: 'Obliczanie prześwitu tłok–głowica (Squish), stopnia sprężania (CR) z presetami silników oraz dawki oleju do paliwa 2T.', view: 'mix', arg: null, min: '' },
-          { id: 'item_shop', icon: '🪙', title: 'Cennik Części i Kalkulator Kosztorysu', desc: 'Porównanie cen części w wariantach Budżet / Standard / Premium oraz szybkie sumowanie kosztu naprawy z robocizną.', view: 'shop', arg: null, min: '' }
+          { id: 'item_hud', icon: '👓', theme: 'green', image: './assets/tile-hud.jpg', spriteIdx: 7, title: 'Tryb Warsztatowy HUD (Duży Ekran)', desc: 'Duży ekran HUD • Momenty dokręcania • Luzy zaworowe • Squish silnika.', view: 'hud', arg: null, min: '' },
+          { id: 'item_jetting', icon: '🫁', theme: 'orange', image: './assets/tile-jetting.jpg', spriteIdx: 6, title: 'Stroiciel Gaźnika (Dobór Dysz i Iglicy)', desc: 'Dobór dyszy głównej i iglicy • 50cc / 70cc / Filtr stożkowy.', view: 'jetting', arg: null, min: '' },
+          { id: 'item_cvt', icon: '⚙️', theme: 'red', image: './assets/tile-cvt.jpg', spriteIdx: 3, title: 'Kalkulator Tuningu Napędu CVT', desc: 'Waga rolek • Sprężyna centralna • Sprzęgło • Obroty mocy silnika.', view: 'cvt', arg: null, min: '' },
+          { id: 'item_mix', icon: '⚡', theme: 'cyan', image: './assets/tile-squish.jpg', spriteIdx: 7, title: 'Kalkulator Squish / CR & Mieszanka 2T', desc: 'Prześwit tłok–głowica • Stopień sprężania • Presety AM6, Aerox, GY6.', view: 'mix', arg: null, min: '' },
+          { id: 'item_shop', icon: '🪙', theme: 'orange', spriteIdx: 20, title: 'Cennik Części i Kalkulator Kosztorysu', desc: 'Ceny • Zamienniki • Porównywanie kosztów naprawy z robocizną.', view: 'shop', arg: null, min: '' }
         ]
       },
       {
-        groupTitle: '🧰 Generator Patentów, Kalkulator Oszczędności i Ustawienia',
+        groupTitle: 'Generator Patentów, Kalkulator Oszczędności i Ustawienia',
         items: [
-          { id: 'item_janusz_gen', icon: '🤖', title: 'Generator Patentów Janusz Engineering 3000', desc: 'Interaktywny generator niekonwencjonalnych rozwiązań naprawczych na podstawie posiadanych materiałów i narzędzi.', view: 'druciarstwo', arg: 'janusz', min: '' },
-          { id: 'item_druciarstwo_tools', icon: '🧮', title: 'Janusz Meter & Quiz Bezpieczeństwa', desc: 'Kalkulator zaoszczędzonej gotówki na naprawach garażowych, 12 Świętych Artefaktów i test zjazdu awaryjnego.', view: 'druciarstwo', arg: 'meter', min: '' },
-          { id: 'item_contact', icon: '🔗', title: 'Kontakt, Wsparcie i Społeczność', desc: 'Informacje o projekcie NAPRAWNIK, kanały kontaktu, zgłaszanie propozycji oraz wsparcie rozwoju aplikacji.', view: 'contact', arg: null, min: '' },
-          { id: 'item_settings', icon: '⚙️', title: 'Ustawienia Aplikacji i Licencja', desc: 'Zarządzanie planem AMATOR / PRO / WARSZTAT, aktywacja kodów promocyjnych, blokada PIN i dane warsztatu.', view: 'settings', arg: null, min: '' }
+          { id: 'item_janusz_gen', icon: '🤖', theme: 'purple', spriteIdx: 22, title: 'Generator Patentów Janusz Engineering 3000', desc: 'Interaktywny generator niekonwencjonalnych rozwiązań naprawczych.', view: 'druciarstwo', arg: 'janusz', min: '' },
+          { id: 'item_druciarstwo_tools', icon: '🧮', theme: 'orange', spriteIdx: 20, title: 'Janusz Meter & Quiz Bezpieczeństwa', desc: 'Kalkulator zaoszczędzonej gotówki na naprawach i 12 Artefaktów.', view: 'druciarstwo', arg: 'meter', min: '' },
+          { id: 'item_contact', icon: '🔗', theme: 'blue', spriteIdx: 21, title: 'Kontakt, Wsparcie i Społeczność', desc: 'Wsparcie • Projekt • Aktualizacje • Kanały kontaktu i społeczność.', view: 'contact', arg: null, min: '' },
+          { id: 'item_settings', icon: '⚙️', theme: 'cyan', spriteIdx: 23, title: 'Ustawienia Aplikacji i Licencja', desc: 'Profil • Licencja AMATOR / PRO / WARSZTAT • Kody promocyjne • PIN.', view: 'settings', arg: null, min: '' }
         ]
       }
     ]
   }
 ];
 
+function getSpriteStyle(spriteIdx, image){
+  if (image) {
+    return `background-image:url('${image}');background-size:cover;background-position:center center`;
+  }
+  const idx = typeof spriteIdx === 'number' ? spriteIdx : 0;
+  const col = idx % 4;
+  const row = Math.floor(idx / 4);
+  return `background-position:${(col / 3 * 100).toFixed(2)}% ${(row / 5 * 100).toFixed(2)}%`;
+}
+
 function getAllModuleItems(){
   const list = [];
   MAIN_MODULES.forEach(mod => {
     mod.groups.forEach(grp => {
       grp.items.forEach(it => {
-        list.push({ ...it, modId: mod.id, modTitle: mod.title, modNum: mod.num, modIcon: mod.icon, groupTitle: grp.groupTitle });
+        list.push({ ...it, modId: mod.id, modTitle: mod.title, modNum: mod.num, modIcon: mod.icon, modTheme: mod.theme, groupTitle: grp.groupTitle });
       });
     });
   });
   return list;
 }
 
-const DEFAULT_FAV_TOOLS = ['item_hud', 'item_jetting', 'item_cvt', 'item_multimeter', 'item_druciarstwo', 'item_catalog'];
+const DEFAULT_FAV_TOOLS = ['item_hud', 'item_jetting', 'item_cvt', 'item_pinouts', 'item_druciarstwo', 'item_catalog'];
 
 function getFavoriteToolIds(){
   try {
@@ -3289,28 +3596,32 @@ function getRecentActivity(){
   ];
 }
 
+function quickSymptomChipSearch(term){
+  const inp = document.getElementById('symptomQuery');
+  if (!inp) return;
+  inp.value = term;
+  searchSymptoms();
+  inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function renderModuleCard(mod){
   const totalItems = mod.groups.reduce((acc, g) => acc + g.items.length, 0);
   const searchStr = escapeHtml(normalizeSearchText(
-    mod.num + ' ' + mod.title + ' ' + mod.desc + ' ' + mod.pills.join(' ') + ' ' +
+    mod.num + ' ' + mod.title + ' ' + (mod.sublabel || '') + ' ' + mod.desc + ' ' + mod.pills.join(' ') + ' ' +
     mod.groups.map(g => g.groupTitle + ' ' + g.items.map(i => i.title + ' ' + i.desc).join(' ')).join(' ')
   ));
-  return `<div class="tile mod6-card" data-theme="${mod.theme}" data-search="${searchStr}" role="button" tabindex="0" onclick="nav('module','${mod.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-    <div>
-      <div class="mod6-top">
-        <div class="mod6-icon-wrap" aria-hidden="true">${mod.icon}</div>
-        <span class="mod6-num">${mod.num}</span>
-      </div>
-      <div class="tile-label mod6-title">${escapeHtml(mod.title)}</div>
-      <div class="tile-desc mod6-desc">${escapeHtml(mod.desc)}</div>
+  const bgStyle = getSpriteStyle(mod.spriteIdx, mod.image);
+  return `<div class="tile tile-special mod6-card" data-theme="${mod.theme}" data-search="${searchStr}" role="button" tabindex="0" onclick="nav('module','${mod.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+    <div class="tile-visual mod6-visual" data-sprite="1" style="${bgStyle}">
+      <img class="mod6-img" src="${mod.image}" alt="${escapeHtml(mod.title)}" loading="eager">
+      <span class="mod6-corner-pill">${mod.num} • ${totalItems} FUNKCJI</span>
     </div>
-    <div>
-      <div class="mod6-pills">
-        ${mod.pills.map(p => `<span class="mod6-pill">${escapeHtml(p)}</span>`).join('')}
-      </div>
-      <div class="mod6-footer">
-        <span>📂 ${totalItems} funkcji w module</span>
-        <span>Otwórz moduł →</span>
+    <div class="tile-body mod6-body">
+      <span class="tile-label gold mod6-title">${escapeHtml(mod.title)}</span>
+      <span class="tile-desc mod6-desc">${mod.shortDesc || escapeHtml(mod.desc)}</span>
+      <div class="mod6-cta-bar">
+        <span>OTWÓRZ MODUŁ (${totalItems})</span>
+        <span>→</span>
       </div>
     </div>
   </div>`;
@@ -3324,19 +3635,19 @@ function renderHomeRemindersWidget(){
   return `<div class="dash-panel" id="homeRemindersBox">
     <div class="dash-panel-head">
       <h3>📅 Przypomnienia serwisowe</h3>
-      <span class="mod6-pill" style="cursor:pointer;color:#00e5ff" onclick="nav('reminders')">Wszystkie (${Array.isArray(rem) ? rem.length : 0}) →</span>
+      <span class="mod6-pill" style="cursor:pointer;color:#ffe066;border-color:#ff991f" onclick="nav('reminders')">Wszystkie (${Array.isArray(rem) ? rem.length : 0}) →</span>
     </div>
     ${sorted.length ? sorted.map(r => {
       const isOver = r.date && r.date < today;
       return `<div class="dash-list-item" onclick="nav('reminders')">
         <div>
-          <strong style="color:${isOver ? '#ff6b6b' : '#f8fafc'}">${isOver ? '⚠️ ' : '🗓️ '}${escapeHtml(r.desc || 'Przegląd serwisowy')}</strong>
-          <div style="font-size:10px;color:var(--dim)">VIN/Pojazd: ${escapeHtml(r.vin || '—')}</div>
+          <strong style="color:${isOver ? '#ff6b6b' : '#ffffff'}">${isOver ? '⚠️ ' : '🗓️ '}${escapeHtml(r.desc || 'Przegląd serwisowy')}</strong>
+          <div style="font-size:10px;color:#d8b4fe">VIN/Pojazd: ${escapeHtml(r.vin || '—')}</div>
         </div>
-        <span class="mod6-pill" style="border-color:${isOver ? '#ff6b6b' : 'rgba(255,255,255,.15)'};color:${isOver ? '#ff8787' : '#ffe066'}">${escapeHtml(r.date || 'Brak daty')}</span>
+        <span class="mod6-pill" style="border-color:${isOver ? '#ff334b' : '#ffd43b'};color:${isOver ? '#ff8787' : '#ffe066'}">${escapeHtml(r.date || 'Brak daty')}</span>
       </div>`;
-    }).join('') : `<div style="font-size:11px;color:var(--dim);padding:6px 2px">Brak zaplanowanych przypomnień. Dodaj termin przeglądu lub wymiany oleju w module Zlecenia Warsztatowe.</div>`}
-    <div class="btn" style="margin-top:8px;padding:7px 10px;font-size:11px" onclick="nav('reminders')">➕ Zarządzaj przypomnieniami</div>
+    }).join('') : `<div style="font-size:11px;color:#e9d5ff;padding:6px 2px;line-height:1.4">Brak zaplanowanych przypomnień. Dodaj termin przeglądu, wymiany oleju lub odbioru pojazdu w module Zlecenia Warsztatowe.</div>`}
+    <div class="btn" style="margin-top:9px;margin-bottom:0;padding:8px 11px;font-size:11px;background:var(--nap-grad-purple-orange);border-color:#ffd43b;color:#fff" onclick="nav('reminders')">➕ Zarządzaj przypomnieniami</div>
   </div>`;
 }
 
@@ -3345,19 +3656,16 @@ function renderHomeRecentWidget(){
   return `<div class="dash-panel" id="homeRecentActivity">
     <div class="dash-panel-head">
       <h3>⏱️ Ostatnia aktywność</h3>
-      <span style="font-size:10px;color:var(--dim)">Szybki powrót</span>
+      <span style="font-size:10px;color:#ffe066;font-weight:800">Szybki powrót</span>
     </div>
     ${recents.map(r => {
       const clickCall = r.arg ? `nav('${r.view}','${r.arg}')` : `nav('${r.view}')`;
       return `<div class="dash-list-item" onclick="${clickCall}">
-        <div style="display:flex;align-items:center;gap:8px;min-width:0">
-          <span style="font-size:17px">${r.icon || '🔧'}</span>
-          <div style="min-width:0">
-            <strong style="color:#fff;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.label)}</strong>
-            <span style="font-size:10px;color:var(--dim)">${escapeHtml(r.modTitle || '')}</span>
-          </div>
+        <div style="min-width:0">
+          <strong style="color:#fff;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.label)}</strong>
+          <span style="font-size:10px;color:#ffae2b;font-weight:700">${escapeHtml(r.modTitle || '')}</span>
         </div>
-        <span style="color:#00e5ff;font-weight:900">→</span>
+        <span style="color:#ffe066;font-weight:900;font-size:14px">→</span>
       </div>`;
     }).join('')}
   </div>`;
@@ -3369,18 +3677,20 @@ function renderHomeFavoritesWidget(){
   const favItems = favIds.map(id => allItems.find(it => it.id === id)).filter(Boolean).slice(0, 6);
   return `<div class="dash-panel" id="homeFavoritesBox" style="margin-bottom:14px">
     <div class="dash-panel-head">
-      <h3>⭐ Ulubione funkcje warsztatowe</h3>
-      <span style="font-size:10px;color:var(--dim)">Przypinaj gwiazdką ⭐ wewnątrz modułów</span>
+      <h3>⭐ Ulubione narzędzia warsztatowe (3D)</h3>
+      <span style="font-size:10px;color:#ffe066;font-weight:700">Przypinaj gwiazdką ⭐ w modułach</span>
     </div>
     <div class="module-sub-grid" style="margin:6px 0 2px">
       ${favItems.map(it => {
         const clickJs = it.customClick || `nav('${it.view}'${it.arg ? `,'${it.arg}'` : ''})`;
-        const badge = it.min && !hasPlan(it.min) ? `<span class="tile-tier-pill">${PLAN_NAMES[it.min]}</span>` : '';
-        return `<div class="mod-sub-card" onclick="${clickJs}">
-          <div class="mod-sub-icon">${it.icon}</div>
+        const badge = it.min && !hasPlan(it.min) ? `<span class="tile-badge-row"><span class="tile-lock-icon">🔒</span><span class="tile-tier-pill">${PLAN_NAMES[it.min]}</span></span>` : '';
+        const thumbStyle = getSpriteStyle(it.spriteIdx, it.image);
+        return `<div class="tile mod-sub-card" data-theme="${it.theme || it.modTheme || 'purple'}" onclick="${clickJs}">
+          <div class="mod-sub-thumb" style="${thumbStyle}" aria-hidden="true"></div>
           <div class="mod-sub-body">
-            <div class="mod-sub-title">${escapeHtml(it.title)} ${badge}</div>
-            <div class="mod-sub-desc">${escapeHtml(it.modTitle)}</div>
+            <span class="mod-sub-title">${escapeHtml(it.title)}</span>
+            ${badge}
+            <span class="mod-sub-desc">${escapeHtml(it.modTitle)}</span>
           </div>
         </div>`;
       }).join('')}
@@ -3392,11 +3702,15 @@ function renderModuleView(modId){
   const mod = MAIN_MODULES.find(m => m.id === modId) || MAIN_MODULES[0];
   const favIds = getFavoriteToolIds();
   const totalCount = mod.groups.reduce((s, g) => s + g.items.length, 0);
+  const heroArtStyle = getSpriteStyle(mod.spriteIdx, mod.image);
 
   let featuredHtml = '';
   if (mod.id === 'mod_tech' || mod.id === 'mod_tools') {
     featuredHtml = `
-      <div class="special-section-divider" style="margin:16px 0 10px"><span>WYRÓŻNIONE NARZĘDZIA EKSPERCKIE</span></div>
+      <div class="workshop-panel-header" style="margin:18px 0 10px">
+        <div class="workshop-panel-title">⭐ WYRÓŻNIONE NARZĘDZIA EKSPERCKIE 3D</div>
+        <span class="workshop-panel-badge">SZYBKIE URUCHOMIENIE</span>
+      </div>
       <div class="neon-grid special-grid" id="expertTileGrid">
         ${mod.id === 'mod_tools' ? `
           ${tile('👓','TRYB WARSZTATOWY HUD','hud',null,'Duży ekran HUD • Momenty dokręcania<br>Luzy zaworowe • Squish silnika','',{theme:'green',goldTitle:true,isSpecial:true,image:'./assets/tile-hud.jpg'})}
@@ -3411,37 +3725,46 @@ function renderModuleView(modId){
 
   screen.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-      <div class="btn back" style="margin:0;flex:1" onclick="nav('home')">← Strona główna (6 modułów)</div>
+      <div class="btn back" style="margin:0;padding:7px 12px;border-radius:10px;background:var(--nap-grad-purple-orange);border:1.5px solid #ffd43b;color:#fff;text-shadow:0 1px 2px #000" onclick="nav('home')">← Panel Główny (6 Modułów)</div>
+      <span class="workshop-panel-badge">${mod.num} • ${totalCount} FUNKCJI</span>
     </div>
     <div class="mod-switcher-bar" aria-label="Przełącznik modułów">
-      ${MAIN_MODULES.map(m => `<button type="button" class="mod-switcher-pill${m.id === mod.id ? ' active' : ''}" onclick="nav('module','${m.id}')">${m.icon} ${escapeHtml(m.shortTitle)}</button>`).join('')}
+      ${MAIN_MODULES.map(m => `<button type="button" class="mod-switcher-pill${m.id === mod.id ? ' active' : ''}" onclick="nav('module','${m.id}')">${escapeHtml(m.shortTitle)}</button>`).join('')}
     </div>
-    <div class="card" style="border-color:var(--cyan);background:linear-gradient(135deg,rgba(19,24,42,.96),rgba(11,13,24,.98))">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
-        <span class="mod6-num">${mod.num}</span>
-        <span style="font-size:11px;color:var(--dim)">Dostępne narzędzia i podkategorie: <b>${totalCount}</b></span>
+    <div class="mod-view-hero">
+      <div class="mod-view-hero-art" style="${heroArtStyle}" aria-hidden="true"></div>
+      <div class="mod-view-hero-content">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span class="workshop-panel-badge">${mod.num}</span>
+          <span style="font-size:10.5px;font-weight:900;color:#00e5ff;letter-spacing:.6px">${escapeHtml(mod.sublabel || '')}</span>
+        </div>
+        <h2 style="margin:0 0 6px;border:none;padding:0;font-size:clamp(18px,3.4vw,24px);color:#ffcc00;text-shadow:0 2px 4px #000,0 0 14px rgba(255,204,0,.55)">${escapeHtml(mod.title)}</h2>
+        <p style="margin:0 0 10px;font-size:12px;color:#f3e8ff;line-height:1.45;text-shadow:0 1px 2px #000;max-width:620px">${escapeHtml(mod.desc)}</p>
+        <input id="moduleSearchInput" placeholder="🔍 Filtruj podkategorie i narzędzia w module ${escapeHtml(mod.shortTitle)}..." oninput="filterModuleView(this.value)" style="margin-bottom:0;border:1.8px solid #ff991f;background:rgba(8,5,18,.94);border-radius:12px;padding:10px 12px">
       </div>
-      <h2 style="margin:0 0 6px;font-size:18px;color:#fff">${mod.icon} ${escapeHtml(mod.title)}</h2>
-      <p style="margin:0 0 10px;font-size:12px;color:#cbd5e1;line-height:1.45">${escapeHtml(mod.desc)}</p>
-      <input id="moduleSearchInput" placeholder="🔍 Szukaj podkategorii lub narzędzia w tym module..." oninput="filterModuleView(this.value)" style="margin-bottom:0">
     </div>
     <div id="moduleGroupsContainer">
       ${mod.groups.map(grp => `
         <div class="mod-group-block">
-          <div class="section-label" style="margin:14px 0 8px">${escapeHtml(grp.groupTitle)}</div>
+          <div class="mod-group-header">
+            <span>${escapeHtml(grp.groupTitle)}</span>
+            <span style="font-size:10px;color:#ffe066">${grp.items.length} poz.</span>
+          </div>
           <div class="module-sub-grid">
             ${grp.items.map(it => {
               const clickJs = it.customClick || `nav('${it.view}'${it.arg ? `,'${it.arg}'` : ''})`;
               const isFav = favIds.includes(it.id);
               const lockBadge = it.min ? `<span class="tile-badge-row">${!hasPlan(it.min) ? '<span class="tile-lock-icon">🔒</span>' : ''}<span class="tile-tier-pill">${PLAN_NAMES[it.min]}</span></span>` : '';
               const searchKey = escapeHtml(normalizeSearchText(it.title + ' ' + it.desc + ' ' + grp.groupTitle));
-              return `<div class="mod-sub-card" data-mod-search="${searchKey}" role="button" tabindex="0" onclick="${clickJs}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
-                <div class="mod-sub-icon" aria-hidden="true">${it.icon}</div>
+              const thumbStyle = getSpriteStyle(it.spriteIdx, it.image);
+              return `<div class="tile mod-sub-card" data-theme="${it.theme || mod.theme || 'purple'}" data-mod-search="${searchKey}" role="button" tabindex="0" onclick="${clickJs}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+                <button type="button" class="mod-fav-btn${isFav ? ' active' : ''}" title="${isFav ? 'Usuń z ulubionych' : 'Przypnij do ulubionych na ekranie głównym'}" onclick="toggleFavoriteTool('${it.id}', event)">${isFav ? '⭐' : '☆'}</button>
+                <div class="mod-sub-thumb" style="${thumbStyle}" aria-hidden="true"></div>
                 <div class="mod-sub-body">
-                  <div class="mod-sub-title">${escapeHtml(it.title)} ${lockBadge}</div>
-                  <div class="mod-sub-desc">${escapeHtml(it.desc)}</div>
+                  <span class="mod-sub-title">${escapeHtml(it.title)}</span>
+                  ${lockBadge}
+                  <span class="mod-sub-desc">${escapeHtml(it.desc)}</span>
                 </div>
-                <button type="button" class="mod-fav-btn${isFav ? ' active' : ''}" title="${isFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych na ekranie głównym'}" onclick="toggleFavoriteTool('${it.id}', event)">${isFav ? '⭐' : '☆'}</button>
               </div>`;
             }).join('')}
           </div>
@@ -3462,7 +3785,7 @@ function filterModuleView(rawQuery){
 
 function renderHome(){
   screen.innerHTML = `
-  <div class="brand-hero" style="margin-bottom:6px">
+  <div class="brand-hero" style="margin-bottom:8px">
     <div class="hero-art hero-art-left" aria-hidden="true"></div>
     <div class="hero-art hero-art-right" aria-hidden="true"></div>
     <div class="hero-center">
@@ -3483,47 +3806,56 @@ function renderHome(){
 
   <div class="home-search-bar">
     <div class="home-search-input-wrap">
-      <input id="symptomQuery" placeholder="🔍 Globalna wyszukiwarka: moduł, narzędzie, objaw, część, model, pomiar..." oninput="searchSymptoms()">
+      <input id="symptomQuery" placeholder="🔍 Szukaj modułu, usterki, modelu, części, pomiaru (np. brak iskry, Aerox, gaźnik)..." oninput="searchSymptoms()">
       <button type="button" id="clearHomeSearch" class="home-search-clear" onclick="clearHomeSearch()" title="Wyczyść wyszukiwanie" aria-label="Wyczyść wyszukiwanie">✕</button>
+    </div>
+    <div class="symptom-chips-row" aria-label="Szybkie filtry objawów">
+      <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('brak iskry')">⚡ Brak iskry</button>
+      <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('ładowanie')">🔋 Nie ładuje</button>
+      <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('gaśnie na ciepło')">🔥 Gaśnie na ciepło</button>
+      <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('wariator pasek')">⚙️ Szarpie CVT</button>
+      <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('zalewa gaźnik')">🫁 Zalewa gaźnik</button>
+      <button type="button" class="symptom-chip" onclick="nav('druciarstwo','baza')">🪛 Druciarstwo 0 zł</button>
     </div>
     <div class="home-search-meta"><span id="homeTileCount"></span></div>
     <div id="symptomResults"></div>
   </div>
 
+  <div class="special-section-header" style="margin:10px 0 8px">
+    <div class="special-section-badge">⭐ PANEL WARSZTATOWY v5.18</div>
+    <div class="special-section-title">SZEŚĆ GŁÓWNYCH MODUŁÓW WARSZTATU</div>
+    <div class="special-section-sub">Wybierz dział główny: Klienci i Pojazdy, Zlecenia, Diagnostyka, Elektryka, Baza Techniczna lub Kalkulatory</div>
+  </div>
+  <div class="neon-grid" id="mainTileGrid">
+    ${MAIN_MODULES.map(mod => renderModuleCard(mod)).join('')}
+  </div>
+
   <div class="workshop-panel-header">
     <div class="workshop-panel-title">⚡ SZYBKIE AKCJE WARSZTATOWE</div>
-    <span class="workshop-panel-badge">NATYCHMIASTOWY DOSTĘP</span>
+    <span class="workshop-panel-badge">NATYCHMIASTOWY START</span>
   </div>
   <div class="quick-actions-grid" id="homeQuickActions">
     <button type="button" class="quick-action-btn" onclick="nav('orders','new')">
-      <span class="quick-action-icon">📋</span>
+      <span class="quick-action-art" style="${getSpriteStyle(4, null)}" aria-hidden="true"></span>
       <span class="quick-action-text">
         <strong>Nowe zlecenie</strong>
-        <small>Przyjęcie pojazdu i wycena</small>
+        <small>Przyjęcie i wycena PDF</small>
       </span>
     </button>
     <button type="button" class="quick-action-btn" onclick="nav('vehicles')">
-      <span class="quick-action-icon">🛵</span>
+      <span class="quick-action-art" style="${getSpriteStyle(9, null)}" aria-hidden="true"></span>
       <span class="quick-action-text">
         <strong>Dodaj pojazd</strong>
         <small>Kartoteka garażu i VIN</small>
       </span>
     </button>
     <button type="button" class="quick-action-btn" onclick="resetDiagFlow()">
-      <span class="quick-action-icon">🔍</span>
+      <span class="quick-action-art" style="${getSpriteStyle(0, null)}" aria-hidden="true"></span>
       <span class="quick-action-text">
         <strong>Szybka diagnostyka</strong>
-        <small>Ścieżka TAK/NIE po objawach</small>
+        <small>Ścieżka TAK/NIE po objawie</small>
       </span>
     </button>
-  </div>
-
-  <div class="workshop-panel-header">
-    <div class="workshop-panel-title">🧭 GŁÓWNE MODUŁY SYSTEMU (6 SEKCJI)</div>
-    <span class="workshop-panel-badge">PANEL WARSZTATOWY v5.18</span>
-  </div>
-  <div class="neon-grid" id="mainTileGrid">
-    ${MAIN_MODULES.map(mod => renderModuleCard(mod)).join('')}
   </div>
 
   ${renderHomeFavoritesWidget()}

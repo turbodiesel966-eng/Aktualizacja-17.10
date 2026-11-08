@@ -369,6 +369,18 @@ test('NAPRAWNIK v5.18 — Przebudowa Strony Głównej na 6 Głównych Modułów,
   assert.ok(html.includes('function renderHomeRecentWidget()') && html.includes('function recordRecentActivity(view, arg)'), 'Brak obsługi Ostatniej aktywności');
   assert.ok(html.includes('function renderHomeRemindersWidget()'), 'Brak widżetu Przypomnień na stronie głównej');
   assert.ok(html.includes('function renderHomeFavoritesWidget()') && html.includes('function toggleFavoriteTool(itemId, ev)'), 'Brak widżetu Ulubionych funkcji');
+
+  // 4. Weryfikacja projektu graficznego 3D Cyber-Workshop (oryginalny gradient fiolet->pomarańcz, dedykowane ilustracje 3D, tło warsztatowe, 45 podkategorii)
+  assert.ok(html.includes('--nap-grad-purple-orange'), 'Brak zmiennej oryginalnego gradientu fiolet -> pomarańcz');
+  assert.ok(html.includes('./assets/workshop-bg.jpg'), 'Brak pełnowartościowego tła warsztatowego ./assets/workshop-bg.jpg');
+  for (const img of ['mod-clients.jpg', 'mod-orders.jpg', 'mod-diag.jpg', 'mod-electric.jpg', 'mod-tech.jpg', 'mod-tools.jpg']) {
+    assert.ok(html.includes(`./assets/${img}`), `Brak dedykowanej grafiki 3D ./assets/${img} w MAIN_MODULES`);
+    assert.ok(fs.existsSync(path.join(root, 'assets', img)), `Brak pliku grafiki assets/${img} na dysku`);
+  }
+  assert.ok(html.includes('class="tile-visual mod6-visual"'), 'Karty 6 modułów muszą posiadać grafikę 3D .mod6-visual');
+  assert.ok(html.includes('class="mod-sub-thumb"'), 'Podkategorie muszą posiadać ilustracje 3D .mod-sub-thumb');
+  assert.ok(html.includes('class="special-section-header"'), 'Brak nagłówka sekcji specjalnej na stronie głównej');
+  assert.ok(html.includes('class="symptom-chips-row"'), 'Brak paska szybkich filtrów objawów');
 });
 
 

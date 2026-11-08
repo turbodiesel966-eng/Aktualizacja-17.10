@@ -68,7 +68,14 @@ for (const file of [
   "tile-pinouts.jpg",
   "tile-squish.jpg",
   "tile-orders.jpg",
-  "tile-druciarstwo.jpg"
+  "tile-druciarstwo.jpg",
+  "workshop-bg.jpg",
+  "mod-clients.jpg",
+  "mod-orders.jpg",
+  "mod-diag.jpg",
+  "mod-electric.jpg",
+  "mod-tech.jpg",
+  "mod-tools.jpg"
 ]) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
 }
@@ -108,7 +115,7 @@ const nativeCacheName = sourceCacheMatch[1] + "-native";
 
 const nativeSwContent = `const CACHE='${nativeCacheName}';
 const WEB_LIVE_BASE='https://turbodiesel966-eng.github.io/Aktualizacja-17.10';
-const PRECACHE=['./index.html','./native-bridge.js','./billing.js?v=17','./katalog-techniczny.js','./druciarstwo.js','./manifest.webmanifest','./assets/naprawnik-icon.svg','./assets/naprawnik-icon-192.svg','./assets/naprawnik-icon-512.svg','./assets/neon-tiles-art.jpg'];
+const PRECACHE=['./index.html','./native-bridge.js','./billing.js?v=17','./katalog-techniczny.js','./druciarstwo.js','./manifest.webmanifest','./assets/naprawnik-icon.svg','./assets/naprawnik-icon-192.svg','./assets/naprawnik-icon-512.svg','./assets/neon-tiles-art.jpg','./assets/workshop-bg.jpg','./assets/mod-clients.jpg','./assets/mod-orders.jpg','./assets/mod-diag.jpg','./assets/mod-electric.jpg','./assets/mod-tech.jpg','./assets/mod-tools.jpg'];
 function instrumentNativeHtml(html){
   if(typeof html!=='string'||!html.includes('const APP_VERSION')||!html.includes('const MAIN_MODULES'))return null;
   let out=html;
