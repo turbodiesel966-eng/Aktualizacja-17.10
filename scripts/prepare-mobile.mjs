@@ -93,6 +93,27 @@ mobileHtml = mobileHtml.replace(
   navMarker,
   navMarker + '\n  window.__naprawnikView = String(view || "home");'
 );
+
+// Sanitize mobile HTML to guarantee complete isolation from production Web PWA:
+// 1. Remove syncApkWithWebNow() function and all calls
+// 2. Remove any text suggesting automatic sync/updates of APK from Web
+const apkCardPattern = /function renderAndroidApkCard\(\)\{[\s\S]*?async function syncApkWithWebNow\(\)\{[\s\S]*?\n\}/;
+if (!apkCardPattern.test(mobileHtml)) {
+  throw new Error("Could not locate renderAndroidApkCard and syncApkWithWebNow in index.html for APK isolation transformation.");
+}
+mobileHtml = mobileHtml.replace(
+  apkCardPattern,
+  `function renderAndroidApkCard(){\n` +
+  `  if (typeof window !== 'undefined' && window.__naprawnikNative) {\n` +
+  `    return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div></div>\`;\n` +
+  `  }\n` +
+  `  return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa w 100% offline w warsztacie.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>\`;\n` +
+  `}`
+);
+
+if (mobileHtml.includes("__naprawnikWebSync") || mobileHtml.includes("syncApkWithWebNow")) {
+  throw new Error("Sanitization failed: mobile HTML still contains OTA synchronization markers.");
+}
 const closingBody = "</body>";
 const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
 if (closingBodyIndex < 0) {

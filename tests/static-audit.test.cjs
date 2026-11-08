@@ -563,6 +563,7 @@ test('APK jest całkowicie odizolowane od produkcyjnego PWA, działa 100% offlin
   assert.ok(!bridge.includes('WEB_LIVE_BASE'), 'native-bridge.js nie może definiować WEB_LIVE_BASE');
   assert.ok(!bridge.includes('turbodiesel966-eng.github.io'), 'native-bridge.js nie może pobierać danych z GitHub Pages');
   assert.ok(!bridge.includes('__naprawnikWebSync'), 'native-bridge.js nie może zawierać synchronizacji webowej OTA');
+  assert.ok(prep.includes('renderAndroidApkCard'), 'prepare-mobile.mjs musi transformować kartę APK na wersję warsztatową offline');
   assert.ok(prep.includes('-native'), 'Service Worker APK musi używać dedykowanego izolowanego cache -native');
   assert.ok(verify.includes('assets/public/assets/neon-tiles-art.jpg'));
 });

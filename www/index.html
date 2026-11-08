@@ -4713,22 +4713,9 @@ function renderLegal(){
 }
 function renderAndroidApkCard(){
   if (typeof window !== 'undefined' && window.__naprawnikNative) {
-    return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (połączona z wersją Web)</h2><div class="diag-sub">Zainstalowane APK automatycznie pobiera nowości z wersji Web. Możesz też wymusić synchronizację jednym kliknięciem.</div><div class="btn" style="border-color:#00f57a;color:#00f57a" onclick="syncApkWithWebNow()">🔄 Synchronizuj z wersją Web teraz</div></div>`;
+    return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div></div>`;
   }
-  return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa offline w warsztacie i automatycznie synchronizuje aktualizacje z wersją Web.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>`;
-}
-async function syncApkWithWebNow(){
-  if (typeof window !== 'undefined' && typeof window.__naprawnikWebSync === 'function') {
-    const ok = await window.__naprawnikWebSync();
-    if (ok) {
-      alert('✅ Pobrano najnowszą wersję z serwera Web. Aplikacja zostanie odświeżona.');
-      location.reload();
-    } else {
-      alert('⚠️ Nie udało się połączyć z serwerem Web (sprawdź internet). Korzystasz z zapisanej wersji offline.');
-    }
-    return;
-  }
-  location.reload();
+  return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa w 100% offline w warsztacie.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>`;
 }
 async function saveCloudBackup(){
   if(!hasPlan('pro')){ renderLocked('pro','Kopia zapasowa w chmurze','renderSettings()'); return; }
