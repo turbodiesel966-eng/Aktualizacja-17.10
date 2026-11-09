@@ -26,7 +26,9 @@ const MAX_FEEDS = 50;
 const MAX_PRODUCTS_PER_FEED = 20000;
 const MAX_QUERY = 100;
 const MAX_LIMIT = 60;
-const ALLOWED_FEED_HOSTS = new Set(["datafeeds.webepartners.pl", "feeds.webepartners.pl", "webep1.pl"]);
+function allowedFeedHosts(env) {
+  return new Set(String(env.FEED_ALLOWED_HOSTS || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean));
+}
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { ...CORS, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
@@ -42,7 +44,36 @@ function xmlTag(block, names) {
   }
   return "";
 }
-function parseFeed(xml, feed) {
+function parseFeed(body, feed, contentType) {
+  if (/json/i.test(contentType) || /^[\\s]*[\\[{]/.test(body)) {
+    let parsed;
+    try { parsed = JSON.parse(body); } catch { throw new Error("Feed declares JSON but could not be parsed"); }
+    const rows = Array.isArray(parsed) ? parsed :
+      (parsed.products || parsed.items || parsed.data || parsed.offers || []);
+    if (!Array.isArray(rows)) throw new Error("Unrecognized JSON feed structure");
+    return rows.slice(0, MAX_PRODUCTS_PER_FEED).map((p, i) => {
+      const pick = (...keys) => {
+        for (const key of keys) if (p?.[key] != null && p[key] !== "") return p[key];
+        return "";
+      };
+      const title = safeText(pick("name","title","product_name"),300);
+      const url = safeText(pick("aw_deep_link","deeplink","link","url","product_url"),2000);
+      const image = safeText(pick("aw_image_url","image_link","image","image_url"),2000);
+      const priceRaw = pick("search_price","price","sale_price","amount");
+      const price = Number(String(priceRaw).replace(",",".").replace(/[^0-9.]/g,""));
+      if (!title || !/^https:\\/\\//i.test(url)) return null;
+      return {
+        external_id:safeText(pick("aw_product_id","id","product_id","sku") || url || title,180) || String(i),
+        title, description:safeText(pick("description","product_description"),2000),
+        brand:safeText(pick("brand","manufacturer"),200),
+        category:safeText(feed.category || pick("category","product_type") || "inne",100),
+        price:Number.isFinite(price)&&price>0?price:null,
+        currency:safeText(pick("currency","currency_code") || "PLN",3).toUpperCase(),
+        product_url:url,image_url:/^https:\\/\\//i.test(image)?image:null,
+        program:safeText(feed.program,120)
+      };
+    }).filter(Boolean);
+  }
   const items = xml.match(/<(?:[\w.-]+:)?(?:product|item|entry)(?:\s[^>]*)?>[\s\S]*?<\/(?:[\w.-]+:)?(?:product|item|entry)\s*>/gi) || [];
   return items.slice(0, MAX_PRODUCTS_PER_FEED).map((block, i) => {
     const get = (...names) => xmlTag(block, names);
