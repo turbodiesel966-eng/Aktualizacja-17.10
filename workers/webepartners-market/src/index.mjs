@@ -102,10 +102,12 @@ async function feedConfig(env) {
   let feeds;
   try { feeds = JSON.parse(env.FEED_CONFIG || "[]"); } catch { throw new Error("FEED_CONFIG is not valid JSON"); }
   if (!Array.isArray(feeds) || feeds.length > MAX_FEEDS) throw new Error("FEED_CONFIG must be an array of up to 50 feeds");
+  const allowed = allowedFeedHosts(env);
+  if (feeds.length && !allowed.size) throw new Error("FEED_ALLOWED_HOSTS must list exact approved feed hostnames");
   for (const f of feeds) {
     const u = new URL(f.url);
-    if (u.protocol !== "https:" || ![...ALLOWED_FEED_HOSTS].some(h => u.hostname === h || u.hostname.endsWith("."+h))) {
-      throw new Error("Feed host is not allowed: " + u.hostname);
+    if (u.protocol !== "https:" || !allowed.has(u.hostname.toLowerCase())) {
+      throw new Error("Feed host is not allowlisted: " + u.hostname);
     }
   }
   return feeds;
