@@ -14,7 +14,7 @@ This is an isolated APK-only integration. It must not be wired into the producti
 1. Create a NEW D1 database named `naprawnik-market-staging`; do not reuse any subscriptions database.
 2. Apply `schema.sql` to that new database.
 3. Create a separate Worker named `naprawnik-market-staging` with binding `DB`.
-4. Set Worker secrets `MARKET_ADMIN_TOKEN` and `FEED_CONFIG`.
+4. Set Worker secrets `MARKET_ADMIN_TOKEN`, `FEED_CONFIG` and `FEED_ALLOWED_HOSTS` (comma-separated exact hostnames copied from the approved feed URLs).
 5. FEED_CONFIG is a JSON array of approved feeds, for example:
    `[{"program":"Program name","url":"https://exact-feed-url-from-panel","category":"narzedzia"}]`
 6. Verify `GET /health`, then admin sync and product search.
@@ -23,7 +23,7 @@ This is an isolated APK-only integration. It must not be wired into the producti
 `czesci`, `motocykle`, `narzedzia`, `diagnostyka`, `elektronika`, `chemia-eksploatacja`, `wyposazenie-warsztatu`, `akcesoria`, `inne`.
 
 ## Feed handling
-The adapter accepts common XML product/item/entry feeds and common fields such as title/name, product ID/SKU, price, brand, category, image URL and affiliate deep link. Real WebePartners feed schema must be checked against an actual feed before production use. Unrecognized XML formats must be mapped explicitly rather than silently treated as valid.
+The adapter accepts common XML product/item/entry feeds and JSON arrays or products/items/data/offers arrays. It maps common fields such as title/name, product ID/SKU, price, brand, category, image URL and affiliate deep link. Feed hostnames must be explicitly allowlisted; arbitrary URLs are rejected. Real WebePartners feed schema must be checked against an actual feed before production use. Unrecognized XML formats must be mapped explicitly rather than silently treated as valid.
 
 ## Current known blockers
 - No WebePartners API key has been generated yet.
