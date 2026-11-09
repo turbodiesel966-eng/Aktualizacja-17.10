@@ -20,6 +20,7 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/sw.js",
         "assets/public/manifest.webmanifest",
         "assets/public/native-bridge.js",
+        "assets/public/affiliate/market-ui.js",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -45,6 +46,8 @@ with zipfile.ZipFile(apk) as bundle:
     for marker in ["exportBackup()", "importBackup(event)", "paExportCases()", "paImportCases(event)", "paCamera", "paGallery"]:
         if marker not in html:
             raise SystemExit(f"Missing app capability in APK HTML: {marker}")
+    if "NAPRAWNIK MARKET" not in html or "NaprawnikMarket" not in bundle.read("assets/public/affiliate/market-ui.js").decode("utf-8"):
+        raise SystemExit("APK-only NAPRAWNIK MARKET UI is missing.")
     if "NAPRAWNIK_KATALOG" not in catalog:
         raise SystemExit("Technical catalogue module is present but not initialized.")
     if "naprawnik-subscriptions-live.turbodiesel966.workers.dev" not in billing:
