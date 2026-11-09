@@ -173,24 +173,34 @@ if (apkCardStart !== -1) {
   }
 }
 
-// Wycinanie funkcji synchronizacji i webowego updatera z APK
+// Wycinanie funkcji synchronizacji z APK
 mobileHtml = removeJsFunction(mobileHtml, "async function syncApkWithWebNow");
 mobileHtml = removeJsFunction(mobileHtml, "function syncApkWithWebNow");
-mobileHtml = removeJsFunction(mobileHtml, "async function checkForAppUpdates");
-mobileHtml = removeJsFunction(mobileHtml, "function checkForAppUpdates");
-mobileHtml = removeJsFunction(mobileHtml, "async function handleAppUpdateClick");
-mobileHtml = removeJsFunction(mobileHtml, "function handleAppUpdateClick");
-mobileHtml = removeJsFunction(mobileHtml, "function triggerUpdateState");
-
-// Zastąpienie pustymi zaślepkami (no-op) i wycięcie timerów co 25s
 mobileHtml = mobileHtml
   .replace(/id="topUpdateBar" class="top-update-bar"/g, 'id="topUpdateBar" class="top-update-bar" style="display:none !important"')
   .replace(/syncApkWithWebNow\(\)/g, "/* offline */")
   .replace(/onclick="syncApkWithWebNow\(\)"/g, 'style="display:none"')
-  .replace(/setInterval\([^)]*checkForAppUpdates[^)]*\);?/g, "/* APK: updater timer disabled */")
-  .replace(/setTimeout\([^)]*checkForAppUpdates[^)]*\);?/g, "/* APK: updater timeout disabled */")
-  .replace(/checkForAppUpdates\([^)]*\);?/g, "/* APK: updater call disabled */")
   .replace(/onclick="handleAppUpdateClick\([^)]*\)"/g, 'style="display:none"');
+
+// Bezpieczne zastąpienie webowego updatera pustymi zaślepkami w miejscu definicji
+mobileHtml = mobileHtml.replace(
+  /function triggerUpdateState\(\)\s*\{[\s\S]*?\n\}\r?\n/,
+  "function triggerUpdateState(){}\n"
+);
+mobileHtml = mobileHtml.replace(
+  /async function checkForAppUpdates\(manual\)\s*\{[\s\S]*?\n\}\r?\n/,
+  "function checkForAppUpdates(){ return false; }\n"
+);
+mobileHtml = mobileHtml.replace(
+  /async function handleAppUpdateClick\(\)\s*\{[\s\S]*?\n\}\r?\n/,
+  "function handleAppUpdateClick(){}\n"
+);
+
+// Wycięcie całego bloku timerów webowego updatera bez uszkadzania składni JS
+mobileHtml = mobileHtml.replace(
+  /\/\/ Sprawdzanie cykliczne w tle[\s\S]*?if\s*\(\s*pin\s*\)\s*\{/m,
+  "// APK: web updater timers disabled in offline APK\nif(pin){"
+);
 
 const closingBody = "</body>";
 const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
@@ -199,9 +209,21 @@ if (closingBodyIndex < 0) {
 }
 if (!mobileHtml.includes("./native-bridge.js")) {
   mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
-    "  <script>function checkForAppUpdates(){} function handleAppUpdateClick(){} function triggerUpdateState(){}</script>\n" +
     '  <script src="./native-bridge.js"></script>\n' +
     mobileHtml.slice(closingBodyIndex);
+}
+
+// Weryfikacja poprawności składniowej wszystkich skryptów inline w wygenerowanym HTML dla APK
+const apkScriptRegex = /<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi;
+let apkScriptMatch;
+let apkScriptIdx = 0;
+while ((apkScriptMatch = apkScriptRegex.exec(mobileHtml)) !== null) {
+  apkScriptIdx++;
+  try {
+    new Function(apkScriptMatch[1]);
+  } catch (err) {
+    throw new Error(`Błąd składni JavaScript w skrypcie ${apkScriptIdx} w www/index.html: ${err.message}`);
+  }
 }
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
 

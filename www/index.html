@@ -8441,7 +8441,7 @@ try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(
 const CURRENT_APP_VERSION = "5.49";
 const CURRENT_APP_BUILD = 1730653000000;
 let isAppUpdateAvailable = false;
-
+function triggerUpdateState(){}
 
 function isVersionNewer(remoteVer, currentVer){
   if (!remoteVer || !currentVer) return false;
@@ -8457,9 +8457,9 @@ function isVersionNewer(remoteVer, currentVer){
   return false;
 }
 
+function checkForAppUpdates(){ return false; }
 
-
-
+function handleAppUpdateClick(){}
 
 window.npCheckForUpdates = checkForAppUpdates;
 window.npTriggerUpdateState = triggerUpdateState;
@@ -8483,33 +8483,7 @@ if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   });
 }
 
-// Sprawdzanie cykliczne w tle co 25 sekund (bez wysyłania powiadomień)
-if (typeof setInterval === "function") {
-  setInterval(() => {
-    if (!isAppUpdateAvailable) /* APK: updater call disabled */
-  }, 25000);
-}
-
-// Sprawdzanie po powrocie do aplikacji / przywróceniu karty
-if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && !isAppUpdateAvailable) {
-      /* APK: updater call disabled */
-    }
-  });
-}
-if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
-  window.addEventListener("focus", () => {
-    if (!isAppUpdateAvailable) /* APK: updater call disabled */
-  });
-}
-
-// Pierwsze sprawdzenie w tle 1.5s po uruchomieniu
-if (typeof setTimeout === "function") {
-  setTimeout(() => {
-    /* APK: updater call disabled */
-  }, 1500);
-}
+// APK: web updater timers disabled in offline APK
 if(pin){ showLock(); } else { nav('home'); }
 // Płatności i licencje inicjalizuje billing.js po załadowaniu aplikacji.
 </script>
@@ -8520,7 +8494,6 @@ if(pin){ showLock(); } else { nav('home'); }
 <script src="./vin-decoder.js"></script>
 <script src="./platform-adapter.js"></script>
 <script src="./billing.js?v=17"></script>
-  <script>function checkForAppUpdates(){} function handleAppUpdateClick(){} function triggerUpdateState(){}</script>
   <script src="./native-bridge.js"></script>
 </body>
 </html>
