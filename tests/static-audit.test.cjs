@@ -93,10 +93,10 @@ test('billing korzysta z planu zweryfikowanego w pamięci i pojedynczego Checkou
   assert.match(billing, /Nie utworzono nowego konta/);
   assert.match(billing, /const oneTimePackages =/);
   assert.ok(billing.includes("activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +"));
-  assert.match(billing, /tier: 'pro', days: 3, price: '3,00 zł'/);
   assert.match(billing, /tier: 'pro', days: 7, price: '7,00 zł'/);
-  assert.match(billing, /tier: 'warsztat', days: 3, price: '5,00 zł'/);
   assert.match(billing, /tier: 'warsztat', days: 7, price: '10,00 zł'/);
+  assert.doesNotMatch(billing, /tier: 'pro', days: 3/);
+  assert.doesNotMatch(billing, /tier: 'warsztat', days: 3/);
   assert.match(billing, /data-one-time-tier/);
   assert.match(billing, /analiza zdjęć AI jest chwilowo wyłączona/i);
   assert.doesNotMatch(billing, /PRO dodaje analizę AI/);

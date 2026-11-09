@@ -19,11 +19,13 @@ test("mapowanie pakietów jednorazowych jest rozdzielone od mapy abonamentów", 
 });
 
 function makeCheckoutEnv(currentTier = "amator") {
-  const state = { lock: null, form: null, posts: 0, currentTier };
+  const state = { lock: null, form: null, posts: 0, currentTier, pastPurchases: [], customerId: null, customerPastPurchases: [] };
   const env = {
     STRIPE_SECRET_KEY: "sk_test_mock_key",
     STRIPE_EXPECT_LIVEMODE: "false",
     STRIPE_PRICE_PRO_3D: PRICE,
+    STRIPE_PRICE_PRO_7D: "price_test_pro_7d",
+    STRIPE_PRICE_WARSZTAT_7D: "price_test_warsztat_7d",
     APP_BASE_URL: "https://staging.example.test/app/",
     CHECKOUT_SUCCESS_URL: "https://staging.example.test/app/?checkout=success",
     CHECKOUT_CANCEL_URL: "https://staging.example.test/app/?checkout=cancelled",
@@ -36,6 +38,15 @@ function makeCheckoutEnv(currentTier = "amator") {
                 if (sql.includes("INSERT INTO request_limits")) return { request_count: 1 };
                 if (sql.includes("SELECT id, email FROM users")) return { id: "user_test_1", email: "owner@example.test" };
                 if (sql.includes("SELECT session_id, expires_at FROM checkout_locks")) return null;
+                if (sql.includes("FROM one_time_purchases") && sql.includes("duration_days = 7") && !sql.includes("JOIN")) {
+                  return state.pastPurchases.includes(params[1]) ? { checkout_session_id: "cs_past" } : null;
+                }
+                if (sql.includes("SELECT stripe_customer_id FROM stripe_customers")) {
+                  return state.customerId ? { stripe_customer_id: state.customerId } : null;
+                }
+                if (sql.includes("FROM one_time_purchases") && sql.includes("JOIN stripe_customers")) {
+                  return state.customerPastPurchases?.includes(params[1]) ? { checkout_session_id: "cs_cust_past" } : null;
+                }
                 if (sql.includes("SELECT user_id, idempotency_key, tier, duration_days, session_id, expires_at FROM one_time_checkout_locks")) {
                   return state.lock ? { ...state.lock } : null;
                 }
@@ -49,6 +60,7 @@ function makeCheckoutEnv(currentTier = "amator") {
                 }
                 if (sql.includes("SELECT tier, expires_at FROM promo_redemptions WHERE user_id")) return { results: [] };
                 if (sql.includes("SELECT tier, expires_at FROM one_time_purchases WHERE user_id")) return { results: [] };
+                if (sql.includes("SELECT tier, duration_days FROM one_time_purchases WHERE user_id = ?")) return { results: [] };
                 throw new Error("Unexpected checkout all SQL: " + sql);
               },
               async run() {
@@ -89,7 +101,7 @@ test("server blocks duplicate or lower-tier one-time purchases before contacting
     const request = new Request("https://worker.example.test/api/one-time-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Idempotency-Key": "one-time-active-0001" },
-      body: JSON.stringify({ tier: "pro", durationDays: 3 })
+      body: JSON.stringify({ tier: "pro", durationDays: 7 })
     });
     const response = await oneTimeCheckout(request, env, { userId: "user_test_1" });
     const data = await response.json();
@@ -103,13 +115,56 @@ test("server blocks duplicate or lower-tier one-time purchases before contacting
   }
 });
 
+test("server rejects 3-day one-time packages with 400", async () => {
+  const { env } = makeCheckoutEnv();
+  const request = new Request("https://worker.example.test/api/one-time-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Idempotency-Key": "one-time-3d-0001" },
+    body: JSON.stringify({ tier: "pro", durationDays: 3 })
+  });
+  const response = await oneTimeCheckout(request, env, { userId: "user_test_1" });
+  const data = await response.json();
+  assert.equal(response.status, 400);
+  assert.match(data.error, /wyłącznie pakiety 7-dniowe/);
+});
+
+test("server blocks repeat 7-day purchase on same account with 409", async () => {
+  const { env, state } = makeCheckoutEnv();
+  state.pastPurchases = ["pro"];
+  const request = new Request("https://worker.example.test/api/one-time-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Idempotency-Key": "one-time-repeat-0001" },
+    body: JSON.stringify({ tier: "pro", durationDays: 7 })
+  });
+  const response = await oneTimeCheckout(request, env, { userId: "user_test_1" });
+  const data = await response.json();
+  assert.equal(response.status, 409);
+  assert.match(data.error, /został już wcześniej wykorzystany/);
+});
+
+test("server blocks repeat 7-day purchase for same Stripe customer identity with 409", async () => {
+  const { env, state } = makeCheckoutEnv();
+  state.customerId = "cus_mock_identity_1";
+  state.customerPastPurchases = ["warsztat"];
+  const request = new Request("https://worker.example.test/api/one-time-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Idempotency-Key": "one-time-repeat-cus-0001" },
+    body: JSON.stringify({ tier: "warsztat", durationDays: 7 })
+  });
+  const response = await oneTimeCheckout(request, env, { userId: "user_test_1" });
+  const data = await response.json();
+  assert.equal(response.status, 409);
+  assert.match(data.error, /został już wcześniej wykorzystany/);
+});
+
 test("one-time Checkout uses payment mode, exact server price and idempotency; does not call a real payment system in this test", async () => {
   const originalFetch = globalThis.fetch;
   const { env, state } = makeCheckoutEnv();
+  const PRICE_7D = "price_test_pro_7d";
   globalThis.fetch = async (input, init = {}) => {
     const url = String(input);
-    if (url === "https://api.stripe.com/v1/prices/" + PRICE && init.method !== "POST") {
-      return new Response(JSON.stringify({ id: PRICE, active:true, livemode:false, currency:"pln", type:"one_time", unit_amount:300, recurring:null }), {
+    if (url === "https://api.stripe.com/v1/prices/" + PRICE_7D && init.method !== "POST") {
+      return new Response(JSON.stringify({ id: PRICE_7D, active:true, livemode:false, currency:"pln", type:"one_time", unit_amount:700, recurring:null }), {
         status:200, headers:{"content-type":"application/json"}
       });
     }
@@ -117,11 +172,11 @@ test("one-time Checkout uses payment mode, exact server price and idempotency; d
       state.posts += 1;
       state.form = new URLSearchParams(init.body);
       assert.equal(state.form.get("mode"), "payment");
-      assert.equal(state.form.get("line_items[0][price]"), PRICE);
+      assert.equal(state.form.get("line_items[0][price]"), PRICE_7D);
       assert.equal(state.form.get("line_items[0][quantity]"), "1");
       assert.equal(state.form.get("metadata[purchase_type]"), "one_time");
-      assert.equal(state.form.get("metadata[package_key]"), "pro_3d");
-      return new Response(JSON.stringify({ id:"cs_test_one_time", url:"https://checkout.stripe.com/c/pay/cs_test_one_time", status:"open", expires_at:NOW+3600 }), {
+      assert.equal(state.form.get("metadata[package_key]"), "pro_7d");
+      return new Response(JSON.stringify({ id:"cs_test_one_time_7d", url:"https://checkout.stripe.com/c/pay/cs_test_one_time_7d", status:"open", expires_at:NOW+3600 }), {
         status:200, headers:{"content-type":"application/json"}
       });
     }
@@ -131,14 +186,14 @@ test("one-time Checkout uses payment mode, exact server price and idempotency; d
     const request = new Request("https://worker.example.test/api/one-time-checkout", {
       method:"POST",
       headers:{"Content-Type":"application/json","Idempotency-Key":"one-time-test-0001"},
-      body:JSON.stringify({tier:"pro",durationDays:3})
+      body:JSON.stringify({tier:"pro",durationDays:7})
     });
     const response = await oneTimeCheckout(request, env, { userId:"user_test_1" });
     const data = await response.json();
     assert.equal(response.status,200);
     assert.match(data.url,/^https:\/\/checkout\.stripe\.com\//);
     assert.equal(state.posts,1);
-    assert.equal(state.lock.session_id,"cs_test_one_time");
+    assert.equal(state.lock.session_id,"cs_test_one_time_7d");
   } finally {
     globalThis.fetch = originalFetch;
   }

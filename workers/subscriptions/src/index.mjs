@@ -930,7 +930,32 @@ async function oneTimeCheckout(request, env, auth) {
   if (!idempotency || !/^[A-Za-z0-9_-]{8,128}$/.test(idempotency)) return err("A valid Idempotency-Key is required", 400);
   const tier = body?.tier;
   const durationDays = Number(body?.durationDays);
-  if (!["pro", "warsztat"].includes(tier) || ![3, 7].includes(durationDays)) return err("Wybierz prawidłowy pakiet jednorazowy.", 400);
+  if (!["pro", "warsztat"].includes(tier) || durationDays !== 7) {
+    return err("Dostępne są wyłącznie pakiety 7-dniowe. Pakiety 3-dniowe zostały wycofane z oferty.", 400);
+  }
+  const pastPurchase = await env.DB.prepare(`
+    SELECT checkout_session_id FROM one_time_purchases
+    WHERE user_id = ? AND tier = ? AND duration_days = 7
+    LIMIT 1
+  `).bind(auth.userId, tier).first();
+  if (pastPurchase) {
+    return err(`Pakiet ${tier.toUpperCase()} 7 dni został już wcześniej wykorzystany na tym koncie. Każdy pakiet 7-dniowy można kupić tylko jeden raz.`, 409);
+  }
+  const customerLink = await env.DB.prepare(
+    "SELECT stripe_customer_id FROM stripe_customers WHERE user_id = ? LIMIT 1"
+  ).bind(auth.userId).first();
+  if (customerLink?.stripe_customer_id) {
+    const customerPastPurchase = await env.DB.prepare(`
+      SELECT p.checkout_session_id
+      FROM one_time_purchases p
+      JOIN stripe_customers sc ON p.user_id = sc.user_id
+      WHERE sc.stripe_customer_id = ? AND p.tier = ? AND p.duration_days = 7
+      LIMIT 1
+    `).bind(customerLink.stripe_customer_id, tier).first();
+    if (customerPastPurchase) {
+      return err(`Pakiet ${tier.toUpperCase()} 7 dni został już wcześniej wykorzystany dla Twojej tożsamości klienta Stripe. Każdy pakiet 7-dniowy można kupić tylko jeden raz.`, 409);
+    }
+  }
   const packageKey = `${tier}_${durationDays}d`;
   const priceMap = oneTimePriceMap(env);
   const [priceId, expected] = [...priceMap.entries()].find(([,v]) => v.tier === tier && v.durationDays === durationDays) || [];
@@ -1145,6 +1170,10 @@ async function getMe(env, auth) {
     tier: p.tier, status: "active", billing_interval: "one_time", current_period_end: Number(p.expires_at),
     cancel_at_period_end: 0, grace_until: null, granted_at: Number(p.granted_at)
   }));
+  const { results: allOneTimePurchases = [] } = await env.DB.prepare(
+    "SELECT tier, duration_days FROM one_time_purchases WHERE user_id = ?"
+  ).bind(auth.userId).all();
+  const usedOneTimePackages = allOneTimePurchases.map(p => `${p.tier}_${p.duration_days}d`);
   const currentTier = await recalcUserTier(env, auth.userId);
   const admin = await env.DB.prepare("SELECT role FROM admin_users WHERE user_id = ? LIMIT 1").bind(auth.userId).first();
   const isAdmin = admin?.role === "admin";
@@ -1161,7 +1190,12 @@ async function getMe(env, auth) {
   let planUsage = null;
   try { planUsage = await readUsage(env, auth.userId, effectiveTier, isAdmin, now); }
   catch (error) { console.error(JSON.stringify({ event: "usage_read_failed", code: error?.message || "unknown" })); }
-  return json({ user: { ...user, tier: effectiveTier, role: admin?.role || "user" }, subscriptions: [...adminEntitlements, ...subscriptions, ...promoEntitlements, ...oneTimeEntitlements], planUsage });
+  return json({
+    user: { ...user, tier: effectiveTier, role: admin?.role || "user" },
+    subscriptions: [...adminEntitlements, ...subscriptions, ...promoEntitlements, ...oneTimeEntitlements],
+    usedOneTimePackages,
+    planUsage
+  });
 }
 
 async function userPlanContext(env, userId) {

@@ -22,6 +22,7 @@
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   let verifiedLicenseState = null;
   let adminTierOverride = null;
+  let userUsedOneTimePackages = [];
   function applyVerifiedPlan(state) {
     if (state && state.verified === true &&
         Object.prototype.hasOwnProperty.call(ORDER, state.tier) &&
@@ -32,12 +33,16 @@
       verifiedLicenseState = null;
       adminTierOverride = null;
     }
+    if (state && Array.isArray(state.usedOneTimePackages)) {
+      userUsedOneTimePackages = state.usedOneTimePackages;
+    }
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
   }
   function clearVerifiedPlan() {
     const hadPaid = !!(verifiedLicenseState && verifiedLicenseState.tier !== 'amator');
     verifiedLicenseState = null;
     adminTierOverride = null;
+    userUsedOneTimePackages = [];
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
     if (hadPaid && typeof nav === 'function') nav('home');
   }
@@ -88,6 +93,7 @@
     const message = String(error && error.message || error || '');
     const status = Number(error && error.status || 0);
     if (message.includes('Płatności są wyłączone dla tej domeny') || message.includes('Nie utworzono nowego konta')) return message;
+    if (message.includes('już wcześniej wykorzystany') || message.includes('został już wcześniej wykorzystany')) return message;
     if (status === 401 || /\bunauthorized\b|user not found|invalid token|token expired/i.test(message)) {
       return 'Klucz dostępu został odrzucony lub wygasł. Zaloguj się ponownie albo odzyskaj poprzedni klucz; nie utworzono nowego konta automatycznie.';
     }
@@ -197,7 +203,8 @@
       localStorage.setItem('naprawnik_license', JSON.stringify({ token, tier, exp: expires, checkedAt: Date.now(), role: isAdmin ? 'admin' : 'user' }));
     }
     if (token) localStorage.setItem(TOKEN_KEY, token);
-    applyVerifiedPlan({ verified: true, tier, exp: expires, token, isAdmin, planUsage: data && data.planUsage });
+    userUsedOneTimePackages = Array.isArray(data && data.usedOneTimePackages) ? data.usedOneTimePackages : [];
+    applyVerifiedPlan({ verified: true, tier, exp: expires, token, isAdmin, planUsage: data && data.planUsage, usedOneTimePackages: userUsedOneTimePackages });
     if (typeof updatePlanBadge === 'function') updatePlanBadge();
     return tier;
   }
@@ -282,7 +289,7 @@
   }
 
   async function checkoutOneTime(tier, durationDays) {
-    if (!['pro', 'warsztat'].includes(tier) || ![3, 7].includes(Number(durationDays))) return;
+    if (!['pro', 'warsztat'].includes(tier) || Number(durationDays) !== 7) return;
     if (!API) { alert('Płatności są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.'); return; }
     try {
       const token = await accountEnsure();
@@ -290,7 +297,7 @@
       const response = await fetch(API + '/api/one-time-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: 'Bearer ' + token, 'Idempotency-Key': key },
-        body: JSON.stringify({ tier, durationDays: Number(durationDays) }),
+        body: JSON.stringify({ tier, durationDays: 7 }),
         credentials: 'omit',
         cache: 'no-store'
       });
@@ -343,15 +350,20 @@
       activation = '<div class="card"><h2>🔑 Aktywacja / odzyskanie dostępu</h2><p style="font-size:12px;line-height:1.5">Po zakupie dostęp aktywuje się po potwierdzeniu Stripe. Na innym urządzeniu wklej klucz dostępu lub wczytaj zapisany plik <code>.txt</code>.</p><input id="licKeyIn" placeholder="Wklej klucz dostępu"><div class="btn" data-np-activate="1">✅ Aktywuj / sprawdź klucz</div><label class="btn" for="licKeyFileIn" style="display:block;border-color:#00e5ff;color:#00e5ff">📂 Wczytaj klucz z pliku (.txt)</label><input id="licKeyFileIn" type="file" accept=".txt,text/plain" onchange="window.licLoadKeyFile && window.licLoadKeyFile(event)" style="display:none"></div>';
     }
     const oneTimeOffers = [
-      { tier: 'pro', days: 3, price: '3,00 zł', title: 'PRO' },
       { tier: 'pro', days: 7, price: '7,00 zł', title: 'PRO' },
-      { tier: 'warsztat', days: 3, price: '5,00 zł', title: 'WARSZTAT' },
       { tier: 'warsztat', days: 7, price: '10,00 zł', title: 'WARSZTAT' }
     ].filter(offer => ORDER[current] < ORDER[offer.tier]);
-    const oneTimePackages = '<div class="card" style="border-color:var(--accent)"><h2>⚡ Pakiety jednorazowe</h2>' +
+    const oneTimePackages = '<div class="card" style="border-color:var(--accent)"><h2>⚡ Pakiety jednorazowe (7 dni)</h2>' +
       (oneTimeOffers.length
-        ? '<p style="font-size:12px;line-height:1.5">Dostęp na określony czas. Jednorazowa płatność — bez automatycznego odnowienia.</p>' +
-          oneTimeOffers.map(offer => '<div class="entry"><b>' + esc(offer.title) + ' · ' + esc(String(offer.days)) + ' dni — ' + esc(offer.price) + '</b><button class="btn" type="button" data-one-time-tier="' + esc(offer.tier) + '" data-one-time-days="' + esc(String(offer.days)) + '">Kup ' + esc(offer.title) + ' na ' + esc(String(offer.days)) + ' dni</button></div>').join('')
+        ? '<p style="font-size:12px;line-height:1.5">Dostęp próbny na 7 dni. Jednorazowa płatność — bez automatycznego odnowienia. Każdy pakiet można kupić tylko 1 raz na konto.</p>' +
+          oneTimeOffers.map(offer => {
+            const packageKey = offer.tier + '_' + offer.days + 'd';
+            const isUsed = userUsedOneTimePackages.includes(packageKey);
+            if (isUsed) {
+              return '<div class="entry"><b>' + esc(offer.title) + ' · ' + esc(String(offer.days)) + ' dni — ' + esc(offer.price) + '</b><div style="font-size:12px;color:var(--dim);margin-top:4px">⚠️ Ten pakiet jednorazowy został już wcześniej wykorzystany na tym koncie (limit: 1 raz). Dalszy dostęp dostępny w abonamencie miesięcznym lub rocznym.</div></div>';
+            }
+            return '<div class="entry"><b>' + esc(offer.title) + ' · ' + esc(String(offer.days)) + ' dni — ' + esc(offer.price) + '</b><button class="btn" type="button" data-one-time-tier="' + esc(offer.tier) + '" data-one-time-days="' + esc(String(offer.days)) + '">Kup ' + esc(offer.title) + ' na ' + esc(String(offer.days)) + ' dni (1 raz na konto)</button></div>';
+          }).join('')
         : '<p style="font-size:12px;line-height:1.5">Masz już aktywny plan WARSZTAT. Pakiety równe lub niższe od aktywnego planu są ukryte, aby nie proponować zbędnego zakupu.</p>') + '</div>';
     let usageCard = '';
     const planUsage = license && license.planUsage;
