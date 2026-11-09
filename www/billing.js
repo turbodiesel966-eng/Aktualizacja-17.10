@@ -252,6 +252,10 @@
     if (!isSafeCheckoutUrl(url) && !(typeof url === 'string' && /^https:\/\/billing\.stripe\.com\//i.test(url))) {
       throw new Error('Otrzymano niebezpieczny adres zewnętrzny.');
     }
+    if (typeof window !== 'undefined' && window.NaprawnikPlatform && typeof window.NaprawnikPlatform.openCheckout === 'function') {
+      await window.NaprawnikPlatform.openCheckout(url, purpose);
+      return;
+    }
     if (typeof window.__naprawnikNativeCheckout === 'function') {
       await window.__naprawnikNativeCheckout(url, purpose);
       return;

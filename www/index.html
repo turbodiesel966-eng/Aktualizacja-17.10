@@ -3276,7 +3276,7 @@ function renderLocked(min,label,backJs){
    '<div class="btn" onclick="nav(\'plans\')">Porównaj plany / aktywuj licencję</div></div>';
 }
 const NAV_MIN={orders:'warsztat',orderDetail:'warsztat',clients:'warsztat',log:'warsztat',checklist:'warsztat',obd:'pro',models:'pro',pinouts:'pro'};
-const NAV_LABEL={orders:'Karta Zlecenia Serwisowego',orderDetail:'Szczegóły Zlecenia',lab:'Elektroniczne Laboratorium',servicePlan:'Automatyczny Plan Serwisowy',parts:'Inteligentny dobór części',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe',obd:'Baza kodów OBD',models:'Profile konkretnych silników',druciarstwo:'DRUCIARSTWO — Kreatywne Naprawy Garażowe',multicyl:'MOTOCYKLE 3–4 CYLINDRY (400–650 cm³)'};
+const NAV_LABEL={orders:'Karta Zlecenia Serwisowego',orderDetail:'Szczegóły Zlecenia',lab:'Elektroniczne Laboratorium',servicePlan:'Automatyczny Plan Serwisowy',parts:'Inteligentny dobór części',clients:'Klienci',log:'Czarna Skrzynka',checklist:'Checklisty warsztatowe',obd:'Baza kodów OBD',models:'Profile konkretnych silników',druciarstwo:'DRUCIARSTWO — Kreatywne Naprawy Garażowe',multicyl:'MOTOCYKLE 3–4 CYLINDRY (400–650 cm³)',vin:'Czytnik i Dekoder VIN'};
 /* ===== Funkcje warsztatu ===== */
 function workshopInfo(){const w=load('naprawnik_workshop');return (Array.isArray(w)&&w[0])||{};}
 function editWorkshop(){
@@ -3329,7 +3329,7 @@ const MAIN_MODULES = [
         groupTitle: 'Pojazdy, Garaż i Identyfikacja VIN',
         items: [
           { id: 'item_vehicles', icon: '🗂️', theme: 'purple', spriteIdx: 11, title: 'Kartoteka Pojazdów (Moje Pojazdy)', desc: 'Twoje skutery, dane techniczne, przebieg, historia napraw i wydruk PDF.', view: 'vehicles', arg: null, min: '' },
-          { id: 'item_vin_scan', icon: '📷', theme: 'cyan', spriteIdx: 9, title: 'Skaner Numerów VIN (Kamera)', desc: 'Automatyczny odczyt numeru nadwozia VIN z tabliczki lub dowodu.', view: 'vehicles', arg: 'scan_vin', min: '', customClick: "startVinCameraScan(function(v){nav('vehicles');setTimeout(function(){var el=document.getElementById('vVin');if(el)el.value=v;},80);})" },
+          { id: 'item_vin_scan', icon: '📷', theme: 'cyan', spriteIdx: 9, title: 'Czytnik i Dekoder VIN', desc: 'Precyzyjny odczyt ISO 3779/3780, dekodowanie WMI/VIS, historia i integracja z bazą pojazdów.', view: 'vin', arg: null, min: '' },
           { id: 'item_service_plan', icon: '📅', theme: 'pink', spriteIdx: 12, title: 'Automatyczny Plan Serwisowy', desc: 'Obsługa wg km i daty • Automatyczne interwały serwisowe.', view: 'servicePlan', arg: null, min: '' }
         ]
       },
@@ -4717,6 +4717,7 @@ function renderAndroidApkCard(){
   }
   return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa w 100% offline w warsztacie.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>`;
 }
+
 async function saveCloudBackup(){
   if(!hasPlan('pro')){ renderLocked('pro','Kopia zapasowa w chmurze','renderSettings()'); return; }
   if(typeof window.npCloudBackupSave !== 'function'){ alert('Moduł chmury jest niedostępny.'); return; }
@@ -4793,9 +4794,14 @@ function exportBackup(){
     const payload={app:'NAPRAWNIK',formatVersion:1,exportedAt:new Date().toISOString(),data:{}};
     NAPRAWNIK_STORAGE_KEYS.filter(k=>k!=='naprawnik_pin').forEach(k=>{const raw=localStorage.getItem(k); if(raw!==null) payload.data[k]=JSON.parse(raw);});
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download='NAPRAWNIK-kopia-'+new Date().toISOString().slice(0,10)+'.json';
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const fileName='NAPRAWNIK-kopia-'+new Date().toISOString().slice(0,10)+'.json';
+    if(typeof window!=='undefined' && window.NaprawnikPlatform && typeof window.NaprawnikPlatform.exportFile==='function'){
+      window.NaprawnikPlatform.exportFile(blob, fileName, 'Kopia zapasowa NAPRAWNIKA');
+    }else{
+      const url=URL.createObjectURL(blob); const a=document.createElement('a');
+      a.href=url; a.download=fileName;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
     alert('Utworzono kopię zapasową. Przechowuj ją w bezpiecznym miejscu — może zawierać dane klientów i pojazdów. PIN nie jest eksportowany. Nie udostępniaj pliku osobom trzecim.');
   }catch(e){console.error(e);alert('Nie udało się utworzyć kopii zapasowej. Sprawdź pamięć urządzenia.');}
 }
@@ -4934,8 +4940,9 @@ function renderVehicles(){
     <select id="vCatalogModel" onchange="applyCatalogModel()" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin:4px 0 10px"><option value="">Wybierz markę i rodzinę modelu…</option>${SCOOTER_CATALOG.map((m,i)=>`<option value="${i}">${m[0]} — ${m[1]} (${m[2]} cm³)</option>`).join('')}</select>
     <small style="color:var(--dim)">W katalogu: ${SCOOTER_CATALOG.length} rodzin modeli. To szeroka baza startowa, nie pełny spis wszystkich generacji świata.</small><br><br>
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
-      <input id="vVin" placeholder="VIN" style="flex:1;margin:0">
+      <input id="vVin" placeholder="VIN (17 znaków)" style="flex:1;margin:0" oninput="this.value=this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'')">
       <button type="button" class="btn" style="width:auto;margin:0;padding:8px 10px;font-size:12px;background:#1a1a2e;border:1px solid var(--cyan);color:var(--cyan);white-space:nowrap" onclick="startVinCameraScan('vVin')">📷 Skanuj</button>
+      <button type="button" class="btn" style="width:auto;margin:0;padding:8px 10px;font-size:12px;background:#152238;border:1px solid var(--hero);color:var(--hero);white-space:nowrap" onclick="decodeVinFromVehicleForm()">🔍 Rozszyfruj</button>
     </div>
     <input id="vBrand" placeholder="Marka">
     <input id="vModel" placeholder="Model">
@@ -5547,6 +5554,7 @@ function nav(view, arg, restoreState){
   else if(view==='hud') renderWorkshopHud();
   else if(view==='druciarstwo') renderDruciarstwo(arg);
   else if(view==='multicyl') renderMulticyl(arg);
+  else if(view==='vin') renderVinReader(arg);
 
   // 4. Przywróć pozycję przewijania po wyrenderowaniu widoku
   if(isBack && restoreState){
@@ -6353,7 +6361,9 @@ function scanVinFromFileInput(input){
 
 function onVinDetected(val){
   const clean = val.replace(/[^A-Z0-9]/g, '').slice(0, 17);
-  if(_vinScanActiveTargetId){
+  if(typeof _vinScanActiveTargetId === 'function'){
+    try { _vinScanActiveTargetId(clean); } catch(e){ console.error(e); }
+  } else if(_vinScanActiveTargetId){
     const inp = document.getElementById(_vinScanActiveTargetId);
     if(inp){
       inp.value = clean;
@@ -6381,6 +6391,314 @@ function closeVinScanModal(){
   const modal = document.getElementById('vinScanModal');
   if(modal) modal.style.display = 'none';
 }
+
+/* ==========================================================================
+   CZYTNIK I DEKODER NUMERÓW VIN (ISO 3779 / 3780)
+   ========================================================================== */
+
+function decodeVinFromVehicleForm(){
+  const vinEl = document.getElementById('vVin');
+  if(!vinEl || !vinEl.value.trim()){
+    alert('Wprowadź najpierw numer VIN (17 znaków).');
+    return;
+  }
+  const vin = vinEl.value.trim().toUpperCase();
+  if(window.NaprawnikVinDecoder){
+    const d = window.NaprawnikVinDecoder.decodeVin(vin);
+    if(d.wmiInfo && d.wmiInfo.manufacturer){
+      const bEl = document.getElementById('vBrand');
+      if(bEl && !bEl.value) bEl.value = d.wmiInfo.manufacturer;
+    }
+    if(d.visInfo && d.visInfo.yearEstimate){
+      const yEl = document.getElementById('vYear');
+      if(yEl && !yEl.value) yEl.value = d.visInfo.yearEstimate;
+    }
+    nav('vin', vin);
+  }
+}
+
+function renderVinReader(initialVin){
+  const defaultVin = (typeof initialVin === 'string' && initialVin !== 'scan') ? initialVin.trim().toUpperCase() : '';
+  screen.innerHTML = back() + `
+  <div class="card" style="border:1px solid rgba(0,229,255,0.3);box-shadow:0 0 15px rgba(0,229,255,0.08)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:26px">🔍</span>
+      <div>
+        <h2 style="margin:0;color:var(--cyan);font-size:18px">Czytnik i Dekoder VIN (ISO 3779 / ISO 3780)</h2>
+        <small style="color:var(--dim)">Odczyt z tabliczki znamionowej, dowodu rejestracyjnego lub kamery</small>
+      </div>
+    </div>
+    
+    <div style="display:flex;gap:6px;align-items:center;margin-top:12px;margin-bottom:6px">
+      <input id="vinReaderInput" placeholder="Wpisz 17-znakowy numer VIN..." value="${escapeHtml(defaultVin)}" maxlength="17" 
+        style="flex:1;margin:0;font-family:monospace;letter-spacing:1px;font-size:14px;font-weight:bold;text-transform:uppercase" 
+        oninput="handleVinReaderInput(this.value)">
+      <button type="button" class="btn" style="width:auto;margin:0;padding:10px 14px;background:#1a1a2e;border:1px solid var(--cyan);color:var(--cyan);white-space:nowrap" 
+        onclick="startVinCameraScan(function(v){ onVinReaderScanned(v); })">📷 Skanuj</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:11px">
+      <span id="vinReaderLength" style="color:var(--dim)">Długość: ${defaultVin.length} / 17 znaków</span>
+      <span id="vinReaderCheckDigit" style="color:var(--dim)">Suma kontrolna ISO: —</span>
+    </div>
+    
+    <div style="display:flex;gap:8px">
+      <button type="button" class="btn" style="flex:2;margin:0;background:linear-gradient(135deg,#00838f,#00e5ff);color:#000;font-weight:bold" onclick="executeVinDecode()">🔍 Rozszyfruj VIN</button>
+      <button type="button" class="btn" style="flex:1;margin:0;background:#222;border:1px solid var(--border);color:var(--dim)" onclick="clearVinReader()">🧹 Wyczyść</button>
+    </div>
+  </div>
+
+  <div id="vinReaderOutput"></div>
+
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0;font-size:15px;color:var(--hero)">🕒 Ostatnio sprawdzane numery VIN</h3>
+      <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:11px;background:none;border:1px solid var(--border);color:var(--dim)" onclick="clearVinHistoryUI()">Wyczyść</button>
+    </div>
+    <div id="vinReaderHistory"></div>
+  </div>
+  `;
+
+  renderVinHistoryUI();
+
+  if(initialVin === 'scan'){
+    setTimeout(() => {
+      startVinCameraScan(function(v){ onVinReaderScanned(v); });
+    }, 150);
+  } else if(defaultVin && defaultVin.length >= 3){
+    executeVinDecode();
+  }
+}
+
+function handleVinReaderInput(val){
+  const clean = (val || '').toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17);
+  const inp = document.getElementById('vinReaderInput');
+  if(inp && inp.value !== clean) inp.value = clean;
+  
+  const lenEl = document.getElementById('vinReaderLength');
+  if(lenEl){
+    lenEl.textContent = `Długość: ${clean.length} / 17 znaków`;
+    lenEl.style.color = clean.length === 17 ? 'var(--cyan)' : 'var(--dim)';
+  }
+
+  if(window.NaprawnikVinDecoder){
+    const v = window.NaprawnikVinDecoder.validateVin(clean);
+    const cdEl = document.getElementById('vinReaderCheckDigit');
+    if(cdEl){
+      if(v.checkDigitValid === true){
+        cdEl.textContent = 'Suma kontrolna ISO: PRAWIDŁOWA ✓';
+        cdEl.style.color = '#00e676';
+      } else if(v.checkDigitValid === false){
+        cdEl.textContent = `Suma kontrolna ISO: BŁĄD (oczekiwano: ${v.expectedCheckDigit})`;
+        cdEl.style.color = '#ff5252';
+      } else {
+        cdEl.textContent = 'Suma kontrolna ISO: —';
+        cdEl.style.color = 'var(--dim)';
+      }
+    }
+  }
+}
+
+function onVinReaderScanned(scannedVal){
+  const inp = document.getElementById('vinReaderInput');
+  if(inp){
+    inp.value = scannedVal;
+    handleVinReaderInput(scannedVal);
+    executeVinDecode();
+  }
+}
+
+function clearVinReader(){
+  const inp = document.getElementById('vinReaderInput');
+  if(inp){ inp.value = ''; handleVinReaderInput(''); }
+  const out = document.getElementById('vinReaderOutput');
+  if(out) out.innerHTML = '';
+}
+
+function executeVinDecode(){
+  const inp = document.getElementById('vinReaderInput');
+  const vin = (inp ? inp.value : '').trim().toUpperCase();
+  const out = document.getElementById('vinReaderOutput');
+  if(!out) return;
+
+  if(!vin){
+    out.innerHTML = `<div class="card" style="color:#ff9800">⚠️ Wprowadź numer VIN przed rozszyfrowaniem.</div>`;
+    return;
+  }
+  if(!window.NaprawnikVinDecoder){
+    out.innerHTML = `<div class="card" style="color:#ff5252">❌ Moduł NaprawnikVinDecoder nie został załadowany.</div>`;
+    return;
+  }
+
+  const res = window.NaprawnikVinDecoder.decodeVin(vin);
+  const cdBadge = res.validation.checkDigitValid === true
+    ? '<span style="color:#00e676;font-weight:bold">PRAWIDŁOWA (✓)</span>'
+    : (res.validation.checkDigitValid === false
+        ? `<span style="color:#ff5252;font-weight:bold">BŁĄD (oczekiwano ${res.validation.expectedCheckDigit})</span>`
+        : '<span style="color:var(--dim)">Nieokreślona (zgodna z ISO)</span>');
+
+  const wmi = res.wmiInfo || {};
+  const vis = res.visInfo || {};
+
+  out.innerHTML = `
+  <div class="card" style="border:1px solid var(--accent);background:linear-gradient(180deg,#14142b,#0d0d1a)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:10px">
+      <div>
+        <div style="font-family:monospace;font-size:16px;letter-spacing:2px;font-weight:bold;color:var(--cyan)">
+          <span style="color:#ffeb3b" title="WMI (Producent)">${escapeHtml(res.sections.wmi)}</span>·<span style="color:#00e5ff" title="VDS (Opis pojazdu)">${escapeHtml(res.sections.vds)}</span>·<span style="color:#ff4081" title="VIS (Identyfikacja)">${escapeHtml(res.sections.vis)}</span>
+        </div>
+        <small style="color:var(--dim)">Rozbicie ISO 3779: WMI (1-3) · VDS (4-9) · VIS (10-17)</small>
+      </div>
+      <div>
+        ${res.validation.isValid ? '<span style="background:rgba(0,230,118,0.15);color:#00e676;border:1px solid #00e676;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:bold">ISO 3779 OK</span>' : '<span style="background:rgba(255,82,82,0.15);color:#ff5252;border:1px solid #ff5252;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:bold">NIESTANDARDOWY</span>'}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">
+      <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+        <span style="color:var(--dim);display:block;font-size:11px">PRODUCENT / MARKA (WMI):</span>
+        <b style="color:var(--text);font-size:14px">${escapeHtml(wmi.manufacturer || 'Nieznany producent')}</b>
+        <small style="display:block;color:var(--dim)">${escapeHtml(wmi.category || 'Pojazd dwukołowy / inny')}</small>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+        <span style="color:var(--dim);display:block;font-size:11px">KRAJ / REGION POCHODZENIA:</span>
+        <b style="color:var(--text);font-size:14px">${escapeHtml(wmi.country || 'Nieznany kraj')}</b>
+        <small style="display:block;color:var(--dim)">Region: ${escapeHtml(res.countryRegion || '—')}</small>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+        <span style="color:var(--dim);display:block;font-size:11px">ROK MODELOWY (VIS znak 10):</span>
+        <b style="color:#ffeb3b;font-size:14px">${escapeHtml(String(vis.yearEstimate || vis.yearCode || 'Nieokreślony'))}</b>
+        <small style="display:block;color:var(--dim)">Kod roku: ${escapeHtml(vis.yearCode || '—')}</small>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+        <span style="color:var(--dim);display:block;font-size:11px">KOD FABRYKI I SERIA (VIS):</span>
+        <b style="color:var(--text);font-size:14px">Fabryka: ${escapeHtml(vis.plantCode || '—')}</b>
+        <small style="display:block;color:var(--dim)">Numer seryjny: ${escapeHtml(vis.sequentialNumber || '—')}</small>
+      </div>
+    </div>
+
+    <div style="background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:8px;margin-bottom:14px;font-size:12px;display:flex;justify-content:space-between">
+      <span>Suma kontrolna (mod-11): ${cdBadge}</span>
+      <span>Znak 9: <b>${escapeHtml(res.validation.checkDigitChar || '—')}</b></span>
+    </div>
+
+    <div id="vinNhtsaSection" style="margin-bottom:14px">
+      <button type="button" class="btn" style="width:100%;margin:0;background:#152238;border:1px solid #1976d2;color:#64b5f6;font-size:12px;padding:8px" onclick="enrichVinOnline('${escapeHtml(res.cleanVin)}')">
+        🌐 Weryfikuj i pobierz dodatkowe dane z bazy online (NHTSA vPIC)
+      </button>
+      <div id="vinNhtsaResult" style="margin-top:8px"></div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button type="button" class="btn" style="flex:1;min-width:140px;margin:0;background:#1b5e20;border:1px solid #4caf50;color:#e8f5e9;font-size:12px;padding:9px" onclick="createVehicleFromVin('${escapeHtml(res.cleanVin)}', '${escapeHtml(wmi.manufacturer || '')}', '${escapeHtml(String(vis.yearEstimate || ''))}')">
+        ➕ Utwórz pojazd
+      </button>
+      <button type="button" class="btn" style="flex:1;min-width:140px;margin:0;background:#311b92;border:1px solid #7c4dff;color:#ede7f6;font-size:12px;padding:9px" onclick="saveVinToBlackboxPrompt('${escapeHtml(res.cleanVin)}')">
+        📓 Zapisz w Czarnej Skrzynce
+      </button>
+      <button type="button" class="btn" style="flex:1;min-width:140px;margin:0;background:#263238;border:1px solid #78909c;color:#eceff1;font-size:12px;padding:9px" onclick="copyVinReport('${escapeHtml(res.cleanVin)}')">
+        📋 Kopiuj raport
+      </button>
+    </div>
+  </div>
+  `;
+
+  renderVinHistoryUI();
+}
+
+function enrichVinOnline(vin){
+  const el = document.getElementById('vinNhtsaResult');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--cyan);font-size:12px;padding:6px">Łączenie z bazą NHTSA vPIC...</div>';
+  if(!window.NaprawnikVinDecoder || !window.NaprawnikVinDecoder.enrichWithNhtsa){
+    el.innerHTML = '<div style="color:#ff5252;font-size:12px">Funkcja online niedostępna.</div>';
+    return;
+  }
+  window.NaprawnikVinDecoder.enrichWithNhtsa(vin).then(res => {
+    if(!res.success || !res.details){
+      el.innerHTML = `<div style="color:var(--dim);font-size:12px;padding:6px">Brak danych w NHTSA lub błąd sieci: ${escapeHtml(res.error || 'Nie znaleziono rekordu')}</div>`;
+      return;
+    }
+    const d = res.details;
+    el.innerHTML = `
+      <div style="background:rgba(25,118,210,0.1);border:1px solid #1976d2;border-radius:8px;padding:10px;font-size:12px">
+        <b style="color:#64b5f6;display:block;margin-bottom:6px">Dane z bazy NHTSA vPIC:</b>
+        <div>Marka: <b>${escapeHtml(d.Make || '—')}</b> | Model: <b>${escapeHtml(d.Model || '—')}</b> | Rok: <b>${escapeHtml(d.ModelYear || '—')}</b></div>
+        <div>Typ: <b>${escapeHtml(d.VehicleType || d.BodyClass || '—')}</b> | Silnik: <b>${escapeHtml(d.DisplacementL ? d.DisplacementL + 'L' : '')} ${escapeHtml(d.EngineCylinders ? d.EngineCylinders + ' cyl.' : '—')}</b></div>
+        ${d.PlantCountry ? `<div>Kraj fabryki: ${escapeHtml(d.PlantCountry)}</div>` : ''}
+      </div>
+    `;
+  }).catch(err => {
+    el.innerHTML = `<div style="color:#ff5252;font-size:12px">Błąd sieci: ${escapeHtml(err.message || String(err))}</div>`;
+  });
+}
+
+function createVehicleFromVin(vin, brand, year){
+  nav('vehicles');
+  setTimeout(() => {
+    const vVin = document.getElementById('vVin');
+    if(vVin) vVin.value = vin;
+    const vBrand = document.getElementById('vBrand');
+    if(vBrand && brand) vBrand.value = brand;
+    const vYear = document.getElementById('vYear');
+    if(vYear && year) vYear.value = year;
+    if(vVin) vVin.focus();
+  }, 100);
+}
+
+function saveVinToBlackboxPrompt(vin){
+  const note = prompt('Dodaj opcjonalną notatkę do Czarnej Skrzynki:', 'Weryfikacja VIN');
+  if(note === null) return;
+  if(window.NaprawnikVinDecoder){
+    const d = window.NaprawnikVinDecoder.decodeVin(vin);
+    window.NaprawnikVinDecoder.saveToBlackbox(d, note);
+    alert('Wpis został pomyślnie zapisany w Czarnej Skrzynce.');
+  }
+}
+
+function copyVinReport(vin){
+  if(!window.NaprawnikVinDecoder) return;
+  const d = window.NaprawnikVinDecoder.decodeVin(vin);
+  const text = `NAPRAWNIK — RAPORT DEKODERA VIN
+Numer VIN: ${d.cleanVin}
+Producent: ${d.wmiInfo.manufacturer || 'Nieznany'}
+Kraj: ${d.wmiInfo.country || 'Nieznany'}
+Kategoria: ${d.wmiInfo.category || 'Pojazd'}
+Rok modelowy: ${d.visInfo.yearEstimate || d.visInfo.yearCode || 'Nieokreślony'}
+Suma kontrolna: ${d.validation.checkDigitValid ? 'Prawidłowa' : 'Nieprawidłowa/Brak'}
+Fabryka / Seria: ${d.visInfo.plantCode || '—'} / ${d.visInfo.sequentialNumber || '—'}`;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(() => alert('Skopiowano raport do schowka!'));
+  } else {
+    prompt('Skopiuj treść raportu:', text);
+  }
+}
+
+function renderVinHistoryUI(){
+  const hEl = document.getElementById('vinReaderHistory');
+  if(!hEl || !window.NaprawnikVinDecoder) return;
+  const hist = window.NaprawnikVinDecoder.getHistory();
+  if(!hist.length){
+    hEl.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px 0">Brak historii sprawdzanych numerów VIN.</div>';
+    return;
+  }
+  hEl.innerHTML = hist.slice(0, 10).map((item, idx) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:6px;margin-bottom:6px;font-size:12px">
+      <div>
+        <b style="font-family:monospace;color:var(--cyan);letter-spacing:1px">${escapeHtml(item.vin)}</b>
+        <small style="display:block;color:var(--dim)">${escapeHtml(item.manufacturer || '')} · ${escapeHtml(item.country || '')} ${item.year ? '· ' + escapeHtml(item.year) : ''}</small>
+      </div>
+      <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:11px;background:#1a1a2e;border:1px solid var(--border);color:var(--text)" onclick="nav('vin', '${escapeHtml(item.vin)}')">Wczytaj</button>
+    </div>
+  `).join('');
+}
+
+function clearVinHistoryUI(){
+  if(window.NaprawnikVinDecoder){
+    window.NaprawnikVinDecoder.clearHistory();
+    renderVinHistoryUI();
+  }
+}
+
 
 
 /* ==========================================================================
@@ -8122,6 +8440,8 @@ if(pin){ showLock(); } else { nav('home'); }
 <script src="./druciarstwo.js"></script>
 <script src="./motocykle-multi-data.js"></script>
 <script src="./motocykle-multi.js"></script>
+<script src="./vin-decoder.js"></script>
+<script src="./platform-adapter.js"></script>
 <script src="./billing.js?v=17"></script>
   <script src="./native-bridge.js"></script>
 </body>

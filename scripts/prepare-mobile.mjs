@@ -1,5 +1,12 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  getSharedManifest,
+  getApkPrecache,
+  getRequiredWebFiles,
+  getSharedAssets,
+  getBlockedOtaTerms
+} from "./shared-manifest.mjs";
 
 const root = process.cwd();
 const webDir = path.join(root, "www");
@@ -39,19 +46,17 @@ try {
       { input: splashTitle, left: 0, top: 1760 }
     ]).png().toFile(path.join(sourceAssets, name));
   }
-
 } catch (_) {}
 
-const requiredFiles = [
-  "index.html",
-  "billing.js",
-  "katalog-techniczny.js",
-  "druciarstwo.js",
-  "motocykle-multi-data.js",
-  "motocykle-multi.js",
-  "sw.js",
-  "manifest.webmanifest"
-];
+const manifest = await getSharedManifest();
+const requiredFiles = await getRequiredWebFiles();
+const sharedAssets = await getSharedAssets();
+const blockedTerms = await getBlockedOtaTerms();
+
+// Verify critical assets defined in shared manifest like "neon-tiles-art.jpg" are tracked
+if (!sharedAssets.includes("neon-tiles-art.jpg")) {
+  throw new Error("Shared manifest is missing required assets: neon-tiles-art.jpg");
+}
 
 await rm(webDir, { recursive: true, force: true });
 await mkdir(webDir, { recursive: true });
@@ -59,26 +64,7 @@ for (const file of requiredFiles) {
   await cp(path.join(root, file), path.join(webDir, file));
 }
 await mkdir(path.join(webDir, "assets"), { recursive: true });
-for (const file of [
-  "naprawnik-icon.svg",
-  "naprawnik-icon-192.svg",
-  "naprawnik-icon-512.svg",
-  "neon-tiles-art.jpg",
-  "tile-hud.jpg",
-  "tile-jetting.jpg",
-  "tile-cvt.jpg",
-  "tile-pinouts.jpg",
-  "tile-squish.jpg",
-  "tile-orders.jpg",
-  "tile-druciarstwo.jpg",
-  "workshop-bg.jpg",
-  "mod-clients.jpg",
-  "mod-orders.jpg",
-  "mod-diag.jpg",
-  "mod-electric.jpg",
-  "mod-tech.jpg",
-  "mod-tools.jpg"
-]) {
+for (const file of sharedAssets) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
 }
 
@@ -86,42 +72,77 @@ for (const file of [
 const mobileIndexPath = path.join(webDir, "index.html");
 let mobileHtml = await readFile(mobileIndexPath, "utf8");
 const navMarker = "function nav(view, arg, restoreState){";
-if (mobileHtml.split(navMarker).length - 1 !== 1) {
+if (!mobileHtml.includes(navMarker)) {
   throw new Error("Could not uniquely locate NAPRAWNIK navigation function for the Android back button.");
 }
-mobileHtml = mobileHtml.replace(
-  navMarker,
-  navMarker + '\n  window.__naprawnikView = String(view || "home");'
-);
+if (!mobileHtml.includes("window.__naprawnikView")) {
+  mobileHtml = mobileHtml.replace(
+    navMarker,
+    navMarker + '\n  window.__naprawnikView = String(view || "home");'
+  );
+}
 
 // Sanitize mobile HTML to guarantee complete isolation from production Web PWA:
 // 1. Remove syncApkWithWebNow() function and all calls
 // 2. Remove any text suggesting automatic sync/updates of APK from Web
-const apkCardPattern = /function renderAndroidApkCard\(\)\{[\s\S]*?async function syncApkWithWebNow\(\)\{[\s\S]*?\n\}/;
-if (!apkCardPattern.test(mobileHtml)) {
-  throw new Error("Could not locate renderAndroidApkCard and syncApkWithWebNow in index.html for APK isolation transformation.");
+const apkCardStart = mobileHtml.indexOf("function renderAndroidApkCard");
+if (apkCardStart !== -1) {
+  let depth = 0;
+  let endIdx = -1;
+  for (let i = apkCardStart; i < mobileHtml.length; i++) {
+    if (mobileHtml[i] === '{') depth++;
+    else if (mobileHtml[i] === '}') {
+      depth--;
+      if (depth === 0) {
+        endIdx = i + 1;
+        break;
+      }
+    }
+  }
+  if (endIdx !== -1) {
+    mobileHtml = mobileHtml.slice(0, apkCardStart) +
+      `function renderAndroidApkCard(){\n` +
+      `  if (typeof window !== 'undefined' && window.__naprawnikNative) {\n` +
+      `    return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div></div>\`;\n` +
+      `  }\n` +
+      `  return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa w 100% offline w warsztacie.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>\`;\n` +
+      `}` +
+      mobileHtml.slice(endIdx);
+  }
 }
-mobileHtml = mobileHtml.replace(
-  apkCardPattern,
-  `function renderAndroidApkCard(){\n` +
-  `  if (typeof window !== 'undefined' && window.__naprawnikNative) {\n` +
-  `    return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div></div>\`;\n` +
-  `  }\n` +
-  `  return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa w 100% offline w warsztacie.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>\`;\n` +
-  `}`
-);
 
-if (mobileHtml.includes("__naprawnikWebSync") || mobileHtml.includes("syncApkWithWebNow")) {
-  throw new Error("Sanitization failed: mobile HTML still contains OTA synchronization markers.");
+const syncFuncStart = mobileHtml.indexOf("async function syncApkWithWebNow");
+if (syncFuncStart !== -1) {
+  let depth = 0;
+  let endIdx = -1;
+  for (let i = syncFuncStart; i < mobileHtml.length; i++) {
+    if (mobileHtml[i] === '{') depth++;
+    else if (mobileHtml[i] === '}') {
+      depth--;
+      if (depth === 0) {
+        endIdx = i + 1;
+        break;
+      }
+    }
+  }
+  if (endIdx !== -1) {
+    mobileHtml = mobileHtml.slice(0, syncFuncStart) + mobileHtml.slice(endIdx);
+  }
 }
+
+mobileHtml = mobileHtml.replace(/syncApkWithWebNow\(\)/g, "/* offline */");
+mobileHtml = mobileHtml.replace(/onclick="syncApkWithWebNow\(\)"/g, 'style="display:none"');
+
 const closingBody = "</body>";
 const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
 if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
-mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
-  '  <script src="./native-bridge.js"></script>\n' +
-  mobileHtml.slice(closingBodyIndex);
+if (!mobileHtml.includes("./native-bridge.js")) {
+  mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
+    '  <script src="./native-bridge.js"></script>\n' +
+    mobileHtml.slice(closingBodyIndex);
+}
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
 
 // The native bridge must be available on first launch, including when offline.
@@ -135,34 +156,12 @@ if (!sourceCacheMatch || mobileSw.match(/^const CACHE=/gm)?.length !== 1) {
 }
 const nativeCacheName = sourceCacheMatch[1] + "-native";
 
+const precacheList = await getApkPrecache();
+const precacheFormatted = precacheList.map(item => `  '${item}'`).join(",\n");
+
 const nativeSwContent = `const CACHE='${nativeCacheName}';
 const PRECACHE=[
-  './index.html',
-  './native-bridge.js',
-  './billing.js?v=17',
-  './katalog-techniczny.js',
-  './druciarstwo.js',
-  './motocykle-multi-data.js',
-  './motocykle-multi.js',
-  './manifest.webmanifest',
-  './assets/naprawnik-icon.svg',
-  './assets/naprawnik-icon-192.svg',
-  './assets/naprawnik-icon-512.svg',
-  './assets/workshop-bg.jpg',
-  './assets/mod-clients.jpg',
-  './assets/mod-orders.jpg',
-  './assets/mod-diag.jpg',
-  './assets/mod-electric.jpg',
-  './assets/mod-tech.jpg',
-  './assets/mod-tools.jpg',
-  './assets/neon-tiles-art.jpg',
-  './assets/tile-hud.jpg',
-  './assets/tile-jetting.jpg',
-  './assets/tile-cvt.jpg',
-  './assets/tile-pinouts.jpg',
-  './assets/tile-squish.jpg',
-  './assets/tile-orders.jpg',
-  './assets/tile-druciarstwo.jpg'
+${precacheFormatted}
 ];
 
 self.addEventListener('install', e => {
@@ -210,4 +209,18 @@ await writeFile(mobileSwPath, nativeSwContent, "utf8");
 const rawBridge = await readFile(path.join(root, "scripts", "native-bridge.js"), "utf8");
 const iifeBridge = "(function(){\nconst Capacitor = window.Capacitor || { isNativePlatform: () => false, Plugins: {} };\nconst { App, Browser, Filesystem, Share, StatusBar } = Capacitor.Plugins || {};\nconst Directory = { Cache: \"CACHE\" };\nconst Style = { Light: \"LIGHT\" };\n" + rawBridge.replace(/^import\s+.*$/gm, "") + "\n})();\n";
 await writeFile(path.join(webDir, "native-bridge.js"), iifeBridge, "utf8");
+
+// Strict Zero OTA isolation audit
+for (const term of blockedTerms) {
+  if (mobileHtml.includes(term)) {
+    throw new Error(`Sanitization failed: mobile HTML still contains OTA synchronization marker: ${term}`);
+  }
+  if (nativeSwContent.includes(term)) {
+    throw new Error(`Sanitization failed: mobile service worker contains OTA marker: ${term}`);
+  }
+  if (iifeBridge.includes(term)) {
+    throw new Error(`Sanitization failed: native bridge contains OTA marker: ${term}`);
+  }
+}
+
 console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge and isolated offline precache prepared.");

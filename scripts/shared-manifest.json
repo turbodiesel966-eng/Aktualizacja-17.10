@@ -1,0 +1,78 @@
+{
+  "$schema": "./shared-manifest.schema.json",
+  "appVersion": "5.49",
+  "cacheVersion": "naprawnik-v5-49",
+  "nativeCacheVersion": "naprawnik-v5-49-native",
+  "sharedScripts": [
+    "platform-adapter.js",
+    "billing.js",
+    "katalog-techniczny.js",
+    "druciarstwo.js",
+    "motocykle-multi-data.js",
+    "motocykle-multi.js",
+    "vin-decoder.js"
+  ],
+  "sharedAssets": [
+    "naprawnik-icon.svg",
+    "naprawnik-icon-192.svg",
+    "naprawnik-icon-512.svg",
+    "workshop-bg.jpg",
+    "mod-clients.jpg",
+    "mod-orders.jpg",
+    "mod-diag.jpg",
+    "mod-electric.jpg",
+    "mod-tech.jpg",
+    "mod-tools.jpg",
+    "neon-tiles-art.jpg",
+    "tile-hud.jpg",
+    "tile-jetting.jpg",
+    "tile-cvt.jpg",
+    "tile-pinouts.jpg",
+    "tile-squish.jpg",
+    "tile-orders.jpg",
+    "tile-druciarstwo.jpg"
+  ],
+  "requiredWebFiles": [
+    "index.html",
+    "platform-adapter.js",
+    "billing.js",
+    "katalog-techniczny.js",
+    "druciarstwo.js",
+    "motocykle-multi-data.js",
+    "motocykle-multi.js",
+    "vin-decoder.js",
+    "sw.js",
+    "manifest.webmanifest"
+  ],
+  "pwaPrecache": [
+    "./index.html",
+    "./platform-adapter.js",
+    "./billing.js?v=17",
+    "./katalog-techniczny.js",
+    "./druciarstwo.js",
+    "./motocykle-multi-data.js",
+    "./motocykle-multi.js",
+    "./vin-decoder.js",
+    "./manifest.webmanifest"
+  ],
+  "apkPrecache": [
+    "./index.html",
+    "./platform-adapter.js",
+    "./native-bridge.js",
+    "./billing.js?v=17",
+    "./katalog-techniczny.js",
+    "./druciarstwo.js",
+    "./motocykle-multi-data.js",
+    "./motocykle-multi.js",
+    "./vin-decoder.js",
+    "./manifest.webmanifest"
+  ],
+  "blockedOtaTerms": [
+    "WEB_LIVE_BASE",
+    "turbodiesel966-eng.github.io",
+    "fetchLiveWithTimeout",
+    "__naprawnikWebSync",
+    "OTA_HASH_KEY",
+    "syncApkWithWebNow"
+  ]
+}

@@ -24,6 +24,7 @@
     filterLayout: 'ALL',
     filterFuel: 'ALL',
     filterCooling: 'ALL',
+    filterDisplacement: 'ALL',
     // Drzewa diagnostyczne
     activeTreeId: 'missing_cylinder',
     activeStepId: 'step_1',
@@ -2146,7 +2147,7 @@
 
   function getMeasurementSheetForModel(modelId, cylCount) {
     const all = loadJson(STORAGE_KEYS.MEASUREMENTS, {});
-    const count = cylCount === 3 ? 3 : 4;
+    const count = [1, 2, 3, 4, 6].includes(cylCount) ? cylCount : (cylCount === 3 ? 3 : 4);
     const existing = all[modelId];
     if (existing && Array.isArray(existing.cylinders) && existing.cylinders.length === count) {
       return existing;
@@ -2422,6 +2423,15 @@
       if (state.filterLayout !== 'ALL' && m.layout !== state.filterLayout) return false;
       if (state.filterFuel !== 'ALL' && m.fuelSystem !== state.filterFuel) return false;
       if (state.filterCooling !== 'ALL' && m.cooling !== state.filterCooling) return false;
+      if (state.filterDisplacement !== 'ALL') {
+        const cc = m.displacementCc || 600;
+        if (state.filterDisplacement === 'under500' && cc >= 500) return false;
+        if (state.filterDisplacement === '500_650' && (cc < 500 || cc > 650)) return false;
+        if (state.filterDisplacement === '650_800' && (cc < 650 || cc > 800)) return false;
+        if (state.filterDisplacement === '800_1000' && (cc < 800 || cc > 1000)) return false;
+        if (state.filterDisplacement === '1000_1300' && (cc < 1000 || cc > 1300)) return false;
+        if (state.filterDisplacement === 'over1300' && cc <= 1300) return false;
+      }
       if (!q) return true;
       const hay = `${m.brand} ${m.model} ${m.years} ${m.generation} ${m.engineCode} ${m.variant} ${m.displacementCc}`.toLowerCase();
       return hay.includes(q);
@@ -2504,25 +2514,42 @@
       <div class="mc-card">
         <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px">
           <div>
-            <div style="font-size:15px;font-weight:900;color:#fff">🔍 WYSZUKIWARKA I FILTRY KATALOGU (400–650 cm³ • 3–4 CYLINDRY)</div>
-            <div style="font-size:11px;color:#94a3b8">Szukaj po marce, modelu, pojemności (np. 599, 636, 399), roczniku lub kodzie silnika (np. PC37E, 5EB, N703E, ZX600E)</div>
+            <div style="font-size:15px;font-weight:900;color:#fff">🔍 WYSZUKIWARKA I FILTRY KATALOGU MOTOCYKLI (1–4 CYL • 400 – >1300 cm³)</div>
+            <div style="font-size:11px;color:#94a3b8">Szukaj po marce, modelu, pojemności (np. 650, 750, 800, 900, 1000, 1300), roczniku lub kodzie silnika (np. PC37E, SC57E, CP2, LC8, ShiftCam)</div>
           </div>
           <div style="font-size:12px;font-weight:800;color:#fde047">Znaleziono: ${filtered.length} / ${d.MODELS.length} modeli</div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px">
           <input id="mc-search-input" class="mc-input" placeholder="Szukaj modelu, rocznika, kodu silnika..." value="${esc(state.searchQuery)}" oninput="window.NAPRAWNIK_MULTICYL.setFilter('searchQuery', this.value)">
           <select class="mc-select" onchange="window.NAPRAWNIK_MULTICYL.setFilter('filterBrand', this.value)">
-            <option value="ALL">Wszystkie marki (10+)</option>
+            <option value="ALL">Wszystkie marki (${d.MANUFACTURERS.length})</option>
             ${d.MANUFACTURERS.map(b => `<option value="${esc(b.name)}" ${state.filterBrand === b.name ? 'selected' : ''}>${esc(b.name)} (${esc(b.country)})</option>`).join('')}
           </select>
+          <select class="mc-select" onchange="window.NAPRAWNIK_MULTICYL.setFilter('filterDisplacement', this.value)">
+            <option value="ALL">Pojemność: Wszystkie</option>
+            <option value="under500" ${state.filterDisplacement === 'under500' ? 'selected' : ''}>Do 500 cm³</option>
+            <option value="500_650" ${state.filterDisplacement === '500_650' ? 'selected' : ''}>500–650 cm³</option>
+            <option value="650_800" ${state.filterDisplacement === '650_800' ? 'selected' : ''}>650–800 cm³</option>
+            <option value="800_1000" ${state.filterDisplacement === '800_1000' ? 'selected' : ''}>800–1000 cm³</option>
+            <option value="1000_1300" ${state.filterDisplacement === '1000_1300' ? 'selected' : ''}>1000–1300 cm³</option>
+            <option value="over1300" ${state.filterDisplacement === 'over1300' ? 'selected' : ''}>Powyżej 1300 cm³</option>
+          </select>
           <select class="mc-select" onchange="window.NAPRAWNIK_MULTICYL.setFilter('filterCylinders', this.value)">
-            <option value="ALL">Liczba cylindrów: 3 i 4</option>
+            <option value="ALL">Cylindry: Wszystkie (1–6)</option>
+            <option value="1" ${state.filterCylinders === '1' ? 'selected' : ''}>1 cylinder</option>
+            <option value="2" ${state.filterCylinders === '2' ? 'selected' : ''}>2 cylindry</option>
             <option value="3" ${state.filterCylinders === '3' ? 'selected' : ''}>3 cylindry</option>
             <option value="4" ${state.filterCylinders === '4' ? 'selected' : ''}>4 cylindry</option>
+            <option value="6" ${state.filterCylinders === '6' ? 'selected' : ''}>6 cylindrów</option>
           </select>
           <select class="mc-select" onchange="window.NAPRAWNIK_MULTICYL.setFilter('filterLayout', this.value)">
-            <option value="ALL">Układ: R3 / R4 / V4</option>
+            <option value="ALL">Układ: Wszystkie</option>
+            <option value="Single" ${state.filterLayout === 'Single' ? 'selected' : ''}>1-cyl (Single)</option>
+            <option value="R2" ${state.filterLayout === 'R2' ? 'selected' : ''}>Rzędowy R2</option>
+            <option value="V2" ${state.filterLayout === 'V2' ? 'selected' : ''}>Widlasty V2</option>
+            <option value="L2" ${state.filterLayout === 'L2' ? 'selected' : ''}>Widlasty L2 (Ducati)</option>
+            <option value="Boxer" ${state.filterLayout === 'Boxer' ? 'selected' : ''}>Boxer B2</option>
             <option value="R3" ${state.filterLayout === 'R3' ? 'selected' : ''}>Rzędowy R3</option>
             <option value="R4" ${state.filterLayout === 'R4' ? 'selected' : ''}>Rzędowy R4</option>
             <option value="V4" ${state.filterLayout === 'V4' ? 'selected' : ''}>Widlasty V4</option>

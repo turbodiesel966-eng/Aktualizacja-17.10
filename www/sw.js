@@ -1,12 +1,14 @@
-const CACHE='naprawnik-v5-48-native';
+const CACHE='naprawnik-v5-49-native';
 const PRECACHE=[
   './index.html',
+  './platform-adapter.js',
   './native-bridge.js',
   './billing.js?v=17',
   './katalog-techniczny.js',
   './druciarstwo.js',
   './motocykle-multi-data.js',
   './motocykle-multi.js',
+  './vin-decoder.js',
   './manifest.webmanifest',
   './assets/naprawnik-icon.svg',
   './assets/naprawnik-icon-192.svg',

@@ -62,6 +62,10 @@ if (Capacitor.isNativePlatform()) {
     }
   };
 
+  if (window.NaprawnikPlatform) {
+    window.NaprawnikPlatform.openCheckout = window.__naprawnikNativeCheckout;
+  }
+
   // Keep web and in-app navigation stable when opening external OEM PDF manuals.
   document.addEventListener("click", event => {
     const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
@@ -172,6 +176,10 @@ if (Capacitor.isNativePlatform()) {
   // Android Back: close the current diagnostic detail first, return home next,
   // and exit only when already on the home view.
   void App.addListener("backButton", () => {
+    if (window.NaprawnikPlatform && typeof window.NaprawnikPlatform.handleBack === "function") {
+      window.NaprawnikPlatform.handleBack();
+      return;
+    }
     const screen = document.getElementById("screen");
     const inScreenBack = screen?.querySelector(".back, [data-native-back]");
     if (inScreenBack instanceof HTMLElement) {

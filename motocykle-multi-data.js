@@ -13,7 +13,7 @@
   'use strict';
 
   const SCHEMA_VERSION = 1;
-  const CC_RANGE = { min: 400, max: 650 };
+  const CC_RANGE = { min: 50, max: 2500 };
 
   // ---------- 1. PRODUCENCI (rozszerzalna lista) ----------
   const MANUFACTURERS = [
@@ -22,9 +22,10 @@
     { id: 'suzuki', name: 'Suzuki', country: 'Japonia', note: 'Pełne pokrycie rodzin GSX-R, GSF Bandit, GSR, GSX-F, RF (R4) oraz klasycznych GT550 (R3 2T).' },
     { id: 'kawasaki', name: 'Kawasaki', country: 'Japonia', note: 'Pełne pokrycie rodzin ZX-6R/636/6RR, ZX-4R, ZXR400, ZZR400/600, GPZ/Zephyr (R4) oraz H1 500 (R3 2T).' },
     { id: 'triumph', name: 'Triumph', country: 'Wielka Brytania', note: 'W zakresie 400–650 cm³ obsługiwane są 4-cylindrowe TT600, Speed Four, Daytona 600 i Daytona 650 (646 cm³). Trzycylindrowe 675/660 przekraczają 650 cm³ (kandydaci do rozszerzenia zakresu).' },
-    { id: 'bmw', name: 'BMW', country: 'Niemcy', note: 'Brak seryjnych modeli 3–4 cyl. w przedziale 400–650 cm³ (K75 = 740 cm³ R3). Marka aktywna w architekturze pod własne rekordy warsztatowe.' },
-    { id: 'ducati', name: 'Ducati', country: 'Włochy', note: 'Brak seryjnych modeli 3–4 cyl. w przedziale 400–650 cm³ (Desmosedici/Panigale V4 > 990 cm³). Marka aktywna w architekturze.' },
-    { id: 'aprilia', name: 'Aprilia', country: 'Włochy', note: 'Brak seryjnych modeli 3–4 cyl. w przedziale 400–650 cm³ (RS/Tuono 660 i RS 457 to R2). Marka aktywna w architekturze.' },
+    { id: 'bmw', name: 'BMW', country: 'Niemcy', note: 'Pełne pokrycie modeli: Boxer R1150/R1200/R1250/R1300GS, rzędowe S1000RR/XR, F800/F850/F900, K75 R3 oraz K1200/K1300/K1600.' },
+    { id: 'ktm', name: 'KTM', country: 'Austria', note: 'Pełne pokrycie modeli: 1-cylindrowe LC4 (690 Duke/SMC/Enduro), rzędowe dwucylindrowe LC8c (790/890) oraz widlaste 75° V2 LC8 (990, 1190, 1290, 1390).' },
+    { id: 'ducati', name: 'Ducati', country: 'Włochy', note: 'Pełne pokrycie modeli: Desmodue (Monster 696/796/1100), Testastretta (821/939/1198), Superquadro (1199/1299), DVT oraz Desmosedici Stradale / Granturismo V4.' },
+    { id: 'aprilia', name: 'Aprilia', country: 'Włochy', note: 'Pełne pokrycie modeli: 60° V2 Rotax V990 (RSV Mille/Tuono), 90° V2 (Shiver/Dorsoduro 750/900), R2 270° (RS 660) oraz 65° V4 (RSV4 / Tuono V4 1000/1100).' },
     { id: 'benelli', name: 'Benelli', country: 'Włochy / Chiny (QJ)', note: 'Czterocylindrowe modele rodziny TNT 600 / BN600 / BJ600 oraz klasyczne 500 Quattro.' },
     { id: 'mvagusta', name: 'MV Agusta', country: 'Włochy', note: 'Historyczne 600 Quattro Cilindri (592 cm³ R4). Trzycylindrowe F3/Brutale 675 przekraczają 650 cm³.' }
   ];
@@ -382,7 +383,517 @@
     E('benelli_500q', { brand: 'benelli', code: null, cc: 498, bore: 56, strokeMm: 50.6, cooling: 'air', cam: 'SOHC (łańcuch, śruby regulacyjne)', valves: 8, carbType: '4× Dell’Orto VHB', ignition: 'Stykowy (przerywacze + kondensatory)', faults: ['f_points', 'f_carb_sync', 'f_pilot_jets'] }),
 
     // ===== MV AGUSTA =====
-    E('mv_600_4c', { brand: 'mvagusta', code: null, cc: 592, cooling: 'air', cam: 'DOHC – napęd kołami zębatymi', valves: 8, carbType: '4× Dell’Orto', ignition: 'Stykowy', dataNote: 'Motocykl kolekcjonerski – części i dane wyłącznie po weryfikacji źródłowej.', faults: ['f_carb_sync', 'f_points'] })
+    E('mv_600_4c', { brand: 'mvagusta', code: null, cc: 592, cooling: 'air', cam: 'DOHC – napęd kołami zębatymi', valves: 8, carbType: '4× Dell’Orto', ignition: 'Stykowy', dataNote: 'Motocykl kolekcjonerski – części i dane wyłącznie po weryfikacji źródłowej.', faults: ['f_carb_sync', 'f_points'] }),
+
+    // ===== ROZSZERZENIE POJEMNOŚCI I MAREK (650 – >1300 cm³, 1–4 CYL) =====
+    // HONDA
+    E('honda_re01e', { brand: 'honda', code: 'RE01E', codeVerified: true, cc: 649, cyl: 1, layout: 'Single', bore: 100, strokeMm: 82.6, valves: 4, cam: 'SOHC 4V', carbType: 'Keihin 40 mm (Pusher)', ignition: 'Cyfrowy CDI', params: {
+      valveIn: P('0,15 ± 0,02', 'B', SRC_LIT), valveEx: P('0,20 ± 0,02', 'B', SRC_LIT),
+      compression: P('1050 kPa (10,5 bar)', 'B', SRC_LIT), sparkPlug: P('NGK BKPR6E-11', 'B', SRC_LIT),
+      idleRpm: P('1400 ± 100', 'B', SRC_LIT), oilCapacity: P('2,0 L', 'B', SRC_LIT),
+      charging: P('13,5 – 15,0 V @ 5000 obr/min', 'B', SRC_LIT), firing: P('1', 'B', SRC_LIT)
+    }, faults: ['f_tight_ex_valves', 'f_pilot_jets'] }),
+
+    E('honda_rd16e', { brand: 'honda', code: 'RD16E', codeVerified: true, cc: 755, cyl: 2, layout: 'R2', bore: 87, strokeMm: 63.5, valves: 8, cam: 'Unicam 8V (270°)', fuel: 'efi', ignition: 'ECU PGM-FI (Ride-by-wire)', params: {
+      valveIn: P('0,16 ± 0,03', 'B', SRC_LIT), valveEx: P('0,25 ± 0,03', 'B', SRC_LIT),
+      sparkPlug: P('NGK SILMAR8A9S', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('24 000 km', 'B', SRC_LIT),
+      fuelPressure: P('ok. 343 kPa (3,5 bar)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_stator_burn'] }),
+
+    E('honda_rc46e', { brand: 'honda', code: 'RC46E', codeVerified: true, cc: 782, cyl: 4, layout: 'V4', bore: 72, strokeMm: 48, valves: 16, cam: 'DOHC 16V HYPER VTEC', fuel: 'efi', ignition: 'ECU PGM-FI (COP)', params: {
+      valveIn: P('0,20 ± 0,03', 'B', SRC_LIT), valveEx: P('0,35 ± 0,03', 'B', SRC_LIT),
+      sparkPlug: P('NGK IMR9B-9H', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('24 000 km', 'B', SRC_LIT),
+      fuelPressure: P('ok. 343 kPa (3,5 bar)', 'B', SRC_LIT), firing: P('1-3-2-4', 'B', SRC_LIT)
+    }, faults: ['f_vtec_solenoid', 'f_v4_rear_heat', 'f_rr_overheat', 'f_stator_connector', 'f_cct'] }),
+
+    E('honda_sc50e', { brand: 'honda', code: 'SC50E', codeVerified: true, cc: 954, cyl: 4, layout: 'R4', bore: 75, strokeMm: 54, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU PGM-FI (COP)', params: {
+      valveIn: P('0,16 ± 0,03', 'B', SRC_LIT), valveEx: P('0,27 ± 0,03', 'B', SRC_LIT),
+      compression: P('1250 kPa (12,5 bar)', 'B', SRC_LIT), sparkPlug: P('NGK IMR9C-9H', 'B', SRC_LIT),
+      idleRpm: P('1200 ± 100', 'B', SRC_LIT), oilCapacity: P('3,7 L (z filtrem)', 'B', SRC_LIT),
+      fuelPressure: P('ok. 343 kPa (3,5 bar)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_rr_overheat', 'f_stator_connector', 'f_cct', 'f_tb_sync'] }),
+
+    E('honda_sc57e', { brand: 'honda', code: 'SC57E', codeVerified: true, cc: 998, cyl: 4, layout: 'R4', bore: 75, strokeMm: 56.5, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU PGM-DSFI (8 wtryskiwaczy)', params: {
+      valveIn: P('0,16 ± 0,03', 'B', SRC_LIT), valveEx: P('0,27 ± 0,03', 'B', SRC_LIT),
+      compression: P('1220 kPa (12,2 bar)', 'B', SRC_LIT), sparkPlug: P('NGK IMR9C-9HES', 'B', SRC_LIT),
+      idleRpm: P('1200 ± 100', 'B', SRC_LIT), oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT),
+      fuelPressure: P('ok. 343 kPa (3,5 bar)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_rr_overheat', 'f_stator_connector', 'f_cct'] }),
+
+    E('honda_sc42e', { brand: 'honda', code: 'SC42E', codeVerified: true, cc: 1137, cyl: 4, layout: 'R4', bore: 79, strokeMm: 58, valves: 16, cam: 'DOHC 16V (podwójny wałek balansu)', fuel: 'efi', ignition: 'ECU PGM-FI', params: {
+      valveIn: P('0,16 ± 0,03', 'B', SRC_LIT), valveEx: P('0,22 ± 0,03', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EHVX-9', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,9 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('24 000 km', 'B', SRC_LIT),
+      fuelPressure: P('ok. 343 kPa (3,5 bar)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_cct', 'f_rr_overheat', 'f_stator_connector'] }),
+
+    E('honda_sd08e', { brand: 'honda', code: 'SD08E', codeVerified: true, cc: 1084, cyl: 2, layout: 'R2', bore: 92, strokeMm: 81.5, valves: 8, cam: 'Unicam 8V (270°)', fuel: 'efi', ignition: 'ECU PGM-FI (Ride-by-wire)', params: {
+      valveIn: P('0,16 ± 0,03', 'B', SRC_LIT), valveEx: P('0,26 ± 0,03', 'B', SRC_LIT),
+      sparkPlug: P('NGK SILMAR8A9S', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('24 000 km', 'B', SRC_LIT),
+      fuelPressure: P('ok. 343 kPa (3,5 bar)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_connectors_moisture'] }),
+
+    E('honda_sc54e', { brand: 'honda', code: 'SC54E', codeVerified: true, cc: 1284, cyl: 4, layout: 'R4', bore: 78, strokeMm: 67.2, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU PGM-FI', params: {
+      valveIn: P('0,16 ± 0,03', 'B', SRC_LIT), valveEx: P('0,27 ± 0,03', 'B', SRC_LIT),
+      sparkPlug: P('NGK DPR8EA-9', 'B', SRC_LIT), idleRpm: P('1000 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('24 000 km', 'B', SRC_LIT),
+      firing: FIRING_I4
+    }, faults: ['f_tb_sync', 'f_stator_connector'] }),
+
+    E('honda_sc63e', { brand: 'honda', code: 'SC63E', codeVerified: true, cc: 1237, cyl: 4, layout: 'V4', bore: 81, strokeMm: 60, valves: 16, cam: 'Unicam 16V (76° V4)', fuel: 'efi', ignition: 'ECU PGM-FI (Ride-by-wire)', params: {
+      valveIn: P('0,20 ± 0,03', 'B', SRC_LIT), valveEx: P('0,28 ± 0,03', 'B', SRC_LIT),
+      sparkPlug: P('NGK IMR9E-9HES', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-4-3-2', 'B', SRC_LIT)
+    }, faults: ['f_v4_rear_heat', 'f_tb_sync'] }),
+
+    E('honda_sc79e', { brand: 'honda', code: 'SC79E', codeVerified: true, cc: 1833, cyl: 6, layout: 'R6', bore: 73, strokeMm: 73, valves: 24, cam: 'Unicam 24V (Boxer B6)', fuel: 'efi', ignition: 'ECU PGM-FI (Ride-by-wire)', params: {
+      valveIn: P('0,17 ± 0,02', 'B', SRC_LIT), valveEx: P('0,22 ± 0,02', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR6HIX-9', 'B', SRC_LIT), idleRpm: P('750 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('4,6 L (z filtrem)', 'B', SRC_LIT), firing: P('1-4-3-6-2-5', 'B', SRC_LIT)
+    }, faults: ['f_connectors_moisture'] }),
+
+    // YAMAHA
+    E('yamaha_5vk', { brand: 'yamaha', code: '5VK', codeVerified: true, cc: 660, cyl: 1, layout: 'Single', bore: 100, strokeMm: 84, valves: 4, cam: 'SOHC 4V', fuel: 'efi', ignition: 'TCI Cyfrowy', params: {
+      valveIn: P('0,09 – 0,13', 'B', SRC_LIT), valveEx: P('0,16 – 0,20', 'B', SRC_LIT),
+      compression: P('1000 kPa (10,0 bar)', 'B', SRC_LIT), sparkPlug: P('NGK CR7E', 'B', SRC_LIT),
+      idleRpm: P('1350 ± 100', 'B', SRC_LIT), oilCapacity: P('2,6 L', 'B', SRC_LIT),
+      firing: P('1', 'B', SRC_LIT)
+    }, faults: ['f_tight_ex_valves', 'f_tb_sync'] }),
+
+    E('yamaha_m401e', { brand: 'yamaha', code: 'M401E', codeVerified: true, cc: 689, cyl: 2, layout: 'R2', bore: 80, strokeMm: 68.6, valves: 8, cam: 'DOHC 8V (CP2 270°)', fuel: 'efi', ignition: 'TCI Cyfrowy', params: {
+      valveIn: P('0,11 – 0,20', 'B', SRC_LIT), valveEx: P('0,24 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR8A-9', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,6 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('40 000 km', 'B', SRC_LIT),
+      firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_connectors_moisture'] }),
+
+    E('yamaha_n701e', { brand: 'yamaha', code: 'N701E', codeVerified: true, cc: 847, cyl: 3, layout: 'R3', bore: 78, strokeMm: 59.1, valves: 12, cam: 'DOHC 12V (CP3 120°)', fuel: 'efi', ignition: 'TCI YCC-T (Ride-by-wire)', params: {
+      valveIn: P('0,11 – 0,20', 'B', SRC_LIT), valveEx: P('0,26 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CPR9EA-9', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,4 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('40 000 km', 'B', SRC_LIT),
+      firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_cp3_cam_chain_tensioner', 'f_tb_sync', 'f_coil_cap'] }),
+
+    E('yamaha_5ps', { brand: 'yamaha', code: '5PS', codeVerified: true, cc: 897, cyl: 2, layout: 'R2', bore: 92, strokeMm: 67.5, valves: 10, cam: 'DOHC 10V (5V/cyl, 270°)', fuel: 'efi', ignition: 'TCI', params: {
+      valveIn: P('0,11 – 0,20', 'B', SRC_LIT), valveEx: P('0,21 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK DPR8EA-9', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,9 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_rr_overheat'] }),
+
+    E('yamaha_5pw', { brand: 'yamaha', code: '5PW', codeVerified: true, cc: 998, cyl: 4, layout: 'R4', bore: 74, strokeMm: 58, valves: 20, cam: 'DOHC 20V (5V/cyl Genesis)', fuel: 'efi', ignition: 'TCI (COP)', params: {
+      valveIn: P('0,11 – 0,20', 'B', SRC_LIT), valveEx: P('0,21 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9E', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_rr_overheat', 'f_cct', 'f_second_gear_dogs'] }),
+
+    E('yamaha_14b', { brand: 'yamaha', code: '14B', codeVerified: true, cc: 998, cyl: 4, layout: 'R4', bore: 78, strokeMm: 52.2, valves: 16, cam: 'DOHC 16V (Crossplane CP4)', fuel: 'efi', ignition: 'TCI YCC-T/YCC-I', params: {
+      valveIn: P('0,09 – 0,17', 'B', SRC_LIT), valveEx: P('0,18 – 0,23', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR9E-J', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,9 L (z filtrem)', 'B', SRC_LIT), firing: P('1-3-2-4 (Crossplane)', 'B', SRC_LIT)
+    }, faults: ['f_cct', 'f_stator_burn', 'f_coil_cap', 'f_tb_sync'] }),
+
+    E('yamaha_rn16', { brand: 'yamaha', code: 'RN16', codeVerified: true, cc: 998, cyl: 4, layout: 'R4', bore: 77, strokeMm: 53.6, valves: 20, cam: 'DOHC 20V (5V/cyl)', fuel: 'efi', ignition: 'TCI', params: {
+      valveIn: P('0,11 – 0,20', 'B', SRC_LIT), valveEx: P('0,21 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EK', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_tb_sync', 'f_rr_overheat'] }),
+
+    E('yamaha_dp01', { brand: 'yamaha', code: 'DP01', codeVerified: true, cc: 1199, cyl: 2, layout: 'R2', bore: 98, strokeMm: 79.5, valves: 8, cam: 'DOHC 8V (270°)', fuel: 'efi', ignition: 'TCI (2 świece/cyl)', params: {
+      valveIn: P('0,11 – 0,20', 'B', SRC_LIT), valveEx: P('0,21 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CPR8EB-9', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,2 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_cct'] }),
+
+    E('yamaha_rp06', { brand: 'yamaha', code: 'RP06', codeVerified: true, cc: 1251, cyl: 4, layout: 'R4', bore: 79, strokeMm: 63.8, valves: 16, cam: 'DOHC 16V', cooling: 'air-oil', carbType: '4× Mikuni BSR37 / EFI', ignition: 'TCI', params: {
+      valveIn: P('0,11 – 0,15', 'B', SRC_LIT), valveEx: P('0,16 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK DPR8EA-9', 'B', SRC_LIT), idleRpm: P('1050 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,2 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_intake_boot_crack', 'f_carb_sync', 'f_pilot_jets'] }),
+
+    E('yamaha_rp23', { brand: 'yamaha', code: 'RP23', codeVerified: true, cc: 1298, cyl: 4, layout: 'R4', bore: 79, strokeMm: 66.2, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'TCI (YCC-T)', params: {
+      valveIn: P('0,15 – 0,22', 'B', SRC_LIT), valveEx: P('0,18 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CPR8EA-9', 'B', SRC_LIT), idleRpm: P('1050 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,9 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_tb_sync', 'f_cct'] }),
+
+    E('yamaha_rp21', { brand: 'yamaha', code: 'RP21', codeVerified: true, cc: 1679, cyl: 4, layout: 'V4', bore: 90, strokeMm: 66, valves: 16, cam: 'DOHC 16V (65° V4)', fuel: 'efi', ignition: 'TCI YCC-T/YCC-I', params: {
+      valveIn: P('0,15 – 0,22', 'B', SRC_LIT), valveEx: P('0,20 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CPR9EA-9', 'B', SRC_LIT), idleRpm: P('1000 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('5,3 L (z filtrem)', 'B', SRC_LIT), firing: P('1-4-3-2', 'B', SRC_LIT)
+    }, faults: ['f_v4_rear_heat', 'f_tb_sync'] }),
+
+    // SUZUKI
+    E('suzuki_p405', { brand: 'suzuki', code: 'P405', codeVerified: true, cc: 644, cyl: 1, layout: 'Single', bore: 100, strokeMm: 82, valves: 4, cam: 'SOHC 4V', cooling: 'air-oil', carbType: 'Mikuni BST40', ignition: 'CDI', params: {
+      valveIn: P('0,08 – 0,13', 'B', SRC_LIT), valveEx: P('0,17 – 0,22', 'B', SRC_LIT),
+      compression: P('980 kPa (9,8 bar)', 'B', SRC_LIT), sparkPlug: P('NGK CR10E', 'B', SRC_LIT),
+      idleRpm: P('1500 ± 100', 'B', SRC_LIT), oilCapacity: P('2,4 L', 'B', SRC_LIT),
+      firing: P('1', 'B', SRC_LIT)
+    }, faults: ['f_tight_ex_valves', 'f_pilot_jets'] }),
+
+    E('suzuki_p507', { brand: 'suzuki', code: 'P507', codeVerified: true, cc: 645, cyl: 2, layout: 'V2', bore: 81, strokeMm: 62.6, valves: 8, cam: 'DOHC 8V (90° V2)', fuel: 'efi', ignition: 'ECU Cyfrowy (2 świece/cyl)', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8E', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,7 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('24 000 km', 'B', SRC_LIT),
+      firing: P('1-2 (90° V2)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_rr_overheat', 'f_stator_burn'] }),
+
+    E('suzuki_r745', { brand: 'suzuki', code: 'R745', codeVerified: true, cc: 749, cyl: 4, layout: 'R4', bore: 72, strokeMm: 46, valves: 16, cam: 'DOHC 16V tytan', fuel: 'efi', ignition: 'ECU SDTV (8 wtryskiwaczy)', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      compression: P('1300 kPa (13,0 bar)', 'B', SRC_LIT), sparkPlug: P('NGK CR9EIA-9', 'B', SRC_LIT),
+      idleRpm: P('1250 ± 100', 'B', SRC_LIT), oilCapacity: P('3,0 L (z filtrem)', 'B', SRC_LIT),
+      fuelPressure: P('ok. 300 kPa (3,0 bar)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_rr_overheat', 'f_tps_sub_throttle'] }),
+
+    E('suzuki_q501', { brand: 'suzuki', code: 'Q501', codeVerified: true, cc: 776, cyl: 2, layout: 'R2', bore: 84, strokeMm: 70, valves: 8, cam: 'DOHC 8V (270° Cross Balancer)', fuel: 'efi', ignition: 'ECU Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK MR8BI-9', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,5 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync'] }),
+
+    E('suzuki_t711', { brand: 'suzuki', code: 'T711', codeVerified: true, cc: 999, cyl: 4, layout: 'R4', bore: 73.4, strokeMm: 59, valves: 16, cam: 'DOHC 16V tytan', fuel: 'efi', ignition: 'ECU SDTV', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      compression: P('1280 kPa (12,8 bar)', 'B', SRC_LIT), sparkPlug: P('NGK CR9EIA-9', 'B', SRC_LIT),
+      idleRpm: P('1150 ± 100', 'B', SRC_LIT), oilCapacity: P('3,3 L (z filtrem)', 'B', SRC_LIT),
+      firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_rr_overheat', 'f_cct', 'f_tps_sub_throttle'] }),
+
+    E('suzuki_t501', { brand: 'suzuki', code: 'T501', codeVerified: true, cc: 996, cyl: 2, layout: 'V2', bore: 98, strokeMm: 66, valves: 8, cam: 'DOHC 8V (90° V2)', fuel: 'efi', ignition: 'ECU EFI', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8EK', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,1 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (90° V2)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_stator_burn', 'f_tb_sync'] }),
+
+    E('suzuki_w501', { brand: 'suzuki', code: 'W501', codeVerified: true, cc: 1255, cyl: 4, layout: 'R4', bore: 79, strokeMm: 64, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU SDTV', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR7E', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,5 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_tb_sync', 'f_cct'] }),
+
+    E('suzuki_wva1', { brand: 'suzuki', code: 'WVA1', codeVerified: true, cc: 1299, cyl: 4, layout: 'R4', bore: 81, strokeMm: 63, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU EFI', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9E', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,3 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_rr_overheat', 'f_cct'] }),
+
+    E('suzuki_wvck', { brand: 'suzuki', code: 'WVCK', codeVerified: true, cc: 1340, cyl: 4, layout: 'R4', bore: 81, strokeMm: 65, valves: 16, cam: 'DOHC 16V tytan', fuel: 'efi', ignition: 'ECU SDTV', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EIA-9', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,4 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_cct', 'f_tps_sub_throttle'] }),
+
+    E('suzuki_bn111', { brand: 'suzuki', code: 'BN111', codeVerified: true, cc: 1402, cyl: 4, layout: 'R4', bore: 81, strokeMm: 68, valves: 16, cam: 'DOHC 16V', cooling: 'air-oil', fuel: 'efi', ignition: 'ECU EFI 34mm', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8EK', 'B', SRC_LIT), idleRpm: P('1050 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_tb_sync', 'f_stator_burn'] }),
+
+    // KAWASAKI
+    E('kawasaki_kl650', { brand: 'kawasaki', code: 'KL650', codeVerified: true, cc: 651, cyl: 1, layout: 'Single', bore: 100, strokeMm: 83, valves: 4, cam: 'DOHC 4V', carbType: 'Keihin CVK40 / EFI', ignition: 'CDI / ECU', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,15 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK DPR8EA-9', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,5 L', 'B', SRC_LIT), firing: P('1', 'B', SRC_LIT)
+    }, faults: ['f_tight_ex_valves', 'f_pilot_jets'] }),
+
+    E('kawasaki_ex650', { brand: 'kawasaki', code: 'EX650', codeVerified: true, cc: 649, cyl: 2, layout: 'R2', bore: 83, strokeMm: 60, valves: 8, cam: 'DOHC 8V (180°)', fuel: 'efi', ignition: 'ECU EFI 38mm', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,22 – 0,31', 'B', SRC_LIT),
+      sparkPlug: P('NGK SILMAR9B9', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,3 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (180°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_stator_burn'] }),
+
+    E('kawasaki_zx750p', { brand: 'kawasaki', code: 'ZX750P', codeVerified: true, cc: 749, cyl: 4, layout: 'R4', bore: 73, strokeMm: 44.7, valves: 16, cam: 'DOHC 16V', carbType: '4× Keihin CVKD38', ignition: 'Cyfrowy CDI', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,20 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9E', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,7 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_carb_sync', 'f_pilot_jets', 'f_cct'] }),
+
+    E('kawasaki_zr750l', { brand: 'kawasaki', code: 'ZR750L', codeVerified: true, cc: 748, cyl: 4, layout: 'R4', bore: 68.4, strokeMm: 50.9, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU EFI', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,22 – 0,31', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EK', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_rr_overheat', 'f_tb_sync'] }),
+
+    E('kawasaki_zr900b', { brand: 'kawasaki', code: 'ZR900B', codeVerified: true, cc: 948, cyl: 4, layout: 'R4', bore: 73.4, strokeMm: 56, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU Ride-by-wire', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,25 – 0,34', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EIA-9', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_tb_sync', 'f_cct'] }),
+
+    E('kawasaki_zx900e', { brand: 'kawasaki', code: 'ZX900E', codeVerified: true, cc: 899, cyl: 4, layout: 'R4', bore: 75, strokeMm: 50.9, valves: 16, cam: 'DOHC 16V', carbType: '4× Keihin CVRD40', ignition: 'Cyfrowy', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,25 – 0,34', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9E', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_carb_sync', 'f_pilot_jets', 'f_cct'] }),
+
+    E('kawasaki_zxt00d', { brand: 'kawasaki', code: 'ZXT00D', codeVerified: true, cc: 998, cyl: 4, layout: 'R4', bore: 76, strokeMm: 55, valves: 16, cam: 'DOHC 16V tytan', fuel: 'efi', ignition: 'ECU (kasetowa skrzynia)', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,17 – 0,22', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EIA-9', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,7 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_rr_overheat', 'f_tb_sync'] }),
+
+    E('kawasaki_zxt00g', { brand: 'kawasaki', code: 'ZXT00G', codeVerified: true, cc: 1043, cyl: 4, layout: 'R4', bore: 77, strokeMm: 56, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU EFI 38mm', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,22 – 0,31', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EIA-9', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_tb_sync', 'f_cct'] }),
+
+    E('kawasaki_zxt10d', { brand: 'kawasaki', code: 'ZXT10D', codeVerified: true, cc: 1052, cyl: 4, layout: 'R4', bore: 76, strokeMm: 58, valves: 16, cam: 'DOHC 16V', carbType: '4× Keihin CVKD40', ignition: 'Cyfrowy', params: {
+      valveIn: P('0,13 – 0,19', 'B', SRC_LIT), valveEx: P('0,18 – 0,24', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9E', 'B', SRC_LIT), idleRpm: P('1050 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,5 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_second_gear_dogs', 'f_carb_sync', 'f_pilot_jets'] }),
+
+    E('kawasaki_zxt40a', { brand: 'kawasaki', code: 'ZXT40A', codeVerified: true, cc: 1352, cyl: 4, layout: 'R4', bore: 84, strokeMm: 61, valves: 16, cam: 'DOHC 16V', fuel: 'efi', ignition: 'ECU DFI 44mm', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,20 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EIA-9', 'B', SRC_LIT), idleRpm: P('1050 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,6 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_stator_burn', 'f_cct', 'f_tb_sync'] }),
+
+    // TRIUMPH
+    E('triumph_d67ld', { brand: 'triumph', code: 'D67LD', codeVerified: true, cc: 675, cyl: 3, layout: 'R3', bore: 74, strokeMm: 52.3, valves: 12, cam: 'DOHC 12V', fuel: 'efi', ignition: 'Keihin ECU (COP)', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EK', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,0 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('20 000 km', 'B', SRC_LIT),
+      firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_rr_overheat', 'f_stator_burn', 'f_cct', 'f_tb_sync'] }),
+
+    E('triumph_765', { brand: 'triumph', code: '765', codeVerified: true, cc: 765, cyl: 3, layout: 'R3', bore: 77.99, strokeMm: 53.4, valves: 12, cam: 'DOHC 12V (Moto2)', fuel: 'efi', ignition: 'Keihin Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR9AI-8', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,1 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_cct'] }),
+
+    E('triumph_800', { brand: 'triumph', code: '800', codeVerified: true, cc: 799, cyl: 3, layout: 'R3', bore: 74, strokeMm: 61.9, valves: 12, cam: 'DOHC 12V', fuel: 'efi', ignition: 'Keihin ECU', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,32 – 0,37', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8EK', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,6 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_cct', 'f_tb_sync'] }),
+
+    E('triumph_bonnie_900', { brand: 'triumph', code: 'BONNIE900', codeVerified: true, cc: 900, cyl: 2, layout: 'R2', bore: 84.6, strokeMm: 80, valves: 8, cam: 'SOHC 8V (270°)', fuel: 'efi', ignition: 'ECU Ride-by-wire', params: {
+      valveIn: P('0,05 – 0,10', 'B', SRC_LIT), valveEx: P('0,13 – 0,18', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR8A-9', 'B', SRC_LIT), idleRpm: P('1000 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync'] }),
+
+    E('triumph_speed_1050', { brand: 'triumph', code: '1050', codeVerified: true, cc: 1050, cyl: 3, layout: 'R3', bore: 79, strokeMm: 71.4, valves: 12, cam: 'DOHC 12V', fuel: 'efi', ignition: 'Keihin ECU', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8EK', 'B', SRC_LIT), idleRpm: P('1150 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_rr_overheat', 'f_stator_burn'] }),
+
+    E('triumph_tiger_1200', { brand: 'triumph', code: '1200', codeVerified: true, cc: 1215, cyl: 3, layout: 'R3', bore: 85, strokeMm: 71.4, valves: 12, cam: 'DOHC 12V (wał kardana)', fuel: 'efi', ignition: 'Keihin Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,27 – 0,33', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8EK', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_cct', 'f_tb_sync'] }),
+
+    E('triumph_rocket3', { brand: 'triumph', code: 'ROCKET3', codeVerified: true, cc: 2458, cyl: 3, layout: 'R3', bore: 110.2, strokeMm: 85.9, valves: 12, cam: 'DOHC 12V (longitudinal R3)', fuel: 'efi', ignition: 'Keihin Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,25 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR8A-9', 'B', SRC_LIT), idleRpm: P('850 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('5,4 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2-3', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_tb_sync'] }),
+
+    // BMW
+    E('bmw_k75', { brand: 'bmw', code: 'K75', codeVerified: true, cc: 740, cyl: 3, layout: 'R3', bore: 67, strokeMm: 70, valves: 6, cam: 'DOHC 6V (leżący R3)', fuel: 'efi', carbType: 'Bosch LE-Jetronic', ignition: 'Bosch ECU', params: {
+      valveIn: P('0,15 – 0,20', 'B', SRC_LIT), valveEx: P('0,25 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('Bosch D200', 'B', SRC_LIT), idleRpm: P('950 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('3,75 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_tb_sync', 'f_intake_boot_crack'] }),
+
+    E('bmw_f800', { brand: 'bmw', code: 'F800', codeVerified: true, cc: 798, cyl: 2, layout: 'R2', bore: 82, strokeMm: 75.6, valves: 8, cam: 'DOHC 8V (Rotax 360°)', fuel: 'efi', ignition: 'BMS-KP', params: {
+      valveIn: P('0,18 – 0,26', 'B', SRC_LIT), valveEx: P('0,27 – 0,35', 'B', SRC_LIT),
+      sparkPlug: P('NGK DCPR8E', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,9 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (360°)', 'B', SRC_LIT)
+    }, faults: ['f_stator_burn', 'f_tb_sync', 'f_cct'] }),
+
+    E('bmw_f900', { brand: 'bmw', code: 'F900', codeVerified: true, cc: 895, cyl: 2, layout: 'R2', bore: 86, strokeMm: 77, valves: 8, cam: 'DOHC 8V (Loncin 270°)', fuel: 'efi', ignition: 'BMS-M Ride-by-wire', params: {
+      valveIn: P('0,18 – 0,26', 'B', SRC_LIT), valveEx: P('0,30 – 0,38', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR8J-9E', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync'] }),
+
+    E('bmw_s1000rr', { brand: 'bmw', code: 'S1000RR', codeVerified: true, cc: 999, cyl: 4, layout: 'R4', bore: 80, strokeMm: 49.7, valves: 16, cam: 'DOHC 16V ShiftCam tytan', fuel: 'efi', ignition: 'BMS-O Ride-by-wire', params: {
+      valveIn: P('0,23 – 0,28', 'B', SRC_LIT), valveEx: P('0,28 – 0,33', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR9D-J', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,9 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_shiftcam_actuator', 'f_cct', 'f_tb_sync'] }),
+
+    E('bmw_r1150', { brand: 'bmw', code: 'R1150', codeVerified: true, cc: 1130, cyl: 2, layout: 'Boxer', bore: 101, strokeMm: 70.5, valves: 8, cam: 'CIH 8V (Boxer B2)', cooling: 'air-oil', fuel: 'efi', ignition: 'Motronic 2.4', params: {
+      valveIn: P('0,15', 'B', SRC_LIT), valveEx: P('0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK BKR7EKC', 'B', SRC_LIT), idleRpm: P('1100 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('3,75 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (Boxer)', 'B', SRC_LIT)
+    }, faults: ['f_boxer_throttle_sync', 'f_intake_boot_crack'] }),
+
+    E('bmw_r1200', { brand: 'bmw', code: 'R1200', codeVerified: true, cc: 1170, cyl: 2, layout: 'Boxer', bore: 101, strokeMm: 73, valves: 8, cam: 'DOHC 8V Radial (Boxer B2)', cooling: 'air-oil', fuel: 'efi', ignition: 'BMS-K', params: {
+      valveIn: P('0,13 – 0,23', 'B', SRC_LIT), valveEx: P('0,30 – 0,40', 'B', SRC_LIT),
+      sparkPlug: P('NGK MAR8B-JDS', 'B', SRC_LIT), idleRpm: P('1150 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (Boxer)', 'B', SRC_LIT)
+    }, faults: ['f_boxer_throttle_sync', 'f_stator_burn'] }),
+
+    E('bmw_r1250', { brand: 'bmw', code: 'R1250', codeVerified: true, cc: 1254, cyl: 2, layout: 'Boxer', bore: 102.5, strokeMm: 76, valves: 8, cam: 'DOHC 8V ShiftCam (Boxer B2)', fuel: 'efi', ignition: 'BMS-MP Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,17', 'B', SRC_LIT), valveEx: P('0,34 – 0,41', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR8AI-10', 'B', SRC_LIT), idleRpm: P('1150 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (Boxer)', 'B', SRC_LIT)
+    }, faults: ['f_shiftcam_actuator', 'f_boxer_throttle_sync'] }),
+
+    E('bmw_k1300', { brand: 'bmw', code: 'K1300', codeVerified: true, cc: 1293, cyl: 4, layout: 'R4', bore: 80, strokeMm: 64.3, valves: 16, cam: 'DOHC 16V (55° pochylony R4)', fuel: 'efi', ignition: 'BMS-K', params: {
+      valveIn: P('0,18 – 0,25', 'B', SRC_LIT), valveEx: P('0,25 – 0,32', 'B', SRC_LIT),
+      sparkPlug: P('NGK KR9CI', 'B', SRC_LIT), idleRpm: P('1050 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,5 L (sucha miska)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_cct', 'f_tb_sync', 'f_sprag_clutch_heavy'] }),
+
+    E('bmw_k1600', { brand: 'bmw', code: 'K1600', codeVerified: true, cc: 1649, cyl: 6, layout: 'R6', bore: 72, strokeMm: 67.5, valves: 24, cam: 'DOHC 24V (poprzeczny R6)', fuel: 'efi', ignition: 'BMS-X Ride-by-wire', params: {
+      valveIn: P('0,18 – 0,25', 'B', SRC_LIT), valveEx: P('0,27 – 0,34', 'B', SRC_LIT),
+      sparkPlug: P('NGK LMAR8AI-8', 'B', SRC_LIT), idleRpm: P('900 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('4,5 L (sucha miska)', 'B', SRC_LIT), firing: P('1-5-3-6-2-4', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_coil_cap'] }),
+
+    // DUCATI
+    E('ducati_696', { brand: 'ducati', code: 'DESMO696', codeVerified: true, cc: 696, cyl: 2, layout: 'L2', bore: 88, strokeMm: 57.2, valves: 4, cam: 'Desmodue 4V (90° L2)', cooling: 'air', fuel: 'efi', ignition: 'Siemens VDO', params: {
+      valveIn: P('0,10 – 0,15 (zamkn: 0,03 – 0,08)', 'B', SRC_LIT), valveEx: P('0,15 – 0,20 (zamkn: 0,03 – 0,08)', 'B', SRC_LIT),
+      sparkPlug: P('NGK DCPR8E', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,1 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (90° L2)', 'B', SRC_LIT)
+    }, faults: ['f_desmo_closing_shims', 'f_tb_sync', 'f_rr_overheat'] }),
+
+    E('ducati_821', { brand: 'ducati', code: 'TESTA821', codeVerified: true, cc: 821, cyl: 2, layout: 'L2', bore: 88, strokeMm: 67.5, valves: 8, cam: 'Testastretta 11° 8V Desmo', fuel: 'efi', ignition: 'Continental Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK MAR9A-J', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,4 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (90° L2)', 'B', SRC_LIT)
+    }, faults: ['f_desmo_closing_shims', 'f_tb_sync'] }),
+
+    E('ducati_1198', { brand: 'ducati', code: 'TESTA1198', codeVerified: true, cc: 1198, cyl: 2, layout: 'L2', bore: 106, strokeMm: 67.9, valves: 8, cam: 'Testastretta Evoluzione 8V', fuel: 'efi', ignition: 'Marelli EFI 64mm', params: {
+      valveIn: P('0,15 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK MAR10A-J', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,7 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (90° L2)', 'B', SRC_LIT)
+    }, faults: ['f_desmo_closing_shims', 'f_sprag_clutch_heavy', 'f_stator_burn'] }),
+
+    E('ducati_1199', { brand: 'ducati', code: 'SUPERQUADRO', codeVerified: true, cc: 1198, cyl: 2, layout: 'L2', bore: 112, strokeMm: 60.8, valves: 8, cam: 'Superquadro 8V tytan Desmo', fuel: 'efi', ignition: 'Mitsubishi Ride-by-wire', params: {
+      valveIn: P('0,15 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK MAR9A-J', 'B', SRC_LIT), idleRpm: P('1350 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (90° L2)', 'B', SRC_LIT)
+    }, faults: ['f_desmo_closing_shims', 'f_tb_sync'] }),
+
+    E('ducati_1260_dvt', { brand: 'ducati', code: 'DVT1260', codeVerified: true, cc: 1262, cyl: 2, layout: 'L2', bore: 106, strokeMm: 71.5, valves: 8, cam: 'Testastretta DVT 8V (zmienne fazy)', fuel: 'efi', ignition: 'Bosch Ride-by-wire', params: {
+      valveIn: P('0,15 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK MAR9A-J', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,1 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (90° L2)', 'B', SRC_LIT)
+    }, faults: ['f_desmo_closing_shims', 'f_shiftcam_actuator'] }),
+
+    E('ducati_v4_stradale', { brand: 'ducati', code: 'STRADALE_V4', codeVerified: true, cc: 1103, cyl: 4, layout: 'V4', bore: 81, strokeMm: 53.5, valves: 16, cam: 'Desmosedici Stradale 16V (90° V4)', fuel: 'efi', ignition: 'Bosch Twin Pulse Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,18 – 0,23', 'B', SRC_LIT),
+      sparkPlug: P('NGK R0451B-10', 'B', SRC_LIT), idleRpm: P('1350 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,2 L (sucha miska)', 'B', SRC_LIT), firing: P('1-3-2-4 Twin Pulse', 'B', SRC_LIT)
+    }, faults: ['f_desmo_closing_shims', 'f_v4_rear_heat', 'f_v4_cam_wear'] }),
+
+    E('ducati_v4_granturismo', { brand: 'ducati', code: 'GRANTURISMO_V4', codeVerified: true, cc: 1158, cyl: 4, layout: 'V4', bore: 83, strokeMm: 53.5, valves: 16, cam: 'V4 Granturismo 16V (sprężyny zaworowe)', fuel: 'efi', ignition: 'Bosch Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,20 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK SILMAR9E9', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,3 L (z filtrem)', 'B', SRC_LIT), valveInterval: P('60 000 km', 'B', SRC_LIT),
+      firing: P('1-3-2-4 Twin Pulse', 'B', SRC_LIT)
+    }, faults: ['f_v4_rear_heat', 'f_tb_sync'] }),
+
+    // KTM
+    E('ktm_690_lc4', { brand: 'ktm', code: 'LC4_690', codeVerified: true, cc: 693, cyl: 1, layout: 'Single', bore: 105, strokeMm: 80, valves: 4, cam: 'LC4 SOHC 4V (2 wałki balansu)', fuel: 'efi', ignition: 'Keihin EFI 50mm Ride-by-wire', params: {
+      valveIn: P('0,07 – 0,13', 'B', SRC_LIT), valveEx: P('0,13 – 0,19', 'B', SRC_LIT),
+      sparkPlug: P('NGK LKAR8AI-9', 'B', SRC_LIT), idleRpm: P('1550 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('1,7 L (2 filtry)', 'B', SRC_LIT), firing: P('1', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_tight_ex_valves'] }),
+
+    E('ktm_790_lc8c', { brand: 'ktm', code: 'LC8C_790', codeVerified: true, cc: 799, cyl: 2, layout: 'R2', bore: 88, strokeMm: 65.7, valves: 8, cam: 'LC8c DOHC 8V (285°/435°)', fuel: 'efi', ignition: 'DKK Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK LKAR9BI-10', 'B', SRC_LIT), idleRpm: P('1400 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,8 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (285°)', 'B', SRC_LIT)
+    }, faults: ['f_v4_cam_wear', 'f_tb_sync'] }),
+
+    E('ktm_990_lc8', { brand: 'ktm', code: 'LC8_990', codeVerified: true, cc: 999, cyl: 2, layout: 'V2', bore: 101, strokeMm: 62.4, valves: 8, cam: 'LC8 DOHC 8V (75° V2)', fuel: 'efi', ignition: 'Keihin EFI', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,25 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK LKAR8AI-9', 'B', SRC_LIT), idleRpm: P('1400 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,0 L (sucha miska)', 'B', SRC_LIT), firing: P('1-2 (75° V2)', 'B', SRC_LIT)
+    }, faults: ['f_lc8_water_pump_seal', 'f_sprag_clutch_heavy', 'f_tb_sync'] }),
+
+    E('ktm_1290_lc8', { brand: 'ktm', code: 'LC8_1290', codeVerified: true, cc: 1301, cyl: 2, layout: 'V2', bore: 108, strokeMm: 71, valves: 8, cam: 'LC8 DOHC 8V (75° V2 podwójna świeca)', fuel: 'efi', ignition: 'Keihin Ride-by-wire 56mm', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,25 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK LKAR9BI-10', 'B', SRC_LIT), idleRpm: P('1350 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,6 L (sucha miska)', 'B', SRC_LIT), firing: P('1-2 (75° V2)', 'B', SRC_LIT)
+    }, faults: ['f_lc8_water_pump_seal', 'f_sprag_clutch_heavy', 'f_tb_sync'] }),
+
+    // APRILIA
+    E('aprilia_660_r2', { brand: 'aprilia', code: 'APR660', codeVerified: true, cc: 659, cyl: 2, layout: 'R2', bore: 81, strokeMm: 63.9, valves: 8, cam: 'DOHC 8V (270°)', fuel: 'efi', ignition: 'Marelli 11MP Ride-by-wire', params: {
+      valveIn: P('0,15 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK MR9DE', 'B', SRC_LIT), idleRpm: P('1400 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,7 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_connectors_moisture'] }),
+
+    E('aprilia_750_v2', { brand: 'aprilia', code: 'APR750', codeVerified: true, cc: 750, cyl: 2, layout: 'V2', bore: 92, strokeMm: 56.4, valves: 8, cam: 'DOHC 8V (90° V2 hybryda koła/łańcuch)', fuel: 'efi', ignition: 'Marelli Ride-by-wire', params: {
+      valveIn: P('0,11 – 0,18', 'B', SRC_LIT), valveEx: P('0,16 – 0,23', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR7EKB', 'B', SRC_LIT), idleRpm: P('1350 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,2 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (90° V2)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_sprag_clutch_heavy'] }),
+
+    E('aprilia_v990', { brand: 'aprilia', code: 'V990', codeVerified: true, cc: 998, cyl: 2, layout: 'V2', bore: 97, strokeMm: 67.5, valves: 8, cam: 'Rotax V990 8V (60° V2, 2 świece/cyl)', fuel: 'efi', ignition: 'Denso EFI (sucha miska)', params: {
+      valveIn: P('0,12 – 0,17', 'B', SRC_LIT), valveEx: P('0,23 – 0,28', 'B', SRC_LIT),
+      sparkPlug: P('NGK DCPR9E', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,9 L (sucha miska)', 'B', SRC_LIT), firing: P('1-2 (60° V2)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_rr_overheat', 'f_stator_burn'] }),
+
+    E('aprilia_v4_1000', { brand: 'aprilia', code: 'V4_1000', codeVerified: true, cc: 999, cyl: 4, layout: 'V4', bore: 78, strokeMm: 52.3, valves: 16, cam: 'DOHC 16V tytan (65° V4 kasetowa skrzynia)', fuel: 'efi', ignition: 'Marelli 8-wtryskiwaczy Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK R0451B-10', 'B', SRC_LIT), idleRpm: P('1400 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-3-2-4 (65° V4)', 'B', SRC_LIT)
+    }, faults: ['f_v4_cam_wear', 'f_stator_burn', 'f_v4_rear_heat'] }),
+
+    E('aprilia_v4_1100', { brand: 'aprilia', code: 'V4_1100', codeVerified: true, cc: 1077, cyl: 4, layout: 'V4', bore: 81, strokeMm: 52.3, valves: 16, cam: 'DOHC 16V (65° V4)', fuel: 'efi', ignition: 'Marelli 11MP Ride-by-wire', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK SILMAR9B9', 'B', SRC_LIT), idleRpm: P('1400 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-3-2-4 (65° V4)', 'B', SRC_LIT)
+    }, faults: ['f_v4_rear_heat', 'f_tb_sync', 'f_stator_burn'] }),
+
+    // BENELLI
+    E('benelli_trk502', { brand: 'benelli', code: 'BJ269MR', codeVerified: true, cc: 500, cyl: 2, layout: 'R2', bore: 69, strokeMm: 66.8, valves: 8, cam: 'DOHC 8V (360°)', fuel: 'efi', ignition: 'Bosch EFI 37mm', params: {
+      valveIn: P('0,13 – 0,19', 'B', SRC_LIT), valveEx: P('0,19 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8E', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,2 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (360°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_connectors_moisture'] }),
+
+    E('benelli_752s', { brand: 'benelli', code: 'BJ288MW', codeVerified: true, cc: 754, cyl: 2, layout: 'R2', bore: 88, strokeMm: 62, valves: 8, cam: 'DOHC 8V (270°)', fuel: 'efi', ignition: 'Delphi EFI', params: {
+      valveIn: P('0,13 – 0,19', 'B', SRC_LIT), valveEx: P('0,19 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9E', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,2 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2 (270°)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync'] }),
+
+    E('benelli_tnt899', { brand: 'benelli', code: 'TNT899', codeVerified: true, cc: 898, cyl: 3, layout: 'R3', bore: 88, strokeMm: 49.2, valves: 12, cam: 'DOHC 12V (120°)', fuel: 'efi', ignition: 'Walbro EFI', params: {
+      valveIn: P('0,15 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,25', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EK', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('4,0 L (z filtrem)', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_rr_overheat', 'f_tb_sync'] }),
+
+    // MV AGUSTA
+    E('mv_tre_675', { brand: 'mvagusta', code: 'MV675', codeVerified: true, cc: 675, cyl: 3, layout: 'R3', bore: 79, strokeMm: 45.9, valves: 12, cam: 'DOHC 12V tytan (wał przeciwbieżny)', fuel: 'efi', ignition: 'Eldor MVICS Ride-by-wire', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,20 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EKB', 'B', SRC_LIT), idleRpm: P('1350 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,5 L', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_tb_sync'] }),
+
+    E('mv_tre_800', { brand: 'mvagusta', code: 'MV800', codeVerified: true, cc: 798, cyl: 3, layout: 'R3', bore: 79, strokeMm: 54.3, valves: 12, cam: 'DOHC 12V tytan (wał przeciwbieżny)', fuel: 'efi', ignition: 'Eldor MVICS Ride-by-wire', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,20 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR9EKB', 'B', SRC_LIT), idleRpm: P('1350 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,5 L', 'B', SRC_LIT), firing: P('1-2-3 (120°)', 'B', SRC_LIT)
+    }, faults: ['f_sprag_clutch_heavy', 'f_tb_sync'] }),
+
+    E('mv_f4_750', { brand: 'mvagusta', code: 'F4_750', codeVerified: true, cc: 749, cyl: 4, layout: 'R4', bore: 73.8, strokeMm: 43.8, valves: 16, cam: 'DOHC 16V (promieniowe Radial)', fuel: 'efi', ignition: 'Weber-Marelli 16M', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,20 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('NGK R6252K-105', 'B', SRC_LIT), idleRpm: P('1200 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_rr_overheat', 'f_tb_sync', 'f_sprag_clutch_heavy'] }),
+
+    E('mv_f4_1000', { brand: 'mvagusta', code: 'F4_1000', codeVerified: true, cc: 998, cyl: 4, layout: 'R4', bore: 76, strokeMm: 55, valves: 16, cam: 'DOHC 16V Radial tytan (TSS zmienny dolot)', fuel: 'efi', ignition: 'Marelli 5SM Ride-by-wire', params: {
+      valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,20 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('NGK R6252K-105', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
+    }, faults: ['f_rr_overheat', 'f_tb_sync'] })
+
   ];
 
   // ---------- 3. MODELE (MARKA → MODEL → GENERACJA/ROCZNIK → KOD → WARIANT) ----------
@@ -491,7 +1002,112 @@
     M('b_bj600gs', 'benelli', 'BJ600GS / QJ600GS', '–', 2012, 2020, null, 'benelli_600', 'Wersja azjatycka R4'),
     M('b_500q', 'benelli', '500 Quattro / 504 Sport', '–', 1974, 1980, null, 'benelli_500q', 'Klasyk SOHC R4'),
     // MV AGUSTA
-    M('mv_600', 'mvagusta', '600 Quattro Cilindri (600 4C)', '–', 1966, 1972, null, 'mv_600_4c', 'Turystyczny – kolekcjonerski R4')
+    M('mv_600', 'mvagusta', '600 Quattro Cilindri (600 4C)', '–', 1966, 1972, null, 'mv_600_4c', 'Turystyczny – kolekcjonerski R4'),
+
+    // ===== ROZSZERZENIE KATALOGU MODELI (>650 cm³, 1–4 CYL) =====
+    // HONDA
+    M('h_xr650r', 'honda', 'XR650R', 'RE01', 2000, 2007, 'RE01', 'honda_re01e', 'Enduro/Supermoto 649 cm³ 1-cyl chłodzone cieczą'),
+    M('h_cb750_hornet', 'honda', 'CB750 Hornet', 'RH12', 2023, 2025, 'RH12', 'honda_rd16e', 'Naked R2 755 cm³ 270° Unicam'),
+    M('h_xl750_transalp', 'honda', 'XL750 Transalp', 'RD16', 2023, 2025, 'RD16', 'honda_rd16e', 'Adventure R2 755 cm³ Unicam'),
+    M('h_vfr800_vtec', 'honda', 'VFR800 VTEC / Crossrunner', 'RC46 / RC60', 2002, 2013, 'RC46', 'honda_rc46e', 'Sport-tourer 782 cm³ V4 HYPER VTEC'),
+    M('h_cbr954rr', 'honda', 'CBR954RR Fireblade', 'SC50', 2002, 2003, 'SC50', 'honda_sc50e', 'Supersport R4 954 cm³'),
+    M('h_cbr1000rr_sc57', 'honda', 'CBR1000RR Fireblade', 'SC57', 2004, 2007, 'SC57', 'honda_sc57e', 'Superbike R4 998 cm³ DSFI'),
+    M('h_cbr1100xx', 'honda', 'CBR1100XX Super Blackbird', 'SC42', 1999, 2007, 'SC42', 'honda_sc42e', 'Sport-tourer R4 1137 cm³ PGM-FI'),
+    M('h_crf1100l', 'honda', 'CRF1100L Africa Twin', 'SD08 / SD09', 2020, 2025, 'SD08', 'honda_sd08e', 'Adventure R2 1084 cm³ Unicam'),
+    M('h_cb1300', 'honda', 'CB1300 Super Four / Bol d\'Or', 'SC54', 2003, 2013, 'SC54', 'honda_sc54e', 'Muscle bike R4 1284 cm³'),
+    M('h_vfr1200f', 'honda', 'VFR1200F / Crosstourer', 'SC63 / SC70', 2010, 2017, 'SC63', 'honda_sc63e', 'Sport-tourer 1237 cm³ 76° V4 Unicam'),
+    M('h_gl1800', 'honda', 'GL1800 GoldWing', 'SC79', 2018, 2025, 'SC79', 'honda_sc79e', 'Luksusowy tourer 1833 cm³ Boxer B6'),
+
+    // YAMAHA
+    M('y_xt660r', 'yamaha', 'XT660R / XT660X / Tenere XT660Z', 'DM01 / DM02', 2004, 2016, 'DM01', 'yamaha_5vk', 'Dual-sport / Supermoto 660 cm³ 1-cyl'),
+    M('y_mt07', 'yamaha', 'MT-07 / Tenere 700 / Tracer 7', 'RM04 / RM17 / DM07', 2014, 2025, 'RM04', 'yamaha_m401e', 'Naked / Adventure R2 689 cm³ CP2 270°'),
+    M('y_mt09', 'yamaha', 'MT-09 / Tracer 9 / XSR900', 'RN29 / RN43 / RN57', 2013, 2020, 'RN29', 'yamaha_n701e', 'Hyper-naked R3 847 cm³ CP3 120°'),
+    M('y_tdm900', 'yamaha', 'TDM900', 'RN08 / RN11 / RN18', 2002, 2012, 'RN08', 'yamaha_5ps', 'All-rounder R2 897 cm³ 10V 270°'),
+    M('y_yzfr1_5pw', 'yamaha', 'YZF-R1 (Wtrysk 5-zaworowy)', 'RN09', 2002, 2003, 'RN09', 'yamaha_5pw', 'Superbike R4 998 cm³ DOHC 20V'),
+    M('y_yzfr1_cp4', 'yamaha', 'YZF-R1 Crossplane CP4', 'RN22', 2009, 2014, 'RN22', 'yamaha_14b', 'Superbike R4 Crossplane 998 cm³'),
+    M('y_fz1', 'yamaha', 'FZ1 / FZ1 Fazer', 'RN16', 2006, 2015, 'RN16', 'yamaha_rn16', 'Streetfighter R4 998 cm³ DOHC 20V'),
+    M('y_xtz1200', 'yamaha', 'XTZ1200 Super Tenere', 'DP01 / DP04 / DP07', 2010, 2020, 'DP01', 'yamaha_dp01', 'Adventure R2 1199 cm³ 270° wał kardana'),
+    M('y_xjr1300', 'yamaha', 'XJR1300', 'RP02 / RP06 / RP19', 1999, 2016, 'RP06', 'yamaha_rp06', 'Muscle bike R4 1251 cm³ chłodzony powietrzem i olejem'),
+    M('y_fjr1300', 'yamaha', 'FJR1300A / AS', 'RP04 / RP13 / RP23', 2001, 2020, 'RP13', 'yamaha_rp23', 'Sport-tourer R4 1298 cm³ wał kardana'),
+    M('y_vmax1700', 'yamaha', 'VMAX 1700', 'RP21', 2009, 2020, 'RP21', 'yamaha_rp21', 'Power-cruiser 1679 cm³ 65° V4 200 KM'),
+
+    // SUZUKI
+    M('s_dr650se', 'suzuki', 'DR650SE', 'SP46B', 1996, 2020, 'SP46B', 'suzuki_p405', 'Dual-sport 644 cm³ 1-cyl SACS'),
+    M('s_sv650', 'suzuki', 'SV650 / V-Strom 650', 'AV / BY / C7 / VP53', 2003, 2025, 'WVBY', 'suzuki_p507', 'Naked / Adventure 645 cm³ 90° V2'),
+    M('s_gsxr750_k4', 'suzuki', 'GSX-R750', 'WVB3 / WVCF / C4', 2004, 2019, 'WVB3', 'suzuki_r745', 'Superbike R4 749 cm³ SDTV'),
+    M('s_gsx8s', 'suzuki', 'GSX-8S / V-Strom 800DE', 'EM11', 2023, 2025, 'EM11', 'suzuki_q501', 'Naked / Adventure R2 776 cm³ 270°'),
+    M('s_gsxr1000_k5', 'suzuki', 'GSX-R1000', 'WVB6 / WVCL', 2005, 2008, 'WVB6', 'suzuki_t711', 'Superbike R4 999 cm³ (legendarna baza K5/K6)'),
+    M('s_sv1000', 'suzuki', 'SV1000S / SV1000N', 'WVBX', 2003, 2007, 'WVBX', 'suzuki_t501', 'Sport-naked 996 cm³ 90° V2'),
+    M('s_bandit1250', 'suzuki', 'GSF1250 Bandit / FA', 'WVCH', 2007, 2016, 'WVCH', 'suzuki_w501', 'Sport-tourer R4 1255 cm³ chłodzony cieczą'),
+    M('s_hayabusa_gen1', 'suzuki', 'GSX1300R Hayabusa Gen 1', 'WVA1', 1999, 2007, 'WVA1', 'suzuki_wva1', 'Hypersport R4 1299 cm³ SRAD'),
+    M('s_hayabusa_gen2', 'suzuki', 'GSX1300R Hayabusa Gen 2/3', 'WVCK / EJ11', 2008, 2025, 'WVCK', 'suzuki_wvck', 'Hypersport R4 1340 cm³ SDTV'),
+    M('s_gsx1400', 'suzuki', 'GSX1400', 'BN111 / WVBN', 2001, 2008, 'BN111', 'suzuki_bn111', 'Muscle bike R4 1402 cm³ SACS'),
+
+    // KAWASAKI
+    M('k_klr650', 'kawasaki', 'KLR650', 'KL650A / E', 1987, 2018, 'KL650', 'kawasaki_kl650', 'Dual-sport 651 cm³ 1-cyl DOHC'),
+    M('k_er6_ninja650', 'kawasaki', 'Ninja 650 / Z650 / Versys 650', 'ER650 / EX650 / LE650', 2006, 2025, 'EX650', 'kawasaki_ex650', 'All-rounder R2 649 cm³ 180°'),
+    M('k_zx7r', 'kawasaki', 'Ninja ZX-7R', 'ZX750P', 1996, 2003, 'ZX750P', 'kawasaki_zx750p', 'Superbike R4 749 cm³ Ram-Air'),
+    M('k_z750_z800', 'kawasaki', 'Z750 / Z800', 'ZR750L / ZR800A', 2007, 2016, 'ZR750L', 'kawasaki_zr750l', 'Streetfighter R4 748/806 cm³'),
+    M('k_z900', 'kawasaki', 'Z900', 'ZR900B / D', 2017, 2025, 'ZR900B', 'kawasaki_zr900b', 'Supernaked R4 948 cm³'),
+    M('k_zx9r', 'kawasaki', 'Ninja ZX-9R', 'ZX900C / E / F', 1998, 2003, 'ZX900E', 'kawasaki_zx900e', 'Supersport R4 899 cm³'),
+    M('k_zx10r', 'kawasaki', 'Ninja ZX-10R', 'ZXT00D / E / J / S', 2006, 2020, 'ZXT00D', 'kawasaki_zxt00d', 'Superbike R4 998 cm³ kasetowa skrzynia'),
+    M('k_z1000', 'kawasaki', 'Z1000 / Ninja 1000SX', 'ZXT00G / L / W', 2010, 2025, 'ZXT00G', 'kawasaki_zxt00g', 'Sport-tourer / Naked R4 1043 cm³'),
+    M('k_zzr1100', 'kawasaki', 'ZZR1100 / Ninja ZX-11', 'ZXT10D', 1993, 2001, 'ZXT10D', 'kawasaki_zxt10d', 'Hypersport R4 1052 cm³ Ram-Air'),
+    M('k_zzr1400', 'kawasaki', 'ZZR1400 / Ninja ZX-14R', 'ZXT40A / E', 2006, 2020, 'ZXT40A', 'kawasaki_zxt40a', 'Hypersport R4 1352/1441 cm³'),
+
+    // TRIUMPH
+    M('t_streettriple675', 'triumph', 'Street Triple 675 / Daytona 675', 'D67LD', 2006, 2016, 'D67LD', 'triumph_d67ld', 'Supersport / Naked R3 675 cm³ 120°'),
+    M('t_streettriple765', 'triumph', 'Street Triple 765 RS / R', 'HD01 / HD04', 2017, 2025, 'HD01', 'triumph_765', 'Naked R3 765 cm³ (silnik bazowy Moto2)'),
+    M('t_tiger800', 'triumph', 'Tiger 800 / XC / XR', 'A08', 2011, 2019, 'A08', 'triumph_800', 'Adventure R3 799 cm³'),
+    M('t_bonnie900', 'triumph', 'Bonneville T100 / Street Twin', 'DP01', 2016, 2025, 'DP01', 'triumph_bonnie_900', 'Modern Classic R2 900 cm³ 270°'),
+    M('t_speedtriple1050', 'triumph', 'Speed Triple 1050', '515NJ / 515NV', 2005, 2015, '515NJ', 'triumph_speed_1050', 'Streetfighter R3 1050 cm³'),
+    M('t_tiger1200', 'triumph', 'Tiger 1200 Explorer', 'V13VG', 2012, 2021, 'V13VG', 'triumph_tiger_1200', 'Duży adventure R3 1215 cm³ wał kardana'),
+    M('t_rocket3', 'triumph', 'Rocket 3 R / GT', 'Y101', 2020, 2025, 'Y101', 'triumph_rocket3', 'Power-cruiser R3 2458 cm³ longitudinal'),
+
+    // BMW
+    M('bmw_k75_c', 'bmw', 'K75 / K75S / K75RT', 'K569', 1985, 1996, 'K569', 'bmw_k75', 'Klasyk wzdłużny leżący R3 740 cm³'),
+    M('bmw_f800gs', 'bmw', 'F800GS / F800R / F800GT', 'E8ST / K72', 2008, 2018, 'K72', 'bmw_f800', 'Adventure / Naked R2 798 cm³ 360° Rotax'),
+    M('bmw_f900r', 'bmw', 'F900R / F900XR / F850GS', '4R90 / K81', 2019, 2025, 'K81', 'bmw_f900', 'All-rounder R2 895 cm³ 270°'),
+    M('bmw_s1000rr_k46', 'bmw', 'S1000RR / S1000R / S1000XR', 'K46 / K47 / K67', 2009, 2025, 'K46', 'bmw_s1000rr', 'Superbike R4 999 cm³ ShiftCam'),
+    M('bmw_r1150gs', 'bmw', 'R1150GS / R1150R / R1150RT', 'R21', 1999, 2004, 'R21', 'bmw_r1150', 'Klasyczny Boxer B2 1130 cm³ powietrze-olej'),
+    M('bmw_r1200gs_dohc', 'bmw', 'R1200GS / Adventure (DOHC)', 'K25', 2010, 2013, 'K25', 'bmw_r1200', 'Boxer B2 1170 cm³ DOHC radial powietrze-olej'),
+    M('bmw_r1250gs', 'bmw', 'R1250GS / Adventure', 'K50 / K51', 2018, 2024, 'K50', 'bmw_r1250', 'Boxer B2 1254 cm³ ShiftCam chłodzony cieczą'),
+    M('bmw_k1300s', 'bmw', 'K1300S / K1300R / K1300GT', 'K40 / K43', 2009, 2016, 'K40', 'bmw_k1300', 'Sport-tourer R4 1293 cm³ 55° sucha miska'),
+    M('bmw_k1600gt', 'bmw', 'K1600GT / GTL / Bagger', 'K48', 2011, 2025, 'K48', 'bmw_k1600', 'Luksusowy tourer R6 1649 cm³ 24V'),
+
+    // DUCATI
+    M('d_monster696', 'ducati', 'Monster 696 / 796', 'M5', 2008, 2014, 'M5', 'ducati_696', 'Naked 90° L2 Desmodue 696/803 cm³'),
+    M('d_monster821', 'ducati', 'Monster 821 / Hypermotard 939', 'M6 / BA', 2014, 2020, 'M6', 'ducati_821', 'Sport-naked 90° L2 Testastretta 11°'),
+    M('d_1198', 'ducati', '1098 / 1198 / Streetfighter 1098', 'H7', 2007, 2013, 'H7', 'ducati_1198', 'Superbike 90° L2 Testastretta Evoluzione 1198 cm³'),
+    M('d_panigale1199', 'ducati', 'Panigale 1199 / 1299', 'H8', 2012, 2018, 'H8', 'ducati_1199', 'Superbike 90° L2 Superquadro 1198/1285 cm³'),
+    M('d_multi1260', 'ducati', 'Multistrada 1260 DVT', 'AC', 2018, 2021, 'AC', 'ducati_1260_dvt', 'Adventure 90° L2 Testastretta DVT 1262 cm³'),
+    M('d_panigalev4', 'ducati', 'Panigale V4 / Streetfighter V4', 'DA', 2018, 2025, 'DA', 'ducati_v4_stradale', 'Superbike 90° V4 Desmosedici Stradale 1103 cm³'),
+    M('d_multiv4', 'ducati', 'Multistrada V4 / Pikes Peak', '1A', 2021, 2025, '1A', 'ducati_v4_granturismo', 'Adventure 90° V4 Granturismo 1158 cm³'),
+
+    // KTM
+    M('ktm_690duke', 'ktm', '690 Duke / SMC R / Enduro R', 'KTM 690', 2008, 2025, 'LC4', 'ktm_690_lc4', 'Supermoto / Naked 1-cyl LC4 690/693 cm³'),
+    M('ktm_790duke', 'ktm', '790 Duke / 890 Duke R / 890 Adv', 'KTM 790/890', 2018, 2025, 'LC8c', 'ktm_790_lc8c', 'Naked / Adventure R2 LC8c 799/889 cm³ 285°'),
+    M('ktm_990superduke', 'ktm', '990 Super Duke / 990 Adventure', 'LC8 990', 2005, 2013, 'LC8', 'ktm_990_lc8', 'Streetfighter / Adventure 75° V2 LC8 999 cm³'),
+    M('ktm_1290superduke', 'ktm', '1290 Super Duke R / Super Adv', 'LC8 1290', 2014, 2025, 'LC8', 'ktm_1290_lc8', 'Hyper-naked / Adventure 75° V2 LC8 1301 cm³'),
+
+    // APRILIA
+    M('a_rs660', 'aprilia', 'RS 660 / Tuono 660 / Tuareg 660', 'KS / KY', 2020, 2025, 'KS', 'aprilia_660_r2', 'Sport / Naked R2 659 cm³ 270°'),
+    M('a_shiver750', 'aprilia', 'Shiver 750 / Dorsoduro 750', 'RA / SM', 2007, 2016, 'RA', 'aprilia_750_v2', 'Naked / Supermoto 90° V2 750 cm³ Ride-by-wire'),
+    M('a_rsv1000mille', 'aprilia', 'RSV 1000 Mille / Tuono 1000R', 'ME / RP / RR', 1998, 2010, 'RP', 'aprilia_v990', 'Superbike / Naked 60° V2 Rotax V990 998 cm³'),
+    M('a_rsv4_1000', 'aprilia', 'RSV4 1000 / Tuono V4 1000', 'RK / TY', 2009, 2014, 'RK', 'aprilia_v4_1000', 'Superbike / Naked 65° V4 999 cm³ kasetowa skrzynia'),
+    M('a_rsv4_1100', 'aprilia', 'RSV4 1100 Factory / Tuono V4 1100', 'KE / KZ', 2015, 2025, 'KE', 'aprilia_v4_1100', 'Superbike / Naked 65° V4 1077/1099 cm³'),
+
+    // BENELLI
+    M('b_trk502', 'benelli', 'TRK 502 / TRK 502X / Leoncino 500', 'BJ500', 2017, 2025, 'P17', 'benelli_trk502', 'Turystyczny adventure R2 500 cm³ 360°'),
+    M('b_752s', 'benelli', '752S / TRK 702', 'BJ750', 2019, 2025, 'P28', 'benelli_752s', 'Naked / Tourer R2 754 cm³ 270°'),
+    M('b_tnt899', 'benelli', 'TNT 899 / Tornado Tre 900', 'TN01', 2004, 2015, 'TN01', 'benelli_tnt899', 'Streetfighter R3 898 cm³ 120°'),
+
+    // MV AGUSTA
+    M('mv_f3_675', 'mvagusta', 'F3 675 / Brutale 675', 'F3', 2012, 2020, 'F3', 'mv_tre_675', 'Supersport / Naked R3 675 cm³ wał przeciwbieżny'),
+    M('mv_f3_800', 'mvagusta', 'F3 800 / Brutale 800 / Dragster', 'B3', 2013, 2025, 'B3', 'mv_tre_800', 'Supersport / Naked R3 798 cm³'),
+    M('mv_f4_750', 'mvagusta', 'F4 750 Serie Oro / S / SPR', 'F4', 1999, 2004, 'F4', 'mv_f4_750', 'Superbike R4 749 cm³ zawory promieniowe Radial'),
+    M('mv_f4_1000', 'mvagusta', 'F4 1000 / Brutale 1090', 'F4 1000', 2004, 2018, 'F4 1000', 'mv_f4_1000', 'Superbike R4 998/1078 cm³ Radial TSS')
+
   ];
 
   // ---------- 4. TYPOWE USTERKI (biblioteka) ----------
@@ -516,7 +1132,15 @@
     f_connectors_moisture: { title: 'Korozja złączy wiązki i słabe punkty masowe', sec: 'E', conf: 'B', desc: 'Spadki napięcia na złączach czujników i masie ramy/silnika – błędne wskazania temperatury, szarpanie i błędy ECU.', fix: 'Pomiar spadku napięcia pod obciążeniem (<0,1 V), oczyszczenie punktów masowych i zabezpieczenie złączy.' },
     f_second_gear_dogs: { title: 'Wypadanie 2. biegu pod obciążeniem (zużycie kłów sprzęgłowych)', sec: 'F', conf: 'B', desc: 'Szarpnięcie lub wyskoczenie na luz przy ostrym przyspieszaniu na 2. biegu – zaokrąglone kły (dog teeth) kół zębatych 2./6. biegu i wygięty wodzik.', fix: 'Demontaż skrzyni biegów, wymiana pary współpracujących kół zębatych (lub podcięcie kłów – undercutting), wymiana wodzików i kontrola bębna programatora.' },
     f_head_gasket_multicyl: { title: 'Przedmuch uszczelki pod głowicą między cylindrami lub do płaszcza wodnego', sec: 'A', conf: 'B', desc: 'Symetrycznie niska kompresja na dwóch sąsiednich cylindrach (np. 1–2 lub 2–3) albo wyrzucanie płynu chłodzącego do zbiorniczka pod obciążeniem.', fix: 'Próba Leak Down, test obecności CO₂ w chłodnicy, pomiar płaskości głowicy (limit zwykle 0,05 mm) i montaż nowej uszczelki z dokręceniem na krzyż kluczem dynamometrycznym.' },
-    f_starter_clutch: { title: 'Ślizgające się sprzęgło jednokierunkowe rozrusznika', sec: 'F', conf: 'B', desc: 'Rozrusznik kręci z metalicznym zgrzytem, ale nie obraca wałem korbowym (szczególnie na zimnym oleju lub przy słabym akumulatorze).', fix: 'Kontrola rolkowego/sprzęgiełkowego mechanizmu wolnego koła, sprężynek dociskowych i bieżni koła pośredniego.' }
+    f_starter_clutch: { title: 'Ślizgające się sprzęgło jednokierunkowe rozrusznika', sec: 'F', conf: 'B', desc: 'Rozrusznik kręci z metalicznym zgrzytem, ale nie obraca wałem korbowym (szczególnie na zimnym oleju lub przy słabym akumulatorze).', fix: 'Kontrola rolkowego/sprzęgiełkowego mechanizmu wolnego koła, sprężynek dociskowych i bieżni koła pośredniego.' },
+    f_v4_cam_wear: { title: 'Wycieranie krzywek wałków rozrządu (V4)', sec: 'A', conf: 'B', desc: 'Zużycie szczytów krzywek wałków rozrządu przy rzadkich wymianach oleju lub pracy na zimnym oleju – spadek skoku zaworów i hałas z głowicy.', fix: 'Pomiar wysokości krzywek mikrometrem wg DTR OEM, kontrola ciśnienia oleju i kanałów magistrali głowicy, wymiana wałków i dźwigienek.' },
+    f_shiftcam_actuator: { title: 'Usterka nastawnika zmiennych faz / profilu krzywek (ShiftCam / VVT)', sec: 'A', conf: 'B', desc: 'Elektromagnes przestawiacza nie przesuwa wałka na krzywki pełnego otwarcia powyżej zadanego progu obrotów – błąd ECU i spadek mocy.', fix: 'Kontrola oporności cewki elektrozaworu, zasilania 12V, test wykonawczy w oprogramowaniu serwisowym oraz kontrola rowków przesuwnych na wałku.' },
+    f_desmo_closing_shims: { title: 'Zanikanie luzu płytek zamykających w rozrządzie Desmodromic', sec: 'A', conf: 'B', desc: 'Osiadanie stożków i półpierścieni zamykających (closers) kasuje luz płytki zamykającej – naprężenie trzonka zaworu na gorąco.', fix: 'Precyzyjny pomiar luzu zamykającego i otwierającego specjalnym szczelinomierzem kątowym, dobór płytek z dokładnością do 0.05 mm, wymiana półpierścieni.' },
+    f_boxer_throttle_sync: { title: 'Rozsynchronizowanie linek i przepustnic w silnikach Boxer (B2)', sec: 'B', conf: 'B', desc: 'Nierówne napięcie lewej i prawej linki gazu lub zabrudzenie śrub obejściowych powietrza – silne wibracje poziome przy przyspieszaniu od 2000 obr/min.', fix: 'Synchronizacja podciśnieniowa wakuometrem na rozgrzanym silniku: najpierw śruby bypass na wolnych obrotach, następnie naciąg linek przy 2500–3000 obr/min.' },
+    f_lc8_water_pump_seal: { title: 'Przeciek uszczelniacza wałka pompy cieczy (LC8)', sec: 'D', conf: 'B', desc: 'Wycieranie twardego wałka przez uszczelniacz teflonowy – płyn chłodzący przedostaje się do oleju, fałdowanie papierowego filtra oleju i spadek ciśnienia smarowania.', fix: 'Natychmiastowa wymiana wałka pompy cieczy, uszczelniacza z teflonową wargą, nowego filtra oleju i płukanie układu smarowania.' },
+    f_cp3_cam_chain_tensioner: { title: 'Grzechotanie hydrauliczno-mechanicznego napinacza łańcucha CP3', sec: 'A', conf: 'B', desc: 'Wadliwe blokowanie zapadki napinacza przy spadku ciśnienia oleju na gorąco – głośne dzwonienie łańcucha rozrządu przy 3500–4500 obr/min.', fix: 'Montaż zmodernizowanego napinacza OEM z podwójną zapadką lub precyzyjnego manualnego napinacza śrubowego.' },
+    f_tps_sub_throttle: { title: 'Zacięcie silnika krokowego przepustnic pomocniczych (STV / SDTV)', sec: 'B', conf: 'B', desc: 'Zimne luty w czujniku STP lub wyrobienie plastikowej przekładni silnika pomocniczego – kod błędu C28 / C29, silnik w trybie awaryjnym (brak mocy na wyższych biegach).', fix: 'Pomiar rezystancji czujnika położenia przepustnic pomocniczych, przelutowanie styków silnika STVA lub wymiana zespołu przepustnic.' },
+    f_sprag_clutch_heavy: { title: 'Zużycie sprzęgiełka jednokierunkowego rozrusznika (duże pojemności V2 / 1-cyl)', sec: 'F', conf: 'B', desc: 'Przy gaszeniu lub cofnięciu wału w silnikach o dużej kompresji klocki sprzęgiełka ulegają obiciu – poślizg rozrusznika z metalicznym trzaskiem.', fix: 'Wymiana wieńca zębatego, sprzęgła jednokierunkowego (sprag clutch) i kontrola sprawności dekompresatora automatycznego.' },
   };
 
   // ---------- 5. WALIDACJA DANYCH ----------
@@ -527,7 +1151,7 @@
       if (engineIds.has(e.id)) errors.push('Duplikat silnika: ' + e.id);
       engineIds.add(e.id);
       if (!MANUFACTURERS.some(m => m.id === e.brand)) errors.push('Nieznany producent silnika: ' + e.id);
-      if (![3, 4].includes(e.cyl)) errors.push('Nieobsługiwana liczba cylindrów: ' + e.id);
+      if (![1, 2, 3, 4, 6].includes(e.cyl)) errors.push('Nieobsługiwana liczba cylindrów: ' + e.id);
       if (e.cc !== null && (e.cc < CC_RANGE.min - 5 || e.cc > CC_RANGE.max + 10)) errors.push('Pojemność poza zakresem: ' + e.id);
       e.faults.forEach(f => { if (!FAULTS[f]) errors.push('Nieznana usterka ' + f + ' w ' + e.id); });
       Object.keys(e.params).forEach(k => { if (!PARAM_KEYS.some(p => p[0] === k)) errors.push('Nieznany parametr ' + k + ' w ' + e.id); });
