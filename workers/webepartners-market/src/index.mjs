@@ -61,7 +61,7 @@ function parseFeed(body, feed, contentType) {
       const image = safeText(pick("aw_image_url","image_link","image","image_url"),2000);
       const priceRaw = pick("search_price","price","sale_price","amount");
       const price = Number(String(priceRaw).replace(",",".").replace(/[^0-9.]/g,""));
-      if (!title || !/^https:\\/\\//i.test(url)) return null;
+      if (!title || !/^https:\/\//i.test(url)) return null;
       return {
         external_id:safeText(pick("aw_product_id","id","product_id","sku") || url || title,180) || String(i),
         title, description:safeText(pick("description","product_description"),2000),
@@ -69,7 +69,7 @@ function parseFeed(body, feed, contentType) {
         category:safeText(feed.category || pick("category","product_type") || "inne",100),
         price:Number.isFinite(price)&&price>0?price:null,
         currency:safeText(pick("currency","currency_code") || "PLN",3).toUpperCase(),
-        product_url:url,image_url:/^https:\\/\\//i.test(image)?image:null,
+        product_url:url,image_url:/^https:\/\//i.test(image)?image:null,
         program:safeText(feed.program,120)
       };
     }).filter(Boolean);
