@@ -105,6 +105,23 @@ test('NAPRAWNIK — przycisk Aktualizuj na górze zmieniający kolor i treść p
 
   // 4. Obsługa Service Worker skipWaiting
   assert.ok(sw.includes('skipWaiting'), 'Service worker musi obsługiwać skipWaiting');
+
+  // 5. Ochrona przed zapętleniem aktualizacji (Single Source of Truth i ochrona localStorage)
+  const currentBuildMatch = html.match(/const CURRENT_APP_BUILD\s*=\s*(\d+);/);
+  assert.ok(currentBuildMatch, 'index.html musi definiować CURRENT_APP_BUILD');
+  assert.equal(Number(currentBuildMatch[1]), version.build, 'CURRENT_APP_BUILD w index.html musi być identyczny z build w version.json');
+
+  const currentVersionMatch = html.match(/const CURRENT_APP_VERSION\s*=\s*['"]([^'"]+)['"];/);
+  assert.ok(currentVersionMatch, 'index.html musi definiować CURRENT_APP_VERSION');
+  assert.equal(currentVersionMatch[1], version.version, 'CURRENT_APP_VERSION w index.html musi być identyczny z version w version.json');
+
+  assert.ok(html.includes('naprawnik_last_updated_build'), 'Mechanizm aktualizacji musi zapisywać i respektować naprawnik_last_updated_build w localStorage');
+  assert.ok(html.includes('controllerchange'), 'Obsługa aktualizacji musi nasłuchiwać zdarzenia controllerchange dla płynnego przeładowania');
+
+  // 6. Weryfikacja odizolowania w wersji APK (www/)
+  const wwwHtml = read('www/index.html');
+  assert.ok(wwwHtml.includes('id="topUpdateBar" class="top-update-bar" style="display:none !important"'), 'Pasek aktualizacji w APK musi być ukryty');
+  assert.ok(wwwHtml.includes('function triggerUpdateState(){}'), 'triggerUpdateState w APK musi być pustą zaślepką');
 });
 
 test('NAPRAWNIK MASTER — Kalkulator Squish & CR oraz presety tuningowe 2T/4T', () => {

@@ -5850,6 +5850,145 @@ async function paImportCases(event){
 
 // ---------- BAZA DIAGNOSTYKI POWIĄZANEJ: SILNIK / ELEKTRYKA / CVT ----------
 const knowledgeCases = [
+  {
+    "id": "abs-pump-modulator-diag",
+    "title": "Układ hamulcowy z ABS: błąd pompy, zaworów solenoidowych lub czujnika prędkości koła",
+    "tags": "abs hamulce pompa modulator czujnik kody dtc c1000",
+    "areas": [
+      [
+        "Objawy i rozpoznanie",
+        "Kontrolka ABS świeci ciągle po przekroczeniu 10 km/h lub miga kodem błędnym; twarda lub gąbczasta klamka hamulca; brak pulsacji przy awaryjnym hamowaniu; zablokowanie koła mimo sprawnego mechanicznie zacisku."
+      ],
+      [
+        "Możliwe przyczyny",
+        "Zanieczyszczenie lub skrzywienie wieńca impulsowego (toner ring); nieprawidłowa szczelina powietrzna (air gap) między czujnikiem a wieńcem (poza zakresem 0.4–1.2 mm); uszkodzony przewód czujnika w miejscu pracy zawieszenia; zacięty zawór solenoidowy w modulatorze przez stary, zawilgocony płyn hamulcowy; przepalony bezpiecznik zasilania silnika pompy ABS."
+      ],
+      [
+        "Procedura diagnostyczna krok po kroku",
+        "1. Sprawdź wieniec zębaty koła pod kątem pęknięć, zanieczyszczeń metalicznym pyłem i bicia osiowego. 2. Zmierz szczelinomierzem niemagnetycznym szczelinę powietrzną czujnika do wieńca w 4 punktach obrotu koła (wymóg: 0.4–1.2 mm). 3. Odłącz wtyczkę czujnika i zmierz multimetrem rezystancję cewki czujnika indukcyjnego (nominalnie 0.8–1.4 kΩ w 20°C). 4. Zakręć kołem i zmierz woltomierzem AC generowane napięcie sinusoidalne (min. 0.25 V AC przy powolnym obrocie). 5. W układach z czujnikiem Halla sprawdź napięcie zasilania 5V/12V na wiązce."
+      ],
+      [
+        "Sposób naprawy i weryfikacja końcowa",
+        "Wymień uszkodzony czujnik lub wyprostuj/wymień wieniec. W przypadku zacięcia modulatora wykonaj procedurę odpowietrzenia obwodu wtórnego ABS z wymuszeniem otwarcia elektrozaworów (zworką serwisową lub interfejsem OBD). Zalej świeży płyn hamulcowy DOT 4 o temp. wrzenia >230°C. Wykonaj jazdę próbną >10 km/h i test kontrolowanego zadziałania ABS na bezpiecznym podłożu."
+      ]
+    ]
+  },
+  {
+    "id": "front-fork-seal-damping",
+    "title": "Zawieszenie: wyciek z lag, utrata tłumienia, stuk widelca i niestabilność w zakręcie",
+    "tags": "zawieszenie widelec lagi uszczelniacze olej komora powietrzna damping",
+    "areas": [
+      [
+        "Objawy i rozpoznanie",
+        "Tłusty pierścień oleju na rurze nośnej teleskopu; zaolejenie klocków hamulcowych i tarczy; nurkowanie przodu przy hamowaniu (dobijanie do odbojnika); metaliczny stuk przy gwałtownym uskoku nawierzchni; utrata stabilności toru jazdy w złożeniu."
+      ],
+      [
+        "Możliwe przyczyny",
+        "Wybicie wargi uszczelniacza olejowego przez wżery korozyjne, piasek lub owady na chromie rury; zużycie panewek teflonowych prowadzących (ślizgowych); nieprawidłowa objętość lub lepkość oleju; zużycie lub pęknięcie sprężyny widelca."
+      ],
+      [
+        "Procedura diagnostyczna krok po kroku",
+        "1. Oczyść i dokładnie obejrzyj chrom rury nośnej pod kątem zadrapań i odprysków (wyczuwalne paznokciem kwalifikują rurę do polerowania lub wymiany). 2. Podnieś przód motocykla i sprawdź luz poprzeczny goleni (zużycie panewek ślizgowych). 3. Sprawdź ugięcie wstępne (Static SAG oraz Rider SAG: nominalnie 25–35 mm dla motocykli szosowych). 4. Przy rozbiórce zmierz wysokość komory powietrznej (air gap) po ściśnięciu rury bez sprężyny (zgodnie ze specyfikacją OEM, zazwyczaj 95–130 mm od górnej krawędzi)."
+      ],
+      [
+        "Sposób naprawy i weryfikacja końcowa",
+        "Wymień komplet uszczelniaczy (olejowy + przeciwpyłowy) parami w obu lagach. Zastosuj nowy olej o fabrycznej lepkości (np. SAE 5W lub 10W). Ustaw poziom oleju mierząc wysokość słupa powietrza z dokładnością do 1 mm. Dokręć półki kluczem dynamometrycznym: dolna półka 20–23 Nm (uwaga na zaciśnięcie rury!), górna półka 22–26 Nm."
+      ]
+    ]
+  },
+  {
+    "id": "canbus-communication-lost",
+    "title": "Magistrala CAN-BUS: utrata komunikacji ECU–Licznik–ABS, kody błędów U0100/U0121",
+    "tags": "can-bus elektryka komunikacja sieć ecu licznik u0100 u0121",
+    "areas": [
+      [
+        "Objawy i rozpoznanie",
+        "Zegary nie pokazują obrotów, temperatury lub prędkości; kontrolki 'Check Engine', 'ABS' i 'FI' palą się jednocześnie; silnik nie reaguje na rozrusznik; skaner OBD zgłasza błędy sieciowe 'U0100: Utrata łączności z ECM/PCM' lub 'U0121: Utrata łączności z modułem ABS'."
+      ],
+      [
+        "Możliwe przyczyny",
+        "Przerwa lub zwarcie w skrętce przewodów magistrali CAN_H / CAN_L; uszkodzenie rezystora terminującego (120 Ω) w module nadrzędnym; zaśniedziałe złącze główne wiązki przy główce ramy; uszkodzenie transceivera magistrali w jednym z modułów."
+      ],
+      [
+        "Procedura diagnostyczna krok po kroku",
+        "1. Wyłącz zapłon i odłącz ujemną klemę akumulatora. 2. Wepnij multimetr w piny CAN_H i CAN_L gniazda diagnostycznego OBD/DLC i zmierz rezystancję: prawidłowy wynik to dokładnie 60 Ω (dwa równoległe rezystory terminujące po 120 Ω). 3. Jeśli miernik wskazuje 120 Ω — jeden rezystor/moduł końcowy jest odcięty. Jeśli wskazuje 0 Ω — linie są zwarte ze sobą. Jeśli wskazuje nieskończoność (OL) — magistrala jest przerwana. 4. Podłącz akumulator, włącz zapłon i zmierz napięcia stałe względem masy: CAN_H powinno wynosić ok. 2.6–3.5 V, CAN_L ok. 1.5–2.4 V."
+      ],
+      [
+        "Sposób naprawy i weryfikacja końcowa",
+        "Zlokalizuj uszkodzoną skrętkę, usuń korozję pinów złącz, napraw przerwę zachowując skok skręcenia przewodów (min. 1 skos na 2–3 cm, aby zapobiec zakłóceniom EMI). Skasuj kody błędów i zweryfikuj czy komunikacja między wszystkimi węzłami została wznowiona bez powrotu błędów U-code."
+      ]
+    ]
+  },
+  {
+    "id": "exhaust-lambda-exup-fault",
+    "title": "Układ wydechowy: błąd sondy lambda, przepalona grzałka, zacięty zawór wydechowy EXUP/SET",
+    "tags": "wydech lambda exup set zawór spalin sonda p0135 p0130",
+    "areas": [
+      [
+        "Objawy i rozpoznanie",
+        "Zapalona kontrolka wtrysku FI / silnika; szarpnięcia silnika w średnim zakresie obrotów; wyraźna 'dziura' w mocy przy 4000–6000 obr/min; metaliczny dźwięk brzęczenia z kolektora wydechowego; błąd DTC P0135 (grzałka O2S) lub błąd serwa wydechowego."
+      ],
+      [
+        "Możliwe przyczyny",
+        "Przepalenie grzałki sondy lambda; zatrucie sondy ołowiem lub olejem (np. ze zużytych uszczelniaczy zaworowych); zapieczenie osi motylka zaworu wydechowego przez nagar; zerwana lub zablokowana linka serwomotoru EXUP/SET; uszkodzone zębatki plastikowej przekładni serwomotoru."
+      ],
+      [
+        "Procedura diagnostyczna krok po kroku",
+        "1. Odłącz wtyczkę sondy lambda i zmierz rezystancję między dwoma białymi/czarnymi przewodami grzałki: nominalnie 10–14 Ω (w 20°C). Wynik OL oznacza przepaloną grzałkę. 2. Obejrzyj serwomotor wydechowy przy włączaniu zapłonu: serwo powinno wykonać test samopozycjonowania (pełny obrót tam i z powrotem). 3. Sprawdź luz linek serwa (wymagane 1.0–1.5 mm). 4. Zdejmij linki i sprawdź ręcznie, czy ośka zaworu w rurze wydechowej obraca się lekko pod palcami."
+      ],
+      [
+        "Sposób naprawy i weryfikacja końcowa",
+        "Wymień uszkodzoną sondę lambda. W przypadku zapieczenia zaworu wydechowego oczyść nagar preparatem do usuwania węgla i nasmaruj tuleje osi smarem ceramicznym wysokotemperaturowym (>1200°C). Wyreguluj naciąg linek serwomotoru i przeprowadź procedurę adaptacji zerowej w ECU."
+      ]
+    ]
+  },
+  {
+    "id": "chain-shaft-drive-lash",
+    "title": "Układ napędowy: nierówny naciąg łańcucha, zużycie zębatek, luzy i stuki wału kardana",
+    "tags": "napęd łańcuch kardan zębatki luz szarpanie dyferencjał",
+    "areas": [
+      [
+        "Objawy i rozpoznanie",
+        "Szarpanie przy dodawaniu i ujmowaniu gazu; głuche stuki z tylnego wahacza przy ruszaniu; 'falujący' naciąg łańcucha przy obracaniu kołem; wygięte lub wyostrzone zęby ('zęby rekina') zębatki zdawczej i tylnej; wyciek oleju przy uszczelniaczu przekładni kątowej."
+      ],
+      [
+        "Możliwe przyczyny",
+        "Zatarte ogniwa łańcucha przez brak smarowania lub zużycie uszczelnień O-ring/X-ring; asymetryczne wyciągnięcie łańcucha; nadmierne zużycie zębatki zdawczej na wałku zdawczym silnika; wybicie gumowych tłumików drgań skrętnych w piaście koła (zabierak); luz na krzyżaku wału napędowego lub przekładni hipoidalnej kardana."
+      ],
+      [
+        "Procedura diagnostyczna krok po kroku",
+        "1. Obracaj kołem na podnośniku i mierz naciąg łańcucha w dolnym biegu co 1/4 obrotu: różnica naciągu >15 mm oznacza miejscowe rozciągnięcie kwalifikujące napęd do natychmiastowej wymiany. 2. Odciągnij łańcuch od tylnej zębatki na godzinie 3: odsłonięcie zęba na >1/2 wysokości oznacza krytyczne zużycie. 3. W napędzie wałem kardana podnieś koło i zmierz luz obrotowy na obwodzie felgi: dopuszczalny luz to max 15–20 mm. 4. Skontroluj stan oleju w przekładni (emulsja lub opiłki oznaczają agonię łożysk)."
+      ],
+      [
+        "Sposób naprawy i weryfikacja końcowa",
+        "Wymieniaj napęd łańcuchowy ZAWSZE jako komplet: łańcuch + zębatka przód + zębatka tył. Ustaw ugięcie łańcucha zgodnie z tabliczką na wahaczu (szosa: 25–35 mm, adventure: 35–45 mm). W kardanie wymień uszczelniacz i zalej świeży olej przekładniowy SAE 75W-90 / 80W-90 GL-5 (np. 180 ml). Wymień wybite tłumiki gumowe zabieraka koła."
+      ]
+    ]
+  },
+  {
+    "id": "atv-quad-cvt-diff-lock",
+    "title": "Quady / ATV & UTV: poślizg paska CVT po zalaniu, usterka siłownika 4x4 / blokady dyfra",
+    "tags": "quad atv utv cvt 4x4 dyferencjał pasek woda błoto grizzly outlander",
+    "areas": [
+      [
+        "Objawy i rozpoznanie",
+        "Pisk i dymienie paska CVT przy próbie pokonania przeszkody; wysokie obroty silnika, ale quad nie rusza; brak reakcji na wciśnięcie przycisku 4WD lub DIFF LOCK; migająca kontrolka napędu na desce; trzaski z przedniego mostu przy skręcaniu pod obciążeniem."
+      ],
+      [
+        "Możliwe przyczyny",
+        "Zalanie obudowy wariatora wodą przez nieszczelny korek spustowy lub nieszczelność chrap snorkela; zeszzklenie lub spalenie paska napędowego; zużycie kłów siłownika elektrycznego załączania napędu 4WD; zerwana linka lub spalony silnik nastawnika mostu przedniego; uszkodzone łożysko jednokierunkowe (one-way clutch) hamowania silnikiem."
+      ],
+      [
+        "Procedura diagnostyczna krok po kroku",
+        "1. Odkręć korek spustowy na dole obudowy CVT: wyciek wody/błota natychmiast wyjaśnia poślizg. 2. Zdejmij pokrywę CVT i zmierz szerokość paska suwmiarką (np. Yamaha Grizzly 700: nominalnie 33.2 mm, limit zużycia 29.9 mm; Can-Am Outlander 800: nominalnie 32.5 mm, limit 30.0 mm). 3. Sprawdź luz łożyska jednokierunkowego na sprzęgle odśrodkowym (powinno kręcić się tylko w jedną stronę). 4. Sprawdź zasilanie 12V na kostce siłownika 4WD przy przełączaniu trybów 2WD -> 4WD -> LOCK."
+      ],
+      [
+        "Sposób naprawy i weryfikacja końcowa",
+        "Dokładnie wymyj talerze wariatora i korektora zmywaczem odtłuszczającym. Wymień spalony/zwężony pasek na nowy wzmocniony (np. aramid/carbon). Wymień uszczelkę obwodową pokrywy CVT i zaaplikuj smar dielektryczny na uszczelnienie snorkeli. Przetestuj działanie dołączania przedniego mostu na podnośniku i pod obciążeniem w terenie."
+      ]
+    ]
+  },
+
  {id:'revs_no_speed',title:'Silnik wchodzi na obroty, skuter słabo przyspiesza',tags:'cvt pasek wariator sprzęgło silnik',areas:[
   ['CVT — mechanika (pierwszy trop)','Zużyty lub zbyt wąski pasek; pasek niewłaściwego rozmiaru; pasek założony odwrotnie, jeśli kierunkowy; rolki płaskie lub nieodpowiedniej masy; zacinające się prowadnice/ślizgi; zabrudzona lub zeszklona powierzchnia sprzęgła; zużyte okładziny; uszkodzona sprężyna centralna albo sprężynki sprzęgła; błędny montaż podkładek/tulei; wariator nie domyka się z powodu błędu montażu. Sprawdź ślady oleju/smaru na pasie i powierzchniach ciernych.'],
   ['Silnik — możliwe powiązanie','Nadmierne obroty mogą być skutkiem złego przełożenia CVT, ale spadek mocy silnika też może dawać słabe przyspieszenie: zatkany filtr powietrza/wydech, uboga lub bogata mieszanka, dopływ paliwa, niska kompresja, nieszczelność dolotu, słaba iskra pod obciążeniem.'],
@@ -8314,13 +8453,14 @@ function zoomPhoto(dataUrl){
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
 const CURRENT_APP_VERSION = "5.49";
-const CURRENT_APP_BUILD = 1730572000000;
+const CURRENT_APP_BUILD = 1730653000000;
 let isAppUpdateAvailable = false;
-let initialAppETag = null;
-let initialAppLastModified = null;
-
 function triggerUpdateState(){
   if (isAppUpdateAvailable) return;
+  // W środowisku natywnym APK aktualizacje OTA są bezwzględnie wyłączone
+  if (typeof window !== "undefined" && (window.__naprawnikNative || (window.NaprawnikPlatform && window.NaprawnikPlatform.isNative()))) {
+    return;
+  }
   isAppUpdateAvailable = true;
   const btn = document.getElementById("btnAppUpdate");
   const txt = document.getElementById("updateBtnText");
@@ -8337,10 +8477,29 @@ function triggerUpdateState(){
   }
 }
 
+function isVersionNewer(remoteVer, currentVer){
+  if (!remoteVer || !currentVer) return false;
+  const parse = v => String(v).replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
+  const r = parse(remoteVer);
+  const c = parse(currentVer);
+  for (let i = 0; i < Math.max(r.length, c.length); i++) {
+    const rv = r[i] || 0;
+    const cv = c[i] || 0;
+    if (rv > cv) return true;
+    if (rv < cv) return false;
+  }
+  return false;
+}
+
 async function checkForAppUpdates(manual){
+  // 0. Środowisko natywne APK działa 100% offline — brak odpytywania aktualizacji
+  if (typeof window !== "undefined" && (window.__naprawnikNative || (window.NaprawnikPlatform && window.NaprawnikPlatform.isNative()))) {
+    return false;
+  }
+
   try {
     // 1. Sprawdź Service Worker
-    if ("serviceWorker" in navigator) {
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg) {
         reg.update().catch(() => {});
@@ -8356,24 +8515,12 @@ async function checkForAppUpdates(manual){
       const vRes = await fetch("./version.json?_chk=" + Date.now(), { cache: "no-store" });
       if (vRes.ok) {
         const remote = await vRes.json();
-        if (remote && (remote.version !== CURRENT_APP_VERSION || (remote.build && remote.build > CURRENT_APP_BUILD))) {
-          triggerUpdateState();
-          return true;
-        }
-      }
-    } catch (_) {}
+        const lastInstalledBuild = Number(localStorage.getItem("naprawnik_last_updated_build") || 0);
+        // Semver: starsza wersja z serwera NIE może być uznawana za nowszą
+        const isNewerVersion = remote && typeof remote.version === "string" && isVersionNewer(remote.version, CURRENT_APP_VERSION);
+        const isNewerBuild = remote && typeof remote.build === "number" && remote.build > CURRENT_APP_BUILD && remote.build > lastInstalledBuild;
 
-    // 3. Sprawdź ETag / Last-Modified głównego pliku index.html
-    try {
-      const headRes = await fetch("./index.html?_chk=" + Date.now(), { method: "HEAD", cache: "no-store" });
-      if (headRes.ok) {
-        const etag = headRes.headers.get("ETag");
-        const lastMod = headRes.headers.get("Last-Modified");
-        if (!initialAppETag && etag) initialAppETag = etag;
-        if (!initialAppLastModified && lastMod) initialAppLastModified = lastMod;
-
-        if ((initialAppETag && etag && etag !== initialAppETag) ||
-            (initialAppLastModified && lastMod && lastMod !== initialAppLastModified)) {
+        if (isNewerVersion || isNewerBuild) {
           triggerUpdateState();
           return true;
         }
@@ -8392,20 +8539,48 @@ async function handleAppUpdateClick(){
   if (isAppUpdateAvailable) {
     if (txt) txt.textContent = "⏳ Instaluję aktualizację...";
     try {
-      if ("serviceWorker" in navigator) {
-        const reg = await navigator.serviceWorker.getRegistration();
-        if (reg && reg.waiting) {
-          reg.waiting.postMessage({ action: "skipWaiting" });
+      // 1. Zapisz timestamp aktualizowanego buildu w localStorage, aby zablokować zapętlenie po reloadzie
+      try {
+        const vRes = await fetch("./version.json?_chk=" + Date.now(), { cache: "no-store" });
+        if (vRes.ok) {
+          const remote = await vRes.json();
+          if (remote && remote.build) {
+            localStorage.setItem("naprawnik_last_updated_build", String(remote.build));
+          }
         }
-      }
+      } catch (_) {}
+
+      // 2. Usunięcie pamięci podręcznej przeglądarki
       if ("caches" in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       }
+
+      // 3. Obsługa Service Worker z natychmiastowym przeładowaniem po controllerchange
+      if ("serviceWorker" in navigator) {
+        let reloading = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (!reloading) {
+            reloading = true;
+            window.location.reload();
+          }
+        });
+
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          if (reg.waiting) {
+            reg.waiting.postMessage({ action: "skipWaiting" });
+          } else {
+            await reg.update().catch(() => {});
+          }
+        }
+      }
     } catch (_) {}
+
+    // Fallback: reload po 400ms jeśli controllerchange nie nastąpił
     setTimeout(() => {
-      window.location.reload(true);
-    }, 350);
+      window.location.reload();
+    }, 400);
     return;
   }
 

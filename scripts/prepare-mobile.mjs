@@ -61,15 +61,19 @@ const expectedCacheName = manifest.cacheName || `naprawnik-v${appVersion.replace
 
 // A) Synchronizacja version.json
 const versionJsonPath = path.join(root, "version.json");
+let appBuild = 1730653000000;
 try {
   const vRaw = await readFile(versionJsonPath, "utf8");
   const vData = JSON.parse(vRaw);
   if (vData.version !== appVersion) {
     vData.version = appVersion;
-    await writeFile(versionJsonPath, JSON.stringify(vData, null, 2) + "\n", "utf8");
   }
+  if (typeof vData.build === "number") {
+    appBuild = vData.build;
+  }
+  await writeFile(versionJsonPath, JSON.stringify(vData, null, 2) + "\n", "utf8");
 } catch (_) {
-  await writeFile(versionJsonPath, JSON.stringify({ version: appVersion }, null, 2) + "\n", "utf8");
+  await writeFile(versionJsonPath, JSON.stringify({ version: appVersion, build: appBuild }, null, 2) + "\n", "utf8");
 }
 
 // B) Synchronizacja sw.js
@@ -85,6 +89,7 @@ const rootIndexPath = path.join(root, "index.html");
 let rootIndexContent = await readFile(rootIndexPath, "utf8");
 const updatedRootIndex = rootIndexContent
   .replace(/(CURRENT_APP_VERSION\s*=\s*['"])[^'"]+(['"])/g, `$1${appVersion}$2`)
+  .replace(/(CURRENT_APP_BUILD\s*=\s*)\d+;/g, `$1${appBuild};`)
   .replace(/(NAPRAWNIK\s+v)\d+\.\d+(?:\.\d+)?/gi, `$1${appVersion}`);
 if (updatedRootIndex !== rootIndexContent) {
   await writeFile(rootIndexPath, updatedRootIndex, "utf8");
@@ -175,9 +180,11 @@ mobileHtml = removeJsFunction(mobileHtml, "async function checkForAppUpdates");
 mobileHtml = removeJsFunction(mobileHtml, "function checkForAppUpdates");
 mobileHtml = removeJsFunction(mobileHtml, "async function handleAppUpdateClick");
 mobileHtml = removeJsFunction(mobileHtml, "function handleAppUpdateClick");
+mobileHtml = removeJsFunction(mobileHtml, "function triggerUpdateState");
 
 // Zastąpienie pustymi zaślepkami (no-op) i wycięcie timerów co 25s
 mobileHtml = mobileHtml
+  .replace(/id="topUpdateBar" class="top-update-bar"/g, 'id="topUpdateBar" class="top-update-bar" style="display:none !important"')
   .replace(/syncApkWithWebNow\(\)/g, "/* offline */")
   .replace(/onclick="syncApkWithWebNow\(\)"/g, 'style="display:none"')
   .replace(/setInterval\([^)]*checkForAppUpdates[^)]*\);?/g, "/* APK: updater timer disabled */")
@@ -192,7 +199,7 @@ if (closingBodyIndex < 0) {
 }
 if (!mobileHtml.includes("./native-bridge.js")) {
   mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
-    "  <script>function checkForAppUpdates(){} function handleAppUpdateClick(){}</script>\n" +
+    "  <script>function checkForAppUpdates(){} function handleAppUpdateClick(){} function triggerUpdateState(){}</script>\n" +
     '  <script src="./native-bridge.js"></script>\n' +
     mobileHtml.slice(closingBodyIndex);
 }

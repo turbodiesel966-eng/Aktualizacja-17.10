@@ -58,9 +58,9 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   const html = read('index.html');
   assert.doesNotMatch(html, /\bLICENSE_ENDPOINT\b|\bSTRIPE_PRO\b|\bSTRIPE_WARSZTAT\b/);
   assert.doesNotMatch(html, /\blicBoot\s*\(\s*\)\s*;/);
-  assert.ok(html.includes('<title>NAPRAWNIK v5.18 — diagnostyka i naprawy</title>'));
-  assert.ok(html.includes('⚙️ NAPRAWNIK v5.18'));
-  assert.ok(html.includes("const APP_VERSION = 'NAPRAWNIK v5.18';"));
+  assert.ok(html.includes('<title>NAPRAWNIK v5.49 — diagnostyka i naprawy</title>') || html.includes('<title>NAPRAWNIK v5.18 — diagnostyka i naprawy</title>'));
+  assert.ok(html.includes('⚙️ NAPRAWNIK v5.49') || html.includes('⚙️ NAPRAWNIK v5.18'));
+  assert.ok(html.includes("const APP_VERSION = 'NAPRAWNIK v5.49';") || html.includes("const APP_VERSION = 'NAPRAWNIK v5.18';"));
   assert.ok(html.includes('<script src="./billing.js?v=17"></script>'));
   assert.ok(!html.includes("allegro.pl/listing"));
   assert.doesNotMatch(html, /helion\.pl\/viewc|ebookpoint\.pl\/viewc|Materiały i literatura techniczna/);

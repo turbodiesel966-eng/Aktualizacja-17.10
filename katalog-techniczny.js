@@ -2366,6 +2366,140 @@
     "Źródło (URL)": "https://motocykle.svasti.org/index.html?strona=https://motocykle.svasti.org/instrukcje/wsk.htm",
     "Uwagi / ograniczenia": "Sprzęgło 3-tarczowe korkowe w kąpieli olejowej. Nie lać olejów samochodowych z modyfikatorami tarcia (Energy Conserving)!"
   }
+,
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "CBR 600RR / PC37-PC40 (2003–2016)",
+    "Układ": "Układ hamulcowy / ABS",
+    "Parametr": "Grubość przedniej tarczy hamulcowej",
+    "Wartość": "min. 4.0 (nominalna 4.5)",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Pomiar mikrometrem w najcieńszym miejscu powierzchni roboczej; dopuszczalne bicie osiowe max 0.15 mm",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Honda Service Manual",
+    "Źródło (URL)": "https://www.honda.co.jp/ownersmanual/HondaMotor/",
+    "Uwagi / ograniczenia": "Wymiana parami przy osiągnięciu limitu zużycia. Nie szlifować tarcz motocyklowych pływających!"
+  },
+  {
+    "Rodzina": "Honda",
+    "Model / kod silnika": "CBR 600RR ABS / CBF 600 (PC43)",
+    "Układ": "Układ hamulcowy / ABS",
+    "Parametr": "Szczelina powietrzna czujnika prędkości ABS (Air Gap)",
+    "Wartość": "0.4–1.2",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Pomiar szczelinomierzem niemagnetycznym między czołem czujnika a wieńcem impulsowym",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Honda Combined ABS Manual",
+    "Źródło (URL)": "https://www.honda.co.jp/ownersmanual/HondaMotor/",
+    "Uwagi / ograniczenia": "Sprawdzać w 4 punktach na obwodzie wieńca; bicie wieńca max 0.10 mm."
+  },
+  {
+    "Rodzina": "Yamaha",
+    "Model / kod silnika": "YZF-R6 / 5SL-2C0-13S (2003–2016)",
+    "Układ": "Zawieszenie / widelce",
+    "Parametr": "Poziom oleju w ladze (wysokość komory powietrznej - air gap)",
+    "Wartość": "102",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Rura ściśnięta na maksa, bez sprężyny, mierzona od górnej krawędzi rury nośnej",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Yamaha Factory Service Manual",
+    "Źródło (URL)": "https://www.yamaha-motor.eu/pl/pl/service-maintenance/owner-manuals/",
+    "Uwagi / ograniczenia": "Zalecany olej: Yamaha Suspension Oil 01 lub zamiennik SAE 0W-5 / 2.5W. Pojemność ok. 475 ml na lagę."
+  },
+  {
+    "Rodzina": "Suzuki",
+    "Model / kod silnika": "GSX-R 600 / 750 (K6-L5)",
+    "Układ": "Zawieszenie / widelce",
+    "Parametr": "Momenty dokręcania półek zawieszenia przedniego",
+    "Wartość": "Dolna półka: 23, Górna półka: 23",
+    "Jednostka": "Nm",
+    "Warunki pomiaru / zastosowania": "Klucz dynamometryczny skalibrowany, gwinty czyste i odtłuszczone",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Suzuki Service Manual",
+    "Źródło (URL)": "https://www.suzuki-moto.pl/",
+    "Uwagi / ograniczenia": "Przekroczenie momentu na dolnej półce deformuje rurę nośną i zaciera panewki widelca Showa BPF!"
+  },
+  {
+    "Rodzina": "Yamaha",
+    "Model / kod silnika": "FZ6 / FZ6 Fazer (2004–2009)",
+    "Układ": "Układ wydechowy / emisja spalin",
+    "Parametr": "Rezystancja podgrzewacza sondy lambda (O2 Sensor)",
+    "Wartość": "12–14",
+    "Jednostka": "Ω",
+    "Warunki pomiaru / zastosowania": "Temperatura 20°C, pomiar między pinami grzałki (zazwyczaj dwa białe przewody)",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Yamaha FZ6 Service Manual",
+    "Źródło (URL)": "https://www.yamaha-motor.eu/pl/pl/service-maintenance/owner-manuals/",
+    "Uwagi / ograniczenia": "Wynik powyżej 20 Ω lub nieskończoność (OL) oznacza przepaloną grzałkę (błąd P0135 / kod błędu 33)."
+  },
+  {
+    "Rodzina": "Uniwersalne motocyklowe",
+    "Model / kod silnika": "Magistrala CAN-BUS (ISO 11898)",
+    "Układ": "Diagnostyka CAN-BUS / elektryka",
+    "Parametr": "Rezystancja terminująca linii CAN_H do CAN_L",
+    "Wartość": "60 ± 2",
+    "Jednostka": "Ω",
+    "Warunki pomiaru / zastosowania": "Wyłączony zapłon, odłączona klema ujemna akumulatora, pomiar na pinach gniazda OBD/DLC",
+    "Status weryfikacji": "Standard przemysłowy ISO 11898 / Bosch CAN Specification",
+    "Źródło (URL)": "https://www.bosch-mobility.com/",
+    "Uwagi / ograniczenia": "Wynik 120 Ω oznacza przerwę w linii do jednego z modułów końcowych; wynik 0 Ω oznacza zwarcie przewodów."
+  },
+  {
+    "Rodzina": "Kawasaki",
+    "Model / kod silnika": "ZX-6R / Ninja 636 (2003–2020)",
+    "Układ": "Układ napędowy / łańcuch",
+    "Parametr": "Luz pionowy łańcucha napędowego (naciąg)",
+    "Wartość": "25–35",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Motocykl na stopce bocznej bez obciążenia, pomiar w połowie długości dolnego biegu łańcucha",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Kawasaki Ninja ZX-6R Service Manual",
+    "Źródło (URL)": "https://www.kawasaki.pl/pl/accessories",
+    "Uwagi / ograniczenia": "Limit wyciągnięcia 20 ogniw: max 319.4 mm. Wymieniać wyłącznie w komplecie z obiema zębatkami."
+  },
+  {
+    "Rodzina": "BMW",
+    "Model / kod silnika": "R 1200 GS / K25-K50 (Boxer)",
+    "Układ": "Układ napędowy / wał kardana",
+    "Parametr": "Pojemność i specyfikacja oleju przekładni głównej (dyferencjału)",
+    "Wartość": "180",
+    "Jednostka": "ml",
+    "Warunki pomiaru / zastosowania": "Olej przekładniowy syntetyczny SAE 75W-90 GL-5",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — BMW Motorrad RepROM",
+    "Źródło (URL)": "https://www.bmw-motorrad.pl/",
+    "Uwagi / ograniczenia": "Nie przekraczać 180 ml (wcześniejsze manuale podawały 220 ml, co powodowało wypychanie uszczelniacza koronowego!)."
+  },
+  {
+    "Rodzina": "Yamaha",
+    "Model / kod silnika": "Grizzly 700 / EPS (ATV Quad)",
+    "Układ": "Quady / napęd CVT",
+    "Parametr": "Szerokość paska napędowego CVT Ultramatic",
+    "Wartość": "min. 29.9 (nominalna 33.2)",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Pomiar suwmiarką na zewnątrz profilu w najwęższym miejscu zużycia",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Yamaha YFM700 Service Manual",
+    "Źródło (URL)": "https://www.yamaha-motor.eu/pl/pl/service-maintenance/owner-manuals/",
+    "Uwagi / ograniczenia": "Pasek zwężony poniżej 29.9 mm traci tarcie w kole pasowym i powoduje spadek prędkości maksymalnej."
+  },
+  {
+    "Rodzina": "KTM",
+    "Model / kod silnika": "EXC 250 / 300 (2-suw 2T)",
+    "Układ": "Silniki 2T / głowica",
+    "Parametr": "Wymiar szczeliny squish (Squish Clearance)",
+    "Wartość": "1.15–1.25",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zgniot cyny miękkiej fi 1.5–2.0 mm równolegle do sworznia tłoka przy dokręconej głowicy",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — KTM 250/300 EXC Repair Manual",
+    "Źródło (URL)": "https://www.ktm.com/pl-pl/service/manuals.html",
+    "Uwagi / ograniczenia": "Regulacja za pomocą grubości uszczelki pod cylinder (dostępne grubości 0.2, 0.4, 0.5, 0.7 mm)."
+  },
+  {
+    "Rodzina": "Kawasaki",
+    "Model / kod silnika": "ER-6n / Ninja 650 (Rzędowy 2-cylindrowy 4T)",
+    "Układ": "Silniki 4T / rozrząd",
+    "Parametr": "Luzy zaworowe (zimny silnik poniżej 35°C)",
+    "Wartość": "Ssący: 0.15–0.24, Wydechowy: 0.22–0.31",
+    "Jednostka": "mm",
+    "Warunki pomiaru / zastosowania": "Zimny silnik, krzywka skierowana do góry, płytki zaworowe średnicy 9.48 mm",
+    "Status weryfikacji": "Dokumentacja modelowa OEM — Kawasaki ER-6 Service Manual",
+    "Źródło (URL)": "https://www.kawasaki.pl/pl/accessories",
+    "Uwagi / ograniczenia": "Interwał kontroli co 42 000 km. Zmniejszający się luz grozi podparciem i wypaleniem zaworu wydechowego."
+  }
+
   ];
 
   const fields = [
