@@ -990,7 +990,7 @@ async function oneTimeCheckout(request, env, auth) {
   if (Number(lockLease.meta?.changes || 0) !== 1) return err("Inny zakup jest już przygotowywany. Odczekaj chwilę.", 409);
   const form = new URLSearchParams();
   form.set("mode", "payment");
-  form.set("payment_method_types[0]", "card");
+  // Ensure hosted Checkout shows the product brand instead of the account holder personal name.
   form.set("branding_settings[display_name]", "NAPRAWNIK");
   form.set("line_items[0][price]", priceId);
   form.set("line_items[0][quantity]", "1");
@@ -1019,7 +1019,15 @@ async function oneTimeCheckout(request, env, auth) {
   try { result = await response.json(); } catch { /* Do not expose provider responses. */ }
   if (!response.ok || !isString(result?.url, 2048) || !isString(result?.id, 128)) {
     await env.DB.prepare("DELETE FROM one_time_checkout_locks WHERE user_id = ? AND idempotency_key = ?").bind(auth.userId, idempotency).run().catch(() => {});
-    console.error(JSON.stringify({ event: "stripe_one_time_checkout_rejected", status: response.status, requestId: response.headers.get("request-id") || null }));
+    console.error(JSON.stringify({
+      event: "stripe_one_time_checkout_rejected",
+      status: response.status,
+      requestId: response.headers.get("request-id") || null,
+      errorType: isString(result?.error?.type, 80) ? result.error.type : null,
+      errorCode: isString(result?.error?.code, 80) ? result.error.code : null,
+      errorMessage: isString(result?.error?.message, 160) ? result.error.message : null,
+      errorParam: isString(result?.error?.param, 80) ? result.error.param : null,
+    }));
     return err("Nie udało się utworzyć Checkout dla pakietu jednorazowego.", 502);
   }
   const sessionExpires = stripeTimestamp(result.expires_at) || (nowSeconds() + 24 * 60 * 60);
