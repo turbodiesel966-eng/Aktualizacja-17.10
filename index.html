@@ -10,7 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="./assets/naprawnik-icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NAPRAWNIK v5.18 — diagnostyka i naprawy</title>
+<title>NAPRAWNIK v5.49 — diagnostyka i naprawy</title>
 <style>
 :root{
   --bg:#0a0a14; --panel:#15151f; --border:#33334d; --accent:#ff8c1a; --cyan:#22d3ee; --hero:#ffe14d; --text:#e8e8f5; --dim:#8888aa;
@@ -97,7 +97,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .nav{background:rgba(9,6,20,.88);border-color:#663b91}
 
 
-/* NAPRAWNIK v5.1 — diagnostyka powiązana; bez różowego */
+/* NAPRAWNIK v5.49 — diagnostyka powiązana; bez różowego */
 .brand-hero{
   padding:28px 8px 24px !important;
   margin:10px 0 14px !important;
@@ -127,7 +127,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .brand-hero:before{background:radial-gradient(ellipse at 15% 50%,rgba(255,122,0,.18),transparent 35%),radial-gradient(ellipse at 85% 50%,rgba(40,123,255,.20),transparent 38%) !important;}
 
 
-/* NAPRAWNIK v5.18 — asystent zdjęciowy i historia offline */
+/* NAPRAWNIK v5.49 — asystent zdjęciowy i historia offline */
 .pa-intro{border:1px solid #7c3aed;background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(34,211,238,.07));border-radius:12px;padding:13px;margin-bottom:10px}
 .pa-status{font-size:11px;border:1px solid var(--border);border-radius:8px;padding:8px;margin:8px 0;color:var(--dim);line-height:1.45}
 .pa-status.online{border-color:#16875a;color:#8df0ba}.pa-status.offline{border-color:#b7791f;color:#ffd58a}.pa-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:8px 0}
@@ -838,7 +838,7 @@ body{
   margin-top:4px;
 }
 
-/* ===== NAPRAWNIK v5.18 — CAŁKOWITY REDESIGN HOME WORKSHOP UI (3D CYBER-WORKSHOP) ===== */
+/* ===== NAPRAWNIK v5.49 — CAŁKOWITY REDESIGN HOME WORKSHOP UI (3D CYBER-WORKSHOP) ===== */
 :root{
   --nap-grad-purple-orange:linear-gradient(96deg,rgba(62,16,118,.96) 0%,rgba(142,34,158,.92) 48%,rgba(248,118,12,.96) 100%);
   --nap-grad-cta:linear-gradient(92deg,#6b21a8 0%,#b832c8 44%,#ff7a00 84%,#ffd43b 100%);
@@ -1479,7 +1479,7 @@ body:before{
 </head>
 <body>
 <div class="frame">
-  <div class="topbar"><span>⚙️ NAPRAWNIK v5.18 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b></span><span id="clock"></span></div>
+  <div class="topbar"><span>⚙️ NAPRAWNIK v5.49 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b></span><span id="clock"></span></div>
   <div id="topUpdateBar" class="top-update-bar">
     <button id="btnAppUpdate" class="btn-update normal" type="button" onclick="handleAppUpdateClick()" title="Sprawdź lub zainstaluj aktualizację">
       <span id="updateBtnIcon" class="update-icon">🔄</span>
@@ -5085,7 +5085,7 @@ function renderClients(){
   screen.querySelectorAll('.cl-hit').forEach(el=>el.addEventListener('click', ()=>{ clientFilter = el.dataset.key; renderClients(); }));
 }
 
-const APP_VERSION = 'NAPRAWNIK v5.18';
+const APP_VERSION = 'NAPRAWNIK v5.49';
 function sendReport(kind){
   const ta = $('#' + kind + 'Text');
   const txt = ta.value.trim();
@@ -8292,7 +8292,7 @@ function zoomPhoto(dataUrl){
 
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
-const CURRENT_APP_VERSION = "5.29.0";
+const CURRENT_APP_VERSION = "5.49";
 const CURRENT_APP_BUILD = 1730572000000;
 let isAppUpdateAvailable = false;
 let initialAppETag = null;

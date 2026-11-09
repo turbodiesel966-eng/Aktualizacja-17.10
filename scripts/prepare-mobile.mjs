@@ -53,6 +53,43 @@ const requiredFiles = await getRequiredWebFiles();
 const sharedAssets = await getSharedAssets();
 const blockedTerms = await getBlockedOtaTerms();
 
+// ============================================================================
+// 1. AUTOMATYCZNA SYNCHRONIZACJA WERSJI (Jedno źródło prawdy z manifestu)
+// ============================================================================
+const appVersion = String(manifest.appVersion || "5.49").trim();
+const expectedCacheName = manifest.cacheName || `naprawnik-v${appVersion.replace(/\./g, "-")}`;
+
+// A) Synchronizacja version.json
+const versionJsonPath = path.join(root, "version.json");
+try {
+  const vRaw = await readFile(versionJsonPath, "utf8");
+  const vData = JSON.parse(vRaw);
+  if (vData.version !== appVersion) {
+    vData.version = appVersion;
+    await writeFile(versionJsonPath, JSON.stringify(vData, null, 2) + "\n", "utf8");
+  }
+} catch (_) {
+  await writeFile(versionJsonPath, JSON.stringify({ version: appVersion }, null, 2) + "\n", "utf8");
+}
+
+// B) Synchronizacja sw.js
+const rootSwPath = path.join(root, "sw.js");
+let rootSwContent = await readFile(rootSwPath, "utf8");
+const updatedRootSw = rootSwContent.replace(/^const CACHE='naprawnik-v[\d-]+';$/m, `const CACHE='${expectedCacheName}';`);
+if (updatedRootSw !== rootSwContent) {
+  await writeFile(rootSwPath, updatedRootSw, "utf8");
+}
+
+// C) Synchronizacja źródłowego index.html (zmienna JS + nagłówek)
+const rootIndexPath = path.join(root, "index.html");
+let rootIndexContent = await readFile(rootIndexPath, "utf8");
+const updatedRootIndex = rootIndexContent
+  .replace(/(CURRENT_APP_VERSION\s*=\s*['"])[^'"]+(['"])/g, `$1${appVersion}$2`)
+  .replace(/(NAPRAWNIK\s+v)\d+\.\d+(?:\.\d+)?/gi, `$1${appVersion}`);
+if (updatedRootIndex !== rootIndexContent) {
+  await writeFile(rootIndexPath, updatedRootIndex, "utf8");
+}
+
 // Verify critical assets defined in shared manifest like "neon-tiles-art.jpg" are tracked
 if (!sharedAssets.includes("neon-tiles-art.jpg")) {
   throw new Error("Shared manifest is missing required assets: neon-tiles-art.jpg");
@@ -82,16 +119,36 @@ if (!mobileHtml.includes("window.__naprawnikView")) {
   );
 }
 
+// Helper do bezpiecznego wycinania całych funkcji z kodu JS po klamrach { }
+function removeJsFunction(source, signature) {
+  const startIdx = source.indexOf(signature);
+  if (startIdx === -1) return source;
+  let depth = 0;
+  let endIdx = -1;
+  for (let i = startIdx; i < source.length; i++) {
+    if (source[i] === "{") depth++;
+    else if (source[i] === "}") {
+      depth--;
+      if (depth === 0) {
+        endIdx = i + 1;
+        break;
+      }
+    }
+  }
+  return endIdx !== -1 ? source.slice(0, startIdx) + source.slice(endIdx) : source;
+}
+
 // Sanitize mobile HTML to guarantee complete isolation from production Web PWA:
-// 1. Remove syncApkWithWebNow() function and all calls
-// 2. Remove any text suggesting automatic sync/updates of APK from Web
+// 1. Replace renderAndroidApkCard() with native offline status card
+// 2. Remove syncApkWithWebNow() function and all calls
+// 3. Remove web updater (checkForAppUpdates, handleAppUpdateClick, timers) from APK
 const apkCardStart = mobileHtml.indexOf("function renderAndroidApkCard");
 if (apkCardStart !== -1) {
   let depth = 0;
   let endIdx = -1;
   for (let i = apkCardStart; i < mobileHtml.length; i++) {
-    if (mobileHtml[i] === '{') depth++;
-    else if (mobileHtml[i] === '}') {
+    if (mobileHtml[i] === "{") depth++;
+    else if (mobileHtml[i] === "}") {
       depth--;
       if (depth === 0) {
         endIdx = i + 1;
@@ -111,27 +168,22 @@ if (apkCardStart !== -1) {
   }
 }
 
-const syncFuncStart = mobileHtml.indexOf("async function syncApkWithWebNow");
-if (syncFuncStart !== -1) {
-  let depth = 0;
-  let endIdx = -1;
-  for (let i = syncFuncStart; i < mobileHtml.length; i++) {
-    if (mobileHtml[i] === '{') depth++;
-    else if (mobileHtml[i] === '}') {
-      depth--;
-      if (depth === 0) {
-        endIdx = i + 1;
-        break;
-      }
-    }
-  }
-  if (endIdx !== -1) {
-    mobileHtml = mobileHtml.slice(0, syncFuncStart) + mobileHtml.slice(endIdx);
-  }
-}
+// Wycinanie funkcji synchronizacji i webowego updatera z APK
+mobileHtml = removeJsFunction(mobileHtml, "async function syncApkWithWebNow");
+mobileHtml = removeJsFunction(mobileHtml, "function syncApkWithWebNow");
+mobileHtml = removeJsFunction(mobileHtml, "async function checkForAppUpdates");
+mobileHtml = removeJsFunction(mobileHtml, "function checkForAppUpdates");
+mobileHtml = removeJsFunction(mobileHtml, "async function handleAppUpdateClick");
+mobileHtml = removeJsFunction(mobileHtml, "function handleAppUpdateClick");
 
-mobileHtml = mobileHtml.replace(/syncApkWithWebNow\(\)/g, "/* offline */");
-mobileHtml = mobileHtml.replace(/onclick="syncApkWithWebNow\(\)"/g, 'style="display:none"');
+// Zastąpienie pustymi zaślepkami (no-op) i wycięcie timerów co 25s
+mobileHtml = mobileHtml
+  .replace(/syncApkWithWebNow\(\)/g, "/* offline */")
+  .replace(/onclick="syncApkWithWebNow\(\)"/g, 'style="display:none"')
+  .replace(/setInterval\([^)]*checkForAppUpdates[^)]*\);?/g, "/* APK: updater timer disabled */")
+  .replace(/setTimeout\([^)]*checkForAppUpdates[^)]*\);?/g, "/* APK: updater timeout disabled */")
+  .replace(/checkForAppUpdates\([^)]*\);?/g, "/* APK: updater call disabled */")
+  .replace(/onclick="handleAppUpdateClick\([^)]*\)"/g, 'style="display:none"');
 
 const closingBody = "</body>";
 const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
@@ -140,6 +192,7 @@ if (closingBodyIndex < 0) {
 }
 if (!mobileHtml.includes("./native-bridge.js")) {
   mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
+    "  <script>function checkForAppUpdates(){} function handleAppUpdateClick(){}</script>\n" +
     '  <script src="./native-bridge.js"></script>\n' +
     mobileHtml.slice(closingBodyIndex);
 }
@@ -150,7 +203,7 @@ await writeFile(mobileIndexPath, mobileHtml, "utf8");
 // pre-packaged assets in www, ensuring 100% reliable offline operation with zero remote OTA fetching.
 const mobileSwPath = path.join(webDir, "sw.js");
 let mobileSw = await readFile(mobileSwPath, "utf8");
-const sourceCacheMatch = mobileSw.match(/^const CACHE='(naprawnik-v5-\d+)';$/m);
+const sourceCacheMatch = mobileSw.match(/^const CACHE='(naprawnik-v[\d-]+)';$/m);
 if (!sourceCacheMatch || mobileSw.match(/^const CACHE=/gm)?.length !== 1) {
   throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
 }
@@ -210,10 +263,11 @@ const rawBridge = await readFile(path.join(root, "scripts", "native-bridge.js"),
 const iifeBridge = "(function(){\nconst Capacitor = window.Capacitor || { isNativePlatform: () => false, Plugins: {} };\nconst { App, Browser, Filesystem, Share, StatusBar } = Capacitor.Plugins || {};\nconst Directory = { Cache: \"CACHE\" };\nconst Style = { Light: \"LIGHT\" };\n" + rawBridge.replace(/^import\s+.*$/gm, "") + "\n})();\n";
 await writeFile(path.join(webDir, "native-bridge.js"), iifeBridge, "utf8");
 
-// Strict Zero OTA isolation audit
-for (const term of blockedTerms) {
+// Strict Zero OTA & Web Updater isolation audit
+const allBlockedInApk = [...blockedTerms, "version.json?_chk="];
+for (const term of allBlockedInApk) {
   if (mobileHtml.includes(term)) {
-    throw new Error(`Sanitization failed: mobile HTML still contains OTA synchronization marker: ${term}`);
+    throw new Error(`Sanitization failed: mobile HTML still contains OTA/Updater marker: ${term}`);
   }
   if (nativeSwContent.includes(term)) {
     throw new Error(`Sanitization failed: mobile service worker contains OTA marker: ${term}`);
@@ -223,4 +277,4 @@ for (const term of blockedTerms) {
   }
 }
 
-console.log("NAPRAWNIK Android web assets, branded native icon/splash, native bridge and isolated offline precache prepared.");
+console.log(`NAPRAWNIK v${appVersion} (${nativeCacheName}): Android web assets, synced versions, native bridge and isolated offline precache prepared.`);
