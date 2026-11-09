@@ -1475,6 +1475,27 @@ body:before{
   border-color:#ff991f;
   box-shadow:0 0 14px rgba(255,153,31,.38);
 }
+
+/* NAPRAWNIK WEB — czytelność typografii i źródeł (2026-11-09) */
+:root{--np-link:#67e8f9;--np-link-hover:#ffd166}
+body,body *{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a:not(.btn):not(.support-cta):not(.pa-photo-link){
+ color:var(--np-link);text-decoration:underline;
+ text-decoration-color:rgba(103,232,249,.62);
+ text-decoration-thickness:1px;text-underline-offset:3px;
+ overflow-wrap:anywhere;font-weight:600
+}
+a:not(.btn):not(.support-cta):not(.pa-photo-link):visited{
+ color:#c4b5fd;text-decoration-color:rgba(196,181,253,.62)
+}
+a:not(.btn):not(.support-cta):not(.pa-photo-link):hover,
+a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
+ color:var(--np-link-hover);text-decoration-color:currentColor;outline-offset:3px
+}
+a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
+ outline:2px solid var(--np-link-hover);border-radius:3px
+}
+
 </style>
 </head>
 <body>
