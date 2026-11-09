@@ -76,6 +76,7 @@ if (closingBodyIndex < 0) {
 }
 mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
   '  <script src="./affiliate/catalog.js"></script>\n' +
+  '  <script src="./affiliate/market-ui.js"></script>\n' +
   '  <script src="./native-bridge.js"></script>\n' +
   mobileHtml.slice(closingBodyIndex);
 await writeFile(mobileIndexPath, mobileHtml, "utf8");
