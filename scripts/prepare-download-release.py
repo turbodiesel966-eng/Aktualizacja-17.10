@@ -47,7 +47,7 @@ def add_virustotal_note(html, digest):
             '</div><!-- NAPRAWNIK_VT_NOTE_END -->'
         )
     heading = re.search(
-        r"(?is)<h[1-6]\b[^>]*>.*?Raport\s+VirusTotal.*?</h[1-6]>",
+        r"(?is)<h([1-6])\b[^>]*>(?:(?!</h\1>).)*?Raport\s+VirusTotal.*?</h\1>",
         html,
     )
     if not heading:
