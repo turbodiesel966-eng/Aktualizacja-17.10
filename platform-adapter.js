@@ -98,6 +98,7 @@
       return '<div class="diag-card" style="border-color:#00f57a">' +
         '<h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2>' +
         '<div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem. Wszystkie dane diagnostyczne i moduły są dostępne bez dostępu do sieci.</div>' +
+        '<div class="btn" style="margin-top:8px;border-color:#00f57a;color:#00f57a" onclick="if(window.__naprawnikApkUpdater){window.__naprawnikApkUpdater.openModal(true);}">🔄 Sprawdź / zainstaluj aktualizację APK</div>' +
         '</div>';
     }
     return '<div class="diag-card" style="border-color:#00f57a">' +

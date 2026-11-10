@@ -49,11 +49,32 @@ jobs:
       - name: Bundle native Android bridge
         run: npm run mobile:bundle-native
 
+      - name: Configure persistent Android signing keystore (if secret present)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/naprawnik-signing.jks"
+            echo "NAPRAWNIK_KEYSTORE_PATH=$RUNNER_TEMP/naprawnik-signing.jks" >> "$GITHUB_ENV"
+            echo "NAPRAWNIK_KEYSTORE_PASS=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "NAPRAWNIK_KEYSTORE_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "NAPRAWNIK_KEYSTORE_KEY_PASS=${ANDROID_KEY_PASSWORD:-$ANDROID_KEYSTORE_PASSWORD}" >> "$GITHUB_ENV"
+            echo "Configured persistent Android signing keystore."
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 secret is not configured; falling back to runner debug keystore. In-place APK auto-updates across different runners require a persistent keystore secret."
+          fi
+
       - name: Generate Android project
         run: npx cap add android
 
       - name: Generate branded launcher and splash
         run: npx @capacitor/assets generate --android
+
+      - name: Configure native ApkUpdater plugin and monotonic versionCode
+        run: node scripts/configure-android-project.mjs
 
       - name: Sync Capacitor Android
         run: npx cap sync android
@@ -65,7 +86,7 @@ jobs:
       - name: Verify APK contents
         run: python3 scripts/verify-apk.py android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Prepare existing download page with the new APK and checksum
+      - name: Prepare existing download page with the new APK, version metadata and checksum
         run: python3 scripts/prepare-download-release.py --apk android/app/build/outputs/apk/debug/app-debug.apk --output site
 
       - name: Check required Cloudflare credential
@@ -83,6 +104,16 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: "57d36ef5874a9d0df63d78eee95e74e3"
           command: pages deploy site --project-name=naprawnik-download --branch=main
+
+      - name: Verify live apk-version.json and APK endpoint
+        run: |
+          sleep 3
+          LOCAL_SHA=$(node -e "const fs=require('fs');process.stdout.write(JSON.parse(fs.readFileSync('site/apk-version.json','utf8')).sha256);")
+          REMOTE_SHA=$(curl --fail --silent --show-error --retry 5 --retry-delay 3 "https://naprawnik-download.pages.dev/apk-version.json?_ts=$(date +%s)" | node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync(0,'utf8'));process.stdout.write(d.sha256||'');")
+          echo "Local SHA256:  $LOCAL_SHA"
+          echo "Remote SHA256: $REMOTE_SHA"
+          test -n "$LOCAL_SHA" && test "$LOCAL_SHA" = "$REMOTE_SHA"
+          curl --fail --head --silent --show-error --retry 4 --retry-delay 2 "https://naprawnik-download.pages.dev/app-debug.apk" >/dev/null
 
       - name: Upload APK release artifact
         uses: actions/upload-artifact@v4

@@ -2827,12 +2827,96 @@
       .replace(/'/g, "&#39;");
   }
 
+  const RELIABILITY_META = {
+    A: { code: "A", badge: "🟢 A · OEM / Producent", label: "A — potwierdzone źródłem producenta" },
+    B: { code: "B", badge: "🔵 B · Techniczne", label: "B — wiarygodne źródło techniczne" },
+    C: { code: "C", badge: "🟡 C · Do weryfikacji", label: "C — informacja wymagająca dodatkowej weryfikacji" },
+    U: { code: "U", badge: "🔴 U · Niepotwierdzone", label: "U — niepotwierdzone" }
+  };
+
+  function classifyReliability(record) {
+    if (record && record.reliability && RELIABILITY_META[record.reliability]) {
+      return RELIABILITY_META[record.reliability];
+    }
+    const status = String(record && record["Status weryfikacji"] || "");
+    const low = status.toLowerCase();
+    if (/niepotwierdzon|nie stosowa[cć]|z innego modelu|nie jest samodzieln/i.test(low)) {
+      return RELIABILITY_META.U;
+    }
+    if (/sprawdzi[cć]\s*(rocznik|wariant|zgodno)|wymaga\s*(ponownej|sprawdzenia)|wtórn|podręcznika/i.test(low)) {
+      return RELIABILITY_META.C;
+    }
+    if (/oem|service manual|reprom|shop manual|factory|potwierdzone.*(oem|instrukcj|dokumentacj)|fabryczn/i.test(low)) {
+      return RELIABILITY_META.A;
+    }
+    if (/dokumentacja|instrukcja|manual|specyfikacja|standard|zweryfikowane|pomiary warsztatowe/i.test(low)) {
+      return RELIABILITY_META.B;
+    }
+    return RELIABILITY_META.C;
+  }
+
+  records.forEach(function (record, idx) {
+    const rel = classifyReliability(record);
+    if (!record.id) {
+      const slug = normalize((record["Rodzina"] || "") + "-" + (record["Model / kod silnika"] || "") + "-" + (record["Parametr"] || ""))
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 48);
+      record.id = "kat_" + (idx + 1) + "_" + (slug || "rec");
+    }
+    record.reliability = rel.code;
+    record.reliabilityLabel = rel.label;
+  });
+
+  function matchVehicle(vehicle) {
+    if (!vehicle || typeof vehicle !== "object") return [];
+    const make = normalize(vehicle.brand || vehicle.vehicleMake || "");
+    const model = normalize(vehicle.model || vehicle.vehicleModel || "");
+    const engine = normalize(vehicle.engine || vehicle.engineCc || "");
+    const year = normalize(vehicle.year || "");
+    if (!make && !model && !engine) return [];
+
+    const tokens = (model + " " + engine)
+      .split(/[^a-z0-9]+/)
+      .filter(function (t) { return t.length >= 2 && !["cm3", "cm", "cc", "2t", "4t"].includes(t); });
+
+    const scored = [];
+    for (let i = 0; i < records.length; i++) {
+      const r = records[i];
+      const rMake = normalize(r["Rodzina"]);
+      const rModel = normalize(r["Model / kod silnika"]);
+      const rCond = normalize(r["Warunki pomiaru / zastosowania"]);
+      const rNotes = normalize(r["Uwagi / ograniczenia"]);
+      const hay = rMake + " " + rModel + " " + rCond + " " + rNotes;
+
+      let score = 0;
+      if (make && (rMake.includes(make) || make.includes(rMake))) score += 10;
+      if (model && (rModel.includes(model) || model.includes(rModel))) score += 18;
+      for (let t = 0; t < tokens.length; t++) {
+        if (hay.includes(tokens[t])) score += 6;
+      }
+      if (year && rModel.includes(year)) score += 3;
+      if (r.reliability === "A") score += 4;
+      else if (r.reliability === "B") score += 2;
+      else if (r.reliability === "U") score -= 4;
+
+      if (score >= 10) {
+        scored.push({ record: r, score: score });
+      }
+    }
+    scored.sort(function (a, b) { return b.score - a.score; });
+    return scored.map(function (s) { return s.record; });
+  }
+
   global.NAPRAWNIK_KATALOG = Object.freeze({
-    version: "1.0",
+    version: "1.1",
     records: records,
     search: search,
     normalize: normalize,
     getFacets: getFacets,
-    escapeHtml: escapeHtml
+    escapeHtml: escapeHtml,
+    RELIABILITY_META: RELIABILITY_META,
+    classifyReliability: classifyReliability,
+    matchVehicle: matchVehicle
   });
 })(window);

@@ -535,3 +535,97 @@ test('NAPRAWNIK — Moduł Motocykli 3–4 Cylindry (400–650 cm³): Katalog, 6
   api.zoomSchematic(25);
   assert.ok(fakeContainer.innerHTML.includes('125%'));
 });
+
+test('NAPRAWNIK MASTER — Zintegrowany system warsztatowy: diagnostyka różnicowa, trendy Lab, kontrola jakości, magazyn i powiązania', () => {
+  const vm = require('node:vm');
+  const html = read('index.html');
+  const ktSrc = read('katalog-techniczny.js');
+  const multiDataSrc = read('motocykle-multi-data.js');
+
+  const fakeScreen = { innerHTML: '', scrollTop: 0, querySelector: () => null, querySelectorAll: () => [] };
+  const fakeWindow = {
+    navigator: { serviceWorker: { register: () => Promise.resolve({ addEventListener(){} }) } },
+    document: {
+      getElementById: (id) => id === 'screen' ? fakeScreen : { innerHTML: '', textContent: '', value: '', classList: { add(){}, remove(){}, toggle(){} }, style: {} },
+      querySelector: (sel) => sel === '#screen' ? fakeScreen : { classList: { add(){}, remove(){}, toggle(){} }, dataset: { nav: 'home' } },
+      querySelectorAll: () => [],
+      createElement: () => ({ appendChild(){}, removeChild(){}, style: {}, setAttribute(){} }),
+      body: { appendChild(){}, removeChild(){} },
+      addEventListener: () => {}
+    },
+    location: { protocol: 'https:', href: 'https://example.test/', search: '' },
+    localStorage: { _d: {}, getItem(k){ return this._d[k] || null; }, setItem(k,v){ this._d[k] = String(v); }, removeItem(k){ delete this._d[k]; } },
+    addEventListener: () => {},
+    scrollTo: () => {},
+    setTimeout: () => {},
+    setInterval: () => {},
+    alert: () => {},
+    console
+  };
+  fakeWindow.window = fakeWindow;
+  fakeWindow.globalThis = fakeWindow;
+  const ctx = vm.createContext(fakeWindow);
+  const mainScript = html.match(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/i)[1];
+  vm.runInContext(mainScript, ctx);
+  vm.runInContext(ktSrc, ctx);
+  vm.runInContext(multiDataSrc, ctx);
+
+  // 1. Klasyfikacja jakości A/B/C/U i matchVehicle w katalog-techniczny.js
+  assert.ok(ctx.NAPRAWNIK_KATALOG.records.every(r => ['A','B','C','U'].includes(r.reliability)), 'Każdy rekord katalogu musi mieć klasyfikację A/B/C/U');
+  const aeroxMatches = ctx.NAPRAWNIK_KATALOG.matchVehicle({ brand: 'Yamaha', model: 'Aerox 50', engine: '50 cm3 2T' });
+  assert.ok(aeroxMatches.length >= 3, 'matchVehicle musi dopasować rekordy OEM dla Yamaha Aerox 50');
+
+  // 2. matchModels i verify w motocykle-multi-data.js
+  assert.strictEqual(ctx.NAPRAWNIK_MULTICYL_DATA.validate().length, 0);
+  const atvMatch = ctx.NAPRAWNIK_MULTICYL_DATA.matchModels({ brand: 'Polaris', model: 'Sportsman 570' });
+  assert.ok(atvMatch.some(m => m.id === 'pol_sportsman570'), 'matchModels musi dopasować quad Polaris Sportsman 570');
+  assert.ok(ctx.NAPRAWNIK_MULTICYL_DATA.FAULTS.f_atv_cvu_belt_burn.verify.includes('Po naprawie'), 'Usterki muszą mieć procedurę kontroli po naprawie');
+
+  // 3. Diagnostyka różnicowa: podział na potwierdzone / hipotezy / wykluczone
+  const diffProfiles = vm.runInContext('DIFFERENTIAL_DIAG_PROFILES', ctx);
+  ctx.setDiffTestStatus('t_spark_gap', 'ok');
+  ctx.setDiffTestStatus('t_pickup', 'bad');
+  const diffRes = ctx.evaluateDifferentialState(diffProfiles.brak_iskry);
+  assert.ok(diffRes.confirmed.some(h => h.id === 'hyp_pickup'), 'Zły pomiar impulsatora musi potwierdzać hyp_pickup');
+  assert.ok(diffRes.excluded.some(h => h.id === 'hyp_plug_cap'), 'Poprawna próba iskry musi wykluczyć hyp_plug_cap');
+
+  // 4. Elektroniczne Laboratorium: analiza wielu pomiarów, usterki termiczne oraz trendy Przed/Po
+  const diagLabEval = ctx.analyzeLabHistory([
+    { presetId: 'impulsator', label: 'Impulsator', measuredValue: 165, unit: 'Ω', refMin: 100, refMax: 250, phase: 'before', tempCondition: 'cold' },
+    { presetId: 'impulsator', label: 'Impulsator', measuredValue: 990, unit: 'Ω', refMin: 100, refMax: 250, phase: 'before', tempCondition: 'warm' }
+  ]);
+  assert.strictEqual(diagLabEval.thermalAlerts.length, 1, 'Analiza Lab musi wykryć usterkę termiczną (Zimny OK -> Gorący poza normą)');
+  assert.ok(diagLabEval.nextRecommendation && diagLabEval.nextRecommendation.preset.id === 'stator_zasilanie', 'Lab musi wskazać następny zalecany pomiar');
+
+  const postRepairEval = ctx.analyzeLabHistory([
+    { presetId: 'impulsator', label: 'Impulsator', measuredValue: 165, unit: 'Ω', refMin: 100, refMax: 250, phase: 'before', tempCondition: 'cold' },
+    { presetId: 'impulsator', label: 'Impulsator', measuredValue: 990, unit: 'Ω', refMin: 100, refMax: 250, phase: 'before', tempCondition: 'warm' },
+    { presetId: 'impulsator', label: 'Impulsator', measuredValue: 168, unit: 'Ω', refMin: 100, refMax: 250, phase: 'after', tempCondition: 'warm' }
+  ]);
+  assert.strictEqual(postRepairEval.comparisons.length, 1, 'Analiza Lab musi porównać pomiary Przed i Po naprawie');
+  assert.strictEqual(postRepairEval.comparisons[0].improved, true, 'Po naprawie pomiar powinien wrócić do normy');
+  assert.strictEqual(postRepairEval.thermalAlerts.length, 0, 'Po naprawionym pomiarze alert termiczny powinien wygasnąć');
+
+  // 5. Kontrola Jakości Napraw dla 8 typów
+  const qualTypes = vm.runInContext('QUALITY_CHECKLISTS_BY_TYPE', ctx);
+  for (const qt of ['sprzeglo','hamulce','zawieszenie','silnik','elektryka','paliwo','chlodzenie','przeglad']) {
+    assert.ok(qualTypes[qt] && qualTypes[qt].steps.length >= 4, `Brak pełnej procedury kontroli jakości dla ${qt}`);
+  }
+
+  // 6. Zlecenia + Magazyn + Dodatkowe usterki (zaakceptowane vs odrzucone)
+  const sampleOrder = {
+    id: 'ord_test_1', status: 'w_trakcie', laborCost: 100, laborInternalCost: 40,
+    partsList: [{ name: 'Pasek CVT', inventoryId: 'inv_1', qty: 2, costPrice: 50, unitPrice: 90, total: 180, totalCost: 100 }],
+    extraFindings: [
+      { id: 'ef1', desc: 'Króciec', estPrice: 80, estInternal: 40, consent: 'accepted' },
+      { id: 'ef2', desc: 'Opona', estPrice: 300, estInternal: 200, consent: 'rejected' }
+    ]
+  };
+  const ctxOrders = vm.runInContext('orders', ctx);
+  ctxOrders.push(sampleOrder);
+  ctx.recalculateOrderTotal(sampleOrder);
+  assert.strictEqual(sampleOrder.totalCost, 360, 'Akceptowana usterka dodatkowa (+80) + części (180) + robocizna (100) = 360 zł; odrzucona nie wlicza się do rachunku');
+  assert.strictEqual(sampleOrder.grossProfit, 180, 'Zysk czysty powinien uwzględniać hurtowe koszty części, zaakceptowanych dodatków i robocizny');
+  const resMap = ctx.getInventoryReservations();
+  assert.strictEqual(resMap['inv_1'], 2, 'Otwarte zlecenie musi rezerwować 2 szt. w magazynie');
+});

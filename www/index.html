@@ -1521,8 +1521,95 @@ const $ = s => document.querySelector(s);
 const screen = $('#screen');
 $('#clock').textContent = new Date().toLocaleDateString('pl-PL');
 
-const NAPRAWNIK_STORAGE_KEYS=['naprawnik_workshop','naprawnik_notes','naprawnik_log','naprawnik_shop','naprawnik_reminders','naprawnik_checklist_done','naprawnik_vehicles','naprawnik_repairs','naprawnik_orders','naprawnik_measurements','naprawnik_pin'];
+const NAPRAWNIK_STORAGE_KEYS=['naprawnik_workshop','naprawnik_notes','naprawnik_log','naprawnik_shop','naprawnik_reminders','naprawnik_checklist_done','naprawnik_vehicles','naprawnik_repairs','naprawnik_orders','naprawnik_measurements','naprawnik_pin','naprawnik_inventory','naprawnik_quality_logs'];
 function load(key){ try{ const raw=localStorage.getItem(key); return raw===null ? [] : JSON.parse(raw); }catch(e){ console.error('NAPRAWNIK: błąd odczytu danych',key,e); return []; } }
+
+const RELIABILITY_META = {
+  A: { code: 'A', label: 'A — potwierdzone źródłem producenta', badge: '🟢 A · OEM', color: '#00f57a' },
+  B: { code: 'B', label: 'B — wiarygodne źródło techniczne', badge: '🔵 B · Techniczne', color: '#22d3ee' },
+  C: { code: 'C', label: 'C — wymaga dodatkowej weryfikacji', badge: '🟡 C · Weryfikacja', color: '#ffe066' },
+  U: { code: 'U', label: 'U — niepotwierdzone', badge: '🔴 U · Niepotwierdzone', color: '#ff6b6b' }
+};
+function renderReliabilityBadge(code){
+  const m = RELIABILITY_META[code] || RELIABILITY_META.C;
+  return `<span title="${m.label}" style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;border:1px solid ${m.color};color:${m.color}">${m.badge}</span>`;
+}
+
+let activeVehicleContextId = null;
+let activeOrderContextId = null;
+let inventoryItems = load('naprawnik_inventory');
+let qualityLogs = load('naprawnik_quality_logs');
+if (!Array.isArray(inventoryItems)) inventoryItems = [];
+if (!Array.isArray(qualityLogs)) qualityLogs = [];
+
+function getActiveVehicle(){
+  return (typeof vehicles !== 'undefined' && Array.isArray(vehicles) && activeVehicleContextId) ? vehicles.find(v => v.id === activeVehicleContextId) || null : null;
+}
+function getActiveOrder(){
+  if (typeof orders === 'undefined' || !Array.isArray(orders)) return null;
+  if (activeOrderContextId) {
+    const found = orders.find(o => o.id === activeOrderContextId);
+    if (found) return found;
+  }
+  if (activeVehicleContextId) {
+    return orders.find(o => o.vehicleId === activeVehicleContextId && o.status !== 'wydane') || null;
+  }
+  return null;
+}
+function setActiveContext(vehicleId, orderId, currentView, currentArg){
+  activeVehicleContextId = vehicleId || null;
+  activeOrderContextId = orderId || null;
+  if (currentView && typeof nav === 'function') nav(currentView, currentArg || null);
+}
+function getInventoryReservations(){
+  const map = {};
+  if (typeof orders === 'undefined' || !Array.isArray(orders)) return map;
+  orders.forEach(o => {
+    if (!o || o.status === 'wydane' || o.inventoryDeducted) return;
+    (o.partsList || []).forEach(p => {
+      if (p && p.inventoryId) {
+        map[p.inventoryId] = (map[p.inventoryId] || 0) + (Number(p.qty) || 0);
+      }
+    });
+  });
+  return map;
+}
+function renderActiveContextBanner(viewName, viewArg){
+  if (typeof vehicles === 'undefined' || !Array.isArray(vehicles)) return '';
+  const v = getActiveVehicle();
+  const o = getActiveOrder();
+  const measCount = v && typeof measurements !== 'undefined' && Array.isArray(measurements) ? measurements.filter(m => m.vehicleId === v.id).length : 0;
+  const oemMatches = (v && typeof window !== 'undefined' && window.NAPRAWNIK_KATALOG && typeof window.NAPRAWNIK_KATALOG.matchVehicle === 'function')
+    ? window.NAPRAWNIK_KATALOG.matchVehicle(v).length : 0;
+  const diagCount = v && Array.isArray(v.diagLog) ? v.diagLog.length : 0;
+  const qCount = v && Array.isArray(qualityLogs) ? qualityLogs.filter(q => q.vehicleId === v.id).length : 0;
+  return `<div class="card no-print" style="border-color:var(--cyan);background:rgba(34,211,238,0.06);padding:10px 12px;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="font-size:12px;font-weight:700;color:var(--cyan)">🔗 Kontekst Warsztatowy</div>
+      <select aria-label="Aktywny pojazd kontekstu" onchange="setActiveContext(this.value, '', '${escapeHtml(viewName||'')}', '${escapeHtml(viewArg||'')}')" style="max-width:260px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:11px;margin:0">
+        <option value="">— Praca ogólna (bez wybranego pojazdu) —</option>
+        ${vehicles.map(x => `<option value="${x.id}" ${v && v.id === x.id ? 'selected' : ''}>${escapeHtml(x.brand||'')} ${escapeHtml(x.model||'')} ${x.vin ? '('+escapeHtml(x.vin)+')' : ''}</option>`).join('')}
+      </select>
+    </div>
+    ${v ? `<div style="margin-top:6px;font-size:11px;color:var(--text);line-height:1.45">
+      <b>${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'')}</b> ${v.engine ? '· ' + escapeHtml(v.engine) : ''} ${v.mileage ? '· ' + escapeHtml(v.mileage) + ' km' : ''}
+      ${o ? ` · <span style="color:var(--hero);cursor:pointer;text-decoration:underline" onclick="renderOrderDetail('${o.id}')">Zlecenie ${escapeHtml(o.number||'')}</span>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:10px;color:var(--dim)">
+        <span>🩺 Diagnoz: <b>${diagCount}</b></span>
+        <span>⚡ Pomiarów: <b>${measCount}</b></span>
+        <span>📘 Wpisów OEM: <b>${oemMatches}</b></span>
+        <span>✅ Kontroli jakości: <b>${qCount}</b></span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="selectedVehicleId='${v.id}';nav('vehicleDetail')">📂 Karta pojazdu</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="nav('diag')">🩺 Diagnoza</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="nav('lab','${v.id}')">⚡ Lab pomiarowe</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="nav('parts')">🔩 Części</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="nav('checklist')">✅ Kontrola jakości</button>
+      </div>
+    </div>` : `<div style="font-size:11px;color:var(--dim);margin-top:4px">Wybierz pojazd z Kartoteki, aby pomiary, diagnozy, części i zlecenia zapisywały się w jednej spójnej historii.</div>`}
+  </div>`;
+}
 
 // Zero-cost client-side database storage via IndexedDB for photos and large datasets
 const IDB_NAME = 'naprawnik_db';
@@ -2483,33 +2570,60 @@ Object.assign(diagFlows, {
   ]}
 });
 
+function saveFlowResultToContext(resultTitle, detailText){
+  const v = getActiveVehicle();
+  const o = getActiveOrder();
+  if (!v && !o) {
+    alert('Wybierz aktywny pojazd w pasku Kontekstu u góry ekranu (lub otwórz kartę pojazdu), aby zapisać diagnozę w jego historii.');
+    return;
+  }
+  const stamp = new Date().toLocaleString('pl-PL');
+  if (v) {
+    if (!Array.isArray(v.diagLog)) v.diagLog = [];
+    v.diagLog.push({ id: 'dlg_' + uid(), date: stamp, symptom: 'Ścieżka TAK/NIE: ' + (diagFlows[diagFlowId]?.title || ''), status: 'confirmed', conclusion: resultTitle, detail: detailText, source: 'Diagnostyka krok po kroku TAK/NIE' });
+    save('naprawnik_vehicles', vehicles);
+  }
+  if (o) {
+    o.diagnosis = (o.diagnosis ? o.diagnosis + '\n' : '') + '[' + stamp + '] ' + resultTitle + ': ' + detailText;
+    save('naprawnik_orders', orders);
+  }
+  alert('✅ Zapisano wynik diagnozy w historii ' + (v ? 'pojazdu ' + (v.brand||'') + ' ' + (v.model||'') : '') + (o ? ' i zlecenia ' + o.number : '') + '.');
+}
+
 function renderDiagFlow(){
   const f = diagFlows[diagFlowId];
   const st = currentDiagStep();
+  const ctxBar = renderActiveContextBanner('diagFlow');
   if(!f || !st){
-    screen.innerHTML = back() + `<div class="card"><h2>Diagnostyka krok po kroku</h2>
-      <small style="color:var(--dim)">Odpowiadasz TAK/NIE na kolejne pytania — system prowadzi Cię do prawdopodobnej przyczyny.</small><br><br>
+    screen.innerHTML = back() + ctxBar + `<div class="card"><h2>Diagnostyka krok po kroku</h2>
+      <small style="color:var(--dim)">Odpowiadasz TAK/NIE na kolejne pytania — system prowadzi Cię do prawdopodobnej przyczyny i kolejnych testów.</small><br><br>
       ${Object.entries(diagFlows).map(([id,x])=>`<div class="btn" onclick="startDiagFlow('${id}')">${escapeHtml(x.title)} →</div>`).join('')}
       </div>`;
     return;
   }
   if(diagStepId==='UNSURE'){
-    screen.innerHTML = `<div class="btn back" onclick="resetDiagFlow()">← Wstecz</div>
+    screen.innerHTML = `<div class="btn back" onclick="resetDiagFlow()">← Wstecz</div>` + ctxBar + `
       <div class="card"><h2>Test zakończony bez jednoznacznego wyniku</h2>
-      <div class="entry">Nie udało się dojść do konkretnej przyczyny na podstawie dotychczasowych odpowiedzi. Wróć do pytania i spróbuj dokładniej zmierzyć/sprawdzić, albo skonsultuj się z mechanikiem.</div>
-      </div><div class="btn" onclick="resetDiagFlow()">🔁 Nowa diagnoza</div>`;
+      <div class="entry">Nie udało się dojść do konkretnej przyczyny na podstawie dotychczasowych odpowiedzi. Skorzystaj z Diagnostyki Różnicowej lub wykonaj pomiary w Elektronicznym Laboratorium.</div>
+      </div>
+      <div class="btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="nav('diag')">🧠 Otwórz Diagnostykę Różnicową</div>
+      <div class="btn" onclick="resetDiagFlow()">🔁 Nowa diagnoza</div>`;
     return;
   }
   if(st.result){
-    screen.innerHTML = `<div class="btn back" onclick="resetDiagFlow()">← Wstecz</div>
+    screen.innerHTML = `<div class="btn back" onclick="resetDiagFlow()">← Wstecz</div>` + ctxBar + `
       <div class="card"><h2>Wynik diagnozy</h2>
       <div class="entry" style="color:var(--accent);font-weight:bold;font-size:15px">${escapeHtml(st.result)}</div>
       <div class="entry">${escapeHtml(st.detail)}</div>
-      <small style="color:var(--dim)">Wynik jest wskazówką diagnostyczną, nie potwierdzeniem uszkodzenia części.</small>
-      </div><div class="btn" onclick="resetDiagFlow()">🔁 Nowa diagnoza</div>`;
+      <small style="color:var(--dim)">Wynik jest wskazówką diagnostyczną — potwierdź ją pomiarem w Laboratorium przed wymianą podzespołów.</small>
+      </div>
+      <div class="btn" style="border-color:#00f57a;color:#00f57a" onclick="saveFlowResultToContext('${escapeHtml(st.result).replace(/'/g,"\\'")}', '${escapeHtml(st.detail).replace(/'/g,"\\'")}')">💾 Zapisz wynik w historii pojazdu / zlecenia</div>
+      <div class="btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="nav('lab')">⚡ Potwierdź pomiarem w Laboratorium</div>
+      <div class="btn" onclick="nav('parts')">🔩 Dobierz części dla tej naprawy</div>
+      <div class="btn" onclick="resetDiagFlow()">🔁 Nowa diagnoza</div>`;
     return;
   }
-  screen.innerHTML = `<div class="btn back" onclick="resetDiagFlow()">← Wstecz</div>
+  screen.innerHTML = `<div class="btn back" onclick="resetDiagFlow()">← Wstecz</div>` + ctxBar + `
     <div class="card"><h2>${escapeHtml(f.title)}</h2>
     <div class="entry" style="font-size:14px">${escapeHtml(st.q)}</div>
     ${st.expected?`<small style="color:var(--dim)">Kontrola: ${escapeHtml(st.expected)}</small><br><br>`:''}
@@ -2519,6 +2633,7 @@ function renderDiagFlow(){
     <div class="btn" onclick="endDiagFlowUnsure()">Nie wiem — zakończ test</div>
     </div>`;
 }
+
 
 function jumpToDiagLeaf(path, node){
   let levels = [diagTree]; let current = diagTree;
@@ -4113,13 +4228,418 @@ function callWskSupport(){
   }
 }
 
+const DIFFERENTIAL_DIAG_PROFILES = {
+  brak_iskry: {
+    id: 'brak_iskry',
+    label: 'Brak iskry / silnik nie zapala (układ zapłonowy)',
+    intermittentHint: 'Jeśli iskra znika losowo na wybojach lub po myciu, zacznij od testu styków gaszenia, masy silnika oraz wiązki przy główce ramy.',
+    tests: [
+      { id: 't_spark_gap', label: 'Próba iskry na nowej świecy / testerze WN', labPreset: null },
+      { id: 't_kill_wire', label: 'Odłączenie przewodu gaszenia CDI / weryfikacja stacyjki', labPreset: null },
+      { id: 't_pickup', label: 'Rezystancja impulsatora (Pickup coil)', labPreset: 'impulsator' },
+      { id: 't_exciter', label: 'Rezystancja cewki zasilającej AC-CDI / zasilanie 12V DC-CDI', labPreset: 'stator_zasilanie' },
+      { id: 't_hv_coil', label: 'Oporność cewki WN (pierwotne i wtórne z fajką)', labPreset: 'cewka_wtorna' },
+      { id: 't_ground', label: 'Spadek napięcia na masie silnika podczas rozruchu', labPreset: 'spadek_masy' }
+    ],
+    hypotheses: [
+      {
+        id: 'hyp_plug_cap', cause: 'Przebita świeca lub rezystor w fajce WN / luźny kapturek',
+        reliability: 'A', source: 'Yamaha YQ50 / Peugeot Speedfight / GY6 DTR',
+        confirmTests: ['t_spark_gap', 't_hv_coil'], excludeOnOk: ['t_spark_gap'],
+        thermalRisk: false, intermittentRisk: true,
+        nextTest: 't_hv_coil', repairPartsTag: 'świeca', qualityType: 'elektryka',
+        repair: 'Wymień świecę o poprawnej ciepłocie (z literą R dla CDI), sprawdź fajkę (typowo ~5 kΩ) oraz utnij 5 mm utlenionego końca przewodu WN.',
+        verify: 'Po naprawie: sprawdź niebieską, wyrazistą iskrę na testerze iskry oraz wykonaj kontrolę jakości (Elektryka).'
+      },
+      {
+        id: 'hyp_kill_switch', cause: 'Zwarcie w obwodzie gaszenia (stacyjka / przełącznik STOP / czujnik stopki)',
+        reliability: 'B', source: 'Procedury serwisowe AC/DC-CDI',
+        confirmTests: ['t_kill_wire'], excludeOnOk: ['t_kill_wire'],
+        thermalRisk: false, intermittentRisk: true,
+        nextTest: 't_kill_wire', repairPartsTag: 'stacyjka', qualityType: 'elektryka',
+        repair: 'Wypnij pin gaszenia przy CDI (w AC-CDI zwarcie do masy gasi zapłon!) i sprawdź, czy pojawia się iskra. Oczyść lub wymień wyłącznik/stacyjkę.',
+        verify: 'Po naprawie: sprawdź niezawodne gaszenie stacyjką i brak zaniku iskry przy ruszaniu kierownicą (wiggle test).'
+      },
+      {
+        id: 'hyp_pickup', cause: 'Uszkodzony impulsator (Pickup coil) lub zbyt duża szczelina magnetyczna',
+        reliability: 'A', source: 'DTR Yamaha / Piaggio / GY6',
+        confirmTests: ['t_pickup'], excludeOnOk: ['t_pickup'],
+        thermalRisk: true, intermittentRisk: true,
+        nextTest: 't_pickup', repairPartsTag: 'impulsator', qualityType: 'elektryka',
+        repair: 'Zmierz oporność impulsatora na zimno i po podgrzaniu suszarką. Oczyść wypustek na magnecie z opiłków, ustaw szczelinę wg DTR (zwykle ~0.4–0.8 mm).',
+        verify: 'Po naprawie: pomiar impulsatora na zimno i na gorąco w Elektronicznym Lab przed i po skręceniu pokrywy.'
+      },
+      {
+        id: 'hyp_stator_exciter', cause: 'Przerwa lub zwarcie cewki zasilającej CDI w statorze (lub brak +12V w DC-CDI)',
+        reliability: 'B', source: 'Specyfikacje statorów AC/DC-CDI',
+        confirmTests: ['t_exciter'], excludeOnOk: ['t_exciter'],
+        thermalRisk: true, intermittentRisk: false,
+        nextTest: 't_exciter', repairPartsTag: 'stator', qualityType: 'elektryka',
+        repair: 'Zmierz cewkę source AC-CDI w 20°C (lub zasilanie +12V po stacyjce w układzie DC-CDI) oraz brak przebicia do masy karteru.',
+        verify: 'Po naprawie: sprawdź iskrę na gorącym silniku oraz skontroluj ładowanie po uruchomieniu.'
+      },
+      {
+        id: 'hyp_ground_drop', cause: 'Słaba masa silnika/cewki (korozja, poluzowany przewód masowy)',
+        reliability: 'B', source: 'Normy pomiarowe instalacji 12V',
+        confirmTests: ['t_ground'], excludeOnOk: ['t_ground'],
+        thermalRisk: false, intermittentRisk: true,
+        nextTest: 't_ground', repairPartsTag: 'masa', qualityType: 'elektryka',
+        repair: 'Oczyść do gołego metalu punkty mocowania masy na ramie, karterze i podstawie cewki WN. Zastosuj smar stykowy po skręceniu.',
+        verify: 'Po naprawie: pomiar spadku napięcia między minusem akumulatora a blokiem silnika (< 0.2 V).'
+      }
+    ]
+  },
+  gasnie_cieplo: {
+    id: 'gasnie_cieplo',
+    label: 'Gaśnie po rozgrzaniu / nie odpala na gorąco (usterka termiczna)',
+    intermittentHint: 'Klasyczny przypadek usterki zależnej od temperatury! Kluczowe jest powtórzenie pomiaru w Elektronicznym Lab zarówno na zimno (~20°C), jak i bezpośrednio w momencie zgaśnięcia.',
+    tests: [
+      { id: 't_spark_hot', label: 'Obecność iskry dokładnie w momencie zgaśnięcia na gorąco', labPreset: null },
+      { id: 't_pickup_hot', label: 'Oporność impulsatora / cewki zasilającej NA GORĄCO', labPreset: 'impulsator' },
+      { id: 't_valves_cold', label: 'Kontrola luzów zaworowych (4T — zaciskanie zaworu wydechowego)', labPreset: null },
+      { id: 't_ect_hot', label: 'Oporność czujnika temperatury ECT/NTC (20°C vs 80°C)', labPreset: 'ect_80c' },
+      { id: 't_tank_vent', label: 'Test podciśnienia w zbiorniku (otwarcie korka wlewu przy gaśnięciu)', labPreset: null }
+    ],
+    hypotheses: [
+      {
+        id: 'hyp_hot_pickup', cause: 'Przerwa termiczna uzwojenia impulsatora, cewki CDI lub cewki WN',
+        reliability: 'B', source: 'Typowe usterki zapłonu CDI/TCI',
+        confirmTests: ['t_spark_hot', 't_pickup_hot'], excludeOnOk: ['t_spark_hot', 't_pickup_hot'],
+        thermalRisk: true, intermittentRisk: true,
+        nextTest: 't_pickup_hot', repairPartsTag: 'impulsator', qualityType: 'elektryka',
+        repair: 'Mikropęknięcie drutu nawojowego rozwiera się po nagrzaniu do ~70–90°C. Porównaj oporność w Lab (Zimny vs Rozgrzany) i wymień wadliwy element.',
+        verify: 'Po naprawie: test drogowy lub grzanie postojowe 15 min + kontrolny zapis pomiaru na gorąco w Lab.'
+      },
+      {
+        id: 'hyp_tight_valves', cause: 'Zbyt ciasny luz zaworu wydechowego (4T) — niedomykanie na gorąco',
+        reliability: 'A', source: 'Yamaha / Suzuki / Honda / GY6 4T DTR',
+        confirmTests: ['t_valves_cold'], excludeOnOk: ['t_valves_cold'],
+        thermalRisk: true, intermittentRisk: false,
+        nextTest: 't_valves_cold', repairPartsTag: 'zawór', qualityType: 'silnik',
+        repair: 'Na całkowicie zimnym silniku ustaw luzy zaworowe zgodnie z DTR modelu (śruby lub płytki w Kalkulatorze Płytek).',
+        verify: 'Po naprawie: sprawdź kompresję na ciepłym silniku oraz łatwość ponownego rozruchu po 10 min jazdy.'
+      },
+      {
+        id: 'hyp_tank_vent', cause: 'Zatkane odpowietrzenie korka paliwa / zakleszczony kranik podciśnieniowy',
+        reliability: 'B', source: 'Diagnostyka zasilania paliwem',
+        confirmTests: ['t_tank_vent'], excludeOnOk: ['t_tank_vent'],
+        thermalRisk: false, intermittentRisk: true,
+        nextTest: 't_tank_vent', repairPartsTag: 'kranik', qualityType: 'paliwo',
+        repair: 'Jeśli po odkręceniu korka słychać syknięcie i silnik znów zapala — udrożnij odpowietrzenie korka/zbiornika lub wymień kranik.',
+        verify: 'Po naprawie: kontrola swobodnego wypływu paliwa do komory gaźnika i test 15 min jazdy.'
+      },
+      {
+        id: 'hyp_ect_drift', cause: 'Przekłamanie czujnika temperatury ECT (wtrysk EFI zalewa lub zubaża ciepły silnik)',
+        reliability: 'B', source: 'Diagnostyka EFI Bosch / DellOrto / Keihin',
+        confirmTests: ['t_ect_hot'], excludeOnOk: ['t_ect_hot'],
+        thermalRisk: true, intermittentRisk: false,
+        nextTest: 't_ect_hot', repairPartsTag: 'czujnik', qualityType: 'paliwo',
+        repair: 'Zmierz krzywą oporności NTC w 20°C i 80°C; jeśli ECU widzi np. -20°C na gorącym silniku, zalewa świece bogatą dawką.',
+        verify: 'Po naprawie: odczyt parametrów po rozgrzaniu i kontrola koloru świecy oraz stabilności jałowych.'
+      }
+    ]
+  },
+  brak_ladowania: {
+    id: 'brak_ladowania',
+    label: 'Brak ładowania / przeładowanie akumulatora (>15V) / słaby rozruch',
+    intermittentHint: 'Usterki ładowania mogą pojawiać się dopiero po rozgrzaniu regulatora lub na wyższych obrotach. Zawsze mierz spadek na kostkach fazowych statora.',
+    tests: [
+      { id: 't_charge_v', label: 'Napięcie ładowania na akumulatorze @ 5000 RPM (światła ON)', labPreset: 'ladowanie' },
+      { id: 't_bat_rest', label: 'Napięcie akumulatora w spoczynku (1h po ładowaniu)', labPreset: 'akumulator_spoczynek' },
+      { id: 't_stator_ac', label: 'Napięcie AC na fazach statora (wypięty regulator)', labPreset: 'stator_ac_idle' },
+      { id: 't_stator_ohm', label: 'Rezystancja międzyfazowa stojana i brak przebicia do masy', labPreset: 'stator_ladowanie' },
+      { id: 't_parasitic', label: 'Pobór prądu (upływ) na wyłączonej stacyjce', labPreset: 'uplyw' }
+    ],
+    hypotheses: [
+      {
+        id: 'hyp_rr_fault', cause: 'Uszkodzony regulator napięcia (R/R) lub wypalona kostka połączeniowa',
+        reliability: 'B', source: 'Procedura diagnostyki regulatorów 12V',
+        confirmTests: ['t_charge_v'], excludeOnOk: ['t_charge_v'],
+        thermalRisk: true, intermittentRisk: true,
+        nextTest: 't_stator_ac', repairPartsTag: 'regulator', qualityType: 'elektryka',
+        repair: 'Jeśli napięcie AC ze statora jest prawidłowe, a na klemach przy 5000 RPM jest < 13.5 V lub > 15.2 V — oczyść kostkę/masę i wymień regulator.',
+        verify: 'Po naprawie: obowiązkowy pomiar w Lab (13.8–14.8 V przy 5000 RPM) oraz kontrola temperatury złączy.'
+      },
+      {
+        id: 'hyp_stator_burn', cause: 'Przepalone uzwojenie ładowania statora lub zwarcie do masy',
+        reliability: 'A', source: 'Serwisówki statorów 1-fazowych i 3-fazowych',
+        confirmTests: ['t_stator_ac', 't_stator_ohm'], excludeOnOk: ['t_stator_ac'],
+        thermalRisk: true, intermittentRisk: false,
+        nextTest: 't_stator_ohm', repairPartsTag: 'stator', qualityType: 'elektryka',
+        repair: 'Wymień stojan (stator) i wytnij nadtopioną 3-pinową wtyczkę, zastępując ją złączem hermetycznym wysokoprądowym.',
+        verify: 'Po naprawie: pomiar faza–faza AC oraz ładowania DC po pełnym nagrzaniu oleju.'
+      },
+      {
+        id: 'hyp_bat_dead', cause: 'Zasiarczony akumulator (traci pojemność) lub wysoki upływ prądu na postoju',
+        reliability: 'B', source: 'Norma testów akumulatorów AGM/GEL 12V',
+        confirmTests: ['t_bat_rest', 't_parasitic'], excludeOnOk: ['t_bat_rest', 't_parasitic'],
+        thermalRisk: false, intermittentRisk: false,
+        nextTest: 't_bat_rest', repairPartsTag: 'akumulator', qualityType: 'elektryka',
+        repair: 'Wykonaj pomiar rozruchowy (< 9.6 V = wymiana akumulatora). Jeśli upływ > 2 mA, wypinaj bezpieczniki po kolei by znaleźć obwód pobierający prąd.',
+        verify: 'Po naprawie: zapis testu spoczynkowego i rozruchowego Po naprawie w Elektronicznym Lab.'
+      }
+    ]
+  },
+  brak_mocy_przerywa: {
+    id: 'brak_mocy_przerywa',
+    label: 'Brak mocy / dławi się przy otwarciu gazu / nierówne obroty',
+    intermittentHint: 'Jeśli dławienie pojawia się tylko pod pełnym obciążeniem lub na wyższych biegach, weryfikuj ciśnienie paliwa/poziom pływaka i nieszczelności dolotu.',
+    tests: [
+      { id: 't_air_leak', label: 'Test szczelności króćca, filtra powietrza i skrzyni korbowej (2T)', labPreset: null },
+      { id: 't_fuel_efi', label: 'Ciśnienie paliwa (EFI) lub wydatek/drożność gaźnika', labPreset: 'fuel_pressure_efi' },
+      { id: 't_tps_chk', label: 'Sygnał czujnika TPS (płynność bez skoków)', labPreset: 'tps_idle' },
+      { id: 't_comp_chk', label: 'Pomiar ciśnienia sprężania (kompresja)', labPreset: null }
+    ],
+    hypotheses: [
+      {
+        id: 'hyp_false_air', cause: 'Nieszczelność dolotu („lewe powietrze”: spękany króciec, o-ring, uszczelniacz wału 2T)',
+        reliability: 'B', source: 'Karty diagnostyczne 2T / 4T / Boxery',
+        confirmTests: ['t_air_leak'], excludeOnOk: ['t_air_leak'],
+        thermalRisk: false, intermittentRisk: true,
+        nextTest: 't_air_leak', repairPartsTag: 'gaźnik', qualityType: 'paliwo',
+        repair: 'Wymień spękany króciec, uszczelkę lub uszczelniacze wału w 2T (po próbie ciśnieniowej karteru!). Nie reguluj składu na nieszczelnym dolocie.',
+        verify: 'Po naprawie: natychmiastowy powrót do biegu jałowego w pełnym skręcie kierownicy + kontrola jakości (Paliwo).'
+      },
+      {
+        id: 'hyp_fuel_starv', cause: 'Przytkana dysza główna / membrana gaźnika CV / zabrudzone sitko pompy EFI',
+        reliability: 'B', source: 'Diagnostyka układów zasilania 2T/4T/EFI',
+        confirmTests: ['t_fuel_efi'], excludeOnOk: ['t_fuel_efi'],
+        thermalRisk: false, intermittentRisk: false,
+        nextTest: 't_fuel_efi', repairPartsTag: 'filtr', qualityType: 'paliwo',
+        repair: 'Oczyść ultradźwiękowo kanały gaźnika lub wymień sitko i zmierz ciśnienie na listwie EFI; skontroluj stan membrany gaźnika podciśnieniowego.',
+        verify: 'Po naprawie: płynne wkręcanie pod obciążeniem i odczyt świecy zapłonowej.'
+      },
+      {
+        id: 'hyp_low_comp', cause: 'Spadek kompresji (zużyte pierścienie, tłok, podparty zawór lub uszczelka głowicy)',
+        reliability: 'A', source: 'Diagnostyka mechaniczna cylindra',
+        confirmTests: ['t_comp_chk'], excludeOnOk: ['t_comp_chk'],
+        thermalRisk: true, intermittentRisk: false,
+        nextTest: 't_comp_chk', repairPartsTag: 'tłok', qualityType: 'silnik',
+        repair: 'Wykonaj próbę olejową i Leak Down, aby rozróżnić zużycie pierścieni od nieszczelności zaworów/głowicy przed demontażem.',
+        verify: 'Po naprawie: kontrola jakości (Remont silnika) oraz zapis kompresji po dotarciu.'
+      }
+    ]
+  },
+  poslizg_napedu_cvt: {
+    id: 'poslizg_napedu_cvt',
+    label: 'Wysokie obroty a nie jedzie / szarpanie przy ruszaniu (CVT / sprzęgło)',
+    intermittentHint: 'Szarpanie i piski nasilające się po rozgrzaniu sprzęgła świadczą zwykle o zeszkleniu okładzin lub przegrzanym dzwonie.',
+    tests: [
+      { id: 't_cvt_belt', label: 'Pomiar szerokości paska CVT i inspekcja kordu (min. szerokość wg DTR)', labPreset: null },
+      { id: 't_cvt_rollers', label: 'Kontrola rolek wariatora (płaskie spłaszczenia) i ślizgów', labPreset: null },
+      { id: 't_clutch_pads', label: 'Oględziny dzwonu (przebarwienia na fiolet) i okładzin szczęk', labPreset: null }
+    ],
+    hypotheses: [
+      {
+        id: 'hyp_belt_wear', cause: 'Zużyty (zwężony) pasek CVT lub zerwanie kordu / zaolejenie napędu',
+        reliability: 'A', source: 'Serwisówki skuterów CVT i quadów ATV',
+        confirmTests: ['t_cvt_belt'], excludeOnOk: ['t_cvt_belt'],
+        thermalRisk: false, intermittentRisk: false,
+        nextTest: 't_cvt_belt', repairPartsTag: 'pasek', qualityType: 'sprzeglo',
+        repair: 'Zmierz szerokość paska suwmiarką. Przy zwężeniu >= 1.0–1.5 mm poniżej nominalnej (lub pęknięciach) wymień pasek oraz odtłuść talerze wariatora.',
+        verify: 'Po naprawie: wykonaj procedurę kontroli jakości (Wymiana sprzęgła / CVT) z testem ruszania.'
+      },
+      {
+        id: 'hyp_clutch_glaze', cause: 'Zeszkliwione okładziny sprzęgła / pęknięte sprężynki szczęk / przegrzany dzwon',
+        reliability: 'B', source: 'Diagnostyka napędów CVT',
+        confirmTests: ['t_clutch_pads'], excludeOnOk: ['t_clutch_pads'],
+        thermalRisk: true, intermittentRisk: false,
+        nextTest: 't_clutch_pads', repairPartsTag: 'sprzęgło', qualityType: 'sprzeglo',
+        repair: 'Jeśli dzwon jest fioletowy lub owalny — wymień dzwon i szczęki sprzęgła; lekkie zeszklenie zmatowić drobnoziarnistym papierem, sprężynki wymienić.',
+        verify: 'Po naprawie: test ruszania bez wibracji pod obciążeniem na rozgrzanym układzie.'
+      }
+    ]
+  }
+};
+
+let activeDiffProfileId = 'brak_iskry';
+let activeDiffPattern = 'stala';
+let diffTestAnswers = {};
+
+function openLabWithPreset(presetId){
+  const v = getActiveVehicle();
+  const idx = LAB_SYSTEM_PRESETS.findIndex(p => p.id === presetId);
+  nav('lab', v ? v.id : null);
+  if (idx >= 0) {
+    setTimeout(() => {
+      const sel = document.getElementById('labPresetSel');
+      if (sel) { sel.value = String(idx); applyLabPreset(); }
+    }, 30);
+  }
+}
+
+function syncDiffTestsFromLab(){
+  const v = getActiveVehicle();
+  const profile = DIFFERENTIAL_DIAG_PROFILES[activeDiffProfileId];
+  if (!profile) return;
+  const relevantMeas = (measurements || []).filter(m => !v || m.vehicleId === v.id);
+  let synced = 0;
+  profile.tests.forEach(t => {
+    if (!t.labPreset) return;
+    const preset = LAB_SYSTEM_PRESETS.find(p => p.id === t.labPreset);
+    if (!preset) return;
+    const matches = relevantMeas.filter(m => m.presetId === preset.id || normalizeSearchText(m.label).includes(normalizeSearchText(preset.name.split('(')[0])));
+    if (matches.length) {
+      const latest = matches[matches.length - 1];
+      const st = evaluateLabStatus(latest.measuredValue, latest.refMin, latest.refMax);
+      if (st.code === 'ok') { diffTestAnswers[t.id] = 'ok'; synced++; }
+      else if (st.code === 'bad' || st.code === 'suspect') { diffTestAnswers[t.id] = 'bad'; synced++; }
+    }
+  });
+  alert(synced > 0 ? '✅ Zsynchronizowano ' + synced + ' wyników z Elektronicznego Laboratorium.' : 'ℹ️ Brak zapisanych pomiarów w Laboratorium pasujących do tego objawu' + (v ? ' dla wybranego pojazdu.' : '.'));
+  renderDiag();
+}
+
+function setDiffTestStatus(testId, val){
+  diffTestAnswers[testId] = val;
+  renderDiag();
+}
+
+function evaluateDifferentialState(profile){
+  const confirmed = [];
+  const hypotheses = [];
+  const excluded = [];
+
+  profile.hypotheses.forEach(h => {
+    const hasBad = h.confirmTests.some(tid => diffTestAnswers[tid] === 'bad');
+    const allReqCheckedOk = h.excludeOnOk && h.excludeOnOk.length > 0 && h.excludeOnOk.every(tid => diffTestAnswers[tid] === 'ok');
+
+    let score = 50;
+    if (activeDiffPattern === 'cieplo' && h.thermalRisk) score += 25;
+    if ((activeDiffPattern === 'okresowa' || activeDiffPattern === 'cieplo') && h.intermittentRisk) score += 20;
+    if (activeDiffPattern === 'stala' && !h.thermalRisk) score += 10;
+
+    const item = { ...h, score };
+    if (hasBad) confirmed.push(item);
+    else if (allReqCheckedOk) excluded.push(item);
+    else hypotheses.push(item);
+  });
+
+  hypotheses.sort((a, b) => b.score - a.score);
+  return { confirmed, hypotheses, excluded };
+}
+
+function saveDifferentialDiagnosisToVehicle(hypId){
+  const profile = DIFFERENTIAL_DIAG_PROFILES[activeDiffProfileId];
+  const h = profile?.hypotheses.find(x => x.id === hypId);
+  if (!h) return;
+  const v = getActiveVehicle();
+  const o = getActiveOrder();
+  if (!v && !o) {
+    alert('Wybierz aktywny pojazd w pasku Kontekstu Warsztatowego u góry, aby zapisać diagnozę w jego historii.');
+    return;
+  }
+  const stamp = new Date().toLocaleString('pl-PL');
+  if (v) {
+    if (!Array.isArray(v.diagLog)) v.diagLog = [];
+    v.diagLog.push({
+      id: 'dlg_' + uid(),
+      date: stamp,
+      symptom: profile.label + ' [' + activeDiffPattern + ']',
+      status: 'confirmed',
+      conclusion: h.cause,
+      detail: h.repair,
+      source: h.source + ' (' + h.reliability + ')'
+    });
+    save('naprawnik_vehicles', vehicles);
+  }
+  if (o) {
+    o.faultDesc = o.faultDesc || profile.label;
+    o.diagnosis = (o.diagnosis ? o.diagnosis + '\n' : '') + '[' + stamp + '] Potwierdzona diagnoza: ' + h.cause + ' -> ' + h.repair;
+    o.suggestedQualityType = h.qualityType || 'przeglad';
+    save('naprawnik_orders', orders);
+  }
+  alert('✅ Diagnoza "' + h.cause + '" zapisana w historii ' + (v ? 'pojazdu' : '') + (o ? ' i zleceniu ' + o.number : '') + '.');
+  renderDiag();
+}
+
+function renderDifferentialPanel(){
+  const profile = DIFFERENTIAL_DIAG_PROFILES[activeDiffProfileId] || DIFFERENTIAL_DIAG_PROFILES.brak_iskry;
+  const res = evaluateDifferentialState(profile);
+  const nextHip = res.hypotheses[0];
+  const recommendedTest = nextHip ? profile.tests.find(t => t.id === nextHip.nextTest) : null;
+
+  return `<div class="card" style="border-color:var(--hero);background:rgba(255,209,102,0.03)">
+    <h2 style="color:var(--hero)">🧠 Diagnostyka Różnicowa (Objaw + Pomiary → Przyczyna)</h2>
+    <p style="font-size:11.5px;color:var(--dim);margin-bottom:8px">Wprowadź objaw, wzorzec czasowy (usterka stała lub okresowa/termiczna) i wyniki testów — system zawęzi hipotezy i oddzieli przyczyny potwierdzone od roboczych.</p>
+    <label>1. Objaw główny:</label>
+    <select onchange="activeDiffProfileId=this.value;diffTestAnswers={};renderDiag()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin-bottom:8px">
+      ${Object.values(DIFFERENTIAL_DIAG_PROFILES).map(p => `<option value="${p.id}" ${p.id===activeDiffProfileId?'selected':''}>${escapeHtml(p.label)}</option>`).join('')}
+    </select>
+    <label>2. Charakterystyka występowania (okresowość / temperatura):</label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">
+      ${[['stala','Stała (zawsze)'],['cieplo','Tylko na ciepło / po nagrzaniu'],['zimno','Tylko na zimno'],['okresowa','Okresowa (wyboje / wilgoć)']].map(([k,lbl])=>
+        `<button type="button" class="btn ${activeDiffPattern===k?'active':''}" style="width:auto;margin:0;padding:5px 9px;font-size:11px" onclick="activeDiffPattern='${k}';renderDiag()">${lbl}</button>`
+      ).join('')}
+    </div>
+    ${(activeDiffPattern==='cieplo'||activeDiffPattern==='okresowa') ? `<div class="entry" style="border-left:3px solid #ffe066"><small style="color:#ffe066">🌡️ Wskazówka dla usterek okresowych/termicznych: ${escapeHtml(profile.intermittentHint)}</small></div>` : ''}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:6px;flex-wrap:wrap">
+      <b style="font-size:12px">3. Wprowadź wyniki testów i pomiarów:</b>
+      <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px;border-color:var(--cyan);color:var(--cyan)" onclick="syncDiffTestsFromLab()">⚡ Wczytaj pomiary z Lab</button>
+    </div>
+    ${profile.tests.map(t => {
+      const st = diffTestAnswers[t.id] || 'unknown';
+      return `<div class="entry" style="padding:8px;margin:5px 0">
+        <div style="font-size:12px;font-weight:700">${escapeHtml(t.label)}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;align-items:center">
+          <button type="button" class="btn ${st==='ok'?'active':''}" style="width:auto;margin:0;padding:3px 8px;font-size:10px;border-color:#00f57a;color:#00f57a" onclick="setDiffTestStatus('${t.id}','ok')">✓ OK</button>
+          <button type="button" class="btn ${st==='bad'?'active':''}" style="width:auto;margin:0;padding:3px 8px;font-size:10px;border-color:#ff6b6b;color:#ff6b6b" onclick="setDiffTestStatus('${t.id}','bad')">✕ Poza normą</button>
+          <button type="button" class="btn ${st==='unknown'?'active':''}" style="width:auto;margin:0;padding:3px 8px;font-size:10px" onclick="setDiffTestStatus('${t.id}','unknown')">? Nie sprawdzono</button>
+          ${t.labPreset ? `<button type="button" class="btn" style="width:auto;margin:0;padding:3px 8px;font-size:10px;border-color:var(--cyan);color:var(--cyan)" onclick="openLabWithPreset('${t.labPreset}')">⚡ Zmierz w Lab</button>` : ''}
+        </div>
+      </div>`;
+    }).join('')}
+
+    ${recommendedTest && res.confirmed.length === 0 ? `<div class="entry" style="border-color:var(--cyan);background:rgba(34,211,238,0.08);margin-top:8px">
+      <b style="color:var(--cyan)">🎯 Zalecany następny test zawężający przyczyny:</b><br>
+      <small>${escapeHtml(recommendedTest.label)} (weryfikuje hipotezę: ${escapeHtml(nextHip.cause)})</small>
+      ${recommendedTest.labPreset ? `<div style="margin-top:6px"><button type="button" class="btn" style="width:auto;margin:0;padding:5px 10px;font-size:11px;border-color:var(--cyan);color:var(--cyan)" onclick="openLabWithPreset('${recommendedTest.labPreset}')">⚡ Wykonaj ten pomiar w Laboratorium →</button></div>` : ''}
+    </div>` : ''}
+
+    <div style="margin-top:12px">
+      <h3 style="color:#00f57a">🟢 Przyczyny POTWIERDZONE (${res.confirmed.length})</h3>
+      ${res.confirmed.length === 0 ? '<div class="empty" style="padding:8px">Brak potwierdzonych testem poza normą — zaznacz wynik testu powyżej.</div>' : res.confirmed.map(h => `
+        <div class="entry" style="border-left:4px solid #00f57a">
+          <div style="display:flex;justify-content:space-between;gap:6px;align-items:center">
+            <b>${escapeHtml(h.cause)}</b>
+            ${renderReliabilityBadge(h.reliability)}
+          </div>
+          <small style="display:block;margin-top:4px;color:var(--text)"><b>Naprawa:</b> ${escapeHtml(h.repair)}</small>
+          <small style="display:block;color:var(--cyan);margin-top:3px"><b>Kontrola po naprawie:</b> ${escapeHtml(h.verify)}</small>
+          <small style="display:block;color:var(--dim);margin-top:2px">Źródło: ${escapeHtml(h.source)}</small>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+            <button type="button" class="btn" style="width:auto;margin:0;padding:5px 9px;font-size:11px;border-color:#00f57a;color:#00f57a" onclick="saveDifferentialDiagnosisToVehicle('${h.id}')">💾 Zapisz w pojeździe / zleceniu</button>
+            <button type="button" class="btn" style="width:auto;margin:0;padding:5px 9px;font-size:11px" onclick="nav('parts');setTimeout(()=>{var q=document.getElementById('partsQuery');if(q){q.value='${escapeHtml(h.repairPartsTag)}';filterPartsFinder();}},40)">🔩 Dobierz części</button>
+            <button type="button" class="btn" style="width:auto;margin:0;padding:5px 9px;font-size:11px" onclick="activeQualityType='${h.qualityType}';nav('checklist')">✅ Kontrola po naprawie</button>
+          </div>
+        </div>`).join('')}
+
+      <h3 style="color:#ffe066;margin-top:10px">🟡 Hipotezy robocze do weryfikacji (${res.hypotheses.length})</h3>
+      ${res.hypotheses.map(h => `
+        <div class="entry" style="border-left:4px solid #ffe066">
+          <div style="display:flex;justify-content:space-between;gap:6px;align-items:center">
+            <b>${escapeHtml(h.cause)}</b>
+            ${renderReliabilityBadge(h.reliability)}
+          </div>
+          <small style="display:block;color:var(--dim)">Źródło: ${escapeHtml(h.source)}${h.thermalRisk ? ' · 🌡️ Czynnik termiczny' : ''}</small>
+        </div>`).join('')}
+
+      ${res.excluded.length ? `<h3 style="color:var(--dim);margin-top:10px">⚪ Wykluczone wykonanymi testami (${res.excluded.length})</h3>
+      ${res.excluded.map(h => `<div class="entry" style="opacity:0.65;border-left:4px solid var(--border)"><small><s>${escapeHtml(h.cause)}</s> — wykluczone pozytywnymi testami kontrolnymi.</small></div>`).join('')}` : ''}
+    </div>
+  </div>`;
+}
+
 function renderDiag(){
+  const ctxBar = renderActiveContextBanner('diag');
   if(diagLeaf){
     supportOptionsOpen = false;
-    screen.innerHTML = diagBackBtn() + crumbsHtml() + `<div class="card"><h2>Prawdopodobne przyczyny</h2>` +
+    screen.innerHTML = diagBackBtn() + ctxBar + crumbsHtml() + `<div class="card"><h2>Prawdopodobne przyczyny</h2>` +
       diagLeaf.causes.map(c=>`<div class="entry">• ${escapeHtml(c)}</div>`).join('') +
-      `</div>
-      <div class="card"><h2>Żadna z powyższych nie pasuje?</h2>
+      `</div>` +
+      renderDifferentialPanel() +
+      `<div class="card"><h2>Żadna z powyższych nie pasuje?</h2>
       <div class="entry">• Co robiono przy pojeździe tuż przed pojawieniem się problemu? (naprawa, mycie, wymiana części, upadek itp.)</div>
       <div class="entry">• Czy problem pojawił się nagle, czy narastał stopniowo?</div>
       <div class="entry">• Czy był jakiś wcześniejszy, drobny sygnał zanim doszło do pełnej awarii?</div>
@@ -4131,8 +4651,11 @@ function renderDiag(){
     return;
   }
   const levelNodes = diagStack[diagStack.length-1];
-  screen.innerHTML = diagBackBtn() + crumbsHtml() +
-    levelNodes.map((n,i)=>`<div class="btn" onclick="diagSelect(${i})">${n.label} →</div>`).join('');
+  screen.innerHTML = diagBackBtn() + ctxBar + crumbsHtml() +
+    `<div class="card"><h2>Drzewo Objawów (Wybierz kategorię)</h2>` +
+    levelNodes.map((n,i)=>`<div class="btn" onclick="diagSelect(${i})">${n.label} →</div>`).join('') +
+    `</div>` +
+    renderDifferentialPanel();
 }
 function diagSelect(i){
   const node = diagStack[diagStack.length-1][i];
@@ -4494,14 +5017,233 @@ function addReminder(){
 }
 
 const checklistItems = ['Poziom i stan oleju silnikowego','Naciąg i stan łańcucha/paska napędu','Ciśnienie i stan opon','Działanie hamulców (przód/tył)','Luz na łożyskach kół','Stan i naciąg linek/hydrauliki sprzęgła','Działanie oświetlenia i sygnału','Poziom płynu chłodzącego/hamulcowego','Stan i naciąg paska CVT (jeśli dotyczy)','Dokręcenie kluczowych śrub (patrz: Dane/Nm)'];
-function renderChecklist(){
+
+const QUALITY_CHECKLISTS_BY_TYPE = {
+  sprzeglo: {
+    id: 'sprzeglo', label: 'Wymiana sprzęgła (CVT / wielopłytkowe)', reliability: 'B',
+    source: 'Standard serwisowy układów napędowych 2T/4T/CVT (parametry szczegółowe wg DTR modelu)',
+    steps: [
+      { id: 'q_sp_1', step: 'Kontrola momentu nakrętki kosza / dzwonu i wariatora', condition: 'Przed założeniem pokrywy lub weryfikacja na zablokowanym wale', criteria: 'Dokręcone kluczem dynamometrycznym wg DTR modelu, zabezpieczenie nakrętki', reliability: 'A', source: 'DTR producenta' },
+      { id: 'q_sp_2', step: 'Czystość okładzin i powierzchni ciernych (CVT)', condition: 'Na sucho przed montażem dzwonu', criteria: 'Brak śladów smaru i oleju na dzwonie, pasku i tarczach (0 poślizgu przy rozruchu)', reliability: 'B', source: 'Instrukcje serwisowe CVT' },
+      { id: 'q_sp_3', step: 'Luz roboczy linki / klamki sprzęgła (manualne) lub olej (mokre)', condition: 'Poziom oleju sprawdzony na równej powierzchni, silnik rozgrzany', criteria: 'Luz na końcu dźwigni zwykle ok. 10–15 mm (wg DTR); właściwy stan i klasa oleju JASO MA2', reliability: 'B', source: 'Norma JASO T903 / DTR' },
+      { id: 'q_sp_4', step: 'Test załączania napędu i braku ciągnięcia na biegu', condition: 'Silnik rozgrzany, jazda próbna na placu', criteria: 'Płynne ruszanie bez szarpania i drgań; łatwe wbicie biegu jałowego (N)', reliability: 'B', source: 'Procedura kontroli końcowej' }
+    ]
+  },
+  hamulce: {
+    id: 'hamulce', label: 'Naprawa układu hamulcowego / ABS', reliability: 'A',
+    source: 'Zasady bezpieczeństwa układów hamulcowych i DTR producentów',
+    steps: [
+      { id: 'q_ha_1', step: 'Weryfikacja grubości klocków i tarczy hamulcowej', condition: 'Pomiar suwmiarką/mikrometrem w 3 punktach tarczy', criteria: 'Grubość tarczy > min. wybity na tarczy (MIN. TH.); okładzina klocka > 1,5 mm', reliability: 'A', source: 'Oznaczenia OEM tarczy / DTR' },
+      { id: 'q_ha_2', step: 'Kontrola szczelności pod maksymalnym ciśnieniem', condition: 'Przytrzymanie wciśniętej klamki/pedału przez 30 sekund (zapięta opaska)', criteria: 'Brak spadku ciśnienia, brak pocenia na przewodach, odpowietrznikach i zacisku', reliability: 'B', source: 'Procedura warsztatowa BHP' },
+      { id: 'q_ha_3', step: 'Dokręcenie śrub zacisku, tarczy i przewodu (banjo)', condition: 'Wszystkie elementy montażowe zawieszenia i zacisku', criteria: 'Dokręcone momentem wg DTR + nowe podkładki miedziane/aluminiowe przy rozpinaniu przewodu', reliability: 'A', source: 'DTR producenta' },
+      { id: 'q_ha_4', step: 'Test toczenia i jazdy próbnej (brak blokowania / grzania / bicie)', condition: 'Koło uniesione na stojaku + próbne hamowanie z 30–50 km/h', criteria: 'Koło obraca się swobodnie po puszczeniu klamki; brak pulsowania klamki i kontrolek ABS', reliability: 'B', source: 'Procedura kontroli drogowej' }
+    ]
+  },
+  zawieszenie: {
+    id: 'zawieszenie', label: 'Naprawa zawieszenia (lagi / główka ramy)', reliability: 'B',
+    source: 'Instrukcje serwisowe Showa / KYB / WP i DTR podwozia',
+    steps: [
+      { id: 'q_za_1', step: 'Kontrola szczelności uszczelniaczy lag po ugięciu', condition: 'Po oczyszczeniu rur nośnych, wykonać 10 głębokich ugięć przodu na hamulcu', criteria: 'Rury nośne całkowicie suche (brak filmu olejowego z pierścienia)', reliability: 'A', source: 'Showa / KYB Service Manual' },
+      { id: 'q_za_2', step: 'Równość poziomu oleju i ustawień tłumienia L/P', condition: 'Obydwie lagi zmierzone przed skręceniem korków górnych', criteria: 'Jednakowy poziom (mm) i jednakowa liczba kliknięć regulacji po obu stronach', reliability: 'B', source: 'DTR zawieszenia' },
+      { id: 'q_za_3', step: 'Test luzu i oporu łożysk główki ramy oraz osiowości koła', condition: 'Przednie koło w powietrzu na podnośniku', criteria: 'Kierownica obraca się lekko bez "punktu zerowego" (zacięcia) i bez luzu wzdłużnego', reliability: 'B', source: 'Procedura kontroli podwozia' },
+      { id: 'q_za_4', step: 'Dokręcenie półek, osi koła i śrub zacisków (bez skręcenia lag)', condition: 'Po kilkukrotnym ugięciu zawieszenia bez hamulca przed dokręceniem śrub osi', criteria: 'Lagi pracują płynnie bez zakleszczania; momenty półek wg DTR (nie przekręcać zacisków rury!)', reliability: 'A', source: 'DTR producenta' }
+    ]
+  },
+  silnik: {
+    id: 'silnik', label: 'Remont silnika / rozrząd / zawory', reliability: 'A',
+    source: 'Dokumentacja warsztatowa 2T/4T/Multi OEM',
+    steps: [
+      { id: 'q_si_1', step: 'Weryfikacja znaków rozrządu po 2 pełnych obrotach wału (4T)', condition: 'Po zwolnieniu napinacza łańcucha rozrządu, obrót ręczny kluczem zgodnie z kierunkiem pracy', criteria: 'Znaki na kołach wałków i magnecie/wale pokrywają się co do punktu; brak kolizji zaworów', reliability: 'A', source: 'DTR producenta 4T' },
+      { id: 'q_si_2', step: 'Kontrola końcowa luzów zaworowych (4T) lub squish (2T)', condition: 'Silnik zimny, tłok w TDC suwu sprężania', criteria: 'Wszystkie luzy zaworowe lub prześwit squish mieszczą się w tolerancji DTR', reliability: 'A', source: 'DTR silnika' },
+      { id: 'q_si_3', step: 'Kontrola smarowania (ciśnienie oleju / odpowietrzenie pompy 2T)', condition: 'Pierwsze uruchomienie i rozgrzanie do pełnej temp. roboczej', criteria: 'Zgasła kontrolka ciśnienia oleju w < 3 s (lub stabilne ciśnienie manometrem); brak wycieków oleju/cieczy', reliability: 'B', source: 'Procedura uruchomienia po remoncie' },
+      { id: 'q_si_4', step: 'Stabilność biegu jałowego i test termiczny (wentylator)', condition: 'Silnik rozgrzany na postoju do włączenia wentylatora / stabilnej temp.', criteria: 'Stabilne obroty jałowe, brak falowania, brak dymienia i niepokojących dźwięków mechanicznych', reliability: 'B', source: 'Kontrola odbiorowa' }
+    ]
+  },
+  elektryka: {
+    id: 'elektryka', label: 'Naprawa instalacji elektrycznej / zapłonu / ładowania', reliability: 'B',
+    source: 'Normy pomiarowe instalacji 12V i DTR układów zapłonowych',
+    steps: [
+      { id: 'q_el_1', step: 'Pomiar napięcia ładowania pod obciążeniem', condition: 'Silnik rozgrzany, włączone światła mijania, ~5000 RPM', criteria: '13.8 – 14.8 V DC na klemach akumulatora (wg DTR, brak skoków > 15.0 V)', reliability: 'B', source: 'Laboratorium NAPRAWNIK / DTR' },
+      { id: 'q_el_2', step: 'Spadek napięcia na linii masy (silnik ↔ minus akumulatora)', condition: 'Podczas rozruchu lub przy maksymalnym obciążeniu światłami', criteria: 'Spadek napięcia < 0.2 V DC', reliability: 'B', source: 'Norma pomiarowa instalacji 12V' },
+      { id: 'q_el_3', step: 'Pomiar prądu upływu w spoczynku', condition: 'Stacyjka OFF, multimetr szeregowo na klemie ujemnej (zakres 10A -> mA)', criteria: '< 2.0 mA (wyższe jeśli obecny zegarek/alarm — potwierdzić specyfikacją)', reliability: 'B', source: 'Procedura diagnostyki akumulatora' },
+      { id: 'q_el_4', step: 'Weryfikacja zabezpieczenia wiązki, kostek i test ruszania wiązką (wiggle test)', condition: 'Pracujący silnik, delikatne poruszanie wiązką przy główce ramy', criteria: 'Brak przerw w pracy silnika, brak grzania złączy stator–regulator, bezpieczniki właściwej wartości', reliability: 'B', source: 'Kontrola jakości wiązek' }
+    ]
+  },
+  paliwo: {
+    id: 'paliwo', label: 'Układ paliwowy / gaźnik / wtrysk EFI', reliability: 'B',
+    source: 'Instrukcje obsługi gaźników (Mikuni/Keihin/DellOrto) i układów EFI',
+    steps: [
+      { id: 'q_pa_1', step: 'Test szczelności przewodów, kranika/pompy i króćców (lewe powietrze)', condition: 'Zapłon ON (pompa nabija ciśnienie) oraz praca na biegu jałowym', criteria: 'Zero zapoceń paliwem na króćcach, szybkozłączkach i gaźniku; brak reakcji obrotów na uszczelnieniu dolotu', reliability: 'B', source: 'Procedura BHP i diagnostyki dolotu' },
+      { id: 'q_pa_2', step: 'Ciśnienie paliwa (EFI) lub kontrola przelewania (gaźnik)', condition: 'Manometr na listwie (EFI) lub kranik na PRI/podciśnieniu (gaźnik)', criteria: 'Ciśnienie zgodne z DTR (zwykle ok. 2.5–3.5 bar dla EFI); brak kapania z przelewu gaźnika', reliability: 'C', source: 'Ogólne wytyczne EFI / sprawdzić DTR' },
+      { id: 'q_pa_3', step: 'Powrót manetki gazu i zejście na bieg jałowy w pełnym skręcie kierownicy', condition: 'Kierownica skręcona maksymalnie w lewo i w prawo, silnik pracuje', criteria: 'Brak samoczynnego wzrostu obrotów; linka cofa się z wyraźnym stukiem przepustnicy', reliability: 'A', source: 'Kontrola bezpieczeństwa sterowania' },
+      { id: 'q_pa_4', step: 'Reakcja na gwałtowne otwarcie gazu (na rozgrzanym silniku)', condition: 'Po osiągnięciu temperatury roboczej', criteria: 'Płynne wejście na obroty bez dławienia i bez zawieszania obrotów przy schodzeniu', reliability: 'B', source: 'Kontrola regulacji składu' }
+    ]
+  },
+  chlodzenie: {
+    id: 'chlodzenie', label: 'Naprawa układu chłodzenia', reliability: 'B',
+    source: 'Procedury serwisowe układów chłodzenia cieczą motocykli i quadów',
+    steps: [
+      { id: 'q_ch_1', step: 'Test ciśnieniowy układu i zaworu korka chłodnicy', condition: 'Układ zimny, pompka ciśnieniowa na króćcu chłodnicy', criteria: 'Brak spadku ciśnienia przez 5 min (ciśnienie otwarcia korka wg oznaczenia, np. 1.1 bar)', reliability: 'B', source: 'Specyfikacja korka / DTR' },
+      { id: 'q_ch_2', step: 'Odpowietrzenie i otwarcie termostatu (obieg duży)', condition: 'Rozgrzanie silnika aż dolny i górny wąż chłodnicy staną się gorące', criteria: 'Obydwa węże gorące, poziom płynu w zbiorniczku wyrównawczym stabilny', reliability: 'B', source: 'Procedura odpowietrzania' },
+      { id: 'q_ch_3', step: 'Automatyczne załączenie i wyłączenie wentylatora chłodnicy', condition: 'Dalsze grzanie na postoju pod nadzorem wskaźnika temperatury', criteria: 'Wentylator załącza się w progu DTR i skutecznie zbija temperaturę przed przegrzaniem', reliability: 'A', source: 'DTR układu chłodzenia' },
+      { id: 'q_ch_4', step: 'Weryfikacja poziomu po ostygnięciu silnika', condition: 'Po całkowitym ostygnięciu układu', criteria: 'Uzupełnienie do znaku MAX w zbiorniczku wyrównawczym właściwym płynem (bez krzemianów do alu)', reliability: 'B', source: 'DTR płynów eksploatacyjnych' }
+    ]
+  },
+  przeglad: {
+    id: 'przeglad', label: 'Ogólny przegląd okresowy (10 pkt)', reliability: 'B',
+    source: 'Standardowa checklista przeglądowa NAPRAWNIK',
+    steps: checklistItems.map((t, idx) => ({
+      id: 'q_pr_' + (idx + 1),
+      step: t,
+      condition: 'Przegląd stanowiskowy pojazdu',
+      criteria: 'Stan zgodny z normą producenta / brak usterek i luzów',
+      reliability: 'B',
+      source: 'NAPRAWNIK Checklista Okresowa'
+    }))
+  }
+};
+
+let activeQualityType = 'przeglad';
+let qualityDraftState = {};
+
+function setQualityType(typeKey){
+  if (QUALITY_CHECKLISTS_BY_TYPE[typeKey]) activeQualityType = typeKey;
+  renderChecklist();
+}
+function setQualityStepResult(stepId, status, noteVal){
+  if (!qualityDraftState[stepId]) qualityDraftState[stepId] = { status: '', note: '' };
+  if (status !== null && status !== undefined && status !== '') qualityDraftState[stepId].status = status;
+  if (noteVal !== null && noteVal !== undefined) qualityDraftState[stepId].note = noteVal;
+  if (activeQualityType === 'przeglad') {
+    const idx = parseInt(String(stepId).replace('q_pr_', ''), 10) - 1;
+    if (!isNaN(idx)) {
+      let done = load('naprawnik_checklist_done');
+      if (status === 'pass' && !done.includes(idx)) done.push(idx);
+      else if (status === 'fail' || status === 'na') done = done.filter(x => x !== idx);
+      save('naprawnik_checklist_done', done);
+    }
+  }
+  renderChecklist();
+}
+function saveQualityProtocol(targetOrderId){
+  const spec = QUALITY_CHECKLISTS_BY_TYPE[activeQualityType];
+  if (!spec) return;
+  const v = getActiveVehicle();
+  const o = targetOrderId ? orders.find(x => x.id === targetOrderId) : getActiveOrder();
+  const results = spec.steps.map(st => {
+    const d = qualityDraftState[st.id] || {};
+    return { id: st.id, step: st.step, condition: st.condition, criteria: st.criteria, status: d.status || 'na', note: d.note || '' };
+  });
+  const failCount = results.filter(r => r.status === 'fail').length;
+  const passCount = results.filter(r => r.status === 'pass').length;
+  if (passCount === 0 && failCount === 0) {
+    alert('Oceń przynajmniej jeden punkt kontrolny (ZAL lub NIE) przed zapisaniem protokołu.');
+    return;
+  }
+  const protocol = {
+    id: 'qual_' + uid(),
+    type: spec.id,
+    label: spec.label,
+    date: new Date().toLocaleString('pl-PL'),
+    vehicleId: v ? v.id : (o ? o.vehicleId : null),
+    orderId: o ? o.id : null,
+    passed: failCount === 0 && passCount > 0,
+    passCount,
+    failCount,
+    totalSteps: spec.steps.length,
+    results
+  };
+  qualityLogs.push(protocol);
+  save('naprawnik_quality_logs', qualityLogs);
+
+  if (o) {
+    o.qualityProtocol = protocol;
+    save('naprawnik_orders', orders);
+  }
+  if (protocol.vehicleId) {
+    repairs.push({
+      id: uid(),
+      vehicleId: protocol.vehicleId,
+      date: new Date().toLocaleDateString('pl-PL'),
+      symptom: 'Kontrola jakości po naprawie',
+      diagnosis: spec.label + ' (' + (protocol.passed ? 'ZALICZONA' : 'WYKRYTO NIEZGODNOŚCI: ' + failCount) + ')',
+      repair: results.filter(r => r.status !== 'na').map(r => (r.status === 'pass' ? '✓ ' : '✕ ') + r.step + (r.note ? ' [' + r.note + ']' : '')).join(' | '),
+      parts: '',
+      cost: '0',
+      mileage: v && v.mileage ? v.mileage : '',
+      qualityProtocolId: protocol.id
+    });
+    save('naprawnik_repairs', repairs);
+  }
+  alert(protocol.passed
+    ? '✅ Protokół Kontroli Jakości ZALICZONY i zapisany w historii pojazdu' + (o ? ' oraz zleceniu ' + o.number : '') + '.'
+    : '⚠️ Zapisano protokół Kontroli Jakości z wykrytymi niezgodnościami (' + failCount + '). Usuń usterki przed wydaniem pojazdu!');
+  if (targetOrderId) renderOrderDetail(targetOrderId);
+  else renderChecklist();
+}
+
+function renderChecklist(forceType){
+  if (forceType && QUALITY_CHECKLISTS_BY_TYPE[forceType]) activeQualityType = forceType;
+  const spec = QUALITY_CHECKLISTS_BY_TYPE[activeQualityType] || QUALITY_CHECKLISTS_BY_TYPE.przeglad;
   const done = load('naprawnik_checklist_done');
-  screen.innerHTML = back() + `<div class="card"><h2>Checklista przeglądu okresowego</h2>` +
-    checklistItems.map((t,i)=>`<div class="entry"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-      <input type="checkbox" ${done.includes(i)?'checked':''} onchange="toggleCheck(${i})" style="width:auto;margin:0">
-      <span style="${done.includes(i)?'color:#7fbf7f;text-decoration:line-through':''}">${t}</span>
-      </label></div>`).join('') +
-    `</div><div class="btn" onclick="resetChecklist()">🔁 Wyczyść / nowy przegląd</div>`;
+  if (activeQualityType === 'przeglad') {
+    spec.steps.forEach((st, i) => {
+      if (!qualityDraftState[st.id] && done.includes(i)) {
+        qualityDraftState[st.id] = { status: 'pass', note: '' };
+      }
+    });
+  }
+  const v = getActiveVehicle();
+  const o = getActiveOrder();
+  const vLogs = qualityLogs.filter(q => !v || q.vehicleId === v.id).slice().reverse().slice(0, 8);
+
+  screen.innerHTML = back() + renderActiveContextBanner('checklist') + `
+  <div class="card" style="border-color:var(--green)">
+    <h2>✅ Kontrola Jakości Napraw i Przeglądów</h2>
+    <p style="font-size:12px;color:var(--dim);margin-bottom:8px">Wybierz procedurę odbiorową odpowiednią do wykonanej naprawy. Każdy punkt określa warunki pomiaru i kryterium zaliczenia.</p>
+    <label>Typ procedury kontroli końcowej:</label>
+    <select onchange="setQualityType(this.value)" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin-bottom:8px">
+      ${Object.values(QUALITY_CHECKLISTS_BY_TYPE).map(x => `<option value="${x.id}" ${x.id===activeQualityType?'selected':''}>${escapeHtml(x.label)}</option>`).join('')}
+    </select>
+    <div style="font-size:11px;color:var(--dim);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+      <span>Źródło: ${escapeHtml(spec.source)}</span>
+      ${renderReliabilityBadge(spec.reliability)}
+    </div>
+  </div>
+  <div class="card">
+    <h3>Czynności kontrolne (${spec.steps.length})</h3>
+    ${spec.steps.map(st => {
+      const cur = qualityDraftState[st.id] || { status: '', note: '' };
+      const borderCol = cur.status === 'pass' ? '#00f57a' : cur.status === 'fail' ? '#ff6b6b' : 'var(--border)';
+      return `<div class="entry" style="border-left:4px solid ${borderCol}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+          <b>${escapeHtml(st.step)}</b>
+          ${renderReliabilityBadge(st.reliability)}
+        </div>
+        <small style="display:block;margin-top:4px"><b>Warunki:</b> ${escapeHtml(st.condition)}</small>
+        <small style="display:block;color:var(--cyan)"><b>Kryterium zaliczenia:</b> ${escapeHtml(st.criteria)}</small>
+        <small style="display:block;color:var(--dim)">Źródło: ${escapeHtml(st.source)}</small>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="btn ${cur.status==='pass'?'active':''}" style="width:auto;margin:0;padding:4px 10px;font-size:11px;border-color:#00f57a;color:#00f57a" onclick="setQualityStepResult('${st.id}','pass',null)">✓ ZAL</button>
+          <button type="button" class="btn ${cur.status==='fail'?'active':''}" style="width:auto;margin:0;padding:4px 10px;font-size:11px;border-color:#ff6b6b;color:#ff6b6b" onclick="setQualityStepResult('${st.id}','fail',null)">✕ NIE</button>
+          <button type="button" class="btn ${cur.status==='na'?'active':''}" style="width:auto;margin:0;padding:4px 10px;font-size:11px" onclick="setQualityStepResult('${st.id}','na',null)">— N/D</button>
+          <input placeholder="Pomiar / uwaga (opcjonalnie)" value="${escapeHtml(cur.note||'')}" onchange="setQualityStepResult('${st.id}', '${cur.status||''}', this.value)" style="flex:1;min-width:140px;margin:0;padding:5px 8px;font-size:11px">
+        </div>
+      </div>`;
+    }).join('')}
+    <div class="btn" style="border-color:#00f57a;color:#00f57a;font-weight:700" onclick="saveQualityProtocol('${o ? o.id : ''}')">💾 Zapisz protokół Kontroli Jakości${v ? ' do historii pojazdu' : ''}${o ? ' i zlecenia ' + escapeHtml(o.number) : ''}</div>
+    <div class="btn" onclick="resetChecklist()">🔁 Wyczyść bieżący formularz</div>
+  </div>
+  <div class="card">
+    <h3>Historia zapisanych protokołów jakości (${vLogs.length})</h3>
+    ${vLogs.length === 0 ? '<div class="empty">Brak zapisanych protokołów kontroli.</div>' : vLogs.map(q => {
+      const qv = vehicles.find(x => x.id === q.vehicleId);
+      return `<div class="entry" style="border-left:4px solid ${q.passed ? '#00f57a' : '#ff6b6b'}">
+        <b>${escapeHtml(q.label)} — ${q.passed ? '🟢 ZALICZONY' : '🔴 NIEZALICZONY'}</b>
+        <small>${escapeHtml(q.date)} · ZAL: ${q.passCount}/${q.totalSteps}, NIE: ${q.failCount}${qv ? ' · 🛵 ' + escapeHtml(qv.brand||'') + ' ' + escapeHtml(qv.model||'') : ''}</small>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 function toggleCheck(i){
   let done = load('naprawnik_checklist_done');
@@ -4509,7 +5251,7 @@ function toggleCheck(i){
   save('naprawnik_checklist_done', done);
   renderChecklist();
 }
-function resetChecklist(){ save('naprawnik_checklist_done', []); renderChecklist(); }
+function resetChecklist(){ qualityDraftState = {}; save('naprawnik_checklist_done', []); renderChecklist(); }
 
 function renderLog(){
   const logs = load('naprawnik_log');
@@ -4802,7 +5544,7 @@ async function restoreCloudBackup(){
         localStorage.setItem(k, JSON.stringify(merged));
       }
     }
-    vehicles=load('naprawnik_vehicles'); repairs=load('naprawnik_repairs');
+    vehicles=load('naprawnik_vehicles'); repairs=load('naprawnik_repairs'); orders=load('naprawnik_orders'); measurements=load('naprawnik_measurements'); inventoryItems=load('naprawnik_inventory'); qualityLogs=load('naprawnik_quality_logs'); ensureSafeArrays();
     alert('✅ Bezpiecznie połączono (scalono) dane z chmury z kartoteką na tym urządzeniu.');
     renderSettings();
     return;
@@ -4848,7 +5590,7 @@ async function importBackup(event){
       Object.keys(previous).forEach(k=>{if(previous[k]!==null){try{localStorage.setItem(k,previous[k]);}catch(ignore){}}});
       throw new Error('Brak miejsca lub blokada zapisu. Dotychczasowe dane przywrócono w miarę możliwości. '+(writeError.message||''));
     }
-    vehicles=load('naprawnik_vehicles'); repairs=load('naprawnik_repairs'); pin=load('naprawnik_pin')[0]||null;
+    vehicles=load('naprawnik_vehicles'); repairs=load('naprawnik_repairs'); orders=load('naprawnik_orders'); measurements=load('naprawnik_measurements'); inventoryItems=load('naprawnik_inventory'); qualityLogs=load('naprawnik_quality_logs'); ensureSafeArrays(); pin=load('naprawnik_pin')[0]||null;
     alert('Kopia została przywrócona. Aplikacja zostanie odświeżona.'); location.reload();
   }catch(e){console.error(e);alert('Nie udało się przywrócić kopii: '+(e.message||'nieznany błąd'));}
   finally{event.target.value='';}
@@ -4856,7 +5598,7 @@ async function importBackup(event){
 function wipeAll(){
   if(!confirm('Na pewno usunąć wszystkie dane aplikacji (pojazdy, notatki, historię, przeglądy oraz zdjęcia i przypadki asystenta AI)? Zalecamy najpierw wyeksportować kopię zapasową.')) return;
   NAPRAWNIK_STORAGE_KEYS.forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
-  vehicles=[]; repairs=[]; pin=null; pinEntry=''; paWipeDb();
+  vehicles=[]; repairs=[]; orders=[]; measurements=[]; inventoryItems=[]; qualityLogs=[]; activeVehicleContextId=null; activeOrderContextId=null; pin=null; pinEntry=''; paWipeDb();
   renderSettings();
 }
 
@@ -4990,28 +5732,131 @@ function renderVehicles(){
   screen.querySelectorAll('.veh-hit').forEach(el=>el.addEventListener('click', ()=>{ selectedVehicleId = el.dataset.id; nav('vehicleDetail'); }));
 }
 
+let vehicleHistoryFilter = 'all';
+
+function addVehicleRecommendation(vehicleId){
+  const v = vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  const inp = document.getElementById('vehRecInput');
+  const txt = (inp?.value || '').trim();
+  if (!txt) return;
+  if (!Array.isArray(v.recommendations)) v.recommendations = [];
+  v.recommendations.push({ id: 'rec_' + uid(), date: new Date().toLocaleDateString('pl-PL'), text: txt, done: false });
+  save('naprawnik_vehicles', vehicles);
+  renderVehicleDetail();
+}
+
+function toggleVehicleRecommendation(vehicleId, recId){
+  const v = vehicles.find(x => x.id === vehicleId);
+  if (!v || !Array.isArray(v.recommendations)) return;
+  const r = v.recommendations.find(x => x.id === recId);
+  if (r) r.done = !r.done;
+  save('naprawnik_vehicles', vehicles);
+  renderVehicleDetail();
+}
+
+function addVehicleSymptomEntry(vehicleId){
+  const v = vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  const inp = document.getElementById('vehSympInput');
+  const txt = (inp?.value || '').trim();
+  if (!txt) return;
+  if (!Array.isArray(v.diagLog)) v.diagLog = [];
+  v.diagLog.push({ id: 'dlg_' + uid(), date: new Date().toLocaleString('pl-PL'), symptom: txt, status: 'hypothesis', conclusion: 'Zgłoszony objaw — oczekuje diagnozy', detail: 'Wprowadzono na karcie pojazdu', source: 'Wywiad z klientem' });
+  save('naprawnik_vehicles', vehicles);
+  renderVehicleDetail();
+}
+
 function renderVehicleDetail(){
   const v = vehicles.find(x=>x.id===selectedVehicleId);
   if(!v){ screen.innerHTML = back(); return; }
+  activeVehicleContextId = v.id;
+
   const rs = repairs.filter(r=>r.vehicleId===selectedVehicleId);
+  const vMeas = (typeof measurements !== 'undefined' && Array.isArray(measurements)) ? measurements.filter(m => m.vehicleId === v.id) : [];
+  const vOrders = (typeof orders !== 'undefined' && Array.isArray(orders)) ? orders.filter(o => o.vehicleId === v.id || (v.vin && o.vin === v.vin)) : [];
+  const vQual = (typeof qualityLogs !== 'undefined' && Array.isArray(qualityLogs)) ? qualityLogs.filter(q => q.vehicleId === v.id) : [];
+  const vDiag = Array.isArray(v.diagLog) ? v.diagLog : [];
+  const vRecs = Array.isArray(v.recommendations) ? v.recommendations : [];
+  const remindersAll = load('naprawnik_reminders');
+  const vRemMatch = (Array.isArray(remindersAll) ? remindersAll : []).filter(r => normalizeSearchText(String(r.text||r.title||'')).includes(normalizeSearchText(v.model||v.brand||'__none__')));
+
+  const oemMatched = (typeof window !== 'undefined' && window.NAPRAWNIK_KATALOG && typeof window.NAPRAWNIK_KATALOG.matchVehicle === 'function')
+    ? window.NAPRAWNIK_KATALOG.matchVehicle(v).slice(0, 8) : [];
+  const multiMatched = (typeof window !== 'undefined' && window.NAPRAWNIK_MULTICYL_DATA && typeof window.NAPRAWNIK_MULTICYL_DATA.matchModels === 'function')
+    ? window.NAPRAWNIK_MULTICYL_DATA.matchModels(v).slice(0, 4) : [];
+
+  // Zbuduj wspólną oś historii pojazdu
+  const timeline = [];
+  vDiag.forEach(d => timeline.push({ kind: 'diag', date: d.date || '', title: '🩺 Diagnoza / Objaw: ' + (d.symptom||''), status: d.status === 'confirmed' ? '🟢 POTWIERDZONE' : '🟡 HIPOTEZA', body: (d.conclusion||'') + (d.detail ? ' — ' + d.detail : ''), meta: 'Źródło: ' + (d.source||'—'), color: d.status === 'confirmed' ? '#00f57a' : '#ffe066' }));
+  vMeas.forEach(m => {
+    const st = evaluateLabStatus(m.measuredValue, m.refMin, m.refMax);
+    timeline.push({ kind: 'meas', date: m.date || '', title: '⚡ Pomiar: ' + (m.label||'') + ' = ' + m.measuredValue + ' ' + (m.unit||''), status: st.label, body: (m.phase==='after'?'[PO NAPRAWIE] ':'[DIAGNOZA] ') + (m.notes||''), meta: m.source ? 'Źródło: ' + m.source : '', color: st.color });
+  });
+  rs.forEach(r => timeline.push({ kind: 'repair', date: r.date || '', title: '🔧 Naprawa: ' + (r.repair||''), status: r.cost ? r.cost + ' zł' : 'Zapisano', body: [r.symptom ? 'Objaw: ' + r.symptom : '', r.diagnosis ? 'Diagnoza: ' + r.diagnosis : '', r.parts ? 'Części: ' + r.parts : ''].filter(Boolean).join(' · '), meta: r.mileage ? 'Przebieg: ' + r.mileage + ' km' : '', photos: r.photos, repairId: r.id, color: 'var(--accent)' }));
+  vQual.forEach(q => timeline.push({ kind: 'quality', date: q.date || '', title: '✅ Kontrola jakości: ' + (q.label||''), status: q.passed ? '🟢 ZALICZONA' : '🔴 NIEZALICZONA', body: 'Zaliczono: ' + q.passCount + '/' + q.totalSteps + ' pkt' + (q.failCount ? ' · Niezgodności: ' + q.failCount : ''), meta: '', color: q.passed ? '#00f57a' : '#ff6b6b' }));
+  vOrders.forEach(o => {
+    const ost = (typeof ORDER_STATUS_LABELS !== 'undefined' && ORDER_STATUS_LABELS[o.status]) || { label: o.status, color: '#fff' };
+    timeline.push({ kind: 'order', date: o.dateIn || '', title: '📋 Zlecenie ' + (o.number||''), status: ost.label, body: (o.faultDesc||'') + (o.workDone ? ' → ' + o.workDone : ''), meta: 'Koszt: ' + (o.totalCost||0) + ' zł', orderId: o.id, color: ost.color });
+  });
+
+  const shownTimeline = timeline.filter(it => vehicleHistoryFilter === 'all' || it.kind === vehicleHistoryFilter).reverse();
+
   screen.innerHTML = `<div class="btn back" onclick="navBack()">← Wstecz</div>` + `
-  <div class="card"><h2>${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'Pojazd')}</h2>
+  <div class="card" style="border-color:var(--cyan)"><h2>${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'Pojazd')}</h2>
     <small>VIN: ${escapeHtml(v.vin||'—')}</small>
     <small>Rok: ${escapeHtml(v.year||'—')} · Silnik: ${escapeHtml(v.engine||'—')} · Przebieg: ${escapeHtml(v.mileage||'—')}</small>
     <div class="entry">${escapeHtml(v.mods||'Brak modyfikacji / uwag.')}</div>
-    <div class="btn" onclick="diagReset()">🧪 Diagnozuj ten pojazd</div>
+    <div class="btn" onclick="activeVehicleContextId='${v.id}';diagReset()">🧪 Diagnozuj ten pojazd (Różnicowa + Drzewo)</div>
     <div class="btn" onclick="editVehicle()">${lk('pro')}✏️ Edytuj dane pojazdu</div>
     <div class="btn" onclick="vehicleReport()">${lk('warsztat')}📄 Karta serwisowa dla klienta (PDF)</div>
     <div class="btn" style="border-color:var(--hero);color:var(--hero)" onclick="renderNewOrderForm('${v.id}')">${lk('warsztat')}📋 Utwórz Zlecenie Serwisowe dla tego pojazdu</div>
-    <div class="btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="nav('lab', '${v.id}')">⚡ Pomiary w Elektronicznym Laboratorium</div>
+    <div class="btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="nav('lab', '${v.id}')">⚡ Pomiary w Elektronicznym Laboratorium (${vMeas.length})</div>
+    <div class="btn" onclick="activeVehicleContextId='${v.id}';nav('parts')">🔩 Dobierz kompatybilne części</div>
+    <div class="btn" style="border-color:#00f57a;color:#00f57a" onclick="activeVehicleContextId='${v.id}';nav('checklist')">✅ Kontrola Jakości Napraw</div>
     <div class="btn" style="border-color:var(--accent);color:var(--accent)" onclick="nav('servicePlan', '${v.id}')">📅 Harmonogram serwisowy (interwały km/czas)</div>
   </div>
+
+  ${(oemMatched.length || multiMatched.length) ? `<div class="card" style="border-color:#00f57a">
+    <h2 style="color:#00f57a">📘 Powiązane dane techniczne OEM i Katalogu</h2>
+    ${multiMatched.map(mm => `<div class="entry"><b>🏍️ Katalog Multi/ATV:</b> ${escapeHtml(mm.brand)} ${escapeHtml(mm.model)} (${mm.years.join('–')}) · Silnik: ${escapeHtml(mm.engine)} <button type="button" class="btn" style="width:auto;margin:4px 0 0;padding:3px 8px;font-size:10px" onclick="nav('multicyl','katalog')">Otwórz w module Multi →</button></div>`).join('')}
+    ${oemMatched.map(r => `<div class="entry">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+        <b>${escapeHtml(r['Parametr'])}: ${escapeHtml(r['Wartość'])} ${escapeHtml(r['Jednostka']||'')}</b>
+        ${renderReliabilityBadge(r.reliability)}
+      </div>
+      <small>${escapeHtml(r['Model / kod silnika'])} · ${escapeHtml(r['Układ'])} · Warunki: ${escapeHtml(r['Warunki pomiaru / zastosowania']||'—')}</small>
+    </div>`).join('')}
+  </div>` : ''}
+
   ${(v.ownerName||v.ownerPhone) ? `
   <div class="card"><h2>Klient</h2>
     <small>👤 ${escapeHtml(v.ownerName||'Bez nazwy')}</small>
     ${v.ownerPhone?`<small>📞 ${escapeHtml(v.ownerPhone)}</small><a class="btn" style="display:block;text-decoration:none" href="tel:${escapeHtml(v.ownerPhone)}">📞 Zadzwoń do klienta</a>`:''}
   </div>` : ''}
-  <div class="card"><h2>Dodaj naprawę</h2>
+
+  <div class="card" style="border-color:var(--hero)">
+    <h2>📅 Zalecenia serwisowe i kolejne przeglądy</h2>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input id="vehRecInput" placeholder="Dodaj zalecenie (np. Wymiana paska za 1500 km)" style="flex:1;margin:0">
+      <button type="button" class="btn" style="width:auto;margin:0;padding:8px 12px" onclick="addVehicleRecommendation('${v.id}')">＋</button>
+    </div>
+    ${vRecs.length === 0 ? '<div class="empty" style="padding:8px">Brak zaleceń serwisowych dla tego pojazdu.</div>' : vRecs.map(r => `
+      <div class="entry" style="display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer" onclick="toggleVehicleRecommendation('${v.id}','${r.id}')">
+        <span style="${r.done?'text-decoration:line-through;opacity:0.6':''}">${r.done?'✅':'🔔'} ${escapeHtml(r.text)} <small style="color:var(--dim)">(${escapeHtml(r.date)})</small></span>
+      </div>`).join('')}
+    ${vRemMatch.length ? `<div style="margin-top:6px"><small style="color:var(--cyan)">Powiązane przypomnienia:</small>${vRemMatch.map(rm => `<div class="entry"><small>⏰ ${escapeHtml(rm.text||rm.title||'')}</small></div>`).join('')}</div>` : ''}
+  </div>
+
+  <div class="card">
+    <h2>🩺 Zgłoszony objaw (szybki wpis)</h2>
+    <div style="display:flex;gap:6px">
+      <input id="vehSympInput" placeholder="Wpisz objaw (np. przerywa po rozgrzaniu, ślizga CVT)" style="flex:1;margin:0">
+      <button type="button" class="btn" style="width:auto;margin:0;padding:8px 12px" onclick="addVehicleSymptomEntry('${v.id}')">＋</button>
+    </div>
+  </div>
+
+  <div class="card"><h2>Dodaj naprawę bezpośrednio do historii</h2>
     <input id="rSymptom" placeholder="Objaw">
     <input id="rDiag" placeholder="Diagnoza">
     <textarea id="rRepair" placeholder="Wykonana naprawa"></textarea>
@@ -5023,12 +5868,26 @@ function renderVehicleDetail(){
     <div id="rPhotoPreview" style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0"></div>
     <div class="btn" onclick="addRepair()">+ Zapisz naprawę</div>
   </div>
-  <div class="card"><h2>Historia napraw (${rs.length})</h2>
-    ${rs.length===0?'<div class="empty">Brak napraw</div>':rs.slice().reverse().map(r=>`
-      <div class="entry"><b>${escapeHtml(r.repair)}</b><small>${escapeHtml(r.date)} · ${escapeHtml(r.cost||'koszt —')}${r.mileage?' · '+escapeHtml(r.mileage):''}</small>
-      <div>${r.symptom?`Objaw: ${escapeHtml(r.symptom)}<br>`:''}${r.diagnosis?`Diagnoza: ${escapeHtml(r.diagnosis)}<br>`:''}${r.parts?`Części: ${escapeHtml(r.parts)}`:''}</div>
-      ${Array.isArray(r.photos) && r.photos.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin:6px 0">${r.photos.map(p => `<img src="${p}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid var(--border)" onclick="zoomPhoto('${p}')">`).join('')}</div>` : ''}
-      <div class="btn" onclick="delRepair('${r.id}')">🗑️ Usuń naprawę</div></div>`).join('')}
+
+  <div class="card" style="border-color:var(--accent)">
+    <h2>📚 Spójna Historia Pojazdu (${timeline.length})</h2>
+    <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;margin:6px 0">
+      ${[['all','Wszystko ('+timeline.length+')'],['diag','Diagnozy ('+vDiag.length+')'],['meas','Pomiary ('+vMeas.length+')'],['repair','Naprawy ('+rs.length+')'],['quality','Jakość ('+vQual.length+')'],['order','Zlecenia ('+vOrders.length+')']].map(([k,lbl]) =>
+        `<button type="button" class="btn ${vehicleHistoryFilter===k?'active':''}" style="width:auto;margin:0;padding:4px 8px;font-size:10px;white-space:nowrap" onclick="vehicleHistoryFilter='${k}';renderVehicleDetail()">${lbl}</button>`
+      ).join('')}
+    </div>
+    ${shownTimeline.length === 0 ? '<div class="empty">Brak wpisów w wybranym filtrze historii.</div>' : shownTimeline.map(it => `
+      <div class="entry" style="border-left:4px solid ${it.color}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+          <b>${escapeHtml(it.title)}</b>
+          <span style="font-size:10px;color:${it.color};font-weight:700">${escapeHtml(it.status)}</span>
+        </div>
+        ${it.body ? `<div style="font-size:12px;margin-top:3px">${escapeHtml(it.body)}</div>` : ''}
+        <small style="color:var(--dim)">${escapeHtml(it.date)}${it.meta ? ' · ' + escapeHtml(it.meta) : ''}</small>
+        ${Array.isArray(it.photos) && it.photos.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin:6px 0">${it.photos.map(p => `<img src="${p}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid var(--border)" onclick="zoomPhoto('${p}')">`).join('')}</div>` : ''}
+        ${it.orderId ? `<div class="btn" style="margin-top:6px;padding:4px 8px;font-size:11px" onclick="renderOrderDetail('${it.orderId}')">📋 Otwórz zlecenie →</div>` : ''}
+        ${it.repairId ? `<div class="btn" style="margin-top:6px;padding:4px 8px;font-size:11px" onclick="delRepair('${it.repairId}')">🗑️ Usuń naprawę</div>` : ''}
+      </div>`).join('')}
   </div>
   <div class="btn" onclick="deleteVehicle('${v.id}')">🗑️ Usuń pojazd</div>`;
 }
@@ -5332,6 +6191,104 @@ function openCatalogModel(id){
  <div class="card"><h3>Co trzeba potwierdzić dla tej wersji</h3><div class="entry">• kod silnika i numer/oznaczenie ramy</div><div class="entry">• momenty dokręcania: wariator, sprzęgło, głowica, koło magnetowe</div><div class="entry">• wymiary paska/rolek, świeca i szczelina</div><div class="entry">• rodzaj i ilość oleju, płynu chłodniczego (jeśli występuje), interwały</div><div class="entry">• schemat instalacji i pinout CDI/regulatora dla danego rocznika</div></div>`;
 }
 
+function evaluatePartForVehicle(p, v){
+  if (!v) return { matched: false, level: getPartReliabilityCode(p), reason: 'Brak aktywnego pojazdu — porównaj kod silnika i wymiary.' };
+  const vMake = normalizeSearchText(v.brand || '');
+  const vModel = normalizeSearchText(v.model || '');
+  const vEng = normalizeSearchText(v.engine || '');
+  const pHay = normalizeSearchText([p.title, p.keywords, p.scope].join(' '));
+
+  const makeHit = vMake && pHay.includes(vMake);
+  const modelTokens = vModel.split(/[^a-z0-9]+/).filter(t => t.length >= 2);
+  const modelHit = modelTokens.some(t => pHay.includes(t));
+  const engTokens = vEng.split(/[^a-z0-9]+/).filter(t => t.length >= 2 && !['cm3','cm'].includes(t));
+  const engHit = engTokens.some(t => pHay.includes(t));
+
+  const code = getPartReliabilityCode(p);
+  if (makeHit && (modelHit || engHit)) {
+    return { matched: true, level: code, reason: 'Pasuje opisem do ' + (v.brand||'') + ' ' + (v.model||'') + (code === 'C' || code === 'U' ? ' — WYMAGANA weryfikacja wariantu/rocznika i wymiarów!' : ' — zweryfikuj rocznik i kod ramy przed montażem.') };
+  }
+  return { matched: false, level: code, reason: 'Karta ogólna lub do innego modelu — NIE traktuj jako potwierdzonego dopasowania do ' + (v.brand||'') + ' ' + (v.model||'') + '.' };
+}
+
+function getPartReliabilityCode(p){
+  const c = String(p.confidence || '').toUpperCase();
+  if (c.includes('WYSOKA') || c.includes('POTWIERDZON')) return 'A';
+  if (c.includes('ŚREDNIA') || c.includes('PRAWDOPODOBN')) return 'B';
+  if (c.includes('BRAK POTWIERDZENIA') || c.includes('NIEPOTWIERDZON')) return 'U';
+  return 'C';
+}
+
+function findPartUsageHistory(p){
+  const hits = [];
+  const terms = [p.title.split('—')[0], p.partNumber].map(normalizeSearchText).filter(x => x.length >= 4);
+  const oemMatches = String(p.partNumber || '').match(/[A-Z0-9]{3,}-[A-Z0-9-]+/gi) || [];
+  oemMatches.forEach(code => terms.push(normalizeSearchText(code)));
+
+  (repairs || []).forEach(r => {
+    const hay = normalizeSearchText((r.parts || '') + ' ' + (r.repair || ''));
+    if (hay && terms.some(t => hay.includes(t))) {
+      const rv = vehicles.find(x => x.id === r.vehicleId);
+      hits.push('🔧 Naprawa ' + (r.date||'') + (rv ? ' (' + (rv.brand||'') + ' ' + (rv.model||'') + ')' : '') + ': ' + (r.parts || r.repair));
+    }
+  });
+  (orders || []).forEach(o => {
+    (o.partsList || []).forEach(op => {
+      const hay = normalizeSearchText(op.name || '');
+      if (hay && terms.some(t => hay.includes(t))) {
+        hits.push('📋 Zlecenie ' + (o.number||'') + ' (' + (o.vehicleMake||'') + ' ' + (o.vehicleModel||'') + '): ' + op.name);
+      }
+    });
+  });
+  return hits.slice(0, 4);
+}
+
+function addCatalogPartToCostOrOrder(partId){
+  const p = PARTS_DATABASE.find(x => x.id === partId);
+  if (!p) return;
+  const o = hasPlan('warsztat') ? getActiveOrder() : null;
+  const defaultTitle = p.title + (p.partNumber && p.partNumber.length < 40 ? ' (' + p.partNumber + ')' : '');
+  if (o) {
+    const priceStr = prompt('Dodajesz do zlecenia ' + o.number + '.\nPodaj cenę sprzedaży dla klienta (zł):', '0');
+    if (priceStr === null) return;
+    const costStr = prompt('Podaj koszt zakupu / hurt (zł, opcjonalnie):', '0');
+    if (costStr === null) return;
+    const qtyStr = prompt('Ilość (szt.):', '1');
+    if (qtyStr === null) return;
+    const qty = Math.max(1, parseInt(qtyStr, 10) || 1);
+    const unitPrice = Math.max(0, parseFloat(priceStr) || 0);
+    const costPrice = Math.max(0, parseFloat(costStr) || 0);
+    if (!Array.isArray(o.partsList)) o.partsList = [];
+    o.partsList.push({
+      name: defaultTitle,
+      partId: p.id,
+      qty,
+      costPrice,
+      unitPrice,
+      total: Math.round(qty * unitPrice * 100) / 100,
+      totalCost: Math.round(qty * costPrice * 100) / 100
+    });
+    recalculateOrderTotal(o);
+    save('naprawnik_orders', orders);
+    alert('✅ Dodano „' + p.title + '” bezpośrednio do kosztorysu zlecenia ' + o.number + '.');
+    return;
+  }
+  const priceShop = prompt('Dodaj część do kalkulatora kosztorysu.\nPodaj orientacyjną cenę (zł):', '0');
+  if (priceShop === null) return;
+  const list = load('naprawnik_shop');
+  list.push({ name: defaultTitle, tier: 'OEM/Katalog', price: Math.max(0, parseFloat(priceShop) || 0) });
+  save('naprawnik_shop', list);
+  alert('✅ Dodano „' + p.title + '” do kosztorysu (Cennik / Kosztorys).');
+}
+
+function applyRepairPartsFilter(queryText){
+  const inp = document.getElementById('partsQuery');
+  if (inp) inp.value = queryText;
+  activePartsCat = 'all';
+  document.querySelectorAll('.parts-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === 'all'));
+  filterPartsFinder();
+}
+
 function renderPartsFinder(){
   const q=normalizeSearchText(document.getElementById('partsQuery')?.value||'');
   document.querySelectorAll('#screen .diag-card').forEach(card=>{
@@ -5339,10 +6296,20 @@ function renderPartsFinder(){
     const desc=normalizeSearchText(card.textContent||'');
     card.style.display=(!q||title.includes(q)||desc.includes(q))?'':'none';
   });
-  const matches=PARTS_DATABASE.filter(p=>!q||normalizeSearchText([p.title,p.keywords,p.scope,p.partNumber,p.dimensions,p.confidence,p.caution].join(' ')).includes(q));
-  screen.innerHTML=back()+`<div class="card"><h2>🔩 Katalog doboru części</h2>
-    <p style="font-size:12px;line-height:1.55">Najpierw ustal dokładny model, rocznik, kod silnika i wariant. W kartach oddzielono <b>źródło zgodności</b> od <b>oferty zakupu</b>. Jeśli nie ma wiarygodnego dopasowania, karta podaje tylko kryteria doboru i wyszukiwarki sprzedawców — nie zgaduje numeru OEM.</p>
-    <input id="partsQuery" placeholder="Szukaj: Aerox 1PL1, 5BM-H1800-01, 3VL-15570-00, EBC SFA193…" value="${escapeHtml(q)}" oninput="filterPartsFinder()">
+  screen.innerHTML=back()+renderActiveContextBanner('parts')+`<div class="card"><h2>🔩 Katalog doboru części &amp; Zgodność OEM</h2>
+    <p style="font-size:12px;line-height:1.55">Najpierw ustal dokładny model, rocznik, kod silnika i wariant. Każda karta rozdziela <b>źródło OEM</b> od <b>niepotwierdzonego zamiennika</b>. Nie zakładaj zgodności 1:1 przy poziomie C/U.</p>
+    <input id="partsQuery" placeholder="Szukaj: Aerox 1PL1, 5BM-H1800-01, 3VL-15570-00, EBC SFA193, łożysko 6204…" value="${escapeHtml(q)}" oninput="filterPartsFinder()">
+    <div style="margin:6px 0">
+      <small style="color:var(--dim);display:block;margin-bottom:4px">Lista części potrzebnych do typowej naprawy:</small>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button type="button" class="btn" style="width:auto;margin:0;padding:3px 7px;font-size:10px" onclick="applyRepairPartsFilter('pasek')">Napęd CVT</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:3px 7px;font-size:10px" onclick="applyRepairPartsFilter('iskra')">Układ zapłonowy</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:3px 7px;font-size:10px" onclick="applyRepairPartsFilter('klocki')">Hamulce</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:3px 7px;font-size:10px" onclick="applyRepairPartsFilter('gaźnik')">Gaźnik / Dolot</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:3px 7px;font-size:10px" onclick="applyRepairPartsFilter('6204')">Remont wału 2T</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:3px 7px;font-size:10px" onclick="applyRepairPartsFilter('')">Wyczyść</button>
+      </div>
+    </div>
     <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin:8px 0">
       <button class="btn parts-cat-btn ${activePartsCat==='all'?'active':''}" data-cat="all" style="font-size:11px;padding:4px 8px;margin:0" onclick="setPartsCat('all')">Wszystkie</button>
       <button class="btn parts-cat-btn ${activePartsCat==='silnik'?'active':''}" data-cat="silnik" style="font-size:11px;padding:4px 8px;margin:0" onclick="setPartsCat('silnik')">Silnik</button>
@@ -5406,7 +6373,7 @@ function getPartCategory(p){
   if(/gaźnik|paliw|dolot|iglica|kranik|membran/.test(text)) return 'paliwo';
   if(/pasek|cvt|wariator|rolki|sprzęgło|dzwon/.test(text)) return 'naped';
   if(/hamulc|klocki|tarcza|szczęki|zacisk/.test(text)) return 'hamulce';
-  if(/silnik|cylinder|tłok|zawór|głowic|uszczelk/.test(text)) return 'silnik';
+  if(/silnik|cylinder|tłok|zawór|głowic|uszczelk|6204/.test(text)) return 'silnik';
   if(/rozrusznik|stator|regulator|prądnica|akumulator/.test(text)) return 'elektryka';
   if(/filtr/.test(text)) return 'filtry';
   return 'inne';
@@ -5421,7 +6388,7 @@ function getConfidenceBadge(confidenceStr){
   }
   return '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(0,229,255,0.15);border:1px solid #00e5ff;color:#00e5ff">🔵 Wymaga weryfikacji wymiarów</span>';
 }
-
+
 function filterPartsFinder(){
   const q=normalizeSearchText(document.getElementById('partsQuery')?.value||'');
   document.querySelectorAll('#screen .diag-card').forEach(card=>{
@@ -5429,25 +6396,47 @@ function filterPartsFinder(){
     const desc=normalizeSearchText(card.textContent||'');
     card.style.display=(!q||title.includes(q)||desc.includes(q))?'':'none';
   });
-  const matches=PARTS_DATABASE.filter(p=>{
+  const v = getActiveVehicle();
+  const o = hasPlan('warsztat') ? getActiveOrder() : null;
+  let matches=PARTS_DATABASE.filter(p=>{
     if(activePartsCat !== 'all' && getPartCategory(p) !== activePartsCat) return false;
     return !q||normalizeSearchText([p.title,p.keywords,p.scope,p.partNumber,p.dimensions,p.confidence,p.caution].join(' ')).includes(q);
   });
+  if (v) {
+    matches = matches.slice().sort((a, b) => {
+      const am = evaluatePartForVehicle(a, v).matched ? 1 : 0;
+      const bm = evaluatePartForVehicle(b, v).matched ? 1 : 0;
+      if (bm !== am) return bm - am;
+      return (a.priority || 99) - (b.priority || 99);
+    });
+  }
 
   const count=document.getElementById('partsCount'); if(count) count.textContent=`Wyniki: ${matches.length} / ${PARTS_DATABASE.length} kart doboru`;
   const results=document.getElementById('partsResults'); if(!results) return;
   if(!matches.length){results.innerHTML='<div class="card empty">Brak trafień w tej kategorii. Spróbuj wybrać inną kategorię lub wpisać inny kod.</div>';return;}
-  results.innerHTML=matches.map(p=>`<div class="card" style="border-color:${p.priority<10?'var(--hero)':'var(--border)'}">
-    <h2>${escapeHtml(p.title)}</h2>
-    <div style="margin:4px 0">${getConfidenceBadge(p.confidence)}</div>
-    <div class="entry"><b>Zakres / wariant</b><small>${escapeHtml(p.scope)}</small></div>
-    <div class="entry"><b>Numer części / OEM</b><small>${escapeHtml(p.partNumber)}</small></div>
-    <div class="entry"><b>Wymiary / kryteria</b><small>${escapeHtml(p.dimensions)}</small></div>
-    <div class="entry"><b>Poziom pewności</b><small>${escapeHtml(p.confidence)}</small></div>
-    <div class="entry"><b>Źródło zgodności / katalog OEM</b><small>${p.compatibility.map(x=>`<a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.label)} ↗</a>`).join('<br>')}</small></div>
-    <div class="entry"><b>Zakup / wyszukiwanie u sprzedawcy</b><small>${p.purchase.map(x=>`<a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.label)} ↗</a>`).join('<br>')}</small></div>
-    <div class="alert" style="text-align:left;white-space:normal">⚠️ ${escapeHtml(p.caution)}</div>
-  </div>`).join('');
+  results.innerHTML=matches.map(p=>{
+    const vEval = evaluatePartForVehicle(p, v);
+    const usage = findPartUsageHistory(p);
+    const isUnverifiedAlt = vEval.level === 'C' || vEval.level === 'U';
+    return `<div class="card" style="border-color:${vEval.matched ? '#00f57a' : (p.priority<10?'var(--hero)':'var(--border)')}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+        <h2>${escapeHtml(p.title)}</h2>
+        ${renderReliabilityBadge(vEval.level)}
+      </div>
+      <div style="margin:4px 0">${getConfidenceBadge(p.confidence)}</div>
+      ${v ? `<div class="entry" style="border-left:3px solid ${vEval.matched?'#00f57a':'#ff6b6b'}"><small><b>Kontrola zgodności dla ${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'')}:</b> ${escapeHtml(vEval.reason)}</small></div>` : ''}
+      ${isUnverifiedAlt ? `<div class="entry" style="border-left:3px solid #ffe066"><small style="color:#ffe066">⚠️ Niepotwierdzony zamiennik lub karta ogólna — nie montuj bez weryfikacji numeru OEM i pomiarów starej części.</small></div>` : ''}
+      <div class="entry"><b>Zakres / wariant</b><small>${escapeHtml(p.scope)}</small></div>
+      <div class="entry"><b>Numer części / OEM i zamienniki</b><small>${escapeHtml(p.partNumber)}</small></div>
+      <div class="entry"><b>Wymiary / kryteria</b><small>${escapeHtml(p.dimensions)}</small></div>
+      <div class="entry"><b>Poziom pewności</b><small>${escapeHtml(p.confidence)}</small></div>
+      ${usage.length ? `<div class="entry"><b>Historia użycia w Twoich naprawach</b><small>${usage.map(u=>escapeHtml(u)).join('<br>')}</small></div>` : ''}
+      <div class="entry"><b>Źródło zgodności / katalog OEM</b><small>${p.compatibility.map(x=>`<a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.label)} ↗</a>`).join('<br>')}</small></div>
+      <div class="entry"><b>Zakup / wyszukiwanie u sprzedawcy</b><small>${p.purchase.map(x=>`<a href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.label)} ↗</a>`).join('<br>')}</small></div>
+      <div class="alert" style="text-align:left;white-space:normal">⚠️ ${escapeHtml(p.caution)}</div>
+      <button type="button" class="btn" style="margin-top:8px;border-color:var(--hero);color:var(--hero);font-size:11px" onclick="addCatalogPartToCostOrOrder('${p.id}')">➕ Dodaj do ${o ? 'kosztorysu zlecenia ' + escapeHtml(o.number) : 'kosztorysu / listy części'}</button>
+    </div>`;
+  }).join('');
 }
 
 const navHistory = [];
@@ -6290,12 +7279,36 @@ const KNOW_EVIDENCE_LABELS={confirmed:'Potwierdzone w instrukcji modelowej — t
 function knowledgeCategory(c){return c.category||KNOW_CATEGORY_BY_ID[c.id]||'Diagnostyka ogólna';}
 function knowledgeEvidence(c){return c.evidence||'unlinked';}
 const KNOW_RELATED={revs_no_speed:['low_power','belt_break','cvt-no-engage','clutch-bell-blue','variator-flatspots','cvt-yq50-inspection'],low_power:['revs_no_speed','fuel-starvation','carb-bogging','weak-spark','no_start','dellorto-ecs'],stall_hot:['weak-spark','no_start','four-stroke-valves','fuel-starvation','intake-high-idle','pickup-metal-filings'],no_start:['weak-spark','stall_hot','ignition-kickback','piston-reversed-yq50','purejet-air-pressure-loss','sparkplug-reach-squish'],vibration_noise:['clutch-bell-blue','variator-flatspots','cvt-no-engage','belt_break','cvt-yq50-inspection'],charging:['battery-drain','overcharge','intermittent-lights','weak-spark'],belt_break:['revs_no_speed','cvt-no-engage','clutch-bell-blue','cvt-yq50-inspection'],'two-stroke-seizure':['piston-reversed-yq50','sparkplug-reach-squish','two-stroke-air-leak'],'two-stroke-air-leak':['intake-high-idle','stall_hot','fuel-starvation'],'four-stroke-valves':['stall_hot','no_start','low_power'],'fuel-overflow':['carb-overflow-detailed','carb-bogging','fuel-starvation'],'fuel-starvation':['fuel-overflow','carb-bogging','low_power','purejet-air-pressure-loss','purejet-emulsion'],'intake-backfire':['exhaust-backfire','weak-spark','ignition-kickback'],'exhaust-backfire':['intake-backfire','weak-spark','ignition-kickback'],'weak-spark':['no_start','stall_hot','pickup-metal-filings','flywheel-magnet-loss','sparkplug-reach-squish','ignition-kickback'],'coolant-loss':['fan-not-working','low_power'],'fan-not-working':['coolant-loss'],'clutch-bell-blue':['revs_no_speed','vibration_noise','cvt-no-engage','cvt-yq50-inspection'],'variator-flatspots':['revs_no_speed','vibration_noise','cvt-no-engage','cvt-yq50-inspection'],'cvt-no-engage':['revs_no_speed','belt_break','clutch-bell-blue','cvt-yq50-inspection'],'carb-bogging':['fuel-starvation','fuel-overflow','low_power','dellorto-ecs'],'intake-high-idle':['two-stroke-air-leak','stall_hot'],'purejet-emulsion':['purejet-air-pressure-loss','fuel-starvation','low_power'],'purejet-air-pressure-loss':['purejet-emulsion','fuel-starvation','no_start','low_power'],'piston-reversed-yq50':['two-stroke-seizure','no_start','low_power'],'sparkplug-reach-squish':['weak-spark','no_start','two-stroke-seizure','ignition-kickback'],'cvt-yq50-inspection':['revs_no_speed','belt_break','cvt-no-engage','clutch-bell-blue','variator-flatspots','vibration_noise'],'dellorto-ecs':['carb-bogging','fuel-starvation','low_power'],'pickup-metal-filings':['weak-spark','no_start','stall_hot'],'flywheel-magnet-loss':['weak-spark','no_start','stall_hot'],'ignition-kickback':['no_start','weak-spark','intake-backfire','exhaust-backfire'],'peugeot-aec400':['no_start','weak-spark','intermittent-lights'],'peugeot-oil-pump-limp':['low_power','no_start','carb-bogging']};
+function saveKnowledgeCaseToContext(caseId){
+  const kc = knowledgeCases.find(x => x.id === caseId);
+  if (!kc) return;
+  const v = getActiveVehicle();
+  const o = getActiveOrder();
+  if (!v && !o) {
+    alert('Wybierz aktywny pojazd w pasku Kontekstu u góry ekranu, aby przypiąć ten przypadek do historii pojazdu.');
+    return;
+  }
+  const stamp = new Date().toLocaleString('pl-PL');
+  const firstCause = (kc.areas && kc.areas[0]) ? (kc.areas[0][0] + ': ' + kc.areas[0][1]) : '';
+  if (v) {
+    if (!Array.isArray(v.diagLog)) v.diagLog = [];
+    v.diagLog.push({ id: 'dlg_' + uid(), date: stamp, symptom: kc.title, status: 'hypothesis', conclusion: kc.title, detail: firstCause, source: (kc.source && kc.source.label) || 'Baza przypadków NAPRAWNIK' });
+    save('naprawnik_vehicles', vehicles);
+  }
+  if (o) {
+    o.diagnosis = (o.diagnosis ? o.diagnosis + '\n' : '') + '[' + stamp + '] Przypadek z bazy: ' + kc.title;
+    save('naprawnik_orders', orders);
+  }
+  alert('✅ Przypadek "' + kc.title + '" przypisano do historii ' + (v ? 'pojazdu' : '') + (o ? ' i zlecenia ' + o.number : '') + '.');
+}
+
 function renderKnowledge(){
  const categories=[...new Set(knowledgeCases.map(knowledgeCategory))].sort((a,b)=>a.localeCompare(b,'pl'));
- const cards=knowledgeCases.map(c=>{const category=knowledgeCategory(c),evidence=knowledgeEvidence(c);const sourceMarkup=c.source?'<div class="entry"><b>Dokumentacja:</b><small>'+escapeHtml(c.source.label)+'</small><a href="'+escapeHtml(c.source.url)+'" target="_blank" rel="noopener noreferrer">Otwórz instrukcję / źródło</a></div>':'';const relatedIds=(c.related||KNOW_RELATED[c.id]||[]).filter((id,i,all)=>all.indexOf(id)===i&&knowledgeCases.some(x=>x.id===id));const relatedMarkup=relatedIds.length?'<div class="entry"><b>Powiązane przypadki</b><div class="knowledge-rel-wrap">'+relatedIds.map(id=>{const t=knowledgeCases.find(x=>x.id===id);return '<span class="knowledge-rel" role="button" tabindex="0" onclick="jumpToKnowledge(\''+id+'\')">'+escapeHtml(t.title)+'</span>';}).join('')+'</div></div>':'';return '<div class="card knowledge-case-card" data-knowledge-id="'+c.id+'" data-category="'+escapeHtml(category)+'" data-evidence="'+evidence+'" style="border-color:#276b86"><h2>'+escapeHtml(c.title)+'</h2><div class="knowledge-meta">📂 '+escapeHtml(category)+' · '+escapeHtml(c.tags)+'</div><div class="knowledge-status"><b>Status dokumentacji:</b> '+KNOW_EVIDENCE_LABELS[evidence]+'</div>'+c.areas.map(([h,t])=>'<div class="entry"><b>'+escapeHtml(h)+'</b><small style="white-space:normal;line-height:1.5">'+escapeHtml(t)+'</small></div>').join('')+sourceMarkup+relatedMarkup+'<div class="btn" onclick="nav(\''+(KNOW_LINKS[c.id]||['diag',''])[0]+'\',\''+(KNOW_LINKS[c.id]||['diag',''])[1]+'\')">↗ Otwórz powiązany dział</div></div>';}).join('');
- screen.innerHTML=back()+'<div class="card"><h2>🧭 Diagnostyka łączona: silnik + elektryka + CVT</h2><div class="diag-sub">Biblioteka: '+knowledgeCases.length+' kart. Powiązane objawy prowadzą do innych kart; korelacja nie potwierdza sama przyczyny.</div><p style="font-size:12px;color:var(--dim);line-height:1.55">Szukaj po objawie, części, przyczynie lub teście. Filtruj po kategorii i statusie źródła. Niepotwierdzony wpis to trop, a nie pewna diagnoza.</p><input id="knowledgeFilter" placeholder="Szukaj: gaśnie, brak mocy, impulsator, O-ring, pasek…" oninput="filterKnowledge()"><div class="grid2"><select id="knowledgeCategory" aria-label="Filtr kategorii" onchange="filterKnowledge()"><option value="">Wszystkie kategorie</option>'+categories.map(cat=>'<option value="'+escapeHtml(cat)+'">'+escapeHtml(cat)+'</option>').join('')+'</select><select id="knowledgeEvidence" aria-label="Filtr statusu dokumentacji" onchange="filterKnowledge()"><option value="">Wszystkie statusy</option><option value="confirmed">Potwierdzone w instrukcji</option><option value="partial">Częściowo potwierdzone</option><option value="unlinked">Bez przypisanej serwisówki</option></select></div><small id="knowledgeCount" style="display:block;color:var(--dim);margin:0 0 8px"></small><div class="btn" onclick="nav(\'engine\',\'CVT\')">🔄 Przejdź do mechaniki CVT</div><div class="btn" onclick="nav(\'wiring\',\'2T\')">⚡ Przejdź do instalacji 2T</div><div class="btn" onclick="nav(\'multimeter\')">📏 Procedury multimetrem</div></div><div id="knowledgeCards">'+cards+'</div><div class="card"><h2>📚 Źródła i zasady potwierdzania</h2><p style="font-size:12px;line-height:1.5">Serwisówka potwierdza tylko model i procedurę, którą opisuje. Ustal model, rocznik i kod silnika przed porównaniem pomiarów.</p><div class="entry"><b>Piaggio NRG Power PureJet — Workshop Manual</b><small>Kontrola ciśnienia powietrza, nieszczelności i O-ring przy wtryskiwaczu.</small><a href="https://www.49ccscoot.com/manuals/Piaggio-NRG-Power-Purejet_Shop_Manual.pdf" target="_blank" rel="noopener noreferrer">Otwórz instrukcję PDF</a></div><div class="entry"><b>Yamaha YQ50 5BS-AE2 — Service Manual (1997)</b><small>Orientacja tłoka, świeca, układ zapłonowy i kontrola CVT dla tej wersji.</small><a href="https://scootergrisen.org/scooterhjemmeside/download/yamaha_aerox_servicemanual.pdf" target="_blank" rel="noopener noreferrer">Otwórz instrukcję PDF</a></div><div class="entry"><b>Dell’Orto E.C.S. EURO 4 — short user manual</b><small>Rodzina sterowników i ograniczenia pinoutu do konkretnego wariantu; nie zastępuje serwisówki OEM.</small><a href="https://www.immo-tools.lt/site/files/failai/ASW-NEXT/DELLORTO_ECS_UM.pdf" target="_blank" rel="noopener noreferrer">Otwórz instrukcję PDF</a></div><div class="entry"><b>Materiały społecznościowe</b><small>Pomagają znaleźć tropy, lecz nie potwierdzają same z siebie specyfikacji OEM.</small><a href="https://www.reddit.com/r/scooters/" target="_blank" rel="noopener noreferrer">Społeczność skuterowa</a></div></div>';
+ const cards=knowledgeCases.map(c=>{const category=knowledgeCategory(c),evidence=knowledgeEvidence(c);const sourceMarkup=c.source?'<div class="entry"><b>Dokumentacja:</b><small>'+escapeHtml(c.source.label)+'</small><a href="'+escapeHtml(c.source.url)+'" target="_blank" rel="noopener noreferrer">Otwórz instrukcję / źródło</a></div>':'';const relatedIds=(c.related||KNOW_RELATED[c.id]||[]).filter((id,i,all)=>all.indexOf(id)===i&&knowledgeCases.some(x=>x.id===id));const relatedMarkup=relatedIds.length?'<div class="entry"><b>Powiązane przypadki</b><div class="knowledge-rel-wrap">'+relatedIds.map(id=>{const t=knowledgeCases.find(x=>x.id===id);return '<span class="knowledge-rel" role="button" tabindex="0" onclick="jumpToKnowledge(\''+id+'\')">'+escapeHtml(t.title)+'</span>';}).join('')+'</div></div>':'';return '<div class="card knowledge-case-card" data-knowledge-id="'+c.id+'" data-category="'+escapeHtml(category)+'" data-evidence="'+evidence+'" style="border-color:#276b86"><h2>'+escapeHtml(c.title)+'</h2><div class="knowledge-meta">📂 '+escapeHtml(category)+' · '+escapeHtml(c.tags)+'</div><div class="knowledge-status"><b>Status dokumentacji:</b> '+KNOW_EVIDENCE_LABELS[evidence]+'</div>'+c.areas.map(([h,t])=>'<div class="entry"><b>'+escapeHtml(h)+'</b><small style="white-space:normal;line-height:1.5">'+escapeHtml(t)+'</small></div>').join('')+sourceMarkup+relatedMarkup+'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><div class="btn" style="flex:1;margin:0;font-size:11px" onclick="nav(\''+(KNOW_LINKS[c.id]||['diag',''])[0]+'\',\''+(KNOW_LINKS[c.id]||['diag',''])[1]+'\')">↗ Otwórz dział</div><div class="btn" style="flex:1;margin:0;font-size:11px;border-color:#00f57a;color:#00f57a" onclick="saveKnowledgeCaseToContext(\''+c.id+'\')">📌 Przypisz do pojazdu</div></div></div>';}).join('');
+ screen.innerHTML=back()+renderActiveContextBanner('knowledge')+'<div class="card"><h2>🧭 Diagnostyka łączona: silnik + elektryka + CVT</h2><div class="diag-sub">Biblioteka: '+knowledgeCases.length+' kart. Powiązane objawy prowadzą do innych kart; korelacja nie potwierdza sama przyczyny.</div><p style="font-size:12px;color:var(--dim);line-height:1.55">Szukaj po objawie, części, przyczynie lub teście. Filtruj po kategorii i statusie źródła. Niepotwierdzony wpis to trop, a nie pewna diagnoza.</p><input id="knowledgeFilter" placeholder="Szukaj: gaśnie, brak mocy, impulsator, O-ring, pasek…" oninput="filterKnowledge()"><div class="grid2"><select id="knowledgeCategory" aria-label="Filtr kategorii" onchange="filterKnowledge()"><option value="">Wszystkie kategorie</option>'+categories.map(cat=>'<option value="'+escapeHtml(cat)+'">'+escapeHtml(cat)+'</option>').join('')+'</select><select id="knowledgeEvidence" aria-label="Filtr statusu dokumentacji" onchange="filterKnowledge()"><option value="">Wszystkie statusy</option><option value="confirmed">Potwierdzone w instrukcji</option><option value="partial">Częściowo potwierdzone</option><option value="unlinked">Bez przypisanej serwisówki</option></select></div><small id="knowledgeCount" style="display:block;color:var(--dim);margin:0 0 8px"></small><div class="btn" onclick="nav(\'diag\')">🧠 Otwórz Diagnostykę Różnicową</div><div class="btn" onclick="nav(\'engine\',\'CVT\')">🔄 Przejdź do mechaniki CVT</div><div class="btn" onclick="nav(\'wiring\',\'2T\')">⚡ Przejdź do instalacji 2T</div><div class="btn" onclick="nav(\'multimeter\')">📏 Procedury multimetrem</div></div><div id="knowledgeCards">'+cards+'</div><div class="card"><h2>📚 Źródła i zasady potwierdzania</h2><p style="font-size:12px;line-height:1.5">Serwisówka potwierdza tylko model i procedurę, którą opisuje. Ustal model, rocznik i kod silnika przed porównaniem pomiarów.</p><div class="entry"><b>Piaggio NRG Power PureJet — Workshop Manual</b><small>Kontrola ciśnienia powietrza, nieszczelności i O-ring przy wtryskiwaczu.</small><a href="https://www.49ccscoot.com/manuals/Piaggio-NRG-Power-Purejet_Shop_Manual.pdf" target="_blank" rel="noopener noreferrer">Otwórz instrukcję PDF</a></div><div class="entry"><b>Yamaha YQ50 5BS-AE2 — Service Manual (1997)</b><small>Orientacja tłoka, świeca, układ zapłonowy i kontrola CVT dla tej wersji.</small><a href="https://scootergrisen.org/scooterhjemmeside/download/yamaha_aerox_servicemanual.pdf" target="_blank" rel="noopener noreferrer">Otwórz instrukcję PDF</a></div><div class="entry"><b>Dell’Orto E.C.S. EURO 4 — short user manual</b><small>Rodzina sterowników i ograniczenia pinoutu do konkretnego wariantu; nie zastępuje serwisówki OEM.</small><a href="https://www.immo-tools.lt/site/files/failai/ASW-NEXT/DELLORTO_ECS_UM.pdf" target="_blank" rel="noopener noreferrer">Otwórz instrukcję PDF</a></div><div class="entry"><b>Materiały społecznościowe</b><small>Pomagają znaleźć tropy, lecz nie potwierdzają same z siebie specyfikacji OEM.</small><a href="https://www.reddit.com/r/scooters/" target="_blank" rel="noopener noreferrer">Społeczność skuterowa</a></div></div>';
  filterKnowledge();
 }
+
 function filterKnowledge(){
  const q=normalizeSearchText(document.getElementById('knowledgeFilter')?.value||''),category=document.getElementById('knowledgeCategory')?.value||'',evidence=document.getElementById('knowledgeEvidence')?.value||'';
  const cards=[...document.querySelectorAll('#knowledgeCards .knowledge-case-card, #knowledgeCards .diag-card')];let shown=0;
@@ -6378,14 +7391,19 @@ let measurements = load('naprawnik_measurements');
 function ensureSafeArrays(){
   if(!Array.isArray(orders)) orders = [];
   if(!Array.isArray(measurements)) measurements = [];
+  if(!Array.isArray(inventoryItems)) inventoryItems = [];
+  if(!Array.isArray(qualityLogs)) qualityLogs = [];
 }
 ensureSafeArrays();
 
 // --- MODUŁ 1: KARTA ZLECENIA SERWISOWEGO (WARSZTAT) ---
 const ORDER_STATUS_LABELS = {
   nowe: { label: 'Nowe zlecenie', color: '#00e5ff' },
-  w_trakcie: { label: 'W trakcie naprawy', color: '#ff991f' },
+  diagnostyka: { label: 'Diagnostyka i pomiary', color: '#38bdf8' },
+  czeka_na_zgode: { label: 'Czeka na zgodę klienta', color: '#f472b6' },
   czekanie_na_czesci: { label: 'Oczekiwanie na części', color: '#ffe066' },
+  w_trakcie: { label: 'W trakcie naprawy', color: '#ff991f' },
+  kontrola_jakosci: { label: 'Kontrola jakości', color: '#a78bfa' },
   gotowe: { label: 'Gotowe do odbioru', color: '#00f57a' },
   wydane: { label: 'Wydane klientowi', color: '#a0a0b8' }
 };
@@ -7454,9 +8472,219 @@ function initVoiceDictation(targetInputId){
   _voiceRecognition = recognition;
 }
 
+let activeWorkshopSubTab = 'orders'; // 'orders' | 'inventory' | 'reports'
+
+function setWorkshopSubTab(tab){
+  activeWorkshopSubTab = tab || 'orders';
+  renderOrders();
+}
+
+function getOrderStageSteps(){
+  return ['nowe','diagnostyka','czeka_na_zgode','czekanie_na_czesci','w_trakcie','kontrola_jakosci','gotowe','wydane'];
+}
+
+function renderWorkshopInventoryTab(){
+  const resMap = getInventoryReservations();
+  const lowAlerts = inventoryItems.filter(it => (Number(it.stockQty)||0) - (resMap[it.id]||0) <= (Number(it.minQty)||0));
+  const totalInvValueBuy = inventoryItems.reduce((a, it) => a + ((Number(it.stockQty)||0) * (Number(it.costPrice)||0)), 0);
+  const actOrd = getActiveOrder();
+
+  return `
+  <div class="card" style="border-color:var(--cyan)">
+    <h2>📦 Magazyn Części i Rezerwacje (${inventoryItems.length} pozycji)</h2>
+    <p style="font-size:12px;color:var(--dim)">Kontroluj stany fizyczne, rezerwacje w otwartych zleceniach i alerty minimum. Wartość magazynu (ceny zakupu): <b>${Math.round(totalInvValueBuy * 100) / 100} zł</b></p>
+    ${lowAlerts.length ? `<div class="alert" style="text-align:left;white-space:normal">⚠️ Niski stan magazynowy (${lowAlerts.length}): ${lowAlerts.map(x => escapeHtml(x.name) + ' (dost.: ' + ((Number(x.stockQty)||0)-(resMap[x.id]||0)) + ')').join(', ')}</div>` : ''}
+    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+      <b style="font-size:12px">Dodaj pozycję do magazynu:</b>
+      <div class="grid2" style="margin-top:6px">
+        <input id="invName" placeholder="Nazwa części (np. Pasek CVT 751x16.5)">
+        <input id="invSku" placeholder="Kod OEM / SKU (opcjonalnie)">
+      </div>
+      <div class="grid2">
+        <input id="invQty" type="number" min="0" value="1" placeholder="Ilość na stanie">
+        <input id="invMin" type="number" min="0" value="1" placeholder="Próg alarmowy min.">
+      </div>
+      <div class="grid2">
+        <input id="invCost" type="number" step="0.5" placeholder="Cena zakupu hurt (zł)">
+        <input id="invSell" type="number" step="0.5" placeholder="Cena sprzedaży (zł)">
+      </div>
+      <button type="button" class="btn" style="border-color:#00f57a;color:#00f57a;font-weight:700" onclick="addInventoryItem()">＋ Dodaj część na magazyn</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Stany magazynowe i rezerwacje</h3>
+    ${inventoryItems.length === 0 ? '<div class="empty">Magazyn jest pusty. Dodaj pierwszą część powyżej.</div>' : inventoryItems.map(it => {
+      const stock = Number(it.stockQty) || 0;
+      const reserved = resMap[it.id] || 0;
+      const available = stock - reserved;
+      const isLow = available <= (Number(it.minQty) || 0);
+      return `<div class="entry" style="border-left:4px solid ${isLow ? '#ff6b6b' : '#00f57a'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+          <b>${escapeHtml(it.name)}</b>
+          <span style="font-size:11px;font-weight:700;color:${isLow?'#ff6b6b':'#00f57a'}">Dostępne: ${available} szt.</span>
+        </div>
+        <small>${it.sku ? 'Kod/OEM: ' + escapeHtml(it.sku) + ' · ' : ''}Stan fizyczny: <b>${stock}</b> · Zarezerwowane w zleceniach: <b style="color:#ffe066">${reserved}</b> · Próg min.: ${it.minQty||0}</small><br>
+        <small style="color:var(--dim)">Hurt: ${it.costPrice||0} zł · Klient: ${it.sellPrice||0} zł</small>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          <button type="button" class="btn" style="width:auto;margin:0;padding:4px 9px;font-size:11px" onclick="adjustInventoryQty('${it.id}', 1)">＋1 szt.</button>
+          <button type="button" class="btn" style="width:auto;margin:0;padding:4px 9px;font-size:11px" onclick="adjustInventoryQty('${it.id}', -1)">－1 szt.</button>
+          ${actOrd ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 9px;font-size:11px;border-color:var(--hero);color:var(--hero)" onclick="reserveInventoryPartToOrder('${it.id}','${actOrd.id}')">📋 Zarezerwuj do ${escapeHtml(actOrd.number)}</button>` : ''}
+          <button type="button" class="btn" style="width:auto;margin:0;padding:4px 9px;font-size:11px;border-color:#ff6b6b;color:#ff6b6b" onclick="deleteInventoryItem('${it.id}')">🗑️</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function addInventoryItem(){
+  const name = (document.getElementById('invName')?.value || '').trim();
+  if (!name) { alert('Podaj nazwę części.'); return; }
+  const item = {
+    id: 'inv_' + uid(),
+    name,
+    sku: (document.getElementById('invSku')?.value || '').trim(),
+    stockQty: Math.max(0, parseInt(document.getElementById('invQty')?.value, 10) || 0),
+    minQty: Math.max(0, parseInt(document.getElementById('invMin')?.value, 10) || 0),
+    costPrice: Math.max(0, parseFloat(document.getElementById('invCost')?.value) || 0),
+    sellPrice: Math.max(0, parseFloat(document.getElementById('invSell')?.value) || 0)
+  };
+  inventoryItems.push(item);
+  save('naprawnik_inventory', inventoryItems);
+  renderOrders();
+}
+
+function adjustInventoryQty(invId, delta){
+  const it = inventoryItems.find(x => x.id === invId);
+  if (!it) return;
+  it.stockQty = Math.max(0, (Number(it.stockQty) || 0) + delta);
+  save('naprawnik_inventory', inventoryItems);
+  renderOrders();
+}
+
+function deleteInventoryItem(invId){
+  if (!confirm('Usunąć pozycję z magazynu?')) return;
+  inventoryItems = inventoryItems.filter(x => x.id !== invId);
+  save('naprawnik_inventory', inventoryItems);
+  renderOrders();
+}
+
+function reserveInventoryPartToOrder(invId, orderId){
+  const it = inventoryItems.find(x => x.id === invId);
+  const o = orders.find(x => x.id === orderId);
+  if (!it || !o) return;
+  const resMap = getInventoryReservations();
+  const available = (Number(it.stockQty)||0) - (resMap[it.id]||0);
+  const qtyStr = prompt('Rezerwacja z magazynu do zlecenia ' + o.number + '.\nDostępne: ' + available + ' szt.\nPodaj ilość do rezerwacji:', '1');
+  if (qtyStr === null) return;
+  const qty = Math.max(1, parseInt(qtyStr, 10) || 1);
+  if (qty > available && !confirm('Uwaga: żądana ilość (' + qty + ') przekracza stan dostępny (' + available + '). Dodać mimo to (do zamówienia)?')) return;
+
+  if (!Array.isArray(o.partsList)) o.partsList = [];
+  const costPrice = Number(it.costPrice) || 0;
+  const unitPrice = Number(it.sellPrice) || 0;
+  o.partsList.push({
+    name: it.name + (it.sku ? ' [' + it.sku + ']' : ''),
+    inventoryId: it.id,
+    qty,
+    costPrice,
+    unitPrice,
+    total: Math.round(qty * unitPrice * 100) / 100,
+    totalCost: Math.round(qty * costPrice * 100) / 100
+  });
+  recalculateOrderTotal(o);
+  save('naprawnik_orders', orders);
+  alert('✅ Zarezerwowano ' + qty + ' szt. w zleceniu ' + o.number + '.');
+  renderOrderDetail(o.id);
+}
+
+function deductOrderInventory(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  if (o.inventoryDeducted) { alert('Części ze zlecenia zostały już wcześniej rozchodowane z magazynu.'); return; }
+  let count = 0;
+  (o.partsList || []).forEach(p => {
+    if (p.inventoryId) {
+      const it = inventoryItems.find(x => x.id === p.inventoryId);
+      if (it) {
+        it.stockQty = Math.max(0, (Number(it.stockQty)||0) - (Number(p.qty)||0));
+        count++;
+      }
+    }
+  });
+  o.inventoryDeducted = true;
+  save('naprawnik_inventory', inventoryItems);
+  save('naprawnik_orders', orders);
+  alert(count > 0 ? '✅ Wydano z magazynu pozycje z tego zlecenia (' + count + ' pozycji).' : 'ℹ️ W tym zleceniu nie było pozycji powiązanych z magazynem.');
+  renderOrderDetail(orderId);
+}
+
+function renderWorkshopReportsTab(){
+  let totalRev = 0, closedRev = 0, totalBuy = 0, totalProfit = 0, totalMins = 0;
+  let extraAccepted = 0, extraRejected = 0, warrantyClaimsTotal = 0, qualityPassedCount = 0;
+  const byStatus = {};
+
+  orders.forEach(o => {
+    recalculateOrderTotal(o);
+    const st = o.status || 'nowe';
+    byStatus[st] = (byStatus[st] || 0) + 1;
+    totalRev += Number(o.totalCost) || 0;
+    totalBuy += Number(o.totalInternalCost) || 0;
+    totalProfit += Number(o.grossProfit) || 0;
+    if (st === 'gotowe' || st === 'wydane') closedRev += Number(o.totalCost) || 0;
+    (o.workLogs || []).forEach(w => { totalMins += Number(w.minutes) || 0; });
+    (o.extraFindings || []).forEach(ef => {
+      if (ef.consent === 'accepted') extraAccepted++;
+      else if (ef.consent === 'rejected') extraRejected++;
+    });
+    warrantyClaimsTotal += (o.warrantyClaims || []).length;
+    if (o.qualityProtocol && o.qualityProtocol.passed) qualityPassedCount++;
+  });
+
+  const hours = Math.round((totalMins / 60) * 100) / 100;
+  const avgMargin = totalRev > 0 ? Math.round((totalProfit / totalRev) * 1000) / 10 : 0;
+  const revPerHour = hours > 0 ? Math.round((totalRev / hours) * 100) / 100 : 0;
+
+  return `
+  <div class="card" style="border-color:#ffe066">
+    <h2 style="color:#ffe066">📈 Raporty Właściciela Warsztatu (${orders.length} zleceń)</h2>
+    <div class="grid2" style="margin-top:8px">
+      <div class="entry"><b>Łączny przychód ze zleceń</b><div style="font-size:18px;font-weight:800;color:var(--hero)">${Math.round(totalRev*100)/100} zł</div><small>Zakończone/Gotowe: ${Math.round(closedRev*100)/100} zł</small></div>
+      <div class="entry"><b>Zysk czysty warsztatu</b><div style="font-size:18px;font-weight:800;color:#00f57a">${Math.round(totalProfit*100)/100} zł</div><small>Średnia marża: ${avgMargin}% · Koszty własne: ${Math.round(totalBuy*100)/100} zł</small></div>
+    </div>
+    <div class="grid2" style="margin-top:6px">
+      <div class="entry"><b>Zarejestrowany czas pracy</b><div style="font-size:16px;font-weight:800;color:var(--cyan)">${hours} rbh (${totalMins} min)</div><small>Śr. przychód/rbh: ${revPerHour} zł/h</small></div>
+      <div class="entry"><b>Jakość i dodatki</b><small>Kontrole jakości ZAL: <b>${qualityPassedCount}</b><br>Usterki dodatkowe: ✅ ${extraAccepted} · ❌ ${extraRejected}<br>Zgłoszenia gwarancyjne: <b>${warrantyClaimsTotal}</b></small></div>
+    </div>
+    <div style="margin-top:10px">
+      <b style="font-size:12px">Rozkład etapów realizacji:</b>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        ${Object.entries(ORDER_STATUS_LABELS).map(([k, meta]) => `<span style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid ${meta.color};color:${meta.color}">${escapeHtml(meta.label)}: <b>${byStatus[k]||0}</b></span>`).join('')}
+      </div>
+    </div>
+    <button type="button" class="btn" style="margin-top:12px;border-color:#25D366;color:#25D366;font-weight:700" onclick="exportOrdersCsv()">📊 Eksportuj pełny raport finansowy CSV / Excel</button>
+  </div>`;
+}
+
 function renderOrders(filterStatus){
   if(!hasPlan('warsztat')){ renderLocked('warsztat','Karta Zlecenia Serwisowego','nav(\'home\')'); return; }
   ensureSafeArrays();
+
+  const tabHeader = back() + `
+  <div class="segment" style="margin-bottom:10px">
+    <div class="segment-btn ${activeWorkshopSubTab==='orders'?'active':''}" onclick="setWorkshopSubTab('orders')">📋 Zlecenia (${orders.length})</div>
+    <div class="segment-btn ${activeWorkshopSubTab==='inventory'?'active':''}" onclick="setWorkshopSubTab('inventory')">📦 Magazyn (${inventoryItems.length})</div>
+    <div class="segment-btn ${activeWorkshopSubTab==='reports'?'active':''}" onclick="setWorkshopSubTab('reports')">📈 Raporty</div>
+  </div>`;
+
+  if (activeWorkshopSubTab === 'inventory') {
+    screen.innerHTML = tabHeader + renderWorkshopInventoryTab();
+    return;
+  }
+  if (activeWorkshopSubTab === 'reports') {
+    screen.innerHTML = tabHeader + renderWorkshopReportsTab();
+    return;
+  }
+
   const q = normalizeSearchText(document.getElementById('orderSearchInput')?.value || '');
   let list = orders.slice().reverse();
   if(filterStatus && filterStatus !== 'all'){
@@ -7466,10 +8694,10 @@ function renderOrders(filterStatus){
     list = list.filter(o => normalizeSearchText([o.number, o.customerName, o.customerPhone, o.vehicleMake, o.vehicleModel, o.vin, o.faultDesc].join(' ')).includes(q));
   }
 
-  screen.innerHTML = back() + `
+  screen.innerHTML = tabHeader + `
   <div class="card" style="border-color:var(--hero)">
     <h2>📋 Karta Zlecenia Serwisowego</h2>
-    <p style="font-size:12px;line-height:1.5">Kompleksowa obsługa przyjęcia pojazdu, kosztorysu, części, robocizny, zdjęć oraz protokołu odbioru z podpisem klienta i wydrukiem PDF.</p>
+    <p style="font-size:12px;line-height:1.5">Etapy realizacji, czas pracy, usterki dodatkowe ze zgodą klienta, rezerwacje magazynowe, kontrola końcowa, gwarancja oraz wydruk PDF.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
       <button class="btn" style="flex:1;min-width:140px;background:var(--hero);color:#120c20;font-weight:700;margin:0" onclick="renderNewOrderForm()">＋ Nowe zlecenie</button>
       <button class="btn" style="flex:1;min-width:140px;border-color:#25D366;color:#25D366;font-size:12px;margin:0" onclick="exportOrdersCsv()">📊 Eksportuj CSV / Excel</button>
@@ -7477,26 +8705,31 @@ function renderOrders(filterStatus){
     <input id="orderSearchInput" placeholder="🔍 Szukaj zlecenia (nr, klient, pojazd, VIN, telefon)..." value="${escapeHtml(q)}" oninput="renderOrders('${filterStatus||'all'}')">
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-top:6px">
       <button class="btn ${!filterStatus||filterStatus==='all'?'active':''}" style="font-size:11px;padding:6px 10px;margin:0" onclick="renderOrders('all')">Wszystkie (${orders.length})</button>
-      <button class="btn ${filterStatus==='nowe'?'active':''}" style="font-size:11px;padding:6px 10px;margin:0;border-color:#00e5ff" onclick="renderOrders('nowe')">Nowe</button>
-      <button class="btn ${filterStatus==='w_trakcie'?'active':''}" style="font-size:11px;padding:6px 10px;margin:0;border-color:#ff991f" onclick="renderOrders('w_trakcie')">W trakcie</button>
-      <button class="btn ${filterStatus==='czekanie_na_czesci'?'active':''}" style="font-size:11px;padding:6px 10px;margin:0;border-color:#ffe066" onclick="renderOrders('czekanie_na_czesci')">Części</button>
-      <button class="btn ${filterStatus==='gotowe'?'active':''}" style="font-size:11px;padding:6px 10px;margin:0;border-color:#00f57a" onclick="renderOrders('gotowe')">Gotowe</button>
-      <button class="btn ${filterStatus==='wydane'?'active':''}" style="font-size:11px;padding:6px 10px;margin:0;border-color:#a0a0b8" onclick="renderOrders('wydane')">Wydane</button>
+      ${Object.entries(ORDER_STATUS_LABELS).map(([sk, sm]) => `<button class="btn ${filterStatus===sk?'active':''}" style="font-size:11px;padding:6px 10px;margin:0;border-color:${sm.color};white-space:nowrap" onclick="renderOrders('${sk}')">${escapeHtml(sm.label)}</button>`).join('')}
     </div>
   </div>
   <div class="card">
     <h2>Zlecenia serwisowe (${list.length})</h2>
     ${list.length === 0 ? '<div class="empty">Brak zleceń w wybranym filtrze.</div>' : list.map(o => {
       const st = ORDER_STATUS_LABELS[o.status] || { label: o.status, color: '#fff' };
+      const mins = (o.workLogs || []).reduce((a, w) => a + (Number(w.minutes)||0), 0);
+      const qBadge = o.qualityProtocol ? (o.qualityProtocol.passed ? '🟢 KJ: ZAL' : '🔴 KJ: BŁĄD') : '⚪ Brak KJ';
+      const extraWait = (o.extraFindings || []).filter(ef => ef.consent === 'pending').length;
       return `
       <div class="entry" style="cursor:pointer;border-left:4px solid ${st.color}" onclick="renderOrderDetail('${o.id}')">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <b>${escapeHtml(o.number || 'ZLEC')}</b>
           <span style="font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid ${st.color};color:${st.color}">${st.label}</span>
         </div>
-        <small>👤 ${escapeHtml(o.customerName || 'Klient')} ${o.customerPhone ? '· 📞 ' + escapeHtml(o.customerPhone) : ''}</small>
+        <small>👤 ${escapeHtml(o.customerName || 'Klient')} ${o.customerPhone ? '· 📞 ' + escapeHtml(o.customerPhone) : ''}</small><br>
         <small>🛵 ${escapeHtml(o.vehicleMake || '')} ${escapeHtml(o.vehicleModel || 'Pojazd')} ${o.vin ? '· VIN: ' + escapeHtml(o.vin) : ''}</small>
         <div style="font-size:12px;margin-top:4px;color:var(--text)">${escapeHtml(o.faultDesc || 'Brak opisu usterki')}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:5px;font-size:10px;color:var(--dim)">
+          <span>${qBadge}</span>
+          ${mins ? `<span>⏱️ ${mins} min</span>` : ''}
+          ${extraWait ? `<span style="color:#ffe066">⏳ Zgoda na usterkę (${extraWait})</span>` : ''}
+          ${o.warrantyMonths ? `<span>🛡️ Gwarancja ${o.warrantyMonths} msc</span>` : ''}
+        </div>
         <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--dim)">
           <span>Przyjęto: ${escapeHtml(o.dateIn || '—')}</span>
           <b style="color:var(--hero)">${o.totalCost ? o.totalCost + ' zł' : 'Do wyceny'}</b>
@@ -7602,6 +8835,11 @@ function saveNewOrder(number, linkedVehicleId){
     diagnosis: '',
     workDone: '',
     partsList: [],
+    workLogs: [],
+    extraFindings: [],
+    warrantyMonths: 3,
+    warrantyKm: 1500,
+    warrantyClaims: [],
     laborCost: 0,
     totalCost: 0,
     status: 'nowe',
@@ -7615,25 +8853,129 @@ function saveNewOrder(number, linkedVehicleId){
   renderOrderDetail(order.id);
 }
 
+function addWorkLogToOrder(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  const task = (document.getElementById('wlTask')?.value || '').trim();
+  const minutes = Math.max(1, parseInt(document.getElementById('wlMins')?.value, 10) || 30);
+  const mechanic = (document.getElementById('wlMech')?.value || 'Mechanik').trim();
+  const addCost = Math.max(0, parseFloat(document.getElementById('wlCost')?.value) || 0);
+  if (!task) { alert('Wpisz nazwę czynności roboczej.'); return; }
+  if (!Array.isArray(o.workLogs)) o.workLogs = [];
+  o.workLogs.push({ id: 'wl_' + uid(), task, minutes, mechanic, addCost, date: new Date().toLocaleDateString('pl-PL') });
+  if (addCost > 0) o.laborCost = Math.round(((Number(o.laborCost)||0) + addCost) * 100) / 100;
+  o.workDone = (o.workDone ? o.workDone + '\n' : '') + '• ' + task + ' (' + minutes + ' min)';
+  recalculateOrderTotal(o);
+  save('naprawnik_orders', orders);
+  renderOrderDetail(orderId);
+}
+
+function removeWorkLog(orderId, idx){
+  const o = orders.find(x => x.id === orderId);
+  if (!o || !Array.isArray(o.workLogs)) return;
+  o.workLogs.splice(idx, 1);
+  save('naprawnik_orders', orders);
+  renderOrderDetail(orderId);
+}
+
+function addExtraFindingToOrder(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  const desc = (document.getElementById('efDesc')?.value || '').trim();
+  const estPrice = Math.max(0, parseFloat(document.getElementById('efPrice')?.value) || 0);
+  const estInternal = Math.max(0, parseFloat(document.getElementById('efInternal')?.value) || 0);
+  if (!desc) { alert('Opisz wykrytą usterkę dodatkową.'); return; }
+  if (!Array.isArray(o.extraFindings)) o.extraFindings = [];
+  o.extraFindings.push({
+    id: 'ef_' + uid(),
+    desc,
+    estPrice,
+    estInternal,
+    consent: 'pending', // 'pending' | 'accepted' | 'rejected'
+    consentDate: '',
+    consentNote: ''
+  });
+  save('naprawnik_orders', orders);
+  renderOrderDetail(orderId);
+}
+
+function setExtraFindingConsent(orderId, efId, status){
+  const o = orders.find(x => x.id === orderId);
+  const ef = o?.extraFindings?.find(x => x.id === efId);
+  if (!ef) return;
+  const note = status === 'rejected'
+    ? (prompt('Krótka adnotacja o odmowie klienta (np. ostrzeżono o ryzyku):', ef.consentNote || 'Klient odmówił naprawy dodatkowej') || '')
+    : (prompt('Potwierdzenie zgody (np. telefonicznie / SMS / osobiście):', ef.consentNote || 'Zgoda klienta telefoniczna') || '');
+  ef.consent = status;
+  ef.consentDate = new Date().toLocaleString('pl-PL');
+  ef.consentNote = note;
+  recalculateOrderTotal(o);
+  save('naprawnik_orders', orders);
+  renderOrderDetail(orderId);
+}
+
+function removeExtraFinding(orderId, efId){
+  const o = orders.find(x => x.id === orderId);
+  if (!o || !Array.isArray(o.extraFindings)) return;
+  o.extraFindings = o.extraFindings.filter(x => x.id !== efId);
+  recalculateOrderTotal(o);
+  save('naprawnik_orders', orders);
+  renderOrderDetail(orderId);
+}
+
+function updateOrderWarranty(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  o.warrantyMonths = Math.max(0, parseInt(document.getElementById('ordWarMonths')?.value, 10) || 0);
+  o.warrantyKm = Math.max(0, parseInt(document.getElementById('ordWarKm')?.value, 10) || 0);
+  save('naprawnik_orders', orders);
+}
+
+function addOrderWarrantyClaim(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  const issue = (document.getElementById('warClaimText')?.value || '').trim();
+  const resolution = (document.getElementById('warClaimRes')?.value || '').trim();
+  if (!issue) { alert('Opisz zgłoszenie gwarancyjne.'); return; }
+  if (!Array.isArray(o.warrantyClaims)) o.warrantyClaims = [];
+  o.warrantyClaims.push({ id: 'wc_' + uid(), date: new Date().toLocaleDateString('pl-PL'), issue, resolution: resolution || 'W trakcie rozpatrzenia' });
+  save('naprawnik_orders', orders);
+  if (o.vehicleId) {
+    repairs.push({ id: uid(), vehicleId: o.vehicleId, date: new Date().toLocaleDateString('pl-PL'), symptom: '[GWARANCJA] ' + issue, diagnosis: 'Zgłoszenie gwarancyjne do ' + o.number, repair: resolution || 'Przyjęto w ramach gwarancji', parts: '', cost: '0', mileage: o.mileage || '' });
+    save('naprawnik_repairs', repairs);
+  }
+  renderOrderDetail(orderId);
+}
+
 function renderOrderDetail(orderId){
   if(!hasPlan('warsztat')){ renderLocked('warsztat','Karta Zlecenia Serwisowego','nav(\'home\')'); return; }
   const o = orders.find(x => x.id === orderId);
   if(!o){ alert('Nie znaleziono zlecenia.'); renderOrders(); return; }
 
-  const workshop = workshopInfo();
+  activeOrderContextId = o.id;
+  if (o.vehicleId) activeVehicleContextId = o.vehicleId;
+  recalculateOrderTotal(o);
+
   const st = ORDER_STATUS_LABELS[o.status] || { label: o.status, color: '#fff' };
+  const stages = getOrderStageSteps();
+  const curStageIdx = stages.indexOf(o.status);
+  const resMap = getInventoryReservations();
+  const totalWorkMins = (o.workLogs || []).reduce((a, w) => a + (Number(w.minutes)||0), 0);
+  const hasReservedInv = (o.partsList || []).some(p => p.inventoryId);
 
   screen.innerHTML = `<div class="btn back" onclick="navBack()">← Wróć do listy zleceń</div>
   <div class="card" style="border-color:${st.color}">
-    <div style="display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
       <h2>${escapeHtml(o.number)}</h2>
       <select id="ordStatusSel" onchange="updateOrderStatus('${o.id}')" style="padding:6px;border-radius:6px;border:1px solid ${st.color};background:var(--panel);color:${st.color};font-weight:700">
-        <option value="nowe" ${o.status==='nowe'?'selected':''}>Nowe zlecenie</option>
-        <option value="w_trakcie" ${o.status==='w_trakcie'?'selected':''}>W trakcie naprawy</option>
-        <option value="czekanie_na_czesci" ${o.status==='czekanie_na_czesci'?'selected':''}>Czekanie na części</option>
-        <option value="gotowe" ${o.status==='gotowe'?'selected':''}>Gotowe do odbioru</option>
-        <option value="wydane" ${o.status==='wydane'?'selected':''}>Wydane klientowi</option>
+        ${Object.entries(ORDER_STATUS_LABELS).map(([sk, sm]) => `<option value="${sk}" ${o.status===sk?'selected':''}>${escapeHtml(sm.label)}</option>`).join('')}
       </select>
+    </div>
+    <div style="display:flex;gap:4px;overflow-x:auto;padding:8px 0 4px">
+      ${stages.map((sk, idx) => {
+        const passed = idx <= curStageIdx;
+        return `<span style="font-size:9px;padding:2px 6px;border-radius:4px;white-space:nowrap;border:1px solid ${passed?st.color:'var(--border)'};color:${passed?st.color:'var(--dim)'}">${escapeHtml(ORDER_STATUS_LABELS[sk].label)}</span>`;
+      }).join('')}
     </div>
 
     <div class="entry">
@@ -7643,6 +8985,12 @@ function renderOrderDetail(orderId){
     <div class="entry">
       <b>Pojazd:</b> ${escapeHtml(o.vehicleMake || '')} ${escapeHtml(o.vehicleModel || '')} · Rok: ${escapeHtml(o.year || '—')} · Silnik: ${escapeHtml(o.engineCc || '—')}
       <br><small>VIN: ${escapeHtml(o.vin || '—')} · Przebieg: ${escapeHtml(o.mileage || '—')} km</small>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        ${o.vehicleId ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="selectedVehicleId='${o.vehicleId}';nav('vehicleDetail')">📂 Karta pojazdu</button>` : ''}
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="nav('diag')">🩺 Diagnoza różnicowa</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="nav('lab','${o.vehicleId||''}')">⚡ Pomiary Lab</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="nav('parts')">🔩 Katalog Części</button>
+      </div>
     </div>
     <div class="entry">
       <b>Przyjęto:</b> ${escapeHtml(o.dateIn || '—')} · <b>Planowany odbiór:</b> ${escapeHtml(o.dateOut || '—')}
@@ -7651,7 +8999,7 @@ function renderOrderDetail(orderId){
 
   <div class="card no-print" style="border-color:#25D366;background:#0e1d13">
     <h2 style="color:#25D366">💬 Szybkie powiadomienie klienta (WhatsApp / SMS)</h2>
-    <small style="color:var(--dim);display:block;margin-bottom:8px">Wysyłaj bezpośrednie wiadomości ze statusem i kwotą jednym kliknięciem (bez opłat bramek):</small>
+    <small style="color:var(--dim);display:block;margin-bottom:8px">Wysyłaj bezpośrednie wiadomości ze statusem i kwotą jednym kliknięciem:</small>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn" style="flex:1;min-width:130px;background:#25D366;color:#000;font-weight:700;margin:0" onclick="sendCustomerNotification('${o.id}', 'whatsapp', 'ready')">🟢 WhatsApp: Gotowe</button>
       <button class="btn" style="flex:1;min-width:130px;background:#00e5ff;color:#000;font-weight:700;margin:0" onclick="sendCustomerNotification('${o.id}', 'sms', 'ready')">📱 SMS: Gotowe</button>
@@ -7664,23 +9012,70 @@ function renderOrderDetail(orderId){
   </div>
 
   <div class="card">
-    <h2>Diagnoza i opis prac</h2>
+    <h2>Diagnoza, prace i rejestr czasu (${totalWorkMins} min)</h2>
     <div style="display:flex;justify-content:space-between;align-items:center">
       <label>Zgłoszenie / objawy:</label>
       <button class="btn" type="button" style="width:auto;margin:0;padding:2px 8px;font-size:11px;border-color:var(--hero);color:var(--hero)" onclick="initVoiceDictation('detFault')">🎤 Dyktuj</button>
     </div>
     <textarea id="detFault" onchange="autoSaveOrderField('${o.id}', 'faultDesc', this.value)">${escapeHtml(o.faultDesc || '')}</textarea>
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <label>Diagnoza mechanika:</label>
+      <label>Diagnoza mechanika (powiązana z Lab/Diagnostyką):</label>
       <button class="btn" type="button" style="width:auto;margin:0;padding:2px 8px;font-size:11px;border-color:var(--hero);color:var(--hero)" onclick="initVoiceDictation('detDiag')">🎤 Dyktuj</button>
     </div>
     <textarea id="detDiag" placeholder="Wnioski z weryfikacji i pomiarów..." onchange="autoSaveOrderField('${o.id}', 'diagnosis', this.value)">${escapeHtml(o.diagnosis || '')}</textarea>
     <label>Wykonane czynności / naprawy:</label>
     <textarea id="detWork" placeholder="Zakres prac: co zrobiono, co wyregulowano..." onchange="autoSaveOrderField('${o.id}', 'workDone', this.value)">${escapeHtml(o.workDone || '')}</textarea>
+
+    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+      <b style="font-size:12px;color:var(--cyan)">⏱️ Rejestr czynności i czasu pracy mechanika:</b>
+      ${(o.workLogs && o.workLogs.length) ? o.workLogs.map((w, idx) => `<div class="entry" style="padding:6px 8px;display:flex;justify-content:space-between;align-items:center">
+        <span><b>${escapeHtml(w.task)}</b><br><small style="color:var(--dim)">${w.minutes} min · ${escapeHtml(w.mechanic||'Mechanik')}${w.addCost ? ' · +' + w.addCost + ' zł' : ''}</small></span>
+        <span style="color:#ff6b6b;cursor:pointer" onclick="removeWorkLog('${o.id}', ${idx})">✕</span>
+      </div>`).join('') : '<div style="font-size:11px;color:var(--dim);margin:4px 0">Brak przypisanych czynności czasowych.</div>'}
+      <div class="grid2" style="margin-top:6px">
+        <input id="wlTask" placeholder="Czynność (np. Regulacja zaworów)">
+        <input id="wlMech" placeholder="Mechanik" value="Mechanik">
+      </div>
+      <div class="grid2">
+        <input id="wlMins" type="number" min="5" value="30" placeholder="Czas (min)">
+        <input id="wlCost" type="number" step="5" value="0" placeholder="Dolicz robociznę (zł)">
+      </div>
+      <button type="button" class="btn" style="font-size:11px;padding:6px" onclick="addWorkLogToOrder('${o.id}')">＋ Dodaj czynność i czas pracy</button>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#ffe066">
+    <h2 style="color:#ffe066">🔎 Dodatkowe usterki wykryte w trakcie naprawy (${(o.extraFindings||[]).length})</h2>
+    <small style="color:var(--dim);display:block;margin-bottom:8px">Ewidencjonuj wykryte wady i dokumentuj zgodę lub odmowę klienta. Zaakceptowane automatycznie powiększają kosztorys.</small>
+    ${(o.extraFindings && o.extraFindings.length) ? o.extraFindings.map(ef => {
+      const col = ef.consent === 'accepted' ? '#00f57a' : ef.consent === 'rejected' ? '#ff6b6b' : '#ffe066';
+      const lbl = ef.consent === 'accepted' ? '✅ ZAAKCEPTOWANO' : ef.consent === 'rejected' ? '❌ ODMOWA KLIENTA' : '⏳ OCZEKUJE NA DECYZJĘ';
+      return `<div class="entry" style="border-left:4px solid ${col}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+          <b>${escapeHtml(ef.desc)}</b>
+          <span style="font-size:10px;color:${col};font-weight:700">${lbl}</span>
+        </div>
+        <small>Koszt dodatkowy: <b>${ef.estPrice} zł</b> (koszt własny: ${ef.estInternal||0} zł)${ef.consentDate ? ' · ' + escapeHtml(ef.consentDate) : ''}</small>
+        ${ef.consentNote ? `<br><small style="color:var(--cyan)">Uwaga: ${escapeHtml(ef.consentNote)}</small>` : ''}
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
+          <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px;border-color:#00f57a;color:#00f57a" onclick="setExtraFindingConsent('${o.id}','${ef.id}','accepted')">✓ Akceptacja klienta</button>
+          <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px;border-color:#ff6b6b;color:#ff6b6b" onclick="setExtraFindingConsent('${o.id}','${ef.id}','rejected')">✕ Odmowa klienta</button>
+          <button type="button" class="btn" style="width:auto;margin:0;padding:4px 8px;font-size:10px" onclick="removeExtraFinding('${o.id}','${ef.id}')">🗑️</button>
+        </div>
+      </div>`;
+    }).join('') : '<div class="empty" style="padding:8px">Brak dodatkowych usterek wykrytych podczas prac.</div>'}
+    <div style="margin-top:8px">
+      <input id="efDesc" placeholder="Opis wykrytej usterki (np. spękany króciec ssący, zużyty pasek)">
+      <div class="grid2">
+        <input id="efPrice" type="number" step="5" placeholder="Kosztorysuj dla klienta (zł)">
+        <input id="efInternal" type="number" step="5" placeholder="Koszt własny hurt (zł)">
+      </div>
+      <button type="button" class="btn" style="font-size:11px;border-color:#ffe066;color:#ffe066" onclick="addExtraFindingToOrder('${o.id}')">＋ Zgłoś dodatkową usterkę i wycenę</button>
+    </div>
   </div>
 
   <div class="card">
-    <h2>Kosztorys — Części i materiały</h2>
+    <h2>Kosztorys — Części, Magazyn i Robocizna</h2>
     <div id="ordPartsTable">
       ${renderOrderPartsList(o)}
     </div>
@@ -7691,6 +9086,15 @@ function renderOrderDetail(orderId){
       <input id="newPartPrice" type="number" step="0.5" placeholder="Cena zł" style="width:64px" title="Cena dla klienta">
       <button class="btn" style="margin:0;padding:8px 12px" onclick="addPartToOrder('${o.id}')">＋</button>
     </div>
+    ${inventoryItems.length ? `<div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+      <select id="ordInvPick" style="flex:1;padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:11px;margin:0">
+        <option value="">-- Zarezerwuj część z Magazynu --</option>
+        ${inventoryItems.map(it => `<option value="${it.id}">${escapeHtml(it.name)} (dost.: ${(Number(it.stockQty)||0)-(resMap[it.id]||0)}, ${it.sellPrice||0} zł)</option>`).join('')}
+      </select>
+      <button type="button" class="btn" style="width:auto;margin:0;padding:6px 10px;font-size:11px" onclick="var sel=document.getElementById('ordInvPick')?.value;if(sel)reserveInventoryPartToOrder(sel,'${o.id}')">📦 Zarezerwuj</button>
+    </div>` : ''}
+    ${hasReservedInv && !o.inventoryDeducted ? `<button type="button" class="btn" style="margin-top:6px;font-size:11px;border-color:var(--cyan);color:var(--cyan)" onclick="deductOrderInventory('${o.id}')">📤 Wydaj zarezerwowane części z magazynu (zmniejsz stan)</button>` : ''}
+    ${o.inventoryDeducted ? `<div style="font-size:11px;color:#00f57a;margin-top:6px">✓ Części z magazynu zostały rozchodowane.</div>` : ''}
 
     <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -7737,6 +9141,29 @@ function renderOrderDetail(orderId){
     </div>
   </div>
 
+  <div class="card" style="border-color:var(--green)">
+    <h2>✅ Protokół Kontroli Końcowej (Jakość) &amp; Gwarancja</h2>
+    ${o.qualityProtocol ? `<div class="entry" style="border-left:4px solid ${o.qualityProtocol.passed?'#00f57a':'#ff6b6b'}">
+      <b>${escapeHtml(o.qualityProtocol.label)} — ${o.qualityProtocol.passed ? '🟢 ZALICZONA' : '🔴 WYMAGA POPRAWEK'}</b><br>
+      <small>${escapeHtml(o.qualityProtocol.date)} · ZAL: ${o.qualityProtocol.passCount}/${o.qualityProtocol.totalSteps}, NIE: ${o.qualityProtocol.failCount}</small>
+    </div>` : '<div class="empty" style="padding:8px">Nie wykonano jeszcze protokołu Kontroli Końcowej dla tego zlecenia.</div>'}
+    <button type="button" class="btn" style="border-color:#00f57a;color:#00f57a;font-size:12px" onclick="activeOrderContextId='${o.id}';activeVehicleContextId='${o.vehicleId||''}';activeQualityType='${o.suggestedQualityType||'przeglad'}';nav('checklist')">✅ Przeprowadź / Zaktualizuj Kontrolę Jakości →</button>
+
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+      <b style="font-size:12px">🛡️ Gwarancja na wykonaną usługę i historia gwarancyjna:</b>
+      <div class="grid2" style="margin-top:6px">
+        <div><label>Gwarancja (miesięcy):</label><input id="ordWarMonths" type="number" min="0" value="${o.warrantyMonths ?? 3}" onchange="updateOrderWarranty('${o.id}')"></div>
+        <div><label>Limit przebiegu (km):</label><input id="ordWarKm" type="number" min="0" value="${o.warrantyKm ?? 1500}" onchange="updateOrderWarranty('${o.id}')"></div>
+      </div>
+      ${(o.warrantyClaims && o.warrantyClaims.length) ? o.warrantyClaims.map(wc => `<div class="entry" style="border-left:3px solid #ff6b6b"><b>⚠️ Zgłoszenie ${escapeHtml(wc.date)}:</b> ${escapeHtml(wc.issue)}<br><small>Rozwiązanie: ${escapeHtml(wc.resolution)}</small></div>`).join('') : ''}
+      <div class="grid2" style="margin-top:6px">
+        <input id="warClaimText" placeholder="Ew. zgłoszenie gwarancyjne...">
+        <input id="warClaimRes" placeholder="Decyzja / naprawa gwarancyjna...">
+      </div>
+      <button type="button" class="btn" style="font-size:11px;padding:6px" onclick="addOrderWarrantyClaim('${o.id}')">＋ Zapisz zgłoszenie gwarancyjne</button>
+    </div>
+  </div>
+
   <div class="card">
     <h2>Dokumentacja fotograficzna</h2>
     <div class="grid2">
@@ -7772,7 +9199,7 @@ function renderOrderDetail(orderId){
 
   <div class="card">
     <h2>Akcje i eksport</h2>
-    <div class="btn" style="border-color:#00e5ff;color:#00e5ff;font-weight:700" onclick="printOrderPdf('${o.id}')">🖨️ Drukuj zlecenie / Generuj PDF</div>
+    <div class="btn" style="border-color:#00e5ff;color:#00e5ff;font-weight:700" onclick="printOrderPdf('${o.id}')">🖨️ Drukuj zlecenie / Protokół odbioru PDF</div>
     <div class="btn" style="border-color:#25D366;color:#25D366;font-weight:700" onclick="printServiceTagPdf('${o.id}')">🏷️ Drukuj zawieszkę serwisową / olejową</div>
     <div class="btn" style="border-color:#ffe066;color:#ffe066" onclick="transferOrderToRepairs('${o.id}')">📥 Przepisz do Historii Napraw pojazdu</div>
     <div class="btn" style="border-color:#ff6b6b;color:#ff6b6b" onclick="deleteOrder('${o.id}')">🗑️ Usuń to zlecenie</div>
@@ -7798,7 +9225,7 @@ function renderOrderPartsList(o){
     <tbody>
       ${o.partsList.map((p, idx) => `
       <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
-        <td style="padding:6px 4px">${escapeHtml(p.name)}</td>
+        <td style="padding:6px 4px">${escapeHtml(p.name)}${p.inventoryId ? ' <span style="font-size:9px;color:var(--cyan)">[MAG]</span>' : ''}</td>
         <td style="text-align:center;padding:6px 4px">${p.qty}</td>
         <td style="text-align:right;padding:6px 4px;color:var(--dim)">${p.costPrice ? p.costPrice + ' zł' : '—'}</td>
         <td style="text-align:right;padding:6px 4px">${p.unitPrice} zł</td>
@@ -7847,11 +9274,13 @@ function removeOrderPart(orderId, index){
 function recalculateOrderTotal(o){
   const partsSellSum = (o.partsList || []).reduce((acc, p) => acc + (Number(p.total) || 0), 0);
   const partsBuySum = (o.partsList || []).reduce((acc, p) => acc + (Number(p.totalCost) || (Number(p.costPrice || 0) * (Number(p.qty) || 1))), 0);
+  const extraAcceptedSell = (o.extraFindings || []).filter(ef => ef.consent === 'accepted').reduce((a, ef) => a + (Number(ef.estPrice) || 0), 0);
+  const extraAcceptedBuy = (o.extraFindings || []).filter(ef => ef.consent === 'accepted').reduce((a, ef) => a + (Number(ef.estInternal) || 0), 0);
   const laborSell = Number(o.laborCost) || 0;
   const laborBuy = Number(o.laborInternalCost) || 0;
 
-  o.totalCost = Math.round((partsSellSum + laborSell) * 100) / 100;
-  o.totalInternalCost = Math.round((partsBuySum + laborBuy) * 100) / 100;
+  o.totalCost = Math.round((partsSellSum + extraAcceptedSell + laborSell) * 100) / 100;
+  o.totalInternalCost = Math.round((partsBuySum + extraAcceptedBuy + laborBuy) * 100) / 100;
   o.grossProfit = Math.round((o.totalCost - o.totalInternalCost) * 100) / 100;
   o.marginPercent = o.totalCost > 0 ? Math.round((o.grossProfit / o.totalCost) * 1000) / 10 : 0;
   o.markupPartsPercent = partsBuySum > 0 ? Math.round(((partsSellSum - partsBuySum) / partsBuySum) * 1000) / 10 : 0;
@@ -7876,7 +9305,14 @@ function autoSaveOrderField(orderId, field, val){
 function updateOrderStatus(orderId){
   const o = orders.find(x => x.id === orderId);
   if(!o) return;
-  o.status = document.getElementById('ordStatusSel').value;
+  const nextStatus = document.getElementById('ordStatusSel').value;
+  if ((nextStatus === 'gotowe' || nextStatus === 'wydane') && (!o.qualityProtocol || !o.qualityProtocol.passed)) {
+    if (!confirm('⚠️ To zlecenie nie ma jeszcze zaliczonego protokołu Kontroli Jakości. Czy na pewno zmienić etap na „' + (ORDER_STATUS_LABELS[nextStatus]?.label || nextStatus) + '”?')) {
+      renderOrderDetail(orderId);
+      return;
+    }
+  }
+  o.status = nextStatus;
   save('naprawnik_orders', orders);
   renderOrderDetail(orderId);
 }
@@ -7980,9 +9416,12 @@ function saveOrderSignature(orderId){
 function printOrderPdf(orderId){
   const o = orders.find(x => x.id === orderId);
   if(!o) return;
+  recalculateOrderTotal(o);
   const w = workshopInfo();
   const st = ORDER_STATUS_LABELS[o.status]?.label || o.status;
   const partsSum = (o.partsList || []).reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+  const extraAcc = (o.extraFindings || []).filter(ef => ef.consent === 'accepted');
+  const extraRej = (o.extraFindings || []).filter(ef => ef.consent === 'rejected');
 
   const printWindow = window.open('', '_blank');
   if(!printWindow){ alert('Zezwól na wyskakujące okna, aby wydrukować zlecenie.'); return; }
@@ -8047,6 +9486,15 @@ function printOrderPdf(orderId){
     ${o.diagnosis ? `<div class="box"><b>DIAGNOZA SERWISOWA:</b><br>${escapeHtml(o.diagnosis)}</div>` : ''}
     ${o.workDone ? `<div class="box"><b>WYKONANE CZYNNOŚCI I NAPRAWY:</b><br>${escapeHtml(o.workDone)}</div>` : ''}
 
+    ${extraAcc.length || extraRej.length ? `<div class="box"><b>DODATKOWE USTERKI WYKRYTE PODCZAS PRAC:</b>
+      ${extraAcc.map(ef => `<div>✅ Zaakceptowano: ${escapeHtml(ef.desc)} (${ef.estPrice} zł · ${escapeHtml(ef.consentNote||'zgoda klienta')})</div>`).join('')}
+      ${extraRej.map(ef => `<div style="color:#b91c1c">❌ Odmowa naprawy przez klienta: ${escapeHtml(ef.desc)} (${escapeHtml(ef.consentNote||'odmowa klienta')})</div>`).join('')}
+    </div>` : ''}
+
+    ${o.qualityProtocol ? `<div class="box"><b>PROTOKÓŁ KONTROLI KOŃCOWEJ (${escapeHtml(o.qualityProtocol.label)}):</b><br>
+      Wynik: <b>${o.qualityProtocol.passed ? 'ZALICZONY' : 'Z UWAGAMI'}</b> (${o.qualityProtocol.passCount}/${o.qualityProtocol.totalSteps} pkt) · Data: ${escapeHtml(o.qualityProtocol.date)}
+    </div>` : ''}
+
     <div class="box">
       <b>ROZLICZENIE CZĘŚCI I MATERIAŁÓW:</b>
       ${(o.partsList && o.partsList.length) ? `
@@ -8056,12 +9504,14 @@ function printOrderPdf(orderId){
       </table>` : '<div>Brak pozycji częściowych.</div>'}
       
       <div style="margin-top:10px;text-align:right">
-        Części łącznie: ${partsSum} zł | Robocizna serwisu: ${o.laborCost || 0} zł
+        Części: ${partsSum} zł | Prace dodatkowe zaakceptowane: ${extraAcc.reduce((a,x)=>a+(Number(x.estPrice)||0),0)} zł | Robocizna serwisu: ${o.laborCost || 0} zł
       </div>
       <div class="total-row">
         DO ZAPŁATY (BRUTTO): ${o.totalCost || 0} zł
       </div>
     </div>
+
+    ${o.warrantyMonths ? `<div class="box" style="font-size:11px"><b>GWARANCJA SERWISOWA:</b> Na wykonaną usługę udzielana jest gwarancja ${o.warrantyMonths} miesięcy lub ${o.warrantyKm || '—'} km (z wyłączeniem części odrzuconych przez klienta).</div>` : ''}
 
     <div class="sign-area">
       <div class="sign-box">
@@ -8122,7 +9572,9 @@ function transferOrderToRepairs(orderId){
     repair: o.workDone || ('Realizacja zlecenia ' + o.number),
     parts: partsText,
     cost: String(o.totalCost || 0),
-    mileage: o.mileage || ''
+    mileage: o.mileage || '',
+    orderId: o.id,
+    warrantyInfo: o.warrantyMonths ? (o.warrantyMonths + ' msc / ' + (o.warrantyKm||'—') + ' km') : ''
   };
   repairs.push(repairRecord);
   save('naprawnik_repairs', repairs);
@@ -8131,18 +9583,88 @@ function transferOrderToRepairs(orderId){
   nav('vehicleDetail');
 }
 
-// --- MODUŁ 2: ELEKTRONICZNE LABORATORIUM ---
+// --- MODUŁ 2: ELEKTRONICZNE LABORATORIUM (ROZBUDOWANE) ---
 const LAB_SYSTEM_PRESETS = [
-  { id: 'ladowanie', name: 'Napięcie ładowania (5000 RPM)', unit: 'V', min: 13.8, max: 14.8, tip: 'Mierzone na zaciskach akumulatora po rozgrzaniu przy włączonych światłach mijania.' },
-  { id: 'uplyw', name: 'Upływ prądu w spoczynku (stacyjka OFF)', unit: 'mA', min: 0.0, max: 2.0, tip: 'Multimetr wpięty szeregowo w ujemną klemę. Zacznij od zakresu 10A!' },
-  { id: 'impulsator', name: 'Rezystancja impulsatora (Pickup coil)', unit: 'Ω', min: 100, max: 250, tip: 'Pomiar na zimnym silniku między przewodem sygnałowym a masą statora.' },
-  { id: 'cewka_pierwotna', name: 'Cewka WN — uzwojenie pierwotne', unit: 'Ω', min: 0.2, max: 0.8, tip: 'Między konektorem wejściowym cewki a masą rdzenia.' },
-  { id: 'cewka_wtorna', name: 'Cewka WN — uzwojenie wtórne (z fajką)', unit: 'kΩ', min: 5.0, max: 10.0, tip: 'Między wnętrzem fajki a masą rdzenia (sama fajka ma zwykle 5 kΩ).' },
-  { id: 'stator_zasilanie', name: 'Cewka zasilająca CDI statora (AC-CDI)', unit: 'Ω', min: 300, max: 650, tip: 'Cewka zasilająca moduł iskrownika AC. Uwaga: generuje 200-400V AC podczas kręcenia!' },
-  { id: 'stator_ladowanie', name: 'Cewki ładowania statora (międzyfazowe)', unit: 'Ω', min: 0.3, max: 1.5, tip: 'Niska oporność uzwojeń prądnicy. Sprawdź także brak zwarcia do masy.' },
-  { id: 'akumulator_spoczynek', name: 'Napięcie akumulatora w spoczynku', unit: 'V', min: 12.6, max: 12.9, tip: 'Mierzone minimum 1h po ładowaniu/jeździe. < 12.4V oznacza niedoładowanie.' },
-  { id: 'akumulator_rozruch', name: 'Napięcie akumulatora podczas rozruchu', unit: 'V', min: 9.6, max: 12.0, tip: 'Spadek poniżej 9.6V podczas kręcenia rozrusznikiem wskazuje na zużyty akumulator.' },
-  { id: 'wtrysk_efi', name: 'Rezystancja wtryskiwacza (układy EFI)', unit: 'Ω', min: 10.0, max: 15.0, tip: 'Pomiar na odpiętej wtyczce wtryskiwacza w temperaturze 20°C.' }
+  { id: 'ladowanie', system: 'Ładowanie', name: 'Napięcie ładowania (5000 RPM)', unit: 'V', min: 13.8, max: 14.8,
+    purpose: 'Weryfikacja wydajności układu alternator (stator) + regulator napięcia R/R.',
+    conditions: 'Silnik rozgrzany, światła mijania ON, ~5000 RPM, pomiar bezpośrednio na klemach akumulatora.',
+    source: 'Norma układów ładowania 12V / DTR Yamaha, Honda, Piaggio', reliability: 'B',
+    nextOnBad: 'stator_ac_idle', tip: 'Mierzone na zaciskach akumulatora po rozgrzaniu przy włączonych światłach mijania.' },
+  { id: 'uplyw', system: 'Instalacja 12V', name: 'Upływ prądu w spoczynku (stacyjka OFF)', unit: 'mA', min: 0.0, max: 2.0,
+    purpose: 'Wykrywanie niepożądanego rozładowywania akumulatora na postoju.',
+    conditions: 'Stacyjka OFF, kluczyk wyjęty, multimetr szeregowo na klemie ujemnej (-). Zacznij od gniazda 10A!',
+    source: 'Standard diagnostyki elektryki 12V', reliability: 'B',
+    nextOnBad: 'akumulator_spoczynek', tip: 'Multimetr wpięty szeregowo w ujemną klemę. Zacznij od zakresu 10A!' },
+  { id: 'impulsator', system: 'Zapłon', name: 'Rezystancja impulsatora (Pickup coil)', unit: 'Ω', min: 100, max: 250,
+    purpose: 'Sprawdzenie ciągłości cewki czujnika położenia wału wyzwalającego iskrę w CDI.',
+    conditions: 'Odpięta wtyczka statora (zapłon OFF). Dla Yamaha 2T Aerox/Jog DTR podaje wyższy zakres 400–600 Ω!',
+    source: 'Katalogi Piaggio/Peugeot/GY6 (dla Yamaha sprawdź DTR YQ50)', reliability: 'C',
+    nextOnBad: 'stator_zasilanie', tip: 'Pomiar na zimnym i rozgrzanym silniku między przewodem sygnałowym a masą.' },
+  { id: 'cewka_pierwotna', system: 'Zapłon', name: 'Cewka WN — uzwojenie pierwotne', unit: 'Ω', min: 0.2, max: 0.8,
+    purpose: 'Kontrola obwodu niskiego napięcia cewki zapłonowej.',
+    conditions: '20°C, odłączony przewód sterujący z modułu CDI/ECU. Pomiar pomiędzy konektorem a masą rdzenia.',
+    source: 'Zakres między rodzinami skuterów/motocykli (potwierdź w DTR)', reliability: 'C',
+    nextOnBad: 'cewka_wtorna', tip: 'Między konektorem wejściowym cewki a masą rdzenia.' },
+  { id: 'cewka_wtorna', system: 'Zapłon', name: 'Cewka WN — uzwojenie wtórne (z fajką)', unit: 'kΩ', min: 5.0, max: 10.0,
+    purpose: 'Weryfikacja obwodu wysokiego napięcia i wbudowanego rezystora przeciwzakłóceniowego fajki (~5 kΩ).',
+    conditions: '20°C, wyjęta fajka ze świecy; pomiar z wnętrza fajki do masy rdzenia cewki.',
+    source: 'DTR Peugeot Speedfight / GY6 / Yamaha (różni się zależnie od fajki R)', reliability: 'B',
+    nextOnBad: 'impulsator', tip: 'Między wnętrzem fajki a masą rdzenia (sama fajka ma zwykle 5 kΩ).' },
+  { id: 'stator_zasilanie', system: 'Zapłon', name: 'Cewka zasilająca CDI statora (AC-CDI)', unit: 'Ω', min: 300, max: 650,
+    purpose: 'Kontrola cewki źródłowej generującej impuls zasilający kondensator w modułach AC-CDI.',
+    conditions: '20°C, wypięta kostka statora (zapłon OFF). Yamaha 2T YQ50 ma wyższy zakres 640–960 Ω.',
+    source: 'Notatki serwisowe GY6/Piaggio/Minarelli (potwierdzić w DTR modelu)', reliability: 'C',
+    nextOnBad: 'spadek_masy', tip: 'Cewka zasilająca moduł iskrownika AC. Uwaga: generuje 200-400V AC podczas kręcenia!' },
+  { id: 'stator_ladowanie', system: 'Ładowanie', name: 'Cewki ładowania statora (międzyfazowe)', unit: 'Ω', min: 0.2, max: 1.2,
+    purpose: 'Wykrywanie przerw i zwarć międzyfazowych w uzwojeniach alternatora.',
+    conditions: '20°C, odpięta kostka stator–regulator. Wszystkie 3 pary faz powinny mieć zbliżoną wartość oraz brak przejścia do masy (OL).',
+    source: 'DTR układów ładowania 1F/3F (Yamaha, Honda, Suzuki, Piaggio)', reliability: 'B',
+    nextOnBad: 'stator_ac_idle', tip: 'Niska oporność uzwojeń prądnicy. Sprawdź także brak zwarcia do masy.' },
+  { id: 'akumulator_spoczynek', system: 'Zasilanie 12V', name: 'Napięcie akumulatora w spoczynku', unit: 'V', min: 12.6, max: 12.9,
+    purpose: 'Ocena stanu naładowania spoczynkowego akumulatora 12V AGM/GEL/kwasowego.',
+    conditions: 'Co najmniej 1 godzinę po zgaszeniu silnika lub odłączeniu prostownika, bez obciążenia.',
+    source: 'Norma producentów akumulatorów Yuasa / Varta 12V', reliability: 'A',
+    nextOnBad: 'akumulator_rozruch', tip: 'Mierzone minimum 1h po ładowaniu/jeździe. < 12.4V oznacza niedoładowanie.' },
+  { id: 'akumulator_rozruch', system: 'Zasilanie 12V', name: 'Napięcie akumulatora podczas rozruchu', unit: 'V', min: 9.6, max: 12.2,
+    purpose: 'Test wydolności prądowej akumulatora pod dużym obciążeniem rozrusznika.',
+    conditions: 'Krótkie kręcenie rozrusznikiem (3–5 s) przy pełnym obciążeniu.',
+    source: 'Standard testów rozruchowych 12V', reliability: 'B',
+    nextOnBad: 'spadek_masy', tip: 'Spadek poniżej 9.6V podczas kręcenia wskazuje na zużyty akumulator lub opór mechaniczny/rozrusznik.' },
+  { id: 'wtrysk_efi', system: 'Wtrysk EFI', name: 'Rezystancja wtryskiwacza (układy EFI)', unit: 'Ω', min: 10.0, max: 15.0,
+    purpose: 'Kontrola cewki elektrozaworu wtryskiwacza paliwa.',
+    conditions: '20°C, odpięta wtyczka wtryskiwacza, pomiar między dwoma pinami wtrysku.',
+    source: 'Specyfikacje standardowych wtryskiwaczy wysokoohmowych EFI', reliability: 'B',
+    nextOnBad: 'fuel_pressure_efi', tip: 'Pomiar na odpiętej wtyczce wtryskiwacza w temperaturze 20°C.' },
+  { id: 'spadek_masy', system: 'Instalacja 12V', name: 'Spadek napięcia na masie (akumulator ↔ silnik)', unit: 'V', min: 0.0, max: 0.2,
+    purpose: 'Wykrywanie zaśniedziałych lub luźnych połączeń masowych powodujących słaby rozruch i zaniki iskry.',
+    conditions: 'Multimetr na zakresie V DC między ujemną klemą (-) a metalowym korpusem silnika w trakcie rozruchu/obciążenia.',
+    source: 'Standard diagnostyki spadków napięć (SAE/warsztatowy)', reliability: 'B',
+    nextOnBad: 'ladowanie', tip: 'Wynik > 0.2 V oznacza zły styk przewodu masowego ramy lub silnika.' },
+  { id: 'stator_ac_idle', system: 'Ładowanie', name: 'Napięcie AC na fazach statora (~5000 RPM)', unit: 'V AC', min: 45.0, max: 80.0,
+    purpose: 'Bezpośredni test wydajności alternatora z pominięciem regulatora napięcia.',
+    conditions: 'Kostka regulatora odpięta! Multimetr ustawiony na AC V, pomiar między parami żółtych/białych przewodów przy ~5000 RPM.',
+    source: 'Procedura testu alternatorów motocyklowych (zakres między-modelowy — sprawdź DTR)', reliability: 'C',
+    nextOnBad: 'stator_ladowanie', tip: 'Jeśli wszystkie pary dają >50V AC i równe napięcia, stator jest sprawny, a winny jest regulator.' },
+  { id: 'ect_20c', system: 'Czujniki EFI', name: 'Czujnik temperatury ECT / NTC (zimny ~20°C)', unit: 'kΩ', min: 2.0, max: 3.2,
+    purpose: 'Sprawdzenie charakterystyki termistora na zimnym silniku (dawka rozruchowa EFI).',
+    conditions: 'Silnik całkowicie wystudzony (~20°C), wtyczka czujnika odpięta.',
+    source: 'Typowa krzywa termistorów Bosch / NipponDenso NTC (wymaga weryfikacji w DTR)', reliability: 'C',
+    nextOnBad: 'ect_80c', tip: 'Błędna oporność na zimno powoduje bardzo trudny rozruch lub zalewanie świec.' },
+  { id: 'ect_80c', system: 'Czujniki EFI', name: 'Czujnik temperatury ECT / NTC (gorący ~80°C)', unit: 'kΩ', min: 0.25, max: 0.48,
+    purpose: 'Wykrywanie dryftu termicznego czujnika na rozgrzanym silniku.',
+    conditions: 'Silnik rozgrzany do temperatury roboczej (~80°C), zapłon OFF, wtyczka odpięta.',
+    source: 'Typowa krzywa NTC (potwierdzić dokładną tabelę w DTR modelu)', reliability: 'C',
+    nextOnBad: 'tps_idle', tip: 'Porównaj z pomiarem na zimno (20°C) — oporność musi wyraźnie spadać ze wzrostem temperatury.' },
+  { id: 'tps_idle', system: 'Czujniki EFI', name: 'Czujnik położenia przepustnicy TPS (jałowy)', unit: 'V', min: 0.45, max: 0.95,
+    purpose: 'Kontrola napięcia bazowego czujnika TPS przy zamkniętej przepustnicy.',
+    conditions: 'Zapłon ON (silnik zgaszony), manetka całkowicie zamknięta, pomiar na przewodzie sygnałowym TPS.',
+    source: 'Ogólna procedura TPS 5V (dokładne napięcie spoczynkowe wg DTR modelu)', reliability: 'C',
+    nextOnBad: 'wtrysk_efi', tip: 'Przy płynnym otwieraniu manetki napięcie musi rosnąć bez przerw do ok. 4.0–4.7 V.' },
+  { id: 'fuel_pressure_efi', system: 'Wtrysk EFI', name: 'Ciśnienie paliwa na listwie wtryskowej (EFI)', unit: 'bar', min: 2.5, max: 3.5,
+    purpose: 'Sprawdzenie wydajności pompy paliwa, sitka i regulatora ciśnienia w układzie wtryskowym.',
+    conditions: 'Manometr wpięty przez trójnik za pompą; zapłon ON lub praca na biegu jałowym (zachować BHP ppoż!).',
+    source: 'Typowe ciśnienia robocze EFI (250–350 kPa — potwierdź dokładną wartość w DTR)', reliability: 'C',
+    nextOnBad: 'wtrysk_efi', tip: 'Spadek ciśnienia pod obciążeniem powoduje dławienie na wyższych obrotach.' }
 ];
 
 function evaluateLabStatus(val, min, max){
@@ -8156,21 +9678,167 @@ function evaluateLabStatus(val, min, max){
   return { code: 'bad', label: '🔴 Poza zakresem (Usterka)', color: '#ff6b6b' };
 }
 
-function renderElectronicLab(vehicleIdFilter){
-  ensureSafeArrays();
-  const isProOrWarsztat = hasPlan('pro');
-  const maxMeas = measurementLimit();
-  let list = measurements.slice().reverse();
-  if(vehicleIdFilter){
-    list = list.filter(m => m.vehicleId === vehicleIdFilter);
+function analyzeLabHistory(measList){
+  const list = Array.isArray(measList) ? measList : [];
+  if (!list.length) return null;
+
+  let okCount = 0, suspectCount = 0, badCount = 0;
+  const byCircuit = {};
+
+  list.forEach(m => {
+    const st = evaluateLabStatus(m.measuredValue, m.refMin, m.refMax);
+    if (st.code === 'ok') okCount++;
+    else if (st.code === 'suspect') suspectCount++;
+    else if (st.code === 'bad') badCount++;
+
+    const key = normalizeSearchText(m.presetId || m.label || 'inne');
+    if (!byCircuit[key]) byCircuit[key] = [];
+    byCircuit[key].push({ ...m, evalStatus: st });
+  });
+
+  // Wykryj porównania Przed vs Po naprawie oraz Zimny vs Gorący (termiczne)
+  const comparisons = [];
+  const thermalAlerts = [];
+  Object.values(byCircuit).forEach(group => {
+    if (group.length >= 2) {
+      const befores = group.filter(x => x.phase !== 'after');
+      const afters = group.filter(x => x.phase === 'after');
+      if (befores.length && afters.length) {
+        const b = befores[befores.length - 1];
+        const a = afters[afters.length - 1];
+        const diff = Math.round((a.measuredValue - b.measuredValue) * 100) / 100;
+        comparisons.push({
+          label: a.label,
+          unit: a.unit || b.unit || '',
+          beforeVal: b.measuredValue,
+          afterVal: a.measuredValue,
+          diff,
+          improved: b.evalStatus.code !== 'ok' && a.evalStatus.code === 'ok',
+          afterStatus: a.evalStatus
+        });
+      }
+      const hasFixedAfter = afters.some(a => a.evalStatus.code === 'ok');
+      const scopeForThermal = hasFixedAfter ? afters : group;
+      const colds = scopeForThermal.filter(x => x.tempCondition === 'cold');
+      const warms = scopeForThermal.filter(x => x.tempCondition === 'warm' || x.tempCondition === 'symptom');
+      if (colds.length && warms.length) {
+        const cItem = colds[colds.length - 1];
+        const wItem = warms[warms.length - 1];
+        if (cItem.evalStatus.code === 'ok' && (wItem.evalStatus.code === 'bad' || wItem.evalStatus.code === 'suspect')) {
+          thermalAlerts.push({
+            label: wItem.label,
+            coldVal: cItem.measuredValue + ' ' + (cItem.unit||''),
+            warmVal: wItem.measuredValue + ' ' + (wItem.unit||'')
+          });
+        }
+      }
+    }
+  });
+
+  // Automatyczne wskazanie następnego zalecanego pomiaru
+  let nextRecommendation = null;
+  const badItems = list.filter(m => {
+    const c = evaluateLabStatus(m.measuredValue, m.refMin, m.refMax).code;
+    return c === 'bad' || c === 'suspect';
+  });
+  if (badItems.length) {
+    const lastBad = badItems[badItems.length - 1];
+    const matchedPreset = LAB_SYSTEM_PRESETS.find(p => p.id === lastBad.presetId || normalizeSearchText(p.name) === normalizeSearchText(lastBad.label));
+    if (matchedPreset && matchedPreset.nextOnBad) {
+      const nextP = LAB_SYSTEM_PRESETS.find(p => p.id === matchedPreset.nextOnBad);
+      if (nextP) {
+        nextRecommendation = {
+          reason: 'Ostatni pomiar poza normą („' + lastBad.label + '”: ' + lastBad.measuredValue + ' ' + (lastBad.unit||'') + ') wymaga weryfikacji kolejnego ogniwa:',
+          preset: nextP
+        };
+      }
+    }
   }
 
-  screen.innerHTML = back() + `
+  return { okCount, suspectCount, badCount, comparisons, thermalAlerts, nextRecommendation };
+}
+
+function sendLabSummaryToOrder(){
+  const v = getActiveVehicle();
+  const o = getActiveOrder();
+  if (!o && !v) {
+    alert('Wybierz aktywny pojazd w pasku Kontekstu u góry (lub otwórz zlecenie), aby przekazać wyniki pomiarów.');
+    return;
+  }
+  const relevant = measurements.filter(m => !v || m.vehicleId === v.id).slice(-6);
+  if (!relevant.length) {
+    alert('Brak pomiarów do przekazania.');
+    return;
+  }
+  const summaryLines = relevant.map(m => {
+    const st = evaluateLabStatus(m.measuredValue, m.refMin, m.refMax);
+    const phaseTxt = m.phase === 'after' ? '[PO NAPRAWIE] ' : '[DIAGNOZA] ';
+    return phaseTxt + m.label + ': ' + m.measuredValue + ' ' + (m.unit||'') + ' (' + st.label + ')';
+  }).join('\n');
+
+  if (o) {
+    o.diagnosis = (o.diagnosis ? o.diagnosis + '\n' : '') + 'Pomiary Lab:\n' + summaryLines;
+    save('naprawnik_orders', orders);
+  }
+  if (v) {
+    if (!Array.isArray(v.diagLog)) v.diagLog = [];
+    v.diagLog.push({ id: 'dlg_' + uid(), date: new Date().toLocaleString('pl-PL'), symptom: 'Zestawienie pomiarów z Elektronicznego Lab', status: 'confirmed', conclusion: 'Zarejestrowano ' + relevant.length + ' pomiarów', detail: summaryLines, source: 'Elektroniczne Laboratorium' });
+    save('naprawnik_vehicles', vehicles);
+  }
+  alert('✅ Zestawienie pomiarów przekazano do ' + (o ? 'zlecenia ' + o.number : 'historii pojazdu') + '.');
+}
+
+function renderElectronicLab(vehicleIdFilter){
+  ensureSafeArrays();
+  if (!vehicleIdFilter && activeVehicleContextId) vehicleIdFilter = activeVehicleContextId;
+  const maxMeas = measurementLimit();
+  const filteredMeas = vehicleIdFilter ? measurements.filter(m => m.vehicleId === vehicleIdFilter) : measurements;
+  const list = filteredMeas.slice().reverse();
+  const analysis = analyzeLabHistory(filteredMeas);
+  const vCtx = vehicleIdFilter ? vehicles.find(x => x.id === vehicleIdFilter) : getActiveVehicle();
+  const matchedOem = (vCtx && typeof window !== 'undefined' && window.NAPRAWNIK_KATALOG && typeof window.NAPRAWNIK_KATALOG.matchVehicle === 'function')
+    ? window.NAPRAWNIK_KATALOG.matchVehicle(vCtx).filter(r => /elektryk|zap[lł]on|ładowan/i.test(r['Układ'] || '')).slice(0, 6)
+    : [];
+
+  screen.innerHTML = back() + renderActiveContextBanner('lab', vehicleIdFilter || '') + `
   <div class="card" style="border-color:var(--cyan)">
-    <h2>⚡ Elektroniczne Laboratorium</h2>
-    <p style="font-size:12px;line-height:1.5">Centrum precyzyjnych pomiarów układów elektrycznych, zapłonowych i ładowania z automatyczną oceną stanu, bazą wzorców oraz kartą diagnostyczną.</p>
-    <div style="font-size:11px;color:var(--dim)">Zapisano pomiarów: ${measurements.length} / ${Number.isFinite(maxMeas)?maxMeas:'bez limitu'}</div>
+    <h2>⚡ Elektroniczne Laboratorium &amp; Analiza Trendów</h2>
+    <p style="font-size:12px;line-height:1.5">Centrum pomiarów elektryki, czujników i układów wtryskowych z bazą wzorców (A/B/C/U), analizą Przed/Po naprawie oraz wykrywaniem usterek termicznych.</p>
+    <div style="font-size:11px;color:var(--dim)">Zapisano pomiarów łącznie: ${measurements.length} / ${Number.isFinite(maxMeas)?maxMeas:'bez limitu'}${vehicleIdFilter ? ' · Wyświetlane dla wybranego pojazdu: ' + list.length : ''}</div>
   </div>
+
+  ${matchedOem.length ? `<div class="card" style="border-color:#00f57a">
+    <h3 style="color:#00f57a">📘 Wzorce OEM elektryki dopasowane do pojazdu</h3>
+    ${matchedOem.map(r => `<div class="entry" style="padding:7px">
+      <div style="display:flex;justify-content:space-between;gap:6px">
+        <b>${escapeHtml(r['Parametr'])}: ${escapeHtml(r['Wartość'])} ${escapeHtml(r['Jednostka']||'')}</b>
+        ${renderReliabilityBadge(r.reliability)}
+      </div>
+      <small>${escapeHtml(r['Model / kod silnika'])} · Warunki: ${escapeHtml(r['Warunki pomiaru / zastosowania']||'—')}</small>
+    </div>`).join('')}
+  </div>` : ''}
+
+  ${analysis ? `<div class="card" style="border-color:var(--hero)">
+    <h2>📊 Analiza zbiorcza i trendy (${filteredMeas.length} pomiarów)</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px;margin:6px 0">
+      <span style="color:#00f57a">🟢 W normie: <b>${analysis.okCount}</b></span>
+      <span style="color:#ffe066">🟡 Podejrzane: <b>${analysis.suspectCount}</b></span>
+      <span style="color:#ff6b6b">🔴 Poza normą: <b>${analysis.badCount}</b></span>
+    </div>
+    ${analysis.thermalAlerts.map(ta => `<div class="alert" style="text-align:left;white-space:normal;margin:6px 0">🌡️ <b>WYKRYTO USTERKĘ TERMICZNĄ (${escapeHtml(ta.label)}):</b> na zimno ${escapeHtml(ta.coldVal)} (OK), a na gorąco ${escapeHtml(ta.warmVal)} (poza normą)!</div>`).join('')}
+    ${analysis.comparisons.length ? `<div style="margin-top:8px"><b style="font-size:12px;color:var(--cyan)">Porównanie Przed naprawą vs Po naprawie:</b>
+      ${analysis.comparisons.map(cp => `<div class="entry" style="border-left:3px solid ${cp.improved?'#00f57a':cp.afterStatus.color}">
+        <b>${escapeHtml(cp.label)}</b><br>
+        <small>Przed: <b>${cp.beforeVal} ${escapeHtml(cp.unit)}</b> → Po naprawie: <b>${cp.afterVal} ${escapeHtml(cp.unit)}</b> (zmiana: ${cp.diff > 0 ? '+' : ''}${cp.diff}) · ${cp.improved ? '🟢 Naprawa przywróciła normę' : cp.afterStatus.label}</small>
+      </div>`).join('')}
+    </div>` : ''}
+    ${analysis.nextRecommendation ? `<div class="entry" style="border-color:var(--cyan);background:rgba(34,211,238,0.08);margin-top:8px">
+      <b style="color:var(--cyan)">🎯 Następny zalecany pomiar:</b><br>
+      <small>${escapeHtml(analysis.nextRecommendation.reason)}</small><br>
+      <button type="button" class="btn" style="width:auto;margin:6px 0 0;padding:5px 10px;font-size:11px;border-color:var(--cyan);color:var(--cyan)" onclick="openLabWithPreset('${analysis.nextRecommendation.preset.id}')">⚡ Załaduj test: ${escapeHtml(analysis.nextRecommendation.preset.name)} →</button>
+    </div>` : ''}
+    <button type="button" class="btn" style="margin-top:8px;border-color:var(--hero);color:var(--hero);font-size:11px" onclick="sendLabSummaryToOrder()">📤 Przekaż wyniki pomiarów do aktywnego zlecenia / historii pojazdu</button>
+  </div>` : ''}
 
   <div class="card" style="border-color:#ff991f;background:rgba(255,153,31,0.04)">
     <h3 style="color:#ff991f">🛡️ BHP i przygotowanie stanowiska pomiarowego</h3>
@@ -8184,12 +9852,12 @@ function renderElectronicLab(vehicleIdFilter){
 
   <div class="card">
     <h2>Dodaj nowy pomiar</h2>
-    <label>Wybierz mierzony obwód / układ:</label>
+    <label>Wybierz mierzony obwód / układ (ze wzorcem jakości A/B/C):</label>
     <select id="labPresetSel" onchange="applyLabPreset()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin-bottom:8px">
       <option value="">-- Wybierz układ ze wzorcem referencyjnym --</option>
-      ${LAB_SYSTEM_PRESETS.map((p, idx) => `<option value="${idx}">${escapeHtml(p.name)} (${p.min}-${p.max} ${p.unit})</option>`).join('')}
+      ${LAB_SYSTEM_PRESETS.map((p, idx) => `<option value="${idx}">[${p.reliability||'C'}] ${escapeHtml(p.name)} (${p.min}–${p.max} ${p.unit})</option>`).join('')}
     </select>
-    <div id="labPresetTip" style="font-size:11px;color:var(--cyan);margin-bottom:8px"></div>
+    <div id="labPresetTip" style="font-size:11px;color:var(--cyan);margin-bottom:8px;line-height:1.45"></div>
 
     <div class="grid2">
       <div>
@@ -8201,6 +9869,24 @@ function renderElectronicLab(vehicleIdFilter){
         <select id="labVehSel" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text)">
           <option value="">-- Ogólny / bez powiązania --</option>
           ${vehicles.map(v => `<option value="${v.id}" ${vehicleIdFilter === v.id ? 'selected' : ''}>${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'')} (${escapeHtml(v.vin||'bez VIN')})</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:6px">
+      <div>
+        <label>Etap naprawy:</label>
+        <select id="labPhase" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text)">
+          <option value="before">🔍 Przed naprawą (Diagnoza)</option>
+          <option value="after">✅ Po naprawie (Weryfikacja)</option>
+        </select>
+      </div>
+      <div>
+        <label>Warunki temperaturowe:</label>
+        <select id="labTempCond" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text)">
+          <option value="cold">❄️ Zimny silnik (~20°C)</option>
+          <option value="warm">🌡️ Rozgrzany / roboczy</option>
+          <option value="symptom">⚠️ W chwili wystąpienia objawu</option>
         </select>
       </div>
     </div>
@@ -8229,7 +9915,7 @@ function renderElectronicLab(vehicleIdFilter){
 
     <div id="labEvalPreview" style="margin:10px 0;font-weight:700;font-size:13px"></div>
 
-    <label>Uwagi, temperatura silnika, warunki testu:</label>
+    <label>Uwagi, warunki pomiaru, przypadek diagnostyczny:</label>
     <textarea id="labNotes" placeholder="np. Silnik po 15 min jazdy, światła włączone, 5000 RPM"></textarea>
 
     <div class="btn" style="border-color:#00f57a;color:#00f57a;font-weight:700" onclick="saveLabMeasurement()">💾 Zapisz pomiar w Elektronicznym Laboratorium</div>
@@ -8240,16 +9926,19 @@ function renderElectronicLab(vehicleIdFilter){
     ${list.length === 0 ? '<div class="empty">Brak zapisanych pomiarów.</div>' : list.map(m => {
       const st = evaluateLabStatus(m.measuredValue, m.refMin, m.refMax);
       const v = vehicles.find(x => x.id === m.vehicleId);
+      const phaseTag = m.phase === 'after' ? '<span style="color:#00f57a">[PO NAPRAWIE]</span>' : '<span style="color:var(--cyan)">[DIAGNOZA]</span>';
+      const tempTag = m.tempCondition === 'warm' ? '🌡️ Gorący' : m.tempCondition === 'symptom' ? '⚠️ W chwili objawu' : '❄️ Zimny';
       return `
       <div class="entry" style="border-left:4px solid ${st.color}">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <b>${escapeHtml(m.label || 'Pomiar')}</b>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+          <b>${phaseTag} ${escapeHtml(m.label || 'Pomiar')}</b>
           <span style="font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid ${st.color};color:${st.color}">${st.label}</span>
         </div>
         <div style="font-size:16px;font-weight:700;color:var(--hero);margin:4px 0">
           ${m.measuredValue} ${escapeHtml(m.unit || '')}
           ${Number.isFinite(m.refMin) && Number.isFinite(m.refMax) ? `<span style="font-size:11px;color:var(--dim);font-weight:normal"> (norma: ${m.refMin} – ${m.refMax} ${escapeHtml(m.unit||'')})</span>` : ''}
         </div>
+        <small style="color:var(--dim)">${tempTag}${m.source ? ' · Źródło: ' + escapeHtml(m.source) : ''}</small><br>
         ${v ? `<small>🛵 Pojazd: ${escapeHtml(v.brand||'')} ${escapeHtml(v.model||'')} (${escapeHtml(v.vin||'—')})</small><br>` : ''}
         ${m.notes ? `<small style="color:var(--text)">📝 ${escapeHtml(m.notes)}</small><br>` : ''}
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:10px;color:var(--dim)">
@@ -8270,7 +9959,10 @@ function applyLabPreset(){
   document.getElementById('labUnit').value = p.unit;
   document.getElementById('labMin').value = p.min;
   document.getElementById('labMax').value = p.max;
-  document.getElementById('labPresetTip').textContent = 'ℹ️ ' + p.tip;
+  const tipEl = document.getElementById('labPresetTip');
+  if (tipEl) {
+    tipEl.innerHTML = `${renderReliabilityBadge(p.reliability)} <b>Zastosowanie:</b> ${escapeHtml(p.purpose||'')}<br><b>Warunki:</b> ${escapeHtml(p.conditions||p.tip)}<br><b>Źródło:</b> ${escapeHtml(p.source||'Wzorce NAPRAWNIK')}`;
+  }
   previewLabEval();
 }
 
@@ -8297,14 +9989,26 @@ function saveLabMeasurement(){
     renderLocked(curPlan()==='amator'?'pro':'warsztat', 'Więcej pomiarów w Elektronicznym Laboratorium (limit: ' + maxMeas + ')', 'nav(\'lab\')');
     return;
   }
+  const pIdx = document.getElementById('labPresetSel')?.value;
+  const presetObj = (pIdx !== '' && pIdx !== undefined) ? LAB_SYSTEM_PRESETS[parseInt(pIdx, 10)] : null;
+  const vehId = document.getElementById('labVehSel').value || null;
+  if (vehId) activeVehicleContextId = vehId;
+  const ord = getActiveOrder();
+
   const item = {
     id: 'meas_' + uid(),
+    presetId: presetObj ? presetObj.id : null,
     label,
     measuredValue,
     unit: document.getElementById('labUnit').value.trim() || '',
     refMin: parseFloat(document.getElementById('labMin').value),
     refMax: parseFloat(document.getElementById('labMax').value),
-    vehicleId: document.getElementById('labVehSel').value || null,
+    vehicleId: vehId,
+    orderId: ord ? ord.id : null,
+    phase: document.getElementById('labPhase')?.value || 'before',
+    tempCondition: document.getElementById('labTempCond')?.value || 'cold',
+    reliability: presetObj ? presetObj.reliability : 'C',
+    source: presetObj ? presetObj.source : 'Pomiar indywidualny mechanika',
     notes: document.getElementById('labNotes').value.trim(),
     date: new Date().toLocaleString('pl-PL')
   };
@@ -8320,6 +10024,7 @@ function deleteLabMeasurement(measId){
   save('naprawnik_measurements', measurements);
   renderElectronicLab();
 }
+
 
 // --- MODUŁ 5: AUTOMATYCZNY PLAN SERWISOWY ---
 const STANDARD_SERVICE_INTERVALS = [

@@ -45,11 +45,29 @@ jobs:
       - name: Bundle native Android bridge
         run: npm run mobile:bundle-native
 
+      - name: Configure persistent Android signing keystore (if secret present)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/naprawnik-signing.jks"
+            echo "NAPRAWNIK_KEYSTORE_PATH=$RUNNER_TEMP/naprawnik-signing.jks" >> "$GITHUB_ENV"
+            echo "NAPRAWNIK_KEYSTORE_PASS=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "NAPRAWNIK_KEYSTORE_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "NAPRAWNIK_KEYSTORE_KEY_PASS=${ANDROID_KEY_PASSWORD:-$ANDROID_KEYSTORE_PASSWORD}" >> "$GITHUB_ENV"
+          fi
+
       - name: Generate Android project
         run: npx cap add android
 
       - name: Generate branded NAPRAWNIK launcher and splash
         run: npx @capacitor/assets generate --android
+
+      - name: Configure native ApkUpdater plugin and monotonic versionCode
+        run: node scripts/configure-android-project.mjs
 
       - name: Sync Capacitor Android
         run: npx cap sync android

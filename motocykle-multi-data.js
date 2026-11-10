@@ -1300,6 +1300,53 @@
     f_kardan_spline_dry: { title: 'Korozja i zużycie wielowypustu wału Kardana / przekładni kątowej', sec: 'F', conf: 'B', desc: 'Brak smaru molibdenowego na wielowypuście połączenia przesuwnego – stuki przy dodawaniu i ujmowaniu gazu, korozja cierna i ścięcie zębów.', fix: 'Demontaż przekładni kątowej, oczyszczenie wielowypustu, inspekcja luzu kątowego, naniesienie smaru litowo-molibdenowego MoS2 i wymiana oringów uszczelniających.' },
   };
 
+  // ---------- 4B. UZUPEŁNIENIE STANDARDÓW JAKOŚCI A/B/C/U, KONTROLI PO NAPRAWIE I DOPASOWANIA ----------
+  const FAULT_POST_CHECKS = {
+    A: 'Po naprawie: sprawdź znaki rozrządu po 2 pełnych obrotach wału, zmierz luzy zaworowe i ciśnienie oleju/kompresji na gorącym silniku.',
+    B: 'Po naprawie: przeprowadź test szczelności dolotu/paliwa na pracującym silniku, sprawdź zejście na wolne obroty i równomierność pracy cylindrów.',
+    C: 'Po naprawie: wykonaj test iskry pod obciążeniem, pomiar oporności na zimno i po rozgrzaniu oraz sprawdź stabilność sygnału CKP/COP.',
+    D: 'Po naprawie (hamulce/chłodzenie): test ciśnieniowy szczelności, sprawdzenie odpowietrzenia, test działania pod obciążeniem oraz kontrola wycieków.',
+    E: 'Po naprawie (elektryka): zmierz napięcie ładowania przy 5000 RPM (13.8–14.8 V), spadek na masie (< 0.2 V) i upływ w spoczynku (< 2 mA).',
+    F: 'Po naprawie (napęd): skontroluj momenty dokręcania nakrętek/kosza, płynność ruszania bez szarpania i temperaturę obudowy CVT/przekładni po jeździe próbnej.'
+  };
+
+  Object.keys(FAULTS).forEach(fid => {
+    const f = FAULTS[fid];
+    f.id = fid;
+    f.reliability = ['A', 'B', 'C', 'U'].includes(f.conf) ? f.conf : 'C';
+    if (!f.qualityType) {
+      if (fid.includes('abs') || fid.includes('brake')) f.qualityType = 'hamulce';
+      else if (fid.includes('fork') || fid.includes('susp')) f.qualityType = 'zawieszenie';
+      else if (fid.includes('water_pump') || fid.includes('heat')) f.qualityType = 'chlodzenie';
+      else if (f.sec === 'A') f.qualityType = 'silnik';
+      else if (f.sec === 'B') f.qualityType = 'paliwo';
+      else if (f.sec === 'C' || f.sec === 'E') f.qualityType = 'elektryka';
+      else if (f.sec === 'F') f.qualityType = 'sprzeglo';
+      else f.qualityType = 'przeglad';
+    }
+    if (!f.verify) {
+      f.verify = FAULT_POST_CHECKS[f.sec] || FAULT_POST_CHECKS.A;
+    }
+  });
+
+  function matchModels(vehicle) {
+    if (!vehicle || typeof vehicle !== 'object') return [];
+    const make = String(vehicle.brand || vehicle.vehicleMake || '').toLowerCase().trim();
+    const model = String(vehicle.model || vehicle.vehicleModel || '').toLowerCase().trim();
+    const eng = String(vehicle.engine || vehicle.engineCc || '').toLowerCase().trim();
+    if (!make && !model && !eng) return [];
+    const mTokens = model.split(/[^a-z0-9]+/).filter(t => t.length >= 2);
+    return MODELS.filter(m => {
+      const mBrand = (MANUFACTURERS.find(x => x.id === m.brand)?.name || m.brand || '').toLowerCase();
+      const mName = (m.model + ' ' + m.gen).toLowerCase();
+      const mEng = (ENGINES.find(e => e.id === m.engine)?.code || m.engine || '').toLowerCase();
+      const brandOk = !make || mBrand.includes(make) || make.includes(mBrand);
+      if (!brandOk) return false;
+      if (model && (mName.includes(model) || model.includes(mName))) return true;
+      return mTokens.some(t => mName.includes(t) || mEng.includes(t));
+    });
+  }
+
   // ---------- 5. WALIDACJA DANYCH ----------
   function validate() {
     const errors = [];
@@ -1328,6 +1375,6 @@
   }
 
   global.NAPRAWNIK_MULTICYL_DATA = {
-    SCHEMA_VERSION, CC_RANGE, MANUFACTURERS, ENGINES, MODELS, FAULTS, PARAM_KEYS, validate
+    SCHEMA_VERSION, CC_RANGE, MANUFACTURERS, ENGINES, MODELS, FAULTS, PARAM_KEYS, validate, matchModels
   };
 })(typeof window !== 'undefined' ? window : globalThis);

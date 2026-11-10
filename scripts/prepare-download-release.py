@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Preserve the current NAPRAWNIK download page while replacing its APK and SHA-256."""
 import argparse
+import datetime
 import hashlib
+import json
 import re
 import urllib.parse
 import urllib.request
@@ -94,10 +96,49 @@ def save(url, out):
     return data
 
 
+def resolve_apk_version_meta(args):
+    root = Path(__file__).resolve().parent.parent
+    version_name = args.version_name
+    version_code = args.version_code
+    build_ts = 1730653000000
+
+    version_json_path = root / "version.json"
+    if version_json_path.is_file():
+        vdata = json.loads(version_json_path.read_text(encoding="utf-8"))
+        if not version_name:
+            version_name = str(vdata.get("version") or "5.49")
+        if isinstance(vdata.get("build"), (int, float)):
+            build_ts = int(vdata["build"])
+
+    build_meta_path = root / "android" / "apk-build-meta.json"
+    if build_meta_path.is_file():
+        bmeta = json.loads(build_meta_path.read_text(encoding="utf-8"))
+        if not version_name and bmeta.get("versionName"):
+            version_name = str(bmeta["versionName"])
+        if not version_code and bmeta.get("versionCode"):
+            version_code = int(bmeta["versionCode"])
+
+    if not version_name:
+        version_name = "5.49"
+    if not version_code:
+        base_code = max(2, (build_ts - 1700000000000) // 10000) if build_ts > 1700000000000 else max(2, build_ts)
+        version_code = int(base_code)
+
+    return {
+        "appId": "pl.turbodiesel.naprawnik",
+        "versionName": version_name,
+        "versionCode": int(version_code),
+        "build": build_ts,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apk", required=True, type=Path)
     ap.add_argument("--output", type=Path, default=Path("site"))
+    ap.add_argument("--version-name", default="")
+    ap.add_argument("--version-code", type=int, default=0)
+    ap.add_argument("--changelog", default="Zaktualizowana baza techniczna, ulepszona diagnostyka i poprawki stabilności aplikacji offline.")
     ap.add_argument(
         "--require-existing-checksum",
         action="store_true",
@@ -109,16 +150,17 @@ def main():
     apk = args.apk.read_bytes()
     digest = hashlib.sha256(apk).hexdigest()
     template_file = Path(__file__).resolve().parent / "download-page-template.html"
+    if args.require_existing_checksum:
+        live_html = get(BASE).decode("utf-8")
+        existing = re.search(r"(?is)SHA-256.{0,700}?([a-f0-9]{64})", live_html)
+        if not existing or existing.group(1) != digest:
+            raise SystemExit("Downloaded APK does not match the checksum currently published on the page")
     if template_file.is_file():
         html = template_file.read_text(encoding="utf-8")
     else:
         html = get(BASE).decode("utf-8")
     if "Raport VirusTotal" not in html or "SHA-256" not in html or "app-debug.apk" not in html:
         raise SystemExit("Download page is missing expected sections; refusing deployment")
-    if args.require_existing_checksum:
-        existing = re.search(r"(?is)SHA-256.{0,700}?([a-f0-9]{64})", html)
-        if not existing or existing.group(1) != digest:
-            raise SystemExit("Downloaded APK does not match the checksum currently published on the page")
     html, count = re.subn(r"(?is)(SHA-256.{0,700}?)([a-f0-9]{64})",
                           lambda m: m.group(1) + digest, html, count=1)
     if count != 1:
@@ -153,7 +195,32 @@ def main():
                     pending.append(nested)
     (args.output / "app-debug.apk").write_bytes(apk)
     (args.output / "app-debug.apk.sha256").write_text(digest + "  app-debug.apk\n", encoding="utf-8")
+
+    vmeta = resolve_apk_version_meta(args)
+    apk_version_payload = {
+        "appId": vmeta["appId"],
+        "versionName": vmeta["versionName"],
+        "versionCode": vmeta["versionCode"],
+        "build": vmeta["build"],
+        "apkUrl": BASE + "app-debug.apk",
+        "sha256": digest,
+        "size": len(apk),
+        "changelog": args.changelog,
+        "publishedAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    (args.output / "apk-version.json").write_text(
+        json.dumps(apk_version_payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    (args.output / "_headers").write_text(
+        "/apk-version.json\n"
+        "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
+        "/app-debug.apk.sha256\n"
+        "  Cache-Control: no-store, max-age=0\n",
+        encoding="utf-8",
+    )
     print("Prepared download site; APK SHA-256:", digest)
+    print(f"APK version metadata: v{vmeta['versionName']} (versionCode {vmeta['versionCode']}, {len(apk)} bytes)")
     print("Preserved existing page HTML, images, CSS and VirusTotal section.")
 
 
