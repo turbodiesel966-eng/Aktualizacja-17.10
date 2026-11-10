@@ -233,719 +233,1087 @@
   // 4. ROZBUDOWANA DIAGNOSTYKA — 6 DZIAŁÓW (A–F)
   // ============================================================================
   const DIAGNOSTIC_SECTIONS = [
-    {
-      id: 'A',
-      code: 'DZIAŁ A',
-      title: 'DIAGNOSTYKA MECHANICZNA',
-      color: '#f97316',
-      icon: '⚙️',
-      summary: 'Kompresja, próba szczelności Leak Down, tłoki i pierścienie, luzy zaworowe 12V/16V, wałki rozrządu, łańcuch i napinacz CCT, uszczelka pod głowicą, ciśnienie oleju.',
-      procedures: [
-        {
-          id: 'A1',
-          name: 'Pomiar kompresji w silniku 3- i 4-cylindrowym',
-          tools: 'Manometr kompresji z gwintem M10×1.0 / M12×1.25, naładowany akumulator (min. 12.6 V), klucz do świec 16 mm / 14 mm',
-          when: 'Nierówna praca, spadek mocy, trudny rozruch, podejrzenie podpartych zaworów lub zużycia pierścieni.',
-          steps: [
-            'Rozgrzej silnik do temperatury roboczej (ok. 80–90°C płynu / oleju) i wyłącz zapłon.',
-            'Odłącz zasilanie cewek zapłonowych (lub fajkocewek COP) oraz wtyczki wtryskiwaczy EFI / zamknij kranik paliwa.',
-            'Wykręć WSZYSTKIE 3 lub 4 świece zapłonowe i ułóż je w kolejności cylindrów (Cyl 1 = lewy skrajny w układzie rzędowym poprzecznym).',
-            'Wkręć końcówkę manometru w gniazdo świecy badanego cylindra. Otwórz przepustnicę całkowicie (WOT — 100%) i kręć rozrusznikiem przez 4–6 sekund do ustabilizowania wskazówki.',
-            'Zapisz wynik dla każdego cylindra w zakładce „Diagnostyka Cylindrów” i porównaj rozrzut Δ pomiędzy skrajnymi cylindrami.'
-          ],
-          evaluation: 'W sprawnej jednostce wielocylindrowej różnica pomiędzy najsłabszym a najmocniejszym cylindrem nie powinna przekraczać 1.0–1.5 bar (100–150 kPa / maks. 10%). Wartość nominalną dla wybranego kodu silnika sprawdź w tabeli Parametrów Serwisowych.'
-        },
-        {
-          id: 'A2',
-          name: 'Próba szczelności cylindrów (Leak Down Test)',
-          tools: 'Tester szczelności dwumanometryczny Leak Down, sprężarka powietrza (6–8 bar), klucz do obracania wałem korbowym i jego blokowania w GMP',
-          when: 'Zaniżona kompresja na jednym lub kilku cylindrach — pozwala jednoznacznie odróżnić nieszczelność zaworów od zużycia pierścieni lub uszkodzenia uszczelki pod głowicą.',
-          steps: [
-            'Ustaw tłok badanego cylindra dokładnie w Górnym Martwym Punkcie (GMP / TDC) suwu sprężania (wszystkie krzywki zaworowe tego cylindra skierowane od popychaczy).',
-            'Zablokuj wał korbowy (lub wrzuć 6. bieg i zablokuj tylne koło hamulcem) — ciśnienie sprężonego powietrza może obrócić wał!',
-            'Skalibruj tester Leak Down i podłącz wąż do gniazda świecy. Podaj ciśnienie testowe i odczytaj procentowy spadek (% ubytku).',
-            'Nasłuchuj miejsca ucieczki powietrza: kolektor dolotowy/gardziele = zawory ssące; wydech = zawory wydechowe; korek wlewu oleju/odma = pierścienie tłokowe lub gładź cylindra; bąbelki w chłodnicy = uszczelka pod głowicą.'
-          ],
-          evaluation: 'Ubytek do 5–8% oznacza bardzo dobrą szczelność; 10–15% to stan dopuszczalny eksploatacyjnie; powyżej 15–20% wymaga rewizji głowicy lub układu tłokowo-cylindrowego.'
-        },
-        {
-          id: 'A3',
-          name: 'Kontrola szczelności cylindrów i próba olejowa',
-          tools: 'Manometr kompresji, strzykawka warsztatowa z wężykiem, 3–5 ml czystego oleju silnikowego 10W-40',
-          when: 'Gdy pomiar kompresji na sucho wykazał spadek na wybranym cylindrze, a nie dysponujesz jeszcze zestawem Leak Down.',
-          steps: [
-            'Wstrzyknij 3–5 ml oleju silnikowego bezpośrednio na denko tłoka przez otwór świecy badanego cylindra (uważaj, aby nie wlać więcej — ryzyko podparcia hydraulicznego).',
-            'Obróć wałem korbowym o 2 obroty bez manometru w celu rozprowadzenia filmu olejowego na pierścieniach.',
-            'Ponownie zmierz kompresję przy całkowicie otwartej przepustnicy (WOT) i porównaj z wynikiem „na sucho”.'
-          ],
-          evaluation: 'Wyraźny wzrost ciśnienia po podaniu oleju (o >1.5–2.0 bar) wskazuje na nieszczelność pierścieni tłokowych lub owalizację cylindra. Brak wzrostu wskazuje na podparte/wypalone zawory lub nieszczelność uszczelki głowicy.'
-        },
-        {
-          id: 'A4',
-          name: 'Diagnostyka tłoków, pierścieni i gładzi cylindrowych (Nikasil / żeliwo)',
-          tools: 'Endoskop warsztatowy HD z kamerą kątową 90°, średnicówka zegarowa, mikrometr, szczelinomierz',
-          when: 'Nadmierne zużycie oleju (>0.4–0.5 l / 1000 km), niebieski dym z wydechu, przedmuchy do skrzyni korbowej.',
-          steps: [
-            'Przez otwór świecy wprowadź kamerę endoskopową przy tłoku w DMP i oceń ślady honowania (siatkę krzyżową), rysy wzdłużne oraz odkładanie nagaru olejowego na obwodzie denka tłoka.',
-            'Sprawdź ciśnienie w skrzyni korbowej na biegu jałowym oraz po przygazowaniu (przedmuchy przez odmę do airboxu).',
-            'Przy demontażu cylindrów zmierz owalizację i stożkowatość w 6 punktach oraz luz zamka pierścieni w cylindrze.'
-          ],
-          evaluation: 'Wytarcie siatki honowniczej, pionowe zatarcia na płaszczu tłoka lub zapieczone pierścienie zgarniające wymagają honowania/tulejowania lub wymiany kompletu pierścieni.'
-        },
-        {
-          id: 'A5',
-          name: 'Kontrola zaworów, przylgni i uszczelniaczy trzonków',
-          tools: 'Endoskop z podświetleniem LED, próżniomierz do głowic, nafta kontrolna (przy zdjętej głowicy)',
-          when: 'Zimny dym po rozruchu (uszczelniacze zaworowe), nieszczelność w próbie Leak Down w stronę dolotu lub wydechu.',
-          steps: [
-            'Oceń endoskopowo trzonki zaworów ssących od strony gardzieli dolotowych — mokry olej na grzybku zaworu ssącego świadczy o stwardniałych uszczelniaczach zaworowych.',
-            'W silnikach wysokoobrotowych 400–600 cm³ (kręcących 14 000–16 500 obr./min) sprawdź symetrię osadzenia zaworów i brak wypalenia przylgni wydechowych.',
-            'Po demontażu głowicy wykonaj próbę szczelności podciśnieniowej kanałów dolotowych i wydechowych.'
-          ],
-          evaluation: 'Wypalone gniazda wydechowe lub zużyte prowadnice zaworowe powodują utratę kompresji i brak możliwości trwałego wyregulowania luzów zaworowych.'
-        },
-        {
-          id: 'A6',
-          name: 'Pomiar luzów zaworowych i dobór płytek regulacyjnych (12V / 16V)',
-          tools: 'Szczelinomierz listkowy precyzyjny (co 0.01–0.02 mm), mikrometr 0–25 mm (do pomiaru płytek), klucz dynamometryczny 8–15 Nm',
-          when: 'Trudny rozruch na gorącym silniku, gaśnięcie po rozgrzaniu (zbyt ciasne zawory), metaliczne cykanie z głowicy (zbyt luźne zawory) lub interwał serwisowy.',
-          steps: [
-            'Pomiar wykonuj WYŁĄCZNIE na całkowicie ZIMNYM silniku (poniżej 35°C / po nocy w warsztacie).',
-            'Zdejmij pokrywę zaworów, ustaw znaki rozrządu dla Cyl 1 w GMP sprężania i zmierz luzy na obu zaworach ssących (IN) oraz obu zaworach wydechowych (EX) każdego cylindra po kolei zgodnie z kolejnością zapłonu.',
-            'Zapisz wszystkie 12 (R3) lub 16 (R4) pomiarów. Jeśli luz wykracza poza specyfikację modelu, oblicz nową grubość płytki w Kalkulatorze Płytek Zaworowych: Nowa = Stara + (Zmierzony − Cel).'
-          ],
-          evaluation: 'W 16-zaworowych silnikach R4 luzy zaworowe mają tendencję do ZMNIEJSZANIA SIĘ (osiadanie zaworów w gniazdach). Zbyt mały luz (<0.08 mm) grozi podparciem i wypaleniem zaworu!'
-        },
-        {
-          id: 'A7',
-          name: 'Diagnostyka wałków rozrządu, krzywek i łożyskowania w głowicy',
-          tools: 'Mikrometr 25–50 mm, paski pomiarowe Plastigage, klucz dynamometryczny',
-          when: 'Podczas regulacji płytkowej (płytki pod szklankami wymagają demontażu wałków), przy hałasach z górnej części głowicy lub po spadku ciśnienia oleju.',
-          steps: [
-            'Oceń wierzchołki wszystkich krzywek pod kątem wżerów zmęczeniowych (pittingu), przebarwień termicznych i wyrobienia warstwy utwardzanej.',
-            'Sprawdź czopy wałków rozrządu oraz aluminiowe mostki łożyskowe w głowicy (brak rys zatarcia — wałki pracują bezpośrednio w filmie olejowym głowicy).',
-            'Zmierz wysokość krzywek mikrometrem i luz olejowy czopów za pomocą paska Plastigage.'
-          ],
-          evaluation: 'Zatarcie mostków wałków rozrządu w aluminiowej głowicy świadczy o pracy przy zbyt niskim ciśnieniu oleju lub zatkaniu magistrali olejowej nadmierną ilością silikonu.'
-        },
-        {
-          id: 'A8',
-          name: 'Kontrola łańcucha rozrządu, ślizgów i napinacza (CCT)',
-          tools: 'Stetoskop mechanika, wkrętak precyzyjny do napinacza zapadkowego/śrubowego, suwmiarka (pomiar długości 20 ogniw)',
-          when: 'Metaliczne grzechotanie z prawej lub środkowej części silnika w zakresie 3000–5500 obr./min lub po odpuszczeniu gazu (typowe dla CBR 600 F4/F4i, Hornet, FZ6, GSX-R 600, Daytona 675).',
-          steps: [
-            'Za pomocą stetoskopu osłuchaj okolicę tunelu łańcucha rozrządu i korpusu napinacza (CCT) przy schodzeniu z obrotów.',
-            'Sprawdź znaki na kołach wałków rozrządu względem znaku T na wale korbowym — rozciągnięty łańcuch powoduje opóźnienie faz wałków względem wału.',
-            'Wyjmij napinacz (po wcześniejszym zablokowaniu wału w GMP!) i sprawdź wysunięcie trzpienia, stan sprężyny skrętnej/zapadki oraz zużycie okładzin ślizgów.'
-          ],
-          evaluation: 'Całkowite wysunięcie napinacza oznacza zużyty łańcuch rozrządu. Uszkodzona sprężyna napinacza przy sprawnym łańcuchu powoduje niebezpieczny luz i ryzyko przeskoczenia rozrządu o 1–2 zęby.'
-        },
-        {
-          id: 'A9',
-          name: 'Diagnostyka uszczelki pod głowicą (UPG) i płaszczyzny bloku',
-          tools: 'Tester obecności CO₂ w układzie chłodzenia, próba Leak Down, liniał krawędziowy precyzyjny + szczelinomierz 0.03–0.05 mm',
-          when: 'Wyrzucanie płynu chłodniczego do zbiorniczka wyrównawczego, twarde węże chłodnicy zaraz po rozruchu, para z wydechu lub emulsja wodno-olejowa („masło”) pod korkiem oleju.',
-          steps: [
-            'Na zimnym silniku zdejmij korek chłodnicy, zamontuj tester reakcyjny CO₂ i uruchom silnik — zmiana koloru płynu z niebieskiego na żółty/zielony potwierdza przedostawanie się spalin do płaszcza wodnego.',
-            'Wykonaj pomiar kompresji sąsiednich cylindrów (np. Cyl 1–2 lub Cyl 2–3) — symetrycznie niska kompresja na dwóch sąsiednich cylindrach wskazuje na przepalenie mostka uszczelki.',
-            'Po zdjęciu głowicy zmierz odkształcenie płaszczyzny głowicy i bloku liniałem krawędziowym po przekątnych.'
-          ],
-          evaluation: 'Jakakolwiek obecność CO₂ w płynie chłodniczym lub odkształcenie głowicy przekraczające limit serwisowy (zwykle 0.05 mm) wymaga planowania głowicy i montażu nowej uszczelki wielowarstwowej MLS.'
-        },
-        {
-          id: 'A10',
-          name: 'Kontrola ciśnienia oleju i układu smarowania',
-          tools: 'Manometr ciśnienia oleju 0–10 bar z adapterem gwintowym (M14×1.5 / 1/8" BSPT), termometr serwisowy',
-          when: 'Mruganie lub świecenie kontrolki ciśnienia oleju, głośna praca góry silnika, po naprawie głównej lub wymianie pompy oleju.',
-          steps: [
-            'Sprawdź poziom i lepkość oleju oraz brak rozcieńczenia oleju benzyną (powąchaj bagnet/wlew — nieszczelne zaworki iglicowe gaźników potrafią zalać karter paliwem!).',
-            'Wykręć czujnik ciśnienia oleju z magistrali głównej i wkręć manometr warsztatowy.',
-            'Rozgrzej silnik do temperatury pomiarowej (80–90°C) i odczytaj ciśnienie na biegu jałowym oraz przy obrotach pomiarowych określonych w DTR.'
-          ],
-          evaluation: 'Zbyt niskie ciśnienie oleju grozi natychmiastowym zatarciem panewek korbowodowych na czopach wału (szczególnie Cyl 2 i 3). Sprawdź smok olejowy w misce, zawór przelewowy i luz rotora pompy.'
-        }
-      ]
-    },
-    {
-      id: 'B',
-      code: 'DZIAŁ B',
-      title: 'UKŁAD PALIWOWY (GAŹNIKI & EFI)',
-      color: '#10b981',
-      icon: '⛽',
-      summary: 'Baterie 3–4 gaźników, synchronizacja podciśnień, poziomy pływaków, dysze i iglice, zaworki iglicowe, ssanie, króćce dolotowe, wtryskiwacze EFI, pompa i regulator ciśnienia, czujniki MAP/TPS/IAT.',
-      procedures: [
-        {
-          id: 'B1',
-          name: 'Kompleksowa rewizja baterii 3–4 gaźników',
-          tools: 'Myjka ultradźwiękowa, zmywacz do gaźników, zestaw wkrętaków JIS (Japanese Industrial Standard!), sprężone powietrze z regulacją',
-          when: 'Po dłuższym postoju motocykla, nierówna praca na wolnych obrotach, dławienie przy dodawaniu gazu, strzały w tłumik lub dolot.',
-          steps: [
-            'Zdemontuj baterię gaźników z króćców ssących (podgrzej gumowe króćce opalarką do 45°C, aby ich nie połamać). Używaj wkrętaków JIS, by nie objechać śrub komór pływakowych.',
-            'Rozbierz każdy gaźnik osobno do dedykowanego pojemnika (Gaźnik 1, 2, 3, 4) — w niektórych modelach dysze główne lub iglice na skrajnych cylindrach (1/4) różnią się od środkowych (2/3)!',
-            'Wyjmij wszystkie elementy gumowe (membrany podciśnieniowe, O-ringi śrub składu mieszanki) przed kąpielą w myjce ultradźwiękowej.',
-            'Przedmuchaj i sprawdź drożność kanałów powietrza biegu jałowego, dysz wolnych obrotów (pilot jet) oraz rurek emulsyjnych.'
-          ],
-          evaluation: 'Nawet częściowo przytkana dysza wolnych obrotów (#35–#40 ma prześwit ok. 0.35 mm!) wyłącza cylinder z pracy na biegu jałowym, mimo że przy wysokich obrotach na dyszy głównej cylinder zaczyna pracować.'
-        },
-        {
-          id: 'B2',
-          name: 'Synchronizacja 3–4 gaźników i przepustnic wtryskowych (TB Sync)',
-          tools: 'Wakuometr 4-kanałowy (słupkowy rtęciowy/cieczowy, zegarowy z tłumikami drgań lub elektroniczny), długi wkrętak kątowy do śrub synchronizacji, zewnętrzna butelka paliwowa (kroplówka)',
-          when: 'Szarpnięcia przy małym otwarciu gazu, powolne schodzenie z obrotów, wibracje silnika, po każdej regulacji zaworów lub czyszczeniu gaźników/przepustnic.',
-          steps: [
-            'WARUNEK WSTĘPNY: Przed synchronizacją muszą być sprawdzone luzy zaworowe, szczelność króćców dolotowych oraz ustawione obroty jałowe na rozgrzanym silniku.',
-            'Podłącz 3 lub 4 przewody wakuometru do króćców pomiarowych w kolektorach ssących (Cyl 1, 2, 3, [4]).',
-            'W bateriach 4-gaźnikowych najpierw wyrównaj parę lewą (Cyl 1 z Cyl 2 śrubą lewą), następnie parę prawą (Cyl 3 z Cyl 4 śrubą prawą), a na końcu zsynchronizuj obie pary ze sobą śrubą centralną względem gaźnika bazowego.',
-            'Po każdym obrocie śruby przegazuj lekko manetką (2500–3000 obr./min) i pozwól przepustnicom osiąść na zderzakach.'
-          ],
-          evaluation: 'Dopuszczalna różnica podciśnienia pomiędzy wszystkimi cylindrami nie powinna przekraczać 10–15 mmHg (ok. 1.3–2.0 kPa). Po synchronizacji skoryguj obroty biegu jałowego.'
-        },
-        {
-          id: 'B3',
-          name: 'Pomiar wysokości pływaków i rzeczywistego poziomu paliwa',
-          tools: 'Suwmiarka głębokościowa, przezroczysty wężyk pomiarowy z adapterem do śruby spustowej komory pływakowej',
-          when: 'Zalewanie świec, czarne zadymienie (zbyt wysoki poziom), brak mocy na wysokich obrotach lub gaśnięcie po ostrej jeździe (zbyt niski poziom).',
-          steps: [
-            'Metoda statyczna (wysokość pływaka): Przechyl gaźnik pod kątem ~45°, tak aby języczek pływaka jedynie musnął amortyzowany trzpień zaworka iglicowego (bez jego wciskania!) i zmierz odległość od przylgni komory do szczytu pływaka.',
-            'Metoda dynamiczna (rzeczywisty poziom paliwa): Na zamontowanych gaźnikach podłącz przezroczysty wężyk do króćca spustowego, otwórz śrubę spustową i unieś wężyk obok linii podziału komory pływakowej.'
-          ],
-          evaluation: 'Wszystkie 3 lub 4 gaźniki muszą mieć identyczny poziom paliwa (z dokładnością do ±0.5–1.0 mm względem specyfikacji modelu). Różnice poziomów uniemożliwiają równą pracę silnika w całym zakresie obciążeń.'
-        },
-        {
-          id: 'B4',
-          name: 'Weryfikacja dysz głównych, dysz wolnych obrotów, iglic i rurek emulsyjnych',
-          tools: 'Lupa warsztatowa 10×, mikrometr do iglic, przymiary kalibracyjne (bez rozpychania otworów!)',
-          when: 'Dziura w przyspieszeniu w średnim zakresie (4000–7000 obr./min), przerywanie przy pełnym otwarciu gazu, po montażu przelotowego wydechu.',
-          steps: [
-            'Odczytaj oznaczenia wybitych rozmiarów dysz głównych (Main Jet) i wolnych obrotów (Pilot Jet) na każdym cylindrze i porównaj z katalogiem modelu.',
-            'Sprawdź rurki emulsyjne (rozpylacze) pod kątem owalizacji otworu przez pracującą w nich iglicę — wyrobiona rurka emulsyjna silnie wzbogaca mieszankę w średnim zakresie obrotów!',
-            'Sprawdź położenie zapinki na iglicy (jeśli regulowana) oraz stan stożka śruby składu mieszanki (Pilot Screw) wraz z podkładką i O-ringiem.'
-          ],
-          evaluation: 'Nigdy nie czyść dysz stalowym drutem — porysowanie kalibrowanego otworu zmienia charakterystykę przepływu paliwa.'
-        },
-        {
-          id: 'B5',
-          name: 'Test szczelności zaworków iglicowych i gniazd pływakowych',
-          tools: 'Pompka ciśnieniowa/podciśnieniowa Mityvac z manometrem (0.2–0.3 bar), wacik polerski do gniazd mosiężnych',
-          when: 'Wyciek paliwa przez przelew gaźników, zapach benzyny w oleju silnikowym, zalewanie jednego cylindra po postoju.',
-          steps: [
-            'Oceń gumowy stożek zaworka iglicowego pod lupą — widoczny wygnieciony pierścień (rowek) na stożku kwalifikuje zaworek do wymiany.',
-            'W gaźnikach z wymiennymi gniazdami zaworków wymień O-ring zewnętrzny gniazda mosiężnego (często paliwo cieknie bokiem wokół gniazda, a nie przez sam zaworek!).',
-            'Po złożeniu wykonaj test utrzymania ciśnienia na króćcu zasilającym baterii gaźników.'
-          ],
-          evaluation: 'Nieszczelny zaworek iglicowy przy uszkodzonym kraniku podciśnieniowym potrafi przelać paliwo przez cylinder do skrzyni korbowej, powodując rozrzedzenie oleju lub blokadę hydrauliczną (hydrolock).'
-        },
-        {
-          id: 'B6',
-          name: 'Kontrola układu rozruchowego (ssania / Enrichener / Fast Idle)',
-          tools: 'Szczelinomierz, smar silikonowy/PTFE, wakuometr',
-          when: 'Silnik nie wchodzi na podwyższone obroty po włączeniu ssania na zimno lub po wyłączeniu ssania zalewa wybrane cylindry i nie trzyma wolnych obrotów.',
-          steps: [
-            'Sprawdź płynność przesuwu wspólnej listwy ssania łączącej wszystkie 3–4 gaźniki.',
-            'Wykręć tłoczki ssania (plunger) z każdego gaźnika: sprawdź stan gumowego uszczelniacza na czole tłoczka oraz czystość gniazda.',
-            'Po cofnięciu dźwigni ssania upewnij się, że na każdym gaźniku pozostaje ok. 1–2 mm luzu na listwie i żaden tłoczek nie jest podciągnięty.'
-          ],
-          evaluation: 'Zapieczony tłoczek ssania w jednym gaźniku powoduje permanentne zalewanie tego cylindra po rozgrzaniu (czarna świeca, wypadanie zapłonów na wolnych obrotach).'
-        },
-        {
-          id: 'B7',
-          name: 'Kontrola króćców ssących i test szczelności dolotu (lewe powietrze)',
-          tools: 'Wytwornica dymu diagnostycznego lub zmywacz hamulcowy / tester szczelności (z zachowaniem BHP ppoż.!)',
-          when: 'Obroty zawieszają się na 2500–3500 obr./min i bardzo wolno opadają, uboga mieszanka (białe świece), strzały w wydech przy zamykaniu gazu.',
-          steps: [
-            'Obejrzyj gumowe króćce ssące (szczególnie od spodu i przy obejmach zaciskowych) pod kątem spękań starzeniowych oraz odklejenia gumy od aluminiowej flanszy.',
-            'Sprawdź obecność i stan gumowych zaślepek na króćcach do synchronizacji oraz wężyków podciśnienia (do kranika paliwa, czujnika MAP/IAP, zaworu PAIR/AIS).',
-            'Na pracującym silniku wykonaj punktowy test szczelności każdego połączenia króciec–głowica oraz króciec–gaźnik/przepustnica.'
-          ],
-          evaluation: 'Każda zmiana obrotów biegu jałowego podczas testu punktowego oznacza zasysanie „lewego powietrza” poza przepustnicą i wymaga wymiany króćców lub O-ringów.'
-        },
-        {
-          id: 'B8',
-          name: 'Diagnostyka wtryskiwaczy EFI (rezystancja, wydatek, kształt strugi)',
-          tools: 'Multimetr cyfrowy, stetoskop / oscyloskop, menzurki pomiarowe + generator impulsów do wtryskiwaczy',
-          when: 'Wypadanie zapłonu na jednym cylindrze w silniku EFI, zimniejszy kolektor wydechowy przy obecnej iskrze i prawidłowej kompresji.',
-          steps: [
-            'Na pracującym silniku przyłóż stetoskop do każdego wtryskiwacza — powinieneś słyszeć wyraźne, rytmiczne klikanie iglicy. W silnikach Supersport 600 (np. CBR600RR, R6, ZX-6R, GSX-R600) pamiętaj o dwóch rzędach wtryskiwaczy (Primary + Secondary pod airboxem).',
-            'Odłącz wtyczkę i zmierz rezystancję uzwojenia każdego wtryskiwacza w temperaturze 20°C (typowo 11.5–14.5 Ω dla wtryskiwaczy wysokoomowych).',
-            'Sprawdź wydatek paliwa przez 15 sekund do 4 menzurek oraz kąt rozpylania mgły paliwowej (brak lania zwartym strumieniem).'
-          ],
-          evaluation: 'Różnica wydatku pomiędzy wtryskiwaczami w listwie nie powinna przekraczać 5%. Lejący lub przytkany wtryskiwacz poddaj czyszczeniu ultradźwiękowemu z płukaniem wstecznym lub wymień.'
-        },
-        {
-          id: 'B9',
-          name: 'Kontrola pompy paliwa i filtrów (niskiego / wysokiego ciśnienia)',
-          tools: 'Manometr ciśnienia paliwa z trójnikiem, multimetr (pomiar poboru prądu pompy), cylinder miarowy',
-          when: 'Motocykl nie odpala (brak buczenia pompy po przekręceniu kluczyka), dławi się powyżej 8000–10000 obr./min pod pełnym obciążeniem.',
-          steps: [
-            'Po włączeniu zapłonu i przełącznika RUN nasłuchuj 2–3 sekundowego cyklu nabijania ciśnienia przez pompę paliwa.',
-            'W starszych modelach gaźnikowych z pompą stykową (np. CBR600F2/F3, ZZR600, FZR600, Thundercat) sprawdź stan styków przerywacza pod czarną kopułką pompy Mitsubishi.',
-            'W układach EFI zmierz ciśnienie na listwie wtryskowej (zwykle 3.0–3.5 bar) oraz sprawdź, czy nie spada ono przy gwałtownym otwarciu przepustnicy.'
-          ],
-          evaluation: 'Spadek ciśnienia paliwa pod obciążeniem wskazuje na przytkane sitko/filtr w module zbiornika lub zużyty komutator pompy paliwa.'
-        },
-        {
-          id: 'B10',
-          name: 'Test regulatora ciśnienia paliwa (FPR)',
-          tools: 'Manometr paliwowy, pompka podciśnieniowa Mityvac',
-          when: 'Czarny dym z wszystkich cylindrów w silniku EFI, trudny rozruch na ciepło, benzyna w wężyku podciśnieniowym regulatora.',
-          steps: [
-            'W układach z regulatorem podciśnieniowym na listwie zdejmij cienki wężyk podciśnienia z króćca regulatora — obecność choćby kropli paliwa w tym wężyku oznacza pękniętą membranę regulatora (paliwo jest zasysane bezpośrednio do cylindra!).',
-            'Sprawdź utrzymanie ciśnienia resztkowego w układzie przez 5 minut po wyłączeniu zapłonu.'
-          ],
-          evaluation: 'Uszkodzony regulator zawyża lub zaniża ciśnienie na całej listwie, rozstrajając dawkę paliwa na wszystkich cylindrach jednocześnie.'
-        },
-        {
-          id: 'B11',
-          name: 'Diagnostyka czujników układu dolotowego (TPS, MAP/IAP, IAT)',
-          tools: 'Multimetr cyfrowy o wysokiej impedancji, oscyloskop (do testu płynności ścieżki TPS)',
-          when: 'Szarpnięcia przy przejściu z zamkniętego na lekko otwarty gaz, błędy FI/MIL na zestawie wskaźników, nieprawidłowa korekta dawki.',
-          steps: [
-            'Czujnik położenia przepustnicy (TPS): Zmierz napięcie zasilania (5.0 V ± 0.1 V) oraz napięcie sygnałowe przy powolnym otwieraniu manetki od 0% do 100% (typowo płynny wzrost od ~0.5–1.1 V do ~4.2–4.8 V bez żadnych przeskoków i przerw).',
-            'Czujnik ciśnienia w kolektorze (MAP/IAP): Sprawdź szczelność cienkich wężyków podciśnieniowych łączących gardziele z czujnikiem (często parcieją lub spadają pod airboxem!).',
-            'Czujnik temperatury powietrza dolotowego (IAT): Zmierz rezystancję termistora NTC w funkcji temperatury otoczenia.'
-          ],
-          evaluation: 'Wytarta ścieżka potencjometru TPS w dolnym zakresie otwarcia (5–15%) powoduje gwałtowne szarpanie w ruchu miejskim, często nie zapisując jeszcze błędu w pamięci ECU.'
-        }
-      ]
-    },
-    {
-      id: 'C',
-      code: 'DZIAŁ C',
-      title: 'UKŁAD ZAPŁONOWY (WASTED SPARK & COP)',
-      color: '#38bdf8',
-      icon: '⚡',
-      summary: 'Świece zapłonowe, cewki podwójne (1–4 / 2–3) oraz fajkocewki COP, przewody WN i fajki z rezystorem, czujnik CKP (Pickup) i CMP, moduły CDI/TCI/ECU, brak iskry i wypadanie zapłonów.',
-      procedures: [
-        {
-          id: 'C1',
-          name: 'Ocena stanu świec zapłonowych i dobór ciepłoty',
-          tools: 'Szczelinomierz drutowy do świec, klucz dynamometryczny (11–18 Nm zależnie od gwintu M10/M12), lupa',
-          when: 'Wypadanie zapłonów, trudny rozruch, po zalaniu silnika paliwem (świece w silnikach R4 600 cm³ typu CR9E/CR9EH-9 są bardzo wrażliwe na zalanie na zimno!).',
-          steps: [
-            'Porównaj kolor izolatora wszystkich 3 lub 4 świec ułożonych w kolejności cylindrów: jasnobrązowy/szarobrązowy = prawidłowy; czarny matowy/mokry = zalanie lub brak iskry; kredowobiały ze stopioną elektrodą = niebezpiecznie uboga mieszanka lub nieszczelny dolot.',
-            'Sprawdź odstęp elektrod (zwykle 0.6–0.9 mm zgodnie z katalogiem modelu) oraz rezystancję wewnętrznego opornika przeciwzakłóceniowego (dla świec z literą „R” typowo 3.5–7.5 kΩ).',
-            'Sprawdź izolator ceramiczny pod kątem pionowych czarnych linii przebicia elektrycznego.'
-          ],
-          evaluation: 'Świeca raz silnie zalana benzyną w silniku 4-cylindrowym często dostaje przebicia po izolatorze pod ciśnieniem sprężania, mimo że po wyjęciu na zewnątrz daje widoczną iskrę!'
-        },
-        {
-          id: 'C2',
-          name: 'Diagnostyka cewek podwójnych (Wasted Spark 1–4 / 2–3) oraz fajkocewek COP',
-          tools: 'Multimetr cyfrowy, iskrownik testowy z regulowaną przerwą (tester długości iskry)',
-          when: 'Brak pracy pary cylindrów (1 i 4 lub 2 i 3 w układzie Wasted Spark) albo pojedynczego cylindra w układzie COP (Coil-On-Plug), przerywanie po rozgrzaniu cewek.',
-          steps: [
-            'W układzie klasycznym (2 cewki podwójne dla R4): Cewka nr 1 obsługuje zazwyczaj cylindry skrajne (1 i 4), a Cewka nr 2 cylindry środkowe (2 i 3). Zmierz rezystancję uzwojenia pierwotnego pomiędzy pinami zasilania (typowo 1.8–4.5 Ω) oraz wtórnego pomiędzy dwoma wyjściami WN (typowo 10–25 kΩ bez fajek).',
-            'W układzie indywidualnych fajkocewek COP: Zmierz rezystancję pierwotną (zwykle 0.8–2.2 Ω) i wykonaj test zamiany miejscami fajkocewek pomiędzy cylindrem sprawnym a niedziałającym.',
-            'Sprawdź obudowę fajkocewek COP pod kątem mikropęknięć epoksydu i białego nalotu przebicia do ścianki gniazda w głowicy.'
-          ],
-          evaluation: 'Jeżeli po zamianie fajkocewki COP z Cyl 1 na Cyl 2 usterka (zimny kolektor / wypadanie zapłonu) przenosi się na Cyl 2, fajkocewka jest uszkodzona.'
-        },
-        {
-          id: 'C3',
-          name: 'Kontrola przewodów wysokiego napięcia i fajek z rezystorem',
-          tools: 'Omomierz, środek dielektryczny do osłon gumowych',
-          when: 'Przerywanie silnika podczas jazdy w deszczu lub dużej wilgotności, wypadanie zapłonu na pojedynczym cylindrze przy układzie z cewkami podwójnymi.',
-          steps: [
-            'Wykręć fajkę z przewodu WN i zmierz samą rezystancję opornika wewnątrz fajki (typowo 5 kΩ lub 10 kΩ zależnie od producenta — wartość jest często wybita na korpusie fajki NGK/Nichirin).',
-            'Sprawdź końcówkę miedzianego rdzenia przewodu WN — jeśli jest zielona i skorodowana, przytnij przewód o 5 mm i wkręć fajkę w zdrowy rdzeń.',
-            'Sprawdź gumowe uszczelnienie górne fajki chroniące głęboki kanał świecy w głowicy DOHC przed zalaniem wodą.'
-          ],
-          evaluation: 'Nieskończona rezystancja (OL) lub wartość >20 kΩ w fajce 5 kΩ powoduje osłabienie iskry i obciążenie termiczne cewki zapłonowej.'
-        },
-        {
-          id: 'C4',
-          name: 'Pomiar czujnika położenia wału korbowego (CKP / Pickup Coil)',
-          tools: 'Multimetr z adapterem napięcia szczytowego (Peak Voltage Adapter) lub oscyloskop, szczelinomierz niemagnetyczny',
-          when: 'Całkowity brak iskry na wszystkich cylindrach i brak wysterowania pompy/wtryskiwaczy podczas kręcenia rozrusznikiem.',
-          steps: [
-            'Rozepnij złącze czujnika CKP (impulsatora) i zmierz jego rezystancję w temperaturze 20°C oraz ponownie na gorącym silniku (częsta usterka: czujnik przerywa dopiero po rozgrzaniu oleju do 80°C!).',
-            'Sprawdź brak zwarcia któregokolwiek z przewodów czujnika CKP do masy silnika (musi być OL / ∞).',
-            'Podczas kręcenia rozrusznikiem zmierz napięcie szczytowe (Peak Voltage) generowane przez czujnik indukcyjny — powinno wynosić minimum 0.7–1.5 V_peak.'
-          ],
-          evaluation: 'Opiłki metalu przyklejone do magnetycznego rdzenia czujnika CKP lub uszkodzone uzwojenie powodują utratę synchronizacji zapłonu i nagłe gaśnięcie silnika.'
-        },
-        {
-          id: 'C5',
-          name: 'Diagnostyka czujnika położenia wałka rozrządu (CMP / Cam Sensor)',
-          tools: 'Multimetr, oscyloskop 2-kanałowy (synchronizacja CKP + CMP)',
-          when: 'Długie kręcenie rozrusznikiem przed zapłonem w silnikach EFI z sekwencyjnym wtryskiem, błąd czujnika CMP (np. kod 11 w Suzuki/Yamaha, kod 18 w Hondzie).',
-          steps: [
-            'Dla czujnika Halla (3-przewodowego): sprawdź zasilanie (5 V lub 12 V), masę czujnikową oraz przełączanie sygnału wyjściowego (0 V ↔ 5 V) podczas obracania wałem.',
-            'Dla czujnika indukcyjnego (2-przewodowego): zmierz rezystancję uzwojenia oraz napięcie szczytowe przy rozruchu.'
-          ],
-          evaluation: 'Uszkodzenie czujnika CMP uniemożliwia ECU rozpoznanie, który z dwóch bliźniaczych cylindrów (np. 1 czy 4) jest w suwie sprężania, a który w suwie wydechu.'
-        },
-        {
-          id: 'C6',
-          name: 'Kontrola koła impulsowego (rotora impulsatora) i szczeliny powietrznej',
-          tools: 'Szczelinomierz niemagnetyczny (mosiężny), klucz dynamometryczny',
-          when: 'Po wywrotce motocykla na bok (pęknięty dekiel impulsatora), po pracach przy sprzęgle lub alternatorze.',
-          steps: [
-            'Sprawdź tarczę impulsową (trigger wheel) pod kątem skrzywienia zębów znacznikowych oraz stan wpustu (klina) ustalającego tarczę na czopie wału korbowego.',
-            'Zmierz szczelinę powietrzną pomiędzy wypustem rotora a czołem czujnika CKP (typowo 0.4–0.9 mm).'
-          ],
-          evaluation: 'Ścięty klin na wale korbowym lub wygięty ząb koła impulsowego przesuwa kąt wyprzedzenia zapłonu na wszystkich cylindrach.'
-        },
-        {
-          id: 'C7',
-          name: 'Weryfikacja zasilania i mas modułu zapłonowego CDI / TCI / ECU',
-          tools: 'Multimetr cyfrowy, żarówka próbnikowa 21W (test mas i zasilania pod obciążeniem)',
-          when: 'Brak iskry mimo sprawnych cewek i czujnika CKP, zanik zapłonu przy wjechaniu w nierówność.',
-          steps: [
-            'Sprawdź napięcie zasilania +12V po wyłączniku awaryjnym (Kill Switch) bezpośrednio na pinie wtyczki modułu TCI/ECU oraz na przewodach zasilających cewki zapłonowe (zwykle czarno-biały lub czerwono-czarny).',
-            'Sprawdź obwód blokad bezpieczeństwa (Safety Interlock): czujnik stopki bocznej, czujnik luzu (Neutral), czujnik klamki sprzęgła oraz czujnik przechyłu (Tip-Over / Bank Angle Sensor w motocyklach EFI).',
-            'W motocyklach Honda (HISS), Yamaha, Kawasaki i Ducati sprawdź kontrolkę immobilizera przy włączaniu zapłonu.'
-          ],
-          evaluation: 'Spadek napięcia na wyłączniku Kill Switch lub stacyjce powyżej 0.5–0.8 V obniża energię iskry dokładnie w momencie kręcenia rozrusznikiem.'
-        },
-        {
-          id: 'C8',
-          name: 'Procedura szybkiej lokalizacji braku iskry (1 cylinder vs para 1–4 / 2–3 vs wszystkie)',
-          tools: 'Tester iskry, multimetr',
-          when: 'Silnik nie odpala lub pracuje na niepełnej liczbie cylindrów z powodu usterki zapłonu.',
-          steps: [
-            'PRZYPADEK 1 — Brak iskry na WSZYSTKICH cylindrach: Sprawdź Kill Switch, bezpiecznik Ignition, czujnik CKP, czujnik przechyłu (Tip-Over), blokadę stopki bocznej oraz zasilanie i masę ECU/TCI.',
-            'PRZYPADEK 2 — Brak iskry na PARZE cylindrów (1 i 4 lub 2 i 3 w R4): Sprawdź wspólną cewkę zapłonową tej pary, przewód sterujący z modułu TCI/ECU do tej cewki lub końcówkę mocy tego kanału w module.',
-            'PRZYPADEK 3 — Brak iskry na JEDNYM cylindrze: Sprawdź świecę zapłonową, fajkę z rezystorem, pojedynczy przewód WN lub pojedynczą fajkocewkę COP tego cylindra.'
-          ],
-          evaluation: 'Podział na 1 cylinder / parę bliźniaczą (1-4 lub 2-3) / wszystkie cylindry skraca czas diagnozy w silniku wielocylindrowym o 80%.'
-        },
-        {
-          id: 'C9',
-          name: 'Diagnostyka wypadania zapłonów (Misfire) pod obciążeniem i w wyższych obrotach',
-          tools: 'Termometr pirometryczny IR, tester długości iskry (przerwa 6–8 mm), multimetr',
-          when: 'Na wolnych obrotach silnik pracuje poprawnie, ale przy gwałtownym otwarciu gazu lub powyżej 7000 obr./min przerywa i dławi się.',
-          steps: [
-            'Sprawdź zdolność układu do przeskoku iskry na testerze z przerwą 6–8 mm — w cylindrze przy wysokim ciśnieniu sprężania potrzebne jest znacznie wyższe napięcie przebicia niż na wolnym powietrzu.',
-            'Zmierz napięcie ładowania i napięcie na cewkach przy 5000 obr./min.',
-            'Sprawdź świece pod kątem zużycia (zaokrąglenia) krawędzi elektrody środkowej oraz stanu gumowych osłon fajkocewek COP.'
-          ],
-          evaluation: 'Osłabiona cewka lub przebicie na fajce ujawnia się najpierw przy maksymalnym napełnieniu cylindra (duże otwarcie przepustnicy w średnich obrotach).'
-        },
-        {
-          id: 'C10',
-          name: 'Kontrola wyprzedzenia zapłonu w starszych i nowszych generacjach',
-          tools: 'Lampa stroboskopowa indukcyjna',
-          when: 'Brak mocy w górnym zakresie obrotów, przegrzewanie kolektorów wydechowych, spalanie stukowe.',
-          steps: [
-            'Wyjmij korek wziernika znaków na pokrywie impulsatora/alternatora.',
-            'Podłącz sondę indukcyjną lampy stroboskopowej na przewód WN cylindra nr 1.',
-            'Na biegu jałowym znak „F” (Fire) powinien pokrywać się ze znakiem na karterze, a po zwiększeniu obrotów powyżej 3000–4000 obr./min punkt zapłonu powinien płynnie przesunąć się na znaki wyprzedzenia dynamicznego.'
-          ],
-          evaluation: 'Brak przesuwu kąta wyprzedzenia zapłonu ze wzrostem obrotów wskazuje na uszkodzenie układu wyprzedzenia w module CDI/TCI lub błędny sygnał z czujnika TPS.'
-        }
-      ]
-    },
-    {
-      id: 'D',
-      code: 'DZIAŁ D',
-      title: 'UKŁAD CHŁODZENIA',
-      color: '#06b6d4',
-      icon: '🌡️',
-      summary: 'Chłodnica, pompa wody, termostat, wentylator i termoswitch, czujnik temperatury ECT, korek ciśnieniowy chłodnicy, próba szczelności, diagnostyka przegrzewania.',
-      procedures: [
-        {
-          id: 'D1',
-          name: 'Kontrola drożności chłodnicy (wewnętrznej i zewnętrznej)',
-          tools: 'Pirometr IR (mapa termiczna rdzenia), sprężone powietrze / myjka niskociśnieniowa, grzebień do lameli',
-          when: 'Wzrost temperatury podczas jazdy z prędkością przelotową, nierównomierny rozkład temperatury na powierzchni chłodnicy.',
-          steps: [
-            'Sprawdź stan zewnętrzny lameli chłodnicy (szczególnie w centralnym pasie za przednim kołem — błoto, owady i kamienie potrafią zablokować 40% przepływu powietrza). Myj wyłącznie prostopadle do rdzenia od strony wewnętrznej na zewnątrz!',
-            'Po rozgrzaniu silnika i otwarciu termostatu zmierz pirometrem IR temperaturę górnej, środkowej i dolnej części chłodnicy.',
-            'Zimne plamy w dolnej części gorącej chłodnicy świadczą o zakamienieniu rurek rdzenia (po stosowaniu wody kranowej zamiast płynu do chłodnic aluminiowych).'
-          ],
-          evaluation: 'Zablokowane lub pozaginane lamele chłodnicy w obudowanym motocyklu klasy Supersport 600 drastycznie obniżają odprowadzanie ciepła.'
-        },
-        {
-          id: 'D2',
-          name: 'Diagnostyka pompy wody, wirnika i uszczelnienia mechanicznego',
-          tools: 'Lusterko inspekcyjne, klucz dynamometryczny',
-          when: 'Wyciek płynu chłodniczego lub oleju z otworu kontrolnego (weep hole) pod korpusem pompy wody, przegrzewanie przy sprawnej chłodnicy i termostacie.',
-          steps: [
-            'Zlokalizuj mały otwór drenażowy (kontrolny) w dolnej części korpusu pompy wody: ślady płynu chłodniczego oznaczają zużycie uszczelnienia mechanicznego (ceramika/grafit), a wyciek oleju oznacza zużycie simeringu olejowego wałka pompy.',
-            'Nigdy nie zaślepiaj otworu kontrolnego pompy wody — w razie zatkania płyn chłodniczy przedostanie się bezpośrednio do oleju silnikowego!',
-            'Po zdjęciu pokrywy pompy sprawdź stan łopatek wirnika oraz napęd wałka pompy (często napędzany z wałka pompy oleju lub wałka wyrównoważającego).'
-          ],
-          evaluation: 'Korozja łopatek wirnika lub ścięcie płetwy napędowej wałka pompy zatrzymuje obieg płynu chłodniczego w silniku.'
-        },
-        {
-          id: 'D3',
-          name: 'Test termostatu (temperatura początku otwarcia i pełnego skoku)',
-          tools: 'Naczynie z wodą, termometr laboratoryjny 0–110°C, suwmiarka',
-          when: 'Silnik bardzo długo się nagrzewa w chłodne dni (termostat zablokowany w pozycji otwartej) lub gwałtownie się przegrzewa przy zimnej chłodnicy (zablokowany w pozycji zamkniętej).',
-          steps: [
-            'Na zamontowanym silniku kontroluj temperaturę węża prowadzącego od obudowy termostatu do chłodnicy: powinien pozostawać chłodny aż do osiągnięcia ok. 80–84°C, po czym gwałtownie zrobić się gorący.',
-            'Po wyjęciu termostatu zawieś go na nitce w naczyniu z podgrzewaną wodą (nie może dotykać dna!) i obserwuj temperaturę początku otwarcia (zwykle 80–84°C) oraz pełny skok zaworu przy 95°C (minimum 8 mm).'
-          ],
-          evaluation: 'Termostat otwierający się zbyt późno lub o skoku mniejszym niż 8 mm dławi przepływ płynu i musi zostać wymieniony wraz z O-ringiem obudowy.'
-        },
-        {
-          id: 'D4',
-          name: 'Kontrola wentylatora chłodnicy, przekaźnika i wyłącznika termicznego',
-          tools: 'Multimetr cyfrowy, przewód mostkujący z bezpiecznikiem 15A',
-          when: 'Temperatura płynu w korku ulicznym przekracza 104–106°C, a wentylator chłodnicy nie uruchamia się.',
-          steps: [
-            'Obróć ręcznie śmigło wentylatora na wyłączonym zapłonie — musi obracać się lekko, bez zacięć (częsta usterka: mały kamyk spod koła klinuje łopatki wentylatora i przepala bezpiecznik FAN!).',
-            'W starszych modelach z wyłącznikiem bimetalicznym (Thermoswitch) wkręconym w chłodnicę: zmostkuj wtyczkę czujnika przy włączonym zapłonie — jeśli wentylator ruszy, uszkodzony jest wyłącznik termiczny lub w górnej części chłodnicy jest korek powietrzny.',
-            'W nowszych modelach EFI (gdzie wentylatorem steruje ECU na podstawie czujnika ECT): sprawdź przekaźnik wentylatora, bezpiecznik oraz odczyt temperatury ECT.'
-          ],
-          evaluation: 'W motocyklach 4-cylindrowych 600 cm³ wentylator załącza się standardowo dość wysoko: przy 100–105°C i wyłącza przy ok. 95–98°C.'
-        },
-        {
-          id: 'D5',
-          name: 'Pomiar czujnika temperatury płynu chłodniczego (ECT)',
-          tools: 'Multimetr (pomiar Ω i V), termometr referencyjny',
-          when: 'Błędne wskazania temperatury na desce rozdzielczej, brak załączania wentylatora lub zalewanie ciepłego silnika EFI (ECU „widzi” −20°C i wzbogaca dawkę jak na mrozie!).',
-          steps: [
-            'Zmierz rezystancję czujnika ECT (termistor NTC) na zimnym silniku (ok. 20°C — typowo 2.2–2.8 kΩ) oraz na gorącym silniku (ok. 80°C — typowo 250–350 Ω).',
-            'W niektórych modelach czujnik posiada 3 piny lub dwa osobne uzwojenia: jedno dla ECU, a drugie dla wskaźnika na zegarach.'
-          ],
-          evaluation: 'Przerwa w obwodzie czujnika ECT powoduje przejście ECU w tryb awaryjny (często natychmiastowe uruchomienie wentylatora na stałe i zapalenie kontrolki FI).'
-        },
-        {
-          id: 'D6',
-          name: 'Test korka ciśnieniowego chłodnicy (1.1 bar / 108–122 kPa)',
-          tools: 'Pompka ciśnieniowa z adapterem do badania korków chłodnicy',
-          when: 'Zbyt wczesne gotowanie płynu (już przy 100°C), wyrzucanie płynu do zbiorniczka wyrównawczego lub zasysanie na płasko węży chłodnicy po ostygnięciu silnika.',
-          steps: [
-            'Sprawdź stan obu uszczelek gumowych korka: dolnej (zawór nadciśnieniowy ~1.1 bar) oraz małego talerzyka środkowego (zawór podciśnieniowy powrotny).',
-            'Zamontuj korek na testerze ciśnieniowym: zawór musi utrzymać ciśnienie znamionowe wybitym na korku (np. 1.1 bar / 108 kPa) przez minimum 10 sekund.'
-          ],
-          evaluation: 'Nieszczelny korek obniża temperaturę wrzenia płynu o ok. 15–20°C (brak nadciśnienia w układzie). Zablokowany zaworek zwrotny uniemożliwia zassanie płynu ze zbiorniczka wyrównawczego podczas stygnięcia.'
-        },
-        {
-          id: 'D7',
-          name: 'Próba ciśnieniowa szczelności układu chłodzenia i odpowietrzanie',
-          tools: 'Tester ciśnieniowy układu chłodzenia',
-          when: 'Ubywanie płynu chłodniczego bez widocznych plam pod motocyklem, zapach glikolu wokół gorącego silnika.',
-          steps: [
-            'Na zimnym silniku zamontuj pompkę ciśnieniową w miejsce korka chłodnicy i wytwórz ciśnienie robocze (1.1–1.2 bar — nie przekraczaj 1.3 bar!).',
-            'Obserwuj manometr przez 5 minut i skontroluj opaski zaciskowe węży (szczególnie pod gaźnikami/przepustnicami, gdzie znajdują się króćce wodne w głowicy i rurki metalowe z O-ringami).',
-            'Podczas napełniania układu odkręć śrubę odpowietrzającą przy obudowie termostatu/pompy wody i ugnieć grube węże, aby usunąć poduszki powietrzne.'
-          ],
-          evaluation: 'Poduszka powietrzna przy wyłączniku termicznym lub w głowicy powoduje lokalne wrzenie płynu mimo pozornie prawidłowego poziomu w zbiorniczku wyrównawczym.'
-        },
-        {
-          id: 'D8',
-          name: 'Kompleksowa diagnostyka przegrzewania silnika wielocylindrowego',
-          tools: 'Pirometr IR, tester ciśnieniowy, tester CO₂',
-          when: 'Silnik przegrzewa się w korkach lub podczas jazdy szosowej.',
-          steps: [
-            'Rozróżnij warunki przegrzewania: (A) Przegrzewanie TYLKO na postoju/w korku = sprawdź wentylator, czujnik załączania, przekaźnik i poziom płynu.',
-            '(B) Przegrzewanie podczas szybkiej jazdy = sprawdź drożność chłodnicy, pełne otwarcie termostatu, wirnik pompy wody, zbyt ubogą mieszankę paliwową lub przedmuch spalin przez uszczelkę głowicy (test CO₂).'
-          ],
-          evaluation: 'Zbyt uboga mieszanka lub opóźniony zapłon w silniku R4 znacząco podnoszą obciążenie cieplne głowicy i układu chłodzenia.'
-        }
-      ]
-    },
-    {
-      id: 'E',
-      code: 'DZIAŁ E',
-      title: 'ELEKTRYKA I ŁADOWANIE',
-      color: '#a855f7',
-      icon: '🔋',
-      summary: 'Alternator i stojan 3-fazowy, regulator napięcia (SCR/MOSFET), akumulator i test rozruchu, rozrusznik i sprzęgło jednokierunkowe, przekaźniki, bezpieczniki, wiązka, czujniki i ECU.',
-      procedures: [
-        {
-          id: 'E1',
-          name: 'Kompleksowa diagnostyka układu ładowania (14.0–14.8 V)',
-          tools: 'Multimetr cyfrowy TrueRMS, miernik cęgowy prądu stałego DC',
-          when: 'Rozładowywanie akumulatora w trakcie jazdy, przygasanie świateł, gaśnięcie silnika po włączeniu wentylatora chłodnicy lub przepalanie żarówek.',
-          steps: [
-            'Zmierz napięcie spoczynkowe w pełni naładowanego akumulatora (12.6–12.8 V).',
-            'Uruchom silnik, włącz światła mijania i zmierz napięcie ładowania na klemach akumulatora przy 5000 obr./min: prawidłowy wynik to 13.8–14.8 V (optymalnie 14.0–14.5 V).',
-            'Napięcie <13.5 V przy 5000 obr./min oznacza brak ładowania (sprawdź stojan i regulator); napięcie >15.0 V oznacza uszkodzenie regulatora napięcia (ryzyko zagotowania akumulatora i spalenia ECU!).'
-          ],
-          evaluation: 'W motocyklach Honda (CBR600F2/F3/F4/F4i, Hornet, VFR), Triumph (Daytona 675, Street Triple 675) oraz Suzuki GSX-R układ stojan–regulator–kostka 3-fazowa to punkt obowiązkowej kontroli przy każdym przeglądzie.'
-        },
-        {
-          id: 'E2',
-          name: 'Pomiar stojana 3-fazowego (uzwojenia Y1–Y2–Y3 i przebicie do masy)',
-          tools: 'Multimetr cyfrowy (zakres niskich rezystancji Ω oraz napięcia zmiennego AC do 200 V)',
-          when: 'Brak ładowania lub zaniżone napięcie ładowania po rozgrzaniu silnika.',
-          steps: [
-            'Rozepnij 3-pinową wtyczkę wychodzącą z lewego dekla silnika (3 żółte lub 3 białe przewody fazowe stojana).',
-            'TEST 1 (Rezystancja międzyfazowa): Zmierz opór pomiędzy fazami 1–2, 2–3 oraz 1–3. Wszystkie 3 pomiary muszą być równe i wynosić 0.2–0.9 Ω (po odjęciu rezystancji przewodów miernika!).',
-            'TEST 2 (Izolacja od masy — NAJWAŻNIEJSZY!): Zmierz rezystancję pomiędzy każdym z 3 pinów stojana a czystą masą bloku silnika. Wynik MUSI wynosić nieskończoność (OL). Jakakolwiek przejściówka do masy oznacza zwęglenie lakieru uzwojenia i konieczność wymiany stojana.',
-            'TEST 3 (Napięcie jałowe AC): Na odpiętej wtyczce uruchom silnik i zmierz napięcie zmienne AC pomiędzy parami faz 1–2, 2–3 i 1–3 przy 5000 obr./min — powinno wynosić symetrycznie 60–85 V AC na każdej parze.'
-          ],
-          evaluation: 'Jeżeli na dwóch parach jest 70 V AC, a na trzeciej tylko 35 V AC — jedna faza stojana jest zwarta lub upalona.'
-        },
-        {
-          id: 'E3',
-          name: 'Test regulatora napięcia (stratny SCR vs MOSFET) i złączy wysokoprądowych',
-          tools: 'Multimetr z funkcją testu diody, pirometr IR',
-          when: 'Przeładowywanie akumulatora (>15 V), brak ładowania mimo sprawnego stojana lub stopiona kostka 3-fazowa pod owiewką/siedzeniem.',
-          steps: [
-            'Obejrzyj wtyczki regulatora napięcia: zaśniedziałe konektory 3 żółtych przewodów fazowych wytwarzają ogromną rezystancję przejścia, topiąc plastik kostki i niszcząc stojan.',
-            'Na odpiętym regulatorze wykonaj test mostka prostowniczego (funkcja diody w multimetrze): w kierunku przewodzenia spadek napięcia między każdym pinem fazowym a wyjściem (+) oraz między masą (−) a każdym pinem fazowym powinien wynosić 0.45–0.65 V, a w kierunku zaporowym OL.',
-            'Upewnij się, że aluminiowy radiator regulatora ma czysty styk termiczny z ramą i solidne połączenie masowe.'
-          ],
-          evaluation: 'Przy wymianie uszkodzonego regulatora tyrystorowego (SCR) warto zastosować nowoczesny regulator w technologii MOSFET (np. serii FH020AA) ze złączami hermetycznymi.'
-        },
-        {
-          id: 'E4',
-          name: 'Diagnostyka akumulatora i spadku napięcia podczas rozruchu',
-          tools: 'Tester obciążeniowy akumulatora / multimetr z funkcją MIN/MAX',
-          when: 'Rozrusznik kręci zbyt wolno, zegary resetują się przy naciśnięciu przycisku START, przekaźnik rozrusznika tylko „cyka”.',
-          steps: [
-            'Podłącz multimetr do klem akumulatora i obserwuj minimalne napięcie podczas kręcenia rozrusznikiem (przez 3 sekundy).',
-            'Jeśli napięcie na w pełni naładowanym akumulatorze spada podczas rozruchu poniżej 9.6–10.0 V, akumulator utracił pojemność/prąd rozruchowy (zasiarczenie lub zwarcie celi).',
-            'Zmierz pobór prądu spoczynkowego (upływność) przy wyłączonym zapłonie — nie powinien przekraczać 1.5–3.0 mA.'
-          ],
-          evaluation: 'Silniki 4-cylindrowe wymagają wysokiej prędkości obrotowej rozrusznika; spadek napięcia poniżej 9.5 V potrafi wyłączyć moduł zapłonowy TCI/ECU mimo że rozrusznik nadal obraca wałem.'
-        },
-        {
-          id: 'E5',
-          name: 'Kontrola rozrusznika, szczotek i sprzęgła jednokierunkowego (bendiksu)',
-          tools: 'Multimetr (pomiar spadku napięcia na kablach prądowych), suwmiarka (długość szczotek)',
-          when: 'Rozrusznik nie reaguje mimo kliknięcia przekaźnika, kręci bardzo ciężko na gorącym silniku lub słychać metaliczny zgrzyt i ślizganie przy rozruchu.',
-          steps: [
-            'Zmierz spadek napięcia pomiędzy dodatnią klemą akumulatora a śrubą prądową na rozruszniku podczas kręcenia (powinien być <0.5 V).',
-            'Jeśli przekaźnik załącza napięcie na rozrusznik, a ten nie kręci — sprawdź zużycie szczotek węglowych (limit zwykle 6–7 mm) oraz czystość komutatora.',
-            'Jeśli rozrusznik kręci z wysokim wyciem, a wał korbowy stoi lub zgrzyta — uszkodzone są rolki/sprężynki sprzęgła jednokierunkowego rozrusznika (Starter Clutch).'
-          ],
-          evaluation: 'Zużyte szczotki rozrusznika często uniemożliwiają domknięcie masy cewki przekaźnika rozrusznika w układach, gdzie obwód sterujący przechodzi przez wirnik.'
-        },
-        {
-          id: 'E6',
-          name: 'Diagnostyka przekaźnika rozrusznika, przekaźnika pompy paliwa i przekaźnika głównego',
-          tools: 'Multimetr, zasilacz warsztatowy 12 V',
-          when: 'Brak reakcji na przycisk START, brak zasilania pompy paliwa/wtryskiwaczy po włączeniu zapłonu.',
-          steps: [
-            'Na przekaźniku rozrusznika znajduje się zazwyczaj główny bezpiecznik 30A pod czerwoną osłoną wtyczki — wyjmij wtyczkę i sprawdź, czy konektory wokół bezpiecznika 30A nie są stopione!',
-            'Sprawdź obecność napięcia 12 V i masy na cewce sterującej przekaźnika po naciśnięciu przycisku START (pamiętaj o wciśnięciu sprzęgła i biegu jałowym).'
-          ],
-          evaluation: 'Wypalone styki robocze przekaźnika klikają słyszalnie, ale nie przewodzą prądu rzędu 80–120 A do rozrusznika.'
-        },
-        {
-          id: 'E7',
-          name: 'Kontrola skrzynki bezpieczników i punktów masowych ramy/silnika',
-          tools: 'Multimetr (pomiar spadku napięcia pod obciążeniem), preparat Kontakt S + Kontakt U',
-          when: 'Niestabilna praca elektroniki, przygasanie podświetlenia, losowe błędy czujników.',
-          steps: [
-            'Sprawdź spadek napięcia między ujemną klemą akumulatora a blokiem silnika oraz między ujemną klemą a masą wiązki przedniej przy włączonych światłach drogowych (powinien wynosić <0.1–0.2 V).',
-            'W motocyklach Honda sprawdź żółte/zielone wielopinowe kostki zbiorcze mas w wiązce głównej (często korodują pod taśmą izolacyjną).'
-          ],
-          evaluation: 'Słaba masa silnika zmusza prąd rozrusznika do powrotu przez linkę sprzęgła lub cienkie przewody masowe ECU, prowadząc do ich przepalenia!'
-        },
-        {
-          id: 'E8',
-          name: 'Inspekcja wiązki elektrycznej w newralgicznych punktach (główka ramy, złącze stacyjki)',
-          tools: 'Multimetr, schemat elektryczny',
-          when: 'Motocykl gaśnie przy skręcie kierownicy w lewo lub w prawo, zanika zasilanie zegarów lub zapłonu.',
-          steps: [
-            'Na uruchomionym silniku poruszaj wiązką elektryczną wokół główki ramy (lewa i prawa strona) oraz przy kostce pod stacyjką.',
-            'Sprawdź miejsca przejścia wiązki obok gorących elementów głowicy i pod zbiornikiem paliwa pod kątem przetarcia izolacji do ramy.'
-          ],
-          evaluation: 'Złamane żyły miedziane wewnątrz nieuszkodzonej z zewnątrz izolacji PVC przy główce ramy to klasyczna usterka po kilkunastu latach eksploatacji.'
-        },
-        {
-          id: 'E9',
-          name: 'Diagnostyka czujników bezpieczeństwa (stopka boczna, luz, sprzęgło, przechył Tip-Over)',
-          tools: 'Multimetr cyfrowy',
-          when: 'Silnik odpala na luzie, ale gaśnie natychmiast po wrzuceniu 1. biegu lub nie kręci rozrusznikiem mimo wciśniętego sprzęgła.',
-          steps: [
-            'Czujnik stopki bocznej (Side Stand Switch): Sprawdź ciągłość obwodu przy złożonej stopce (często zabrudzony smarem z łańcucha trzpień czujnika nie wraca po złożeniu stopki!).',
-            'Dioda układu blokad (Clutch/Neutral Diode w skrzynce bezpieczników): Sprawdź przewodzenie jednokierunkowe diody.',
-            'Czujnik przechyłu (Tip-Over Sensor w owiewce przedniej lub pod siedzeniem): Upewnij się, że po demontażu czachy nie został zamontowany do góry nogami (strzałka „UP” musi być skierowana pionowo w górę!).'
-          ],
-          evaluation: 'Zamontowanie czujnika Tip-Over odwrotnie po naprawie owiewek odcina pompę paliwa i zapłon mimo sprawności wszystkich pozostałych elementów.'
-        },
-        {
-          id: 'E10',
-          name: 'Odczyt kodów usterek ECU (FI / MIL / Dealer Mode) i diagnostyka sterownika',
-          tools: 'Zworka serwisowa (Dealer Tool / SCS Connector) lub skaner OBD2 z adapterem motocyklowym 4-pin / 6-pin',
-          when: 'Świeci lub błyska kontrolka FI / MIL na zestawie wskaźników.',
-          steps: [
-            'Zlokalizuj złącze diagnostyczne pod siedzeniem i aktywuj tryb serwisowy (np. w Suzuki zmostkowanie pinów Dealer Mode wyświetla kod C00–C99 na ekranie LCD; w Hondzie/Yamaha/Kawasaki odczytaj kody błyskowe długie = dziesiątki, krótkie = jedności).',
-            'W trybie Dealer Mode w Suzuki sprawdź także wskaźnik kreski przed kodem (`-C00`) służący do precyzyjnego ustawienia kąta początkowego czujnika TPS.'
-          ],
-          evaluation: 'Zawsze zapisz odczytane kody przed odłączeniem akumulatora lub wykasowaniem pamięci usterek.'
-        }
-      ]
-    },
-    {
-      id: 'F',
-      code: 'DZIAŁ F',
-      title: 'SKRZYNIA BIEGÓW I NAPĘD',
-      color: '#ec4899',
-      icon: '⛓️',
-      summary: 'Sprzęgło wielotarczowe mokre, skrzynia biegów (wypadanie 2. biegu, kły i wodziki), mechanizm zmiany biegów, łańcuch napędowy, zębatki, hałasy i szarpanie napędu.',
-      procedures: [
-        {
-          id: 'F1',
-          name: 'Diagnostyka i pomiar sprzęgła wielotarczowego (tarcze cierne, przekładki, sprężyny, kosz)',
-          tools: 'Suwmiarka 0.02 mm, płyta pomiarowa + szczelinomierz, klucz dynamometryczny',
-          when: 'Ślizganie sprzęgła przy przyspieszaniu powyżej 7000–9000 obr./min (obroty rosną, prędkość nie), ciągnięcie sprzęgła i trudności z wrzuceniem luzu na postoju.',
-          steps: [
-            'Najpierw sprawdź luz jałowy na klamce sprzęgła (musi wynosić 10–15 mm na końcu klamki) — brak luzu powoduje niepełne zasprzęglenie i spalenie tarcz!',
-            'Po demontażu pakietu sprzęgła zmierz grubość tarcz ciernych suwmiarką, zwichrowanie przekładek stalowych na płycie pomiarowej (limit zwykle 0.10–0.15 mm) oraz wolną długość sprężyn dociskowych.',
-            'Sprawdź palce kosza zewnętrznego i zabieraka wewnętrznego pod kątem wygniecionych rowków (notching) — rowki blokują rozsuwanie tarcz i powodują ciągnięcie sprzęgła.'
-          ],
-          evaluation: 'Nowe tarcze cierne przed montażem mocz w czystym oleju silnikowym przez minimum 2–4 godziny. Zwróć uwagę na odmienną pierwszą lub ostatnią tarczę w pakiecie (mniejsza średnica wewnętrzna ze sprężyną judder spring).'
-        },
-        {
-          id: 'F2',
-          name: 'Diagnostyka skrzyni biegów (wypadanie 2. biegu, zużycie kłów sprzęgłowych i wodzików)',
-          tools: 'Przyrząd do kontroli bicia wałków, suwmiarka, mikrometr',
-          when: 'Gwałtowne szarpnięcie lub wyskakiwanie 2. biegu na luz przy mocnym przyspieszaniu (klasyczna usterka wysokoobrotowych 600 cm³: R6 5EB, Thundercat, FZR600, ZX-6R, GSX-R).',
-          steps: [
-            'Objaw w jeździe próbnej: na 2. biegu powyżej 7000 obr./min przy mocnym odkręceniu gazu następuje gwałtowny przeskok napędu (jakby łańcuch przeskoczył po zębatce) lub całkowite wyrzucenie biegu.',
-            'Przyczyna mechaniczna: zaokrąglone krawędzie kłów zabierakowych (dogs) kół zębatych 2. i 6. biegu powodują odepchnięcie koła przesuwnego i wygięcie wodzika wybieraka (shift fork).',
-            'Naprawa wymaga demontażu skrzyni (w karterach dzielonych poziomo łatwiejszy dostęp od dołu bez zdejmowania głowicy!) i wymiany pary kół współpracujących oraz wygiętego wodzika + wałka wodzików.'
-          ],
-          evaluation: 'Nigdy nie wymieniaj samego wygiętego wodzika bez wymiany kół zębatych z zaokrąglonymi kłami — zaokrąglone kły natychmiast ponownie zegną nowy wodzik!'
-        },
-        {
-          id: 'F3',
-          name: 'Kontrola mechanizmu zmiany biegów (wałek wybieraka, sprężyna powrotna, gwiazda programatora)',
-          tools: 'Szczelinomierz, klucz dynamometryczny',
-          when: 'Dźwignia zmiany biegów nie wraca sama do pozycji środkowej po zmianie biegu, biegi wchodzą nieprecyzyjnie lub blokują się.',
-          steps: [
-            'Sprawdź zewnętrzny układ dźwigni i przegubów kulowych na setach podnóżków (zapieczony przegub kulowy na secie daje identyczny objaw jak usterka w skrzyni!).',
-            'Po zdjęciu pokrywy mechanizmu wybieraka sprawdź pęknięcie sprężyny powrotnej wałka zmiany biegów (częsta usterka w Triumph Daytona/Street Triple 675 oraz Suzuki Bandit/GSF) oraz dokręcenie śruby gwiazdy programatora (detent star).'
-          ],
-          evaluation: 'Pęknięta sprężyna powrotna wałka wybieraka jest dostępna z zewnątrz po zdjęciu dekla bocznego / kosza sprzęgła bez rozpoławiania karterów.'
-        },
-        {
-          id: 'F4',
-          name: 'Pomiar wyciągnięcia łańcucha napędowego (na odcinku 20 ogniw) i regulacja zwisu',
-          tools: 'Suwmiarka 300 mm, przymiar liniowy, klucz dynamometryczny do osi tylnego koła',
-          when: 'Szarpanie przy jeździe ze stałą prędkością, cykliczne klikanie z okolic napędu, nierównomierny naciąg łańcucha przy obracaniu kołem.',
-          steps: [
-            'Obracaj tylnym kołem i znajdź miejsce, w którym łańcuch jest NAJBARDZIEJ napięty — właśnie w tym punkcie ustawiaj zwis łańcucha (zwykle 25–35 mm zgodnie z wahaczem modelu).',
-            'Napnij górną gałąź łańcucha obciążeniem ok. 15 kg i zmierz odległość pomiędzy osiami 21 sworzni (odcinek 20 ogniw): dla łańcuchów 520/525/530 o podziałce 15.875 mm limit graniczny wynosi 319.4–320.0 mm.',
-            'Sprawdź, czy pojedyncze ogniwa O-ring/X-ring nie są zatarte i czy układają się w linii prostej po zejściu z zębatki.'
-          ],
-          evaluation: 'Zbyt mocno napięty łańcuch napędowy niszczy łożysko wałka zdawczego skrzyni biegów oraz tuleje wahacza podczas ugięcia zawieszenia!'
-        },
-        {
-          id: 'F5',
-          name: 'Ocena zużycia zębatek (zdawczej i tylnej), osiowości kół i zabieraka gumowego',
-          tools: 'Przyrząd laserowy do osiowania łańcucha, klucz dynamometryczny',
-          when: 'Wymiana napędu, uderzenie przy dodawaniu i odejmowaniu gazu.',
-          steps: [
-            'Zdejmij osłonę przedniej zębatki zdawczej (tam zbiera się najwięcej starego smaru i kamyków): sprawdź profil zębów (brak wygięcia w „zęby rekina”) oraz zabezpieczenie nakrętki wałka zdawczego (podkładka zaginana!).',
-            'Sprawdź luz obwodowy tylnej zębatki względem piasty koła — wybite gumy zabieraka (cush drive) powodują silne szarpnięcie przy każdym otwarciu gazu.'
-          ],
-          evaluation: 'Łańcuch i obie zębatki wymieniaj zawsze jako komplet. Przy montażu nowej przedniej zębatki zastosuj nową podkładkę zabezpieczającą i dokręć nakrętkę momentem z DTR.'
-        },
-        {
-          id: 'F6',
-          name: 'Diagnostyka nietypowych hałasów i wibracji układu napędowego i sprzęgła',
-          tools: 'Stetoskop mechanika',
-          when: 'Szum lub grzechotanie z dolnej części silnika zmieniające się po wciśnięciu klamki sprzęgła lub wrzuceniu biegu.',
-          steps: [
-            'Hałas na luzie, który CICHNIE po wciśnięciu klamki sprzęgła: luz kosza sprzęgłowego na sprężynach tłumika drgań skrętnych lub łożysko igiełkowe kosza sprzęgła (w wielu silnikach R4 lekki szum kosza na luzie przed synchronizacją gaźników jest zjawiskiem typowym — po dokładnej synchronizacji podciśnień cichnie o 70%!).',
-            'Hałas pojawiający się TYLKO po wciśnięciu klamki sprzęgła: zużyte łożysko wyciskowe (oporowe) sprzęgła.',
-            'Wycie zależne od prędkości jazdy na wybranym biegu: pitting kół zębatych tego przełożenia lub zużyte łożysko wałka zdawczego.'
-          ],
-          evaluation: 'Zawsze wykonaj precyzyjną synchronizację 3–4 gaźników/przepustnic przed pochopną wymianą kosza sprzęgłowego — nierówna praca cylindrów na wolnych obrotach wprawia kosz sprzęgła w głośne drgania skrętne.'
-        }
-      ]
-    }
-  ];
+  {
+    "id": "A",
+    "code": "DZIAŁ A",
+    "title": "SILNIKI I MECHANIKA",
+    "color": "#f97316",
+    "icon": "⚙️",
+    "summary": "Kompresja, próba szczelności Leak Down, próba olejowa, owalizacja cylindrów, zawory i luzy 12V/16V/Desmo, wałki rozrządu, łańcuchy i napinacze CCT, panewki, uszczelka UPG, ciśnienie oleju oraz układ chłodzenia cieczą.",
+    "procedures": [
+      {
+        "id": "A1",
+        "name": "Pomiar kompresji w silniku wielocylindrowym (1–4 cyl, 2T i 4T)",
+        "applicable": "Wszystkie silniki 1–4 cyl, 2T i 4T (rzędowe, widlaste V, bokser)",
+        "symptom": "Nierówna praca silnika, spadek mocy, trudny rozruch na zimno, gaśnięcie po włączeniu biegu.",
+        "causes": "Nieszczelność zaworów (podparcie, nagar), zużyte/zapieczone pierścienie tłokowe, przedmuch uszczelki głowicy, owalizacja cylindra.",
+        "tools": "Manometr kompresji z gwintem M10×1.0 / M12×1.25 / M14×1.25, naładowany akumulator (min. 12.6 V), klucz do świec 14/16/18 mm, ładowarka buforowa.",
+        "when": "Przy każdym podejrzeniu usterki mechanicznej, przed synchronizacją gaźników/przepustnic oraz przy zakupie pojazdu.",
+        "steps": [
+          "Rozgrzej silnik do temperatury roboczej (80–90°C oleju/płynu) i wyłącz zapłon.",
+          "Odłącz zasilanie cewek zapłonowych (lub zdejmij fajkocewki COP) oraz odłącz wtryskiwacze / zamknij dopływ paliwa.",
+          "Wykręć WSZYSTKIE świece zapłonowe i ułóż je w kolejności cylindrów.",
+          "Wkręć końcówkę manometru z gumowym o-ringiem w gniazdo świecy badanego cylindra.",
+          "Otwórz przepustnicę całkowicie (WOT — 100%) i kręć rozrusznikiem przez 4–6 sekund do ustabilizowania wskazówki manometru.",
+          "Zapisz wynik dla każdego cylindra w tabeli i powtórz pomiar dla pozostałych gniazd."
+        ],
+        "measurementPoint": "Otwór świecy zapłonowej każdego cylindra (manometr dokręcony ręcznie z o-ringiem, przepustnica na 100% WOT).",
+        "referenceValue": "Nominał: 11.0–14.5 bar (wg DTR danego modelu; wiarygodność B). Dopuszczalna różnica ciśnień między cylindrami: Δ ≤ 1.0–1.5 bar (maks. 10%).",
+        "evaluation": "Za niska na jednym cylindrze: nieszczelność zaworu lub pierścieni. Za niska na dwóch sąsiednich: przedmuch uszczelki głowicy. Zbyt wysoka (>15.5 bar): potężny nagar w komorze spalania lub splanowana głowica po niefachowym tuningu.",
+        "repairSteps": "Wykonaj próbę olejową (A3) lub Leak Down (A2). W razie nieszczelności zaworów sprawdź luzy zaworowe (A6), a w razie zatarcia zdemontuj cylinder do honowania.",
+        "verification": "Ponowny pomiar kompresji na rozgrzanym silniku po regulacji luzów lub remoncie góry silnika; rozrzut między cylindrami nie może przekraczać 0.8 bar.",
+        "linkedTool": "Karta Zlecenia Serwisowego & Diagnostyka Porównawcza Cylindrów"
+      },
+      {
+        "id": "A2",
+        "name": "Próba szczelności cylindrów (Leak Down Test)",
+        "applicable": "Silniki 4T (1–4 cyl, Single, Twin, R3, R4, V2, Boxer)",
+        "symptom": "Zaniżona kompresja na jednym lub kilku cylindrach — brak mocy, dymienie, ubytek płynu chłodniczego.",
+        "causes": "Nieszczelność przylgni zaworu ssącego lub wydechowego, pęknięty/zużyty pierścień tłokowy, pęknięta uszczelka pod głowicą.",
+        "tools": "Tester szczelności dwumanometryczny Leak Down, sprężarka powietrza (6–8 bar), klucz do obracania wałem korbowym i jego blokowania w GMP.",
+        "when": "Gdy pomiar kompresji wykaże spadek ciśnienia — pozwala bez demontażu silnika ustalić dokładne miejsce usterki.",
+        "steps": [
+          "Ustaw tłok badanego cylindra dokładnie w Górnym Martwym Punkcie (GMP / TDC) suwu sprężania (wszystkie krzywki skierowane od zaworów).",
+          "Zablokuj wał korbowy (np. zablokowane tylne koło na 6. biegu lub blokada wału na znaku T).",
+          "Skalibruj tester Leak Down i podłącz przewód do gniazda świecy badanego cylindra.",
+          "Podaj ciśnienie testowe (np. 5–6 bar) i odczytaj procentowy ubytek ciśnienia na drugim zegarze.",
+          "Nasłuchuj miejsca ucieczki powietrza: gardziel ssąca (zawory ssące), końcówka wydechu (zawory wydechowe), wlew oleju/odma (pierścienie tłokowe), bąbelki w chłodnicy (uszczelka pod głowicą)."
+        ],
+        "measurementPoint": "Gniazdo świecy zapłonowej w GMP suwu sprężania przy zablokowanym wale korbowym.",
+        "referenceValue": "Ubytek 0–8%: stan idealny (silnik po dotarciu); 8–15%: stan dopuszczalny eksploatacyjnie; powyżej 20%: silnik wymaga natychmiastowej rewizji głowicy/tłoka (wiarygodność A).",
+        "evaluation": "Powietrze w wydechu = niedomknięty lub wypalony zawór wydechowy. Powietrze w dolocie = nieszczelny zawór ssący. Szum z odmy = zużycie pierścieni tłokowych. Bąble w chłodnicy = pęknięta uszczelka głowicy.",
+        "repairSteps": "W razie nieszczelności zaworu: sprawdź luz zaworowy (A6). Jeśli luz jest poprawny, zdemontuj głowicę w celu dotarcia lub wymiany zaworów i frezowania gniazd.",
+        "verification": "Powtórzenie testu Leak Down po naprawie — spadek ciśnienia musi wynosić poniżej 8%.",
+        "linkedTool": "Elektroniczne Laboratorium (moduł pomiarów silnika)"
+      },
+      {
+        "id": "A3",
+        "name": "Kontrola szczelności cylindrów i próba olejowa",
+        "applicable": "Wszystkie silniki 4-suwowe 1–4 cyl",
+        "symptom": "Spadek ciśnienia sprężania na sucho w procedurze A1.",
+        "causes": "Zużyte/zapieczone pierścienie tłokowe lub nieszczelność zaworów w głowicy.",
+        "tools": "Manometr kompresji, strzykawka warsztatowa z elastycznym wężykiem, 3–5 ml czystego oleju silnikowego 10W-40.",
+        "when": "Natychmiast po stwierdzeniu niskiej kompresji na sucho, gdy nie masz pod ręką testera Leak Down.",
+        "steps": [
+          "Przez otwór świecy badanego cylindra wstrzyknij 3–5 ml oleju silnikowego bezpośrednio na denko tłoka.",
+          "Obróć wałem korbowym o 2 obroty bez manometru, aby film olejowy uszczelnił pierścienie w gładzi cylindra.",
+          "Wkręć manometr i ponownie zmierz ciśnienie sprężania przy pełnym otwarciu przepustnicy (WOT)."
+        ],
+        "measurementPoint": "Otwór świecy badanego cylindra po podaniu dawki oleju uszczelniającego pierścienie.",
+        "referenceValue": "Wzrost ciśnienia o ponad 2.0 bar po podaniu oleju potwierdza nieszczelność na linii pierścień–cylinder (wiarygodność B).",
+        "evaluation": "Wyraźny wzrost kompresji = usterka w układzie tłokowo-cylindrowym (zużyte pierścienie, owalizacja). Brak wzrostu = nieszczelność zaworów w głowicy lub przedmuch uszczelki głowicy.",
+        "repairSteps": "Przy nieszczelnych zaworach zdejmij pokrywę i wyreguluj luzy (A6). Przy zużytych pierścieniach demontaż cylindrów, pomiar owalizacji i wymiana pierścieni/tłoków.",
+        "verification": "Weryfikacja kompresji po remoncie na sucho — wartość nominalna osiągana bez użycia oleju.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "A4",
+        "name": "Diagnostyka tłoków, pierścieni i gładzi cylindrowych (Nikasil / żeliwo)",
+        "applicable": "Cylindry powlekane Nikasilem oraz tuleje żeliwne (2T i 4T)",
+        "symptom": "Niebieski dym z wydechu, nadmierne zużycie oleju (>0.5 l / 1000 km), spadek mocy, przedmuchy do skrzyni korbowej.",
+        "causes": "Zużycie lub zapieczenie pierścienia zgarniającego nagarem, wytarcie siatki honowniczej, pionowe rysy po zatarciu, owalizacja cylindra.",
+        "tools": "Endoskop warsztatowy HD z kamerą kątową 90°, średnicówka zegarowa, mikrometr zewnętrzny, szczelinomierz do zamków pierścieni.",
+        "when": "Przed remontem góry silnika oraz przy endoskopowej inspekcji przedzakupowej.",
+        "steps": [
+          "Wprowadź sondę endoskopu przez otwór świecy przy tłoku w Dolnym Martwym Punkcie (DMP).",
+          "Oceń stan siatki honowniczej (krzyżowej), obecność pionowych rys, progu w górnej strefie zwrotu pierścieni oraz nagaru na denku tłoka.",
+          "Po demontażu cylindra zmierz średnicówką owalizację i stożkowatość na 3 wysokościach (góra, środek, dół) w 2 osiach (X i Y).",
+          "Włóż pierścień do cylindra, wciśnij denkiem tłoka na 15 mm i zmierz szczelinomierzem luz na zamku (End Gap)."
+        ],
+        "measurementPoint": "Wnętrze cylindra (3 poziomy pomiaru) oraz szczelina zamka pierścienia.",
+        "referenceValue": "Owalizacja dopuszczalna: maks. 0.03–0.05 mm. Luz na zamku pierścienia kompresyjnego: 0.15–0.30 mm (limit zużycia: 0.50 mm; wiarygodność B).",
+        "evaluation": "Wytarty Nikasil do warstwy aluminium = cylinder wymaga nałożenia nowej powłoki Nikasil lub wymiany. Rysy wyczuwalne paznokciem = utrata kompresji i dymienie.",
+        "repairSteps": "Lekkie zmatowienie: honowanie szczotką Flex-Hone do odtworzenia siatki smarnej. Głębokie rysy w tulei żeliwnej: szlif na nadwymiar (+0.25/+0.50 mm) i nowy komplet tłoka.",
+        "verification": "Pomiary średnicówką po obróbce — zachowanie idealnego pasowania tłok-cylinder (np. 0.035–0.045 mm dla kutej/odlewanej selekcji).",
+        "linkedTool": "Kalkulator Squish & CR"
+      },
+      {
+        "id": "A5",
+        "name": "Pomiar luzów zaworowych i dobór płytek regulacyjnych (12V / 16V / Desmo)",
+        "applicable": "Silniki 4T ze szklankami/płytkami zaworowymi (R2, R3, R4, V2, V4, Boxer, Desmo)",
+        "symptom": "Trudny rozruch ciepłego silnika, gaśnięcie po nagrzaniu, metaliczne cykanie z głowicy (zbyt duży luz) lub cicha praca z wypadaniem zapłonów (luz zerowy!).",
+        "causes": "Osiadanie zaworów w gniazdach (luz zaworowy ZMNIEJSZA SIĘ wraz z przebiegiem), zużycie płytek lub krzywek.",
+        "tools": "Zestaw szczelinomierzy listkowych precyzyjnych (skok co 0.02/0.03 mm), mikrometr do pomiaru płytek (dokładność 0.005 mm), magnes neodymowy do wyjmowania płytek, klucz dynamometryczny 1/4\" (9–12 Nm do mostków).",
+        "when": "Zgodnie z interwałem serwisowym producenta (zwykle co 24 000–42 000 km w motocyklach japońskich, co 10 000 km w BMW Boxer / skuterach GY6).",
+        "steps": [
+          "Pomiar wykonuj WYŁĄCZNIE na całkowicie zimnym silniku (temperatura bloku poniżej 30°C / optymalnie 20°C).",
+          "Zdejmij pokrywę zaworów i ustaw dany cylinder w GMP suwu sprężania (obie krzywki skierowane ku górze z dala od popychaczy).",
+          "Wsuń listek szczelinomierza pomiędzy krzywkę wałka a szklankę popychacza — listek powinien przesuwać się z lekkim, wyczuwalnym oporem.",
+          "Zapisz zmierzoną wartość dla każdego zaworu w Karcie Pomiarowej NAPRAWNIKA.",
+          "Jeżeli luz wykracza poza tolerancję, zdemontuj wałki rozrządu, wyjmij płytkę magnesem i zmierz jej rzeczywistą grubość mikrometrem.",
+          "Skorzystaj z wbudowanego w NAPRAWNIK Kalkulatora Płytek Zaworowych, aby obliczyć idealną nową grubość płytki: Nowa = Stara + (Zmierzony - Zadany_Środek)."
+        ],
+        "measurementPoint": "Szczelina pomiędzy szczytem/plecami krzywki wałka a szklanką popychacza przy wałku w pozycji spoczynkowej.",
+        "referenceValue": "Zgodnie z tabelą parametrów wybranego modelu: Ssące zazwyczaj 0.13–0.20 mm; Wydechowe 0.20–0.30 mm (wiarygodność B/A).",
+        "evaluation": "Luz za ciasny (<0.10 mm wydech): niebezpieczeństwo wypalenia zaworu i zniszczenia gniazda! Luz za duży (>0.35 mm): głośna praca, zużycie krzywki, skrócenie czasu otwarcia zaworu.",
+        "repairSteps": "Montaż nowej płytki o obliczonej grubości, ponowne przykręcenie mostków wałków rozrządu zalecanym momentem (zwykle 10–12 Nm) i ponowny pomiar szczelinomierzem.",
+        "verification": "Dwukrotny obrót wałem korbowym o 360° i ponowna kontrola luzów szczelinomierzem przed montażem pokrywy zaworów.",
+        "linkedTool": "Kalkulator Płytek Zaworowych (wbudowany w NAPRAWNIK)"
+      },
+      {
+        "id": "A6",
+        "name": "Kontrola łańcucha rozrządu, ślizgów i napinacza (CCT)",
+        "applicable": "Silniki z rozrządem łańcuchowym (DOHC/SOHC 1–4 cyl)",
+        "symptom": "Metaliczne grzechotanie i rzężenie z prawej strony silnika (tunelu rozrządu) na zimnym silniku lub przy schodzeniu z 4000 do 2000 obr/min.",
+        "causes": "Wyciągnięty łańcuch rozrządu, wytarty ślizg napinający/prowadzący, uszkodzony mechanizm zapadkowy lub hydrauliczny napinacza CCT.",
+        "tools": "Suwmiarka precyzyjna, klucze nasadowe, wkrętak płaski do zwijania napinacza sprężynowego.",
+        "when": "Zawsze przy hałasie rozrządu oraz co 40 000–50 000 km.",
+        "steps": [
+          "Zdemontuj napinacz rozrządu CCT i sprawdź, ile ząbków pozostało do końca wysunięcia trzpienia.",
+          "Jeżeli napinacz jest wysunięty do ostatniego lub przedostatniego ząbka (powyżej 85% zakresu), łańcuch rozrządu jest trwale wyciągnięty i wymaga wymiany.",
+          "Sprawdź stan gumowej wykładziny ślizgów rozrządu przez otwory inspekcyjne lub kamerą endoskopową.",
+          "Oceń znaki rozrządu na kołach zębatych wałków i wale korbowym — wyciągnięty łańcuch opóźnia fazy rozrządu o pół zęba."
+        ],
+        "measurementPoint": "Wysunięcie trzpienia napinacza CCT oraz pokrywanie się znaków rozrządu na kołach wałków z krawędzią głowicy.",
+        "referenceValue": "Maksymalne wysunięcie napinacza: nie więcej niż 75–80% zakresu roboczego (wiarygodność B).",
+        "evaluation": "Łańcuch wyciągnięty grozi przeskoczeniem o ząb przy gwałtownej redukcji biegu, co prowadzi do kolizji tłoków z zaworami.",
+        "repairSteps": "Wymiana łańcucha rozrządu (oryginalny zakuwany DID/Morse), wymiana ślizgów i montaż nowego lub zmodernizowanego napinacza OEM.",
+        "verification": "Obrót wałem korbowym o 720°, kontrola idealnego pokrywania się znaków faz rozrządu i cicha praca silnika po uruchomieniu.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "A7",
+        "name": "Kontrola ciśnienia oleju i układu smarowania magistrali głównej",
+        "applicable": "Wszystkie silniki 4-suwowe 1–4 cyl",
+        "symptom": "Świecenie lub mruganie kontrolki ciśnienia oleju na wolnych obrotach na gorącym silniku, stuki z dołu silnika (panewki).",
+        "causes": "Zużyte panewki korbowodowe lub główne, zatarty zawór upustowy pompy oleju (PRV w pozycji otwartej), zużyte rotory pompy oleju, rozcieńczenie oleju benzyną.",
+        "tools": "Manometr ciśnienia oleju 0–10 bar z elastycznym wężem i adapterami gwintowymi M14/M16/M18/1/8 NPT.",
+        "when": "Zawsze gdy kontrolka oleju nie gaśnie natychmiast po rozruchu lub po przegrzaniu jednostki.",
+        "steps": [
+          "Wykręć czujnik ciśnienia oleju (lub śrubę zaślepiającą główną magistralę olejową).",
+          "Wkręć końcówkę manometru i uruchom silnik.",
+          "Odczytaj ciśnienie na zimnym silniku na biegu jałowym, a następnie rozgrzej silnik do 80°C oleju.",
+          "Sprawdź ciśnienie na gorącym oleju przy obrotach biegu jałowego oraz przy 5000–6000 obr/min."
+        ],
+        "measurementPoint": "Główna magistrala olejowa w bloku silnika (port czujnika ciśnienia oleju).",
+        "referenceValue": "Bieg jałowy gorący: min. 0.8–1.5 bar; Przy 5000 obr/min gorący: 3.5–5.5 bar (wiarygodność B).",
+        "evaluation": "Ciśnienie poniżej 0.5 bar na biegu jałowym na gorąco grozi natychmiastowym obróceniem panewki korbowodowej! Zbyt wysokie (>7 bar) wskazuje na zablokowany zawór upustowy.",
+        "repairSteps": "Wymiana oleju na zalecaną lepkość OEM; kontrola czystości smoka pompy w misce; w razie niskiego ciśnienia rewizja pompy oleju i panewek wału korbowego.",
+        "verification": "Ponowny pomiar ciśnienia manometrem po wymianie oleju/pompy — stabilne ciśnienie powyżej 1.0 bar na gorącym jałowym.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "A8",
+        "name": "Próba ciśnieniowa szczelności układu chłodzenia i termostatu",
+        "applicable": "Wszystkie silniki chłodzone cieczą",
+        "symptom": "Ubytek płynu chłodzącego bez widocznych kałuż pod motocyklem, zapowietrzanie się układu, gotowanie płynu.",
+        "causes": "Nieszczelność na opaskach węży, mikropęknięcie chłodnicy od wibracji, zablokowany termostat, nieszczelny korek chłodnicy.",
+        "tools": "Zestaw do ciśnieniowego testowania chłodnic z pompką ręczną, termometr cyfrowy.",
+        "when": "Po każdej wymianie płynu chłodniczego lub naprawie elementów układu chłodzenia.",
+        "steps": [
+          "Zamontuj adapter z pompką na wlewie chłodnicy na zimnym silniku.",
+          "Wytwórz ciśnienie równe ciśnieniu roboczemu korka (1.0–1.2 bar).",
+          "Obserwuj manometr przez 15–20 minut: spadek ciśnienia wskazuje na nieszczelność.",
+          "Test termostatu: podgrzej termostat w kąpieli wodnej; początek otwarcia powinien nastąpić przy 80–84°C, pełne otwarcie (skok min. 8 mm) przy 95°C."
+        ],
+        "measurementPoint": "Szyjka wlewu chłodnicy (manometr pompki testowej) oraz grzybek termostatu.",
+        "referenceValue": "Ciśnienie 1.1 bar utrzymane przez 15 minut bez spadku wskazówki (wiarygodność A).",
+        "evaluation": "Spadek ciśnienia bez widocznego wycieku na zewnątrz wskazuje na wyciek wewnętrzny do cylindra lub skrzyni korbowej.",
+        "repairSteps": "Dokręcenie lub wymiana opasek zaciskowych, wymiana termostatu na nowy OEM, odpowietrzenie układu przez odpowietrzniki na pompie i termostacie.",
+        "verification": "Równomierne nagrzewanie się chłodnicy i stabilny poziom płynu w zbiorniczku wyrównawczym po ostygnięciu silnika.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      }
+    ]
+  },
+  {
+    "id": "B",
+    "code": "DZIAŁ B",
+    "title": "UKŁADY PALIWOWE I WTRYSK EFI",
+    "color": "#10b981",
+    "icon": "⛽",
+    "summary": "Gaźniki pojedyncze i wielogardzielowe, synchronizacja podciśnienia, czyszczenie ultradźwiękowe, dysze i iglice, poziomy pływaków i zaworki iglicowe, układ ssania, lewe powietrze, wtrysk EFI, wtryskiwacze, pompa paliwa, regulator ciśnienia FPR oraz czujniki dolotu TPS, MAP, IAT.",
+    "procedures": [
+      {
+        "id": "B1",
+        "name": "Kompleksowa rewizja i czyszczenie baterii 1–4 gaźników w myjce ultradźwiękowej",
+        "applicable": "Wszystkie silniki gaźnikowe (1, 2, 3, 4 gaźniki Keihin, Mikuni, Dellorto)",
+        "symptom": "Nierówna praca silnika po postoju zimowym, praca tylko na ssaniu, kichanie w gaźnik, jeden kolektor wydechowy zimny.",
+        "causes": "Wytrącenie żywic i osadów ze starego paliwa (bioetanol E10), zapchane dysze wolnych obrotów (pilot jets), zablokowane kanały powietrzne.",
+        "tools": "Myjka ultradźwiękowa podgrzewana (min. 40–50°C), specjalistyczny koncentrat do czyszczenia gaźników, sprężone powietrze, precyzyjne wkrętaki gaźnikowe.",
+        "when": "Po dłuższym postoju, przed synchronizacją oraz przy problemach z wolnymi obrotami.",
+        "steps": [
+          "Zdemontuj gaźniki z pojazdu, rozłącz komory pływakowe i wyjmij pływaki z zaworkami iglicowymi.",
+          "Wykręć dysze główne, dysze wolnych obrotów, rurki emulsyjne oraz wyjmij śruby składu mieszanki wraz ze sprężynkami, podkładkami i mikroskopijnymi o-ringami.",
+          "Zdemontuj membrany podciśnieniowe wraz z przepustnicami tłoczkowymi (elementy gumowe NIE mogą być myte w agresywnej chemii ani w zbyt wysokiej temperaturze!).",
+          "Myj korpusy i dysze w myjce ultradźwiękowej w temperaturze 45°C przez 20–30 minut.",
+          "Natychmiast po wyjęciu przedmuchaj sprężonym powietrzem każdy otworek kalibrowany, kanał przejścia wolnych obrotów oraz gniazda zaworków iglicowych.",
+          "Złóż gaźniki stosując nowe gumowe o-ringi i ustaw śruby składu mieszanki na wartość bazową (zwykle 1.5–2.5 obrotu od lekkiego oporu)."
+        ],
+        "measurementPoint": "Drożność kanałów kalibrowanych i stan końcówki iglicy śruby składu mieszanki.",
+        "referenceValue": "Wszystkie dysze o rozmiarach zgodnych z DTR danego rocznika (wiarygodność B). Zero zanieczyszczeń w kanale wolnych obrotów.",
+        "evaluation": "Niedokładne przedmuchanie kanału pilot circuit uniemożliwi późniejszą regulację i synchronizację gaźników.",
+        "repairSteps": "Montaż zestawu naprawczego gaźników (nowe zaworki iglicowe, o-ringi, uszczelki komór pływakowych).",
+        "verification": "Stabilna praca silnika na biegu jałowym bez ssania i natychmiastowa reakcja na gaz.",
+        "linkedTool": "Stroiciel Gaźnika (Jetting Tool)"
+      },
+      {
+        "id": "B2",
+        "name": "Synchronizacja 2–4 gaźników i przepustnic wtryskowych (TB Sync wakuometrem)",
+        "applicable": "Wszystkie silniki wielocylindrowe z osobnymi gardzielami (R2, R3, R4, V2, Boxer)",
+        "symptom": "Silne wibracje silnika przy ruszaniu, nierówny bieg jałowy, szarpanie przy małym otwarciu gazu, powolne opadanie z obrotów.",
+        "causes": "Różnice w stopniu otwarcia przepustnic na poszczególnych cylindrach na skutek wibracji i zużycia mechanizmów cięgien.",
+        "tools": "Zestaw wakuometrów 4-zegarowych z tłumikami drgań lub wakuometr elektroniczny/słupkowy, długi śrubokręt do synchronizacji gaźników.",
+        "when": "Po każdej regulacji zaworów, po czyszczeniu gaźników lub co 12 000 km.",
+        "steps": [
+          "Synchronizację wykonuj ZAWSZE po wcześniejszym ustawieniu prawidłowych luzów zaworowych!",
+          "Rozgrzej silnik do pełnej temperatury roboczej i podłącz wężyki wakuometrów do króćców podciśnieniowych poszczególnych cylindrów.",
+          "Ustal cylinder bazowy (w silnikach 4-cylindrowych jest to zazwyczaj cylinder nr 2 lub nr 3 z nieruchomą dźwignią połączoną z linką gazu).",
+          "Na biegu jałowym (np. 1200 obr/min) wyreguluj śrubami synchronizacyjnymi podciśnienie cylindra 1 względem 2, następnie 4 względem 3, a na końcu zsynchronizuj parę 1-2 z parą 3-4 śrubą centralną.",
+          "W silnikach z wtryskiem EFI (TB Sync) regulację wykonuje się mosiężnymi śrubami obejściowymi powietrza (air bypass screws)."
+        ],
+        "measurementPoint": "Króćce podciśnieniowe w króćcach ssących każdego cylindra.",
+        "referenceValue": "Różnica podciśnienia pomiędzy cylindrami: Δ ≤ 20 mmHg / 2.7 kPa (wielkości wskazówek idealnie zrównane; wiarygodność A).",
+        "evaluation": "Zrównanie podciśnień eliminuje 80% drgań na biegu jałowym i drastycznie wycisza hałas kosza sprzęgłowego na luzie.",
+        "repairSteps": "Precyzyjna regulacja śrubami balansującymi; kontrola szczelności zaślepek króćców po odłączeniu manometrów.",
+        "verification": "Krótkie przegazowanie (do 4000 obr/min) — wskazówki muszą opadać synchronicznie i wracać do identycznego poziomu na wolnych obrotach.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "B3",
+        "name": "Pomiar wysokości pływaków i rzeczywistego poziomu paliwa",
+        "applicable": "Wszystkie silniki gaźnikowe",
+        "symptom": "Zalewanie świec, wysokie spalanie, dymienie na czarno (poziom za wysoki) lub dławienie przy pełnym gazie i strzały w wydech (poziom za niski).",
+        "causes": "Odkształcona blaszka pływaka, nieszczelny pływak nasiąknięty paliwem, zamontowany nieoryginalny zaworek iglicowy o innej długości.",
+        "tools": "Suwmiarka lub przymiar kątowy do pływaków, przezroczysta rurka igielitowa z adapterem do spustu komory pływakowej.",
+        "when": "Przy każdym czyszczeniu gaźników lub podejrzeniu przelewania.",
+        "steps": [
+          "Metoda sucha: przechyl baterię gaźników pod kątem ok. 60° tak, aby języczek pływaka dotknął sprężynującej iglicy zaworka, ale jej NIE ścisnął; zmierz suwmiarką odległość od krawędzi korpusu do szczytu pływaka.",
+          "Metoda mokra (dokładniejsza): podłącz przezroczysty wężyk do króćca spustowego komory, zegnij ku górze wzdłuż krawędzi gaźnika, odkręć śrubę spustową i podaj paliwo ze zbiornika technicznego.",
+          "Odczytaj rzeczywisty menisk paliwa względem znaku lub linii łączenia komory pływakowej."
+        ],
+        "measurementPoint": "Wysokość pływaka od krawędzi korpusu bez uszczelki lub poziom menisku cieczy w rurce.",
+        "referenceValue": "Wg specyfikacji danego gaźnika (np. 13.0 mm, 14.5 mm ± 1.0 mm; wiarygodność B).",
+        "evaluation": "Zbyt wysoki poziom paliwa wzbogaca mieszankę w całym zakresie obrotów; zbyt niski grozi zubożeniem i przegrzaniem tłoka.",
+        "repairSteps": "Delikatne podgięcie blaszki oporowej pływaka; wymiana pływaka jeśli jest nieszczelny.",
+        "verification": "Pozostawienie gaźników pod ciśnieniem słupa paliwa przez 30 minut — zero wycieków z gardzieli dolotowych.",
+        "linkedTool": "Stroiciel Gaźnika (Jetting Tool)"
+      },
+      {
+        "id": "B4",
+        "name": "Test szczelności zaworków iglicowych i króćców ssących (lewe powietrze)",
+        "applicable": "Wszystkie silniki gaźnikowe i wtryskowe EFI",
+        "symptom": "Zawieszanie się obrotów przy schodzeniu, strzały w wydech przy zamykaniu gazu, benzyna lejąca się do oleju.",
+        "causes": "Zużyty gumowy stożek zaworka iglicowego, pęknięcia gumowych króćców ssących od starości, stwardniałe o-ringi pod króćcami.",
+        "tools": "Pompka podciśnieniowa Mityvac z manometrem, spray Break Cleaner do testu lewego powietrza.",
+        "when": "Zawsze przy zapachu paliwa z oleju lub niestabilnych obrotach jałowych.",
+        "steps": [
+          "Wyjmij zaworek iglicowy i obejrzyj stożek pod lupą: obecność rowka dyskwalifikuje zaworek.",
+          "Podaj ciśnienie 0.5 bar na króciec paliwowy przy dociśniętym pływaku: ciśnienie musi się utrzymać min. 30 s bez spadku.",
+          "Test lewego powietrza: uruchom silnik i delikatnie psiknij Break Cleanerem na króćce ssące; każda zmiana obrotów oznacza nieszczelność."
+        ],
+        "measurementPoint": "Gniazdo zaworka iglicowego oraz korpus gumowego króćca ssącego.",
+        "referenceValue": "Zero wycieków z zaworka pod ciśnieniem 0.5 bar; absolutny brak reakcji silnika na natrysk preparatu na króćce (wiarygodność A).",
+        "evaluation": "Lewe powietrze zubaża mieszankę i potrafi wypalić tłok w 50 km jazdy autostradowej!",
+        "repairSteps": "Wymiana zaworków iglicowych z gniazdami oraz montaż nowych gumowych króćców ssących OEM.",
+        "verification": "Płynne schodzenie silnika z obrotów prosto do stabilnego biegu jałowego.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "B5",
+        "name": "Diagnostyka wtryskiwaczy EFI (rezystancja cewki, wydatek i kształt strugi)",
+        "applicable": "Wszystkie silniki z wtryskiem paliwa EFI (motocykle, skutery, quady)",
+        "symptom": "Wypadanie zapłonów na jednym cylindrze, dławienie przy gwałtownym otwarciu gazu, błąd wtryskiwacza na desce rozdzielczej (FI).",
+        "causes": "Zanieczyszczenie sitka wtryskiwacza, zapieczenie iglicy wtryskiwacza, przerwa lub zwarcie w cewce elektromagnesu.",
+        "tools": "Multimetr cyfrowy, generator impulsów wtryskiwaczy, menzurki pomiarowe, myjka ultradźwiękowa do wtryskiwaczy.",
+        "when": "Nierówna praca silnika EFI, błąd obwodu wtryskiwacza lub spadek mocy.",
+        "steps": [
+          "Odłącz wtyczkę wtryskiwacza i zmierz rezystancję cewki multimetrem w temperaturze 20°C.",
+          "Sprawdź zasilanie 12V na wtyczce po włączeniu zapłonu oraz impuls masy podawany z ECU diodą probierczą LED.",
+          "Wyjmij listwę wtryskową z wtryskiwaczami, skieruj wtryskiwacze do menzurek i zakręć rozrusznikiem pod ciśnieniem paliwa.",
+          "Oceń kształt strugi: paliwo musi być rozpylane w stożek drobnej mgiełki, bez grubych kropel i bez sikania ciągłym strumieniem.",
+          "Sprawdź szczelność przy wyłączonym wysterowaniu: wtryskiwacz nie może uronić ani jednej kropli w ciągu minuty."
+        ],
+        "measurementPoint": "Piny cewki wtryskiwacza oraz końcówka rozpylająca.",
+        "referenceValue": "Rezystancja wtryskiwacza: wysokooporowe 11.5–14.5 Ω (niskooporowe 1.5–3.0 Ω; wiarygodność B). Równomierność wydatku między cylindrami: różnica < 3%.",
+        "evaluation": "Lejący wtryskiwacz zmywa film olejowy z gładzi cylindra i niszczy pierścienie. Zapchany wtryskiwacz zubaża mieszankę i przegrzewa zawory.",
+        "repairSteps": "Mycie wtryskiwaczy w myjce ultradźwiękowej z jednoczesnym cyklicznym otwieraniem impulsowym; w razie uszkodzenia cewki wymiana wtryskiwacza.",
+        "verification": "Równy wydatek we wszystkich menzurkach pomiarowych i natychmiastowe odcięcie strugi.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "B6",
+        "name": "Kontrola pompy paliwa i ciśnienia w listwie EFI (FPR)",
+        "applicable": "Wszystkie układy EFI",
+        "symptom": "Silnik dławi się i krztusi przy obrotach powyżej 7000–9000 obr/min, gaśnie przy małej ilości paliwa w zbiorniku, buczenie pompy.",
+        "causes": "Zabrudzone sitko wstępne na dnie zbiornika, zapchany filtr wysokociśnieniowy w korpusie pompy, uszkodzony regulator ciśnienia FPR.",
+        "tools": "Manometr paliwa z trójnikiem i szybkozłączkami, menzurka pomiarowa.",
+        "when": "Spadek mocy pod pełnym obciążeniem i przy wysokich prędkościach.",
+        "steps": [
+          "Wepnij manometr z zaworem odcinającym w przewód zasilający listwę wtryskową.",
+          "Włącz zapłon: odczytaj ciśnienie statyczne dobite przez pompę.",
+          "Uruchom silnik i obserwuj manometr na wolnych obrotach oraz po gwałtownym przygazowaniu — ciśnienie nie może spaść nawet o 0.2 bar!",
+          "Test wydatku pompy: skieruj wąż do menzurki, zewrzyj przekaźnik pompy na 10 sekund i zmierz ilość przepompowanego paliwa."
+        ],
+        "measurementPoint": "Przewód paliwowy wysokiego ciśnienia przed listwą wtryskową.",
+        "referenceValue": "Ciśnienie robocze: typowo 3.0–3.5 bar (Polaris: 4.0 bar; wiarygodność B). Wydatek: min. 200–300 ml w ciągu 10 sekund.",
+        "evaluation": "Jeśli ciśnienie na biegu jałowym jest prawidłowe (3.0 bar), ale przy dodaniu gazu spada do 2.0 bar — filtr pompy jest zapchany.",
+        "repairSteps": "Demontaż zespołu pompy ze zbiornika, czyszczenie sitka, płukanie zbiornika, wymiana wkładu silniczka pompy lub regulatora FPR.",
+        "verification": "Jazda próbna z manometrem pod pełnym obciążeniem — stabilne ciśnienie w całym zakresie obrotów.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "B7",
+        "name": "Diagnostyka czujników dolotu: TPS, MAP, IAT, ECT i sonda lambda",
+        "applicable": "Wszystkie pojazdy z układem wtrysku paliwa EFI",
+        "symptom": "Szarpanie w wybranym punkcie otwarcia gazu (TPS), błąd EFI na liczniku, podwyższone spalanie, falowanie obrotów.",
+        "causes": "Wytarcie ścieżki oporowej potencjometru TPS, zabrudzony nagarem czujnik ciśnienia MAP, przerwa w grzałce sondy lambda.",
+        "tools": "Multimetr cyfrowy lub oscyloskop samochodowy, tester diagnostyczny z podglądem parametrów bieżących Live Data.",
+        "when": "Każdy błąd FI lub szarpanie przy stałej prędkości obrotowej.",
+        "steps": [
+          "TPS: podłącz woltomierz między pin sygnałowy a masę czujnika; powoli obracaj manetką gazu od 0% do 100% WOT; napięcie musi rosnąć idealnie płynnie od ok. 0.6V do 4.5V.",
+          "MAP: zmierz napięcie wyjściowe przy zgaszonym silniku (ciśnienie atmosferyczne, ok. 4.0 V) oraz na wolnych obrotach (podciśnienie obniża napięcie do ok. 1.5 V).",
+          "Sonda lambda: zmierz rezystancję grzałki na pinach sondy (6–15 Ω); przy pracującym rozgrzanym silniku napięcie sygnału musi oscylować 0.1–0.9 V z częstotliwością min. 1 Hz."
+        ],
+        "measurementPoint": "Piny czujników TPS, MAP, IAT oraz kostka sondy lambda.",
+        "referenceValue": "TPS: płynne napięcie 0.6V–4.5V bez dropów. Grzałka lambdy: 6–15 Ω w 20°C (wiarygodność B).",
+        "evaluation": "Skoki napięcia TPS do 0V oznaczają wytartą ścieżkę rezystancyjną i wymagają natychmiastowej wymiany czujnika.",
+        "repairSteps": "Regulacja kąta montażu TPS, czyszczenie czujnika MAP, wymiana sondy lambda.",
+        "verification": "Płynna praca silnika w pełnym zakresie otwarcia przepustnicy bez kodów błędów w sterowniku.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      }
+    ]
+  },
+  {
+    "id": "C",
+    "code": "DZIAŁ C",
+    "title": "UKŁADY ELEKTRYCZNE I ELEKTRONIKA",
+    "color": "#38bdf8",
+    "icon": "⚡",
+    "summary": "Układ zapłonowy klasyczny CDI/TCI oraz cewki COP, alternatory i stojany 3-fazowe, regulatory napięcia SCR i MOSFET, akumulator i spadek napięcia przy rozruchu, rozruszniki i bendix, przekaźniki i bezpieczniki, wiązka i masy, magistrala CAN-BUS, czujniki położenia wału CKP i wałka CMP.",
+    "procedures": [
+      {
+        "id": "C1",
+        "name": "Ocena stanu świec zapłonowych, koloru nagaru i dobór ciepłoty",
+        "applicable": "Wszystkie silniki spalinowe (2T i 4T)",
+        "symptom": "Wypadanie zapłonów, trudny rozruch, dymienie, wysokie spalanie, przegrzewanie głowicy.",
+        "causes": "Zła ciepłota świecy, zbyt duża przerwa elektrod, wypalenie elektrody irydowej, nagar sadzowy lub olejowy.",
+        "tools": "Szczelinomierz płytkowy/druciany do świec, szczotka mosiężna, klucz do świec z wkładką magnetyczną.",
+        "when": "Podczas każdego przeglądu okresowego lub diagnozy nierównej pracy.",
+        "steps": [
+          "Wykręć świece po ostygnięciu silnika i ułóż je w kolejności cylindrów.",
+          "Oceń kolor izolatora: jasnobrązowy/kawa z mlekiem = mieszanka idealna; czarny suchy nagar = mieszanka za bogata lub świeca za zimna; biały/zeszkleny izolator = mieszanka skrajnie uboga lub świeca za ciepła.",
+          "Zmierz przerwę między elektrodami szczelinomierzem; w świecach irydowych koryguj wyłącznie odginając elektrodę masową."
+        ],
+        "measurementPoint": "Izolator i elektroda środkowa świecy zapłonowej.",
+        "referenceValue": "Przerwa elektrod: najczęściej 0.7–0.9 mm (wg DTR danego modelu; wiarygodność B).",
+        "evaluation": "Mokra czarna świeca na jednym cylindrze wskazuje na brak iskry, zalanie wtryskiwaczem lub brak kompresji.",
+        "repairSteps": "Czyszczenie świecy lub wymiana na nowy komplet o ściśle zalecanym symbolu i wartości cieplnej.",
+        "verification": "Pewny rozruch silnika i równomierna praca na wszystkich cylindrach.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "C2",
+        "name": "Diagnostyka cewek podwójnych (Wasted Spark) oraz fajkocewek COP",
+        "applicable": "Wszystkie silniki motocyklowe",
+        "symptom": "Wypadanie zapłonów pod mocnym obciążeniem, praca na 2 lub 3 cylindrach, przebicia do masy w studniach świec.",
+        "causes": "Pęknięcie izolacji korpusu cewki ołówkowej COP, przebicie gumowej fajki, przepalenie uzwojenia pierwotnego lub wtórnego cewki.",
+        "tools": "Multimetr cyfrowy (zakres 200 Ω oraz 20 kΩ), próbnik iskry z regulowaną przerwą.",
+        "when": "Wypadanie zapłonu na wybranym cylindrze lub parze cylindrów.",
+        "steps": [
+          "Zdemontuj cewkę, zdejmij gumową fajkę i obejrzyj korpus pod kątem białych śladów przebicia iskry.",
+          "Zmierz rezystancję uzwojenia pierwotnego między pinami wtyczki niskiego napięcia (zwykle 0.8–1.5 Ω).",
+          "Zmierz rezystancję uzwojenia wtórnego między stykiem świecy a pinem masowym (zwykle 8.0–15.0 kΩ).",
+          "Test zamiany: zamień cewkę COP podejrzanego cylindra ze sprawnym — jeśli wypadanie zapłonu przeniesie się na drugi cylinder, cewka jest uszkodzona."
+        ],
+        "measurementPoint": "Piny złącza niskiego napięcia oraz styk sprężynowy wewnątrz fajki świecy.",
+        "referenceValue": "Pierwotne: 0.8–2.5 Ω; Wtórne: 8.0–16.0 kΩ (wiarygodność B).",
+        "evaluation": "Cewka może wykazywać poprawną rezystancję na zimno, a przebijać dopiero pod wysokim napięciem na gorącym silniku.",
+        "repairSteps": "Wymiana uszkodzonej cewki zapłonowej COP na nową oraz wymiana świec zapłonowych.",
+        "verification": "Test obciążeniowy pod pełnym otwarciem gazu bez jakichkolwiek szarpnięć.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "C3",
+        "name": "Pomiar czujnika położenia wału korbowego (CKP / Pickup) i wałka (CMP)",
+        "applicable": "Wszystkie silniki motocyklowe, skutery i quady",
+        "symptom": "Całkowity brak iskry na wszystkich cylindrach, obrotomierz nie drgnie przy kręceniu rozrusznikiem, błąd CKP w sterowniku.",
+        "causes": "Przerwa w uzwojeniu impulsatora od wibracji/temperatury, opiłki metalowe na magnesie czujnika, zbyt duża szczelina powietrzna.",
+        "tools": "Multimetr cyfrowy, szczelinomierz niemagnetyczny (mosiężny), oscyloskop samochodowy.",
+        "when": "Brak iskry lub gaśnięcie silnika po nagrzaniu.",
+        "steps": [
+          "Zlokalizuj 2-pinową wtyczkę impulsatora wychodzącą z pokrywy alternatora.",
+          "Zmierz rezystancję uzwojenia omomierzem w temperaturze 20°C.",
+          "Podgrzej czujnik suszarką warsztatową obserwując omomierz — pęknięte uzwojenie traci ciągłość dopiero po nagrzaniu!",
+          "Sprawdź szczelinomierzem szczelinę powietrzną między rdzeniem czujnika a występem koła magnesowego (0.5–1.0 mm).",
+          "Podłącz woltomierz AC i zakręć rozrusznikiem: sprawny czujnik generuje min. 1.0–2.5 V AC."
+        ],
+        "measurementPoint": "Piny czujnika CKP (odłączona wtyczka z karteru).",
+        "referenceValue": "Rezystancja: najczęściej 150–550 Ω (wg DTR modelu; wiarygodność B). Napięcie przy kręceniu: >1.0 V AC.",
+        "evaluation": "Przerwa w obwodzie (nieskończoność na omomierzu) całkowicie odcina iskrę i wtrysk paliwa.",
+        "repairSteps": "Oczyszczenie magnesu czujnika z opiłków lub wymiana czujnika impulsatora w stojanie alternatora.",
+        "verification": "Wyraźny sygnał impulsowy AC na mierniku i pojawienie się iskry na świecach.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "C4",
+        "name": "Kompleksowa diagnostyka układu ładowania (stojan 3-fazowy i regulator napięcia)",
+        "applicable": "Wszystkie motocykle, skutery i quady z alternatorem 3-fazowym",
+        "symptom": "Rozładowany akumulator po jeździe, wygotowany akumulator (kwaśny zapach), migotanie świateł, błąd ładowania.",
+        "causes": "Przepalenie jednego z uzwojeń stojana alternatora, przebicie diod w regulatorze stratnym SCR, stopiona kostka 3-pinowa.",
+        "tools": "Multimetr cyfrowy z pomiarem napięcia AC i DC, cęgi prądowe DC.",
+        "when": "Każdy przypadek problemów z akumulatorem lub co 10 000 km.",
+        "steps": [
+          "KROK 1: Pomiar napięcia na klemach akumulatora na wyłączonym silniku (min. 12.6 V), po uruchomieniu na biegu jałowym oraz przy 5000 obr/min (musi wynosić 14.0–14.8 V DC).",
+          "KROK 2: Jeśli brak ładowania, odłącz 3-pinową żółtą kostkę stojana alternatora.",
+          "KROK 3: Zmierz rezystancję między każdą parą faz (1-2, 2-3, 1-3): musi wynosić 0.2–1.0 Ω. Zmierz przejście do masy: musi być ABSOLUTNY BRAK przejścia (nieskończoność!).",
+          "KROK 4: Uruchom silnik i zmierz napięcie zmienne AC między każdą parą faz przy 5000 obr/min: wszystkie 3 odczyty muszą być równe i wynosić ponad 55–70 V AC.",
+          "KROK 5: Jeśli stojan jest sprawny, a na akumulatorze brak 14V — uszkodzony jest regulator napięcia."
+        ],
+        "measurementPoint": "Klemy akumulatora (DC) oraz 3 żółte piny złącza stojana alternatora (AC i rezystancja).",
+        "referenceValue": "Ładowanie akumulatora: 14.0–14.8 V DC przy 5000 obr/min. Stojan AC: >60 V AC faza–faza. Rezystancja uzwojeń: 0.2–1.0 Ω; zwarcie do masy: brak (wiarygodność A).",
+        "evaluation": "Napięcie powyżej 15.5 V oznacza uszkodzony regulator i natychmiast ugotuje akumulator oraz spali sterownik ECU!",
+        "repairSteps": "Wymiana przepalonego stojana, montaż nowoczesnego regulatora MOSFET (np. Shindengen FH020AA) i polutowanie połączeń.",
+        "verification": "Napięcie ładowania stabilne 14.4 V na pełnych światłach drogowych i wentylatorze chłodnicy.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "C5",
+        "name": "Kontrola rozrusznika, szczotek i sprzęgła jednokierunkowego (bendiksu)",
+        "applicable": "Wszystkie pojazdy z rozrusznikiem elektrycznym",
+        "symptom": "Rozrusznik kręci powoli mimo naładowanego akumulatora, metaliczny zgrzyt bez obracania wałem korbowym, stukanie przekaźnika.",
+        "causes": "Zużycie szczotek węglowych rozrusznika, zabrudzenie rowków komutatora pyłem węglowym, zużycie rolek sprzęgła jednokierunkowego (sprag clutch).",
+        "tools": "Multimetr cyfrowy, suwmiarka, zasilacz rozruchowy z amperomierzem (cęgi prądowe DC do 200A).",
+        "when": "Trudności z obracaniem wału przez rozrusznik.",
+        "steps": [
+          "Zmierz spadek napięcia na klemach akumulatora w momencie rozruchu (nie może spaść poniżej 10.0 V).",
+          "Zmierz spadek napięcia na przewodzie masowym silnika i przewodzie plusowym rozrusznika (maks. 0.2 V).",
+          "Rozbierz rozrusznik: zmierz suwmiarką długość szczotek węglowych (limit zużycia zwykle 5–6 mm) i oczyść rowki komutatora nożykiem.",
+          "W razie metalicznego ślizgania się rozrusznika: zdemontuj koło magnesowe i sprawdź rolki oraz bieżnię sprzęgła jednokierunkowego."
+        ],
+        "measurementPoint": "Zacisk prądowy rozrusznika oraz komutator i szczotkotrzymacz.",
+        "referenceValue": "Pobór prądu rozrusznika motocykla: 40–80 A (ATV/V2: do 120 A). Długość szczotek min. 6 mm (wiarygodność B).",
+        "evaluation": "Ślizgające się sprzęgiełko jednokierunkowe wydaje głośny, metaliczny trzask i wymaga natychmiastowej wymiany przed uszkodzeniem karteru.",
+        "repairSteps": "Montaż nowego zestawu szczotek rozrusznika, toczenie/polerowanie komutatora, wymiana wieńca i sprzęgła sprag clutch.",
+        "verification": "Błyskawiczny, lekki obrót wału korbowego po naciśnięciu przycisku Starter.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "C6",
+        "name": "Diagnostyka magistrali cyfrowej CAN-BUS i kodów błędów sterownika",
+        "applicable": "Nowoczesne motocykle i quady z instalacją CAN-BUS (BMW, KTM, Ducati, Yamaha, Honda, CF Moto)",
+        "symptom": "Wariowanie zegarów, komunikaty braku łączności (CAN ERROR, błędy U0100, U0121, U0140), brak reakcji na przyciski.",
+        "causes": "Przetarcie przewodów skrętki CAN-High / CAN-Low w okolicach główki ramy, brak rezystora terminującego 120 Ω, zawilgocenie złącza modułu ABS.",
+        "tools": "Multimetr cyfrowy, oscyloskop 2-kanałowy, tester diagnostyczny OBD/CAN.",
+        "when": "Błędy komunikacji sieciowej lub zanik wskazań licznika.",
+        "steps": [
+          "Wyłącz zapłon i odłącz akumulator.",
+          "Wepnij omomierz między pin CAN-High i CAN-Low w gnieździe diagnostycznym OBD-2 (piny 6 i 14).",
+          "Sprawdź rezystancję linii: sprawna sieć posiada dwa rezystory terminujące 120 Ω na końcach magistrali połączone równolegle, co daje dokładnie 60 Ω!",
+          "Podłącz akumulator, włącz zapłon i zmierz napięcia stałe względem masy: CAN-High musi wynosić ok. 2.5–3.5 V, a CAN-Low ok. 1.5–2.5 V (suma obu napięć wynosi zawsze ok. 5.0 V).",
+          "Na oscyloskopie: sprawdź symetrię ramek danych (lustrzane odbicie sygnałów różnicowych)."
+        ],
+        "measurementPoint": "Piny 6 (CAN-H) i 14 (CAN-L) gniazda OBD lub złącze modułu ABS.",
+        "referenceValue": "Rezystancja terminująca wyłączona: 60.0 ± 3.0 Ω. Napięcie CAN-H: 2.7 V; CAN-L: 2.3 V (wiarygodność A).",
+        "evaluation": "Odczyt 120 Ω oznacza przerwę na jednym końcu magistrali (odłączony licznik lub ECU). Odczyt 0 Ω to zwarcie między liniami.",
+        "repairSteps": "Naprawa uszkodzonej skrętki CAN (z zachowaniem odpowiedniego skrętu przewodów 1 zwój na 2 cm!), osuszenie złączy i zabezpieczenie żelem dielektrycznym.",
+        "verification": "Odczyt parametrów bez błędów transmisji i stabilne 60 Ω na złączu diagnostycznym.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      }
+    ]
+  },
+  {
+    "id": "D",
+    "code": "DZIAŁ D",
+    "title": "UKŁADY HAMULCOWE I ABS",
+    "color": "#ef4444",
+    "icon": "🛑",
+    "summary": "Pompy hamulcowe osiowe i promieniowe, zaciski pływające i radialne, klocki i minimalna grubość, tarcze i bicie osiowe czujnikiem zegarowym, przewody w oplocie stalowym, odpowietrzanie ciśnieniowe i podciśnieniowe, diagnostyka modułów ABS oraz czujników prędkości kół.",
+    "procedures": [
+      {
+        "id": "D1",
+        "name": "Kontrola i pomiar tarcz hamulcowych (minimalna grubość TH min i bicie osiowe)",
+        "applicable": "Wszystkie układy hamulców tarczowych motocykli, skuterów i quadów",
+        "symptom": "Pulsowanie klamki hamulca przy hamowaniu, drżenie kierownicy, spadek siły hamowania, piski.",
+        "causes": "Zwichrowanie tarczy od przegrzania lub krzywego montażu, zużycie poniżej limitu bezpieczeństwa, zapieczone nity pływające.",
+        "tools": "Mikrometr do pomiaru tarcz z końcówkami stożkowymi/kulkowymi, czujnik zegarowy ze statywem magnetycznym.",
+        "when": "Przy każdej wymianie klocków oraz wibracjach podczas hamowania.",
+        "steps": [
+          "Odczytaj minimalną dopuszczalną grubość wytłoczoną na tarczy (np. MIN. TH. 4.0 mm lub 4.5 mm).",
+          "Zmierz grubość tarczy mikrometrem w 8 punktach po obwodzie na wysokości śladu klocków hamulcowych.",
+          "Zamontuj czujnik zegarowy na goleni widelca, przyłóż końcówkę pomiarową 5 mm od zewnętrznej krawędzi tarczy i powoli obracaj kołem.",
+          "Zanotuj całkowite wychylenie wskazówki zegara (bicie osiowe tarczy)."
+        ],
+        "measurementPoint": "Powierzchnia robocza tarczy hamulcowej w 8 punktach obwodowych.",
+        "referenceValue": "Bicie osiowe tarczy: maks. 0.10–0.15 mm (dla tarcz pływających maks. 0.10 mm; wiarygodność A). Grubość powyżej wartości MIN. TH.",
+        "evaluation": "Tarcza poniżej grubości minimalnej grozi pęknięciem termicznym przy ostrym hamowaniu! Bicie powyżej 0.15 mm powoduje odpychanie klocków i pulsowanie klamki.",
+        "repairSteps": "Wymiana tarczy na nową z nowymi śrubami mocującymi (zabezpieczonymi klejem do gwintów Loctite 243 i dokręconymi na krzyż kluczem dynamometrycznym).",
+        "verification": "Pomiar bicia nowej tarczy po dokręceniu — wskazówka czujnika zegarowego nie może wychylać się o więcej niż 0.05 mm.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "D2",
+        "name": "Diagnostyka klocków hamulcowych i zacisków (prowadnice, tłoczki, uszczelnienia)",
+        "applicable": "Wszystkie motocyklowe zaciski hamulcowe (pływające i stałe)",
+        "symptom": "Ściąganie motocykla, grzanie się tarczy po jeździe bez hamowania, miękka klamka, piski i nierówne zużycie klocków.",
+        "causes": "Zatarte tłoczki w korpusie zacisku (brud i korozja za uszczelniaczem przeciwpyłowym), zapieczone prowadnice zacisku pływającego.",
+        "tools": "Suwmiarka, szczypce do wyjmowania tłoczków hamulcowych, smar silikonowy do hamulców (Ate Bremszylinder-Paste).",
+        "when": "Co sezon lub przy wymianie klocków hamulcowych.",
+        "steps": [
+          "Zmierz grubość okładziny ciernej klocków (bez metalowej blachy nośnej).",
+          "Sprawdź równomierność zużycia klocka wewnętrznego i zewnętrznego: różnica > 1.5 mm wskazuje na zapieczone prowadnice zacisku.",
+          "Wysuń tłoczki hamulcowe delikatnie klamką i oceń ich powierzchnię: gładź chromowana musi być idealna, bez wżerów i korozji.",
+          "Oczyść tłoczki zmywaczem do hamulców i szczoteczką mosiężną/nylonową; nasmaruj gładź pastą do cylinderków i wciśnij tłoczki palcami."
+        ],
+        "measurementPoint": "Grubość okładziny klocka ciernego oraz powierzchnia boczna tłoczków.",
+        "referenceValue": "Minimalna grubość okładziny klocka: 1.0 mm (zalecana wymiana przy 1.5 mm; wiarygodność B). Tłoczki muszą cofać się pod naciskiem kciuków.",
+        "evaluation": "Zapieczony tłoczek powoduje stałe tarcie klocka o tarczę, gotowanie płynu hamulcowego i utratę hamulców po kilku kilometrach!",
+        "repairSteps": "Wymiana klocków hamulcowych na nowe (spiekane sintermetalowe na przód), montaż nowego zestawu gumek uszczelniających zacisku.",
+        "verification": "Koło musi obracać się swobodnie ręką po zwolnieniu klamki hamulca (lekkie ocieranie jest dopuszczalne, opór jest niedopuszczalny).",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "D3",
+        "name": "Procedura odpowietrzania układu hamulcowego i wymiany płynu DOT 4 / DOT 5.1",
+        "applicable": "Wszystkie hydrauliczne układy hamulcowe motocykli i quadów",
+        "symptom": "Miękka, wpadająca klamka hamulca (\"gumowa klamka\"), brak wyczuwalnego twardego punktu oporu, spadek skuteczności po rozgrzaniu.",
+        "causes": "Pęcherze powietrza w magistrali hamulcowej, zawodniony stary płyn hamulcowy (zawartość wody > 3% obniża temperaturę wrzenia z 260°C do 150°C!).",
+        "tools": "Tester zawartości wody w płynie hamulcowym, pompka podciśnieniowa do odpowietrzania, przezroczysty wężyk z zaworkiem zwrotnym, świeży płyn DOT 4 / 5.1.",
+        "when": "Obowiązkowo co 2 lata lub przy jakiejkolwiek ingerencji w układ hydrauliczny.",
+        "steps": [
+          "Zbadaj płyn w zbiorniczku testerem elektronicznym: obecność wody > 2% wymaga natychmiastowej wymiany.",
+          "Zabezpiecz lakierowane elementy owiewek i zbiornika folią (płyn DOT rozpuszcza lakier w kilkadziesiąt sekund!).",
+          "Odsącz stary płyn ze zbiorniczka, wlej świeży płyn z nowo otwartej butelki.",
+          "Podłącz wężyk do odpowietrznika zacisku, pompuj klamką, przytrzymaj wciśniętą, odkręć odpowietrznik o 1/4 obrotu, zakręć i dopiero puść klamkę.",
+          "Powtarzaj procedurę do momentu wypłynięcia idealnie czystego płynu bez mikropęcherzyków powietrza.",
+          "W układach z pompą radialną odpowietrz najpierw odpowietrznik na samej pompie przy klamce!"
+        ],
+        "measurementPoint": "Zbiorniczek płynu oraz zaworki odpowietrzające na pompie i zaciskach.",
+        "referenceValue": "Zawartość wody w płynie: < 1.0% (płyn bezpieczny; wiarygodność A). Punkt oporu na klamce twardy po przesunięciu o 15–20 mm.",
+        "evaluation": "Obecność powietrza w układzie kompresuje się pod naciskiem klamki, drastycznie wydłużając drogę hamowania.",
+        "repairSteps": "Pełne odpowietrzenie tradycyjne lub podciśnieniowe z opukaniem przewodów drewnianym trzonkiem w celu uwolnienia pęcherzyków.",
+        "verification": "Test klamki: po zaciśnięciu klamki opaską zaciskową (trytytką) do manetki na całą noc, rano klamka musi być sztywna jak kamień.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "D4",
+        "name": "Odpowietrzanie i obsługa modulatora ABS oraz czujników prędkości kół (WSS)",
+        "applicable": "Wszystkie pojazdy wyposażone w układ zapobiegający blokowaniu kół ABS",
+        "symptom": "Świecąca kontrolka ABS na desce po przekroczeniu 10 km/h, miękka klamka po wymianie płynu, twarda klamka bez modulacji ciśnienia.",
+        "causes": "Powietrze uwięzione w komorach elektrozaworów modulatora ABS, zanieczyszczona szczelina czujnika koła, zgięty wieniec impulsowy.",
+        "tools": "Tester diagnostyczny z funkcją aktywacji pompy i zaworów ABS, szczelinomierz niemagnetyczny mosiężny, multimetr.",
+        "when": "Wymiana płynu w układzie z ABS lub świecenie kontrolki usterki ABS.",
+        "steps": [
+          "Tradycyjne odpowietrzenie NIE usuwa płynu z zamkniętych komór elektrozaworów agregatu ABS.",
+          "Podłącz tester diagnostyczny, wybierz procedurę odpowietrzania ABS (ABS Bleeding Routine) i wysteruj pompę ABS przy wciśniętej klamce.",
+          "Sprawdź szczelinomierzem niemagnetycznym przerwę powietrzną między czołem czujnika Halla a wieńcem impulsowym na obu kołach.",
+          "Obracaj kołem i zmierz bicie wieńca impulsowego (zgięty ząb wieńca natychmiast zgłasza błąd usterki czujnika koła!)."
+        ],
+        "measurementPoint": "Szczelina czujnik–wieniec ABS oraz złącze agregatu pompy ABS.",
+        "referenceValue": "Szczelina powietrzna czujnika ABS: 0.4–1.2 mm (zwykle 0.6–0.8 mm; wiarygodność A). Brak bicia wieńca impulsowego.",
+        "evaluation": "Przerwa w obwodzie czujnika lub szczelina > 1.5 mm wyłącza system ABS i przełącza hamulce w tryb czysto mechaniczny.",
+        "repairSteps": "Aktywacja zaworów modulatora w testerze, wyczyszczenie czujników z opiłków magnetycznych, naprostowanie wieńca impulsowego.",
+        "verification": "Zgaśnięcie kontrolki ABS po ruszeniu i przekroczeniu prędkości 5–10 km/h oraz prawidłowa pulsacja pedału/klamki przy ostrym hamowaniu na śliskiej nawierzchni.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "D5",
+        "name": "Weryfikacja przewodów hamulcowych i montaż przewodów w oplocie stalowym",
+        "applicable": "Wszystkie motocykle, skutery i quady",
+        "symptom": "Gumowa klamka, spadek siły hamowania po nagrzaniu, pęcznienie przewodów pod ciśnieniem.",
+        "causes": "Starzenie się gumy przewodów elastycznych (okres eksploatacji gumy wg producentów to 4–5 lat!).",
+        "tools": "Suwmiarka, klucz dynamometryczny do śrub Banjo M10 (zwykle 22–25 Nm), nowe podkładki miedziane/aluminiowe.",
+        "when": "Co 4 lata lub przy modernizacji układu hamulcowego.",
+        "steps": [
+          "Zaciśnij mocno klamkę hamulca i zbadaj ręką pęcznienie gumowych węży.",
+          "Zastąp stare gumowe przewody przewodami w oplocie ze stali nierdzewnej (teflon PTFE w oplocie stalowym).",
+          "Używaj ZAWSZE nowych podkładek zgniatanych pod śruby Banjo i dokręcaj zalecanym momentem."
+        ],
+        "measurementPoint": "Średnica zewnętrzna przewodu pod ciśnieniem oraz śruby Banjo.",
+        "referenceValue": "Zero rozszerzalności objętościowej przewodu w oplocie PTFE; moment śrub Banjo: 22–25 Nm (wiarygodność A).",
+        "evaluation": "Oplot stalowy eliminuje zjawisko puchnięcia węża i zapewnia natychmiastową, twardą reakcję klamki.",
+        "repairSteps": "Montaż przewodów w oplocie stalowym HEL / Fren Tubo / Goodridge.",
+        "verification": "Twardy, precyzyjny punkt zadziałania hamulca na klamce.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      }
+    ]
+  },
+  {
+    "id": "E",
+    "code": "DZIAŁ E",
+    "title": "ZAWIESZENIE I UKŁAD KIEROWNICZY",
+    "color": "#8b5cf6",
+    "icon": "🏍️",
+    "summary": "Widelce klasyczne i teleskopowe USD, wymiana uszczelniaczy olejowych i pyłowych, dobór lepkości oleju i poziomu poduszki powietrznej air gap, tylne amortyzatory centralne i stereo, regulacja SAG statyczny i dynamiczny, łożyska główki ramy i wahacza.",
+    "procedures": [
+      {
+        "id": "E1",
+        "name": "Diagnostyka i regulacja ugięcia wstępnego zawieszenia (SAG statyczny i dynamiczny)",
+        "applicable": "Wszystkie motocykle sportowe, turystyczne, naked i quady",
+        "symptom": "Niestabilność w zakrętach, dobijanie zawieszenia na nierównościach, brak przyczepności przedniego koła, uciekanie tyłu.",
+        "causes": "Niewłaściwe napięcie wstępne sprężyn (Preload) niedopasowane do wagi kierowcy z ekwipunkiem.",
+        "tools": "Taśma miernicza z dokładnością do 1 mm, klucz hakowy do nakrętek amortyzatora, pomocnik do asekuracji.",
+        "when": "Po zakupie motocykla, zmianie wagi kierowcy, jeździe z pasażerem lub torowaniu.",
+        "steps": [
+          "POMIAR 1 (R1): Podnieś motocykl tak, aby koła wisiały w powietrzu (pełne rozprężenie zawieszenia); zmierz odległość od osi koła do stałego punktu ramy/zadupka.",
+          "POMIAR 2 (R2 - Static Sag): Postaw motocykl pionowo na kołach pod własnym ciężarem; zmierz tę samą odległość (Static Sag = R1 - R2).",
+          "POMIAR 3 (R3 - Rider Sag): Kierowca w pełnym rynsztunku siada w pozycji do jazdy, stopy na podnóżkach (pomocnik trzyma motocykl); zmierz odległość (Rider Sag = R1 - R3).",
+          "Wyreguluj nakrętkami napięcia wstępnego sprężyny tak, aby uzyskać zadane wartości."
+        ],
+        "measurementPoint": "Odległość od osi koła przedniego/tylnego do wyznaczonego punktu na ramie/błotniku.",
+        "referenceValue": "Przód Rider Sag: 30–40 mm (tor 25–30 mm). Tył Rider Sag: 30–40 mm (tor 25–30 mm). Static Sag tył: 5–15 mm (wiarygodność A).",
+        "evaluation": "Jeśli przy prawidłowym Rider Sag brak jest Static Sag (0 mm) — sprężyna jest zbyt miękka i wymaga wymiany na sprężynę o twardszej stałej K (N/mm).",
+        "repairSteps": "Regulacja napięcia wstępnego kluczem hakowym; wymiana sprężyn na progresywne lub liniowe dopasowane do wagi kierowcy.",
+        "verification": "Pewne prowadzenie motocykla w pełnym złożeniu bez tendencji do wyjeżdżania na zewnętrzną zakrętu.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "E2",
+        "name": "Wymiana uszczelniaczy olejowych i pyłowych w widelcu teleskopowym klasycznym i USD",
+        "applicable": "Zawieszenia teleskopowe klasyczne oraz odwrócone Upside-Down (USD)",
+        "symptom": "Pierścienie oleju na rurach nośnych widelca, wyciek oleju zalewający zaciski hamulcowe, utrata tłumienia (nurkowanie przodu).",
+        "causes": "Zanieczyszczenie wargi uszczelniacza piaskiem/owadami, mikrorysy lub wżery korozyjne na chromie rury nośnej, stwardnienie gumy uszczelniacza.",
+        "tools": "Przyrząd do wbijania uszczelniaczy (Driver do lag odpowiedniej średnicy np. 41, 43, 48 mm), ściągacz do rur, klucz do korków widelca, miska na olej.",
+        "when": "Natychmiast po zauważeniu filmu olejowego na goleni widelca.",
+        "steps": [
+          "Zdemontuj lagi z półek motocykla, odkręć korek górny i zlej stary zużyty olej do naczynia z miarką.",
+          "Zdejmij uszczelniacz pyłowy i wyjmij druciany pierścień zabezpieczający (seger) uszczelniacz olejowy.",
+          "Wysuń gwałtownym ruchem rurę nośną z goleni (metoda slide-hammer), rozdzielając panewki ślizgowe teflonowe.",
+          "Skontroluj stan panewek teflonowych (jeśli miedź przebija przez teflon — wymień panewki!).",
+          "Przeszlifuj rurę nośną papierem wodnym gradacji 2000 z olejem, usuwając zadziory od uderzeń kamyków.",
+          "Załóż woreczek foliowy na krawędź rury (aby krawędzie rowków nie ścięły nowej wargi uszczelniacza!) i nasuń nowy uszczelniacz.",
+          "Wbij nowy uszczelniacz specjalnym dedykowanym pobijakiem do oporu i zabezpiecz pierścieniem seger."
+        ],
+        "measurementPoint": "Gładź rury nośnej widelca oraz gniazdo uszczelniacza w goleni zewnętrznej.",
+        "referenceValue": "Absolutny brak wycieków po 50 ugięciach zawieszenia na postoju (wiarygodność A). Bicie rury nośnej ≤ 0.20 mm.",
+        "evaluation": "Pozostawienie cieknącego widelca doprowadzi do zalania klocków hamulcowych olejem i utraty hamulców przednich!",
+        "repairSteps": "Montaż uszczelniaczy olejowych i pyłowych renomowanych producentów (NOK, SKF, Ariete) z wargą z elastomeru NBR/FKM.",
+        "verification": "Idealnie sucha goleń po jeździe próbnej i prawidłowe tłumienie nierówności.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "E3",
+        "name": "Pomiar i regulacja poziomu poduszki powietrznej (Air Gap) oraz dobór oleju SAE",
+        "applicable": "Wszystkie widelce motocyklowe",
+        "symptom": "Dobijanie widelca przy ostrym hamowaniu (poziom oleju za niski) lub twardy przód i brak pełnego skoku (oleju za dużo).",
+        "causes": "Niewłaściwa ilość wlanego oleju, dobór błędnej lepkości oleju (np. 15W zamiast 5W).",
+        "tools": "Strzykawka warsztatowa ze skalibrowaną rurką poziomą i ogranicznikiem głębokości, menzurka pomiarowa, olej do zawieszeń Fork Oil.",
+        "when": "Przy każdym serwisie olejowym widelca teleskopowego.",
+        "steps": [
+          "Wlej świeży olej do rury widelca.",
+          "Odpowietrz wkład tłumiący: powoli przesuwaj tłoczysko i rurę nośną góra-dół kilkanaście razy, aż znikną wszelkie odgłosy bulgotania powietrza.",
+          "Ściśnij rurę nośną całkowicie na dół (bez zamontowanej sprężyny!).",
+          "Ustaw suwak na rurce strzykawki na zadaną odległość poziomu poduszki powietrznej (np. 110 mm od górnej krawędzi rury).",
+          "Wprowadź rurkę pionowo do wnętrza i odessij nadmiar oleju strzykawką, aż zassie powietrze."
+        ],
+        "measurementPoint": "Odległość od lustra oleju do górnej krawędzi całkowicie zsuniętej rury nośnej widelca bez sprężyny.",
+        "referenceValue": "Wg DTR modelu: zazwyczaj 100–140 mm poziomu poduszki (Air Gap; wiarygodność B). Lepkość: najczęściej SAE 5W lub 10W.",
+        "evaluation": "Zmiana poziomu poduszki powietrznej o ±10 mm pozwala dostroić twardość zawieszenia w końcowej fazie skoku bez zmiany twardości sprężyny.",
+        "repairSteps": "Precyzyjna korekta poziomu oleju w obu lagach z dokładnością do 1 mm (obie lagi MUSZĄ mieć identyczny poziom poduszki!).",
+        "verification": "Równe ugięcie obu goleni i wykorzystanie 90% skoku zawieszenia przy awaryjnym hamowaniu (kontrola opaską o-ring na ladze).",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "E4",
+        "name": "Diagnostyka łożysk główki ramy (luzy, zacięcia w pozycji na wprost)",
+        "applicable": "Wszystkie motocykle, motorowery i quady",
+        "symptom": "Wężykowanie motocykla przy niskich prędkościach (tzw. polowanie na tor jazdy), stuki przy naciśnięciu przedniego hamulca.",
+        "causes": "Wybicie dołków w bieżni łożyska główki ramy w pozycji centralnej (brinelling od uderzeń w dziury na wprost), luźna nakrętka wieńcowa.",
+        "tools": "Podnośnik pod silnik/ramę, klucz hakowy z adapterem pod klucz dynamometryczny, waga sprężynowa do pomiaru oporu skrętu.",
+        "when": "Co 10 000 km lub przy niestabilnym prowadzeniu motocykla.",
+        "steps": [
+          "Unieś przód motocykla tak, aby koło wisiało swobodnie w powietrzu.",
+          "Chwyć za dolne końce goleni widelca i szarpnij przód-tył: wyczuwalny stuk oznacza luz na łożyskach główki ramy.",
+          "Powoli obracaj kierownicą od lewego do prawego oporu koniuszkiem palca: wyczuwalne „wpadanie” lub przeskok w pozycji środkowej oznacza wybite bieżnie i kwalifikuje łożyska do natychmiastowej wymiany!",
+          "Zmierz siłę potrzebną do obrócenia kierownicy wagą sprężynową zaczepioną o koniec manetki."
+        ],
+        "measurementPoint": "Bieżnie łożysk w główce ramy oraz opór skrętu kierownicy.",
+        "referenceValue": "Zero luzu wzdłużnego; opór obrotu kierownicy: 200–500 g na wadze sprężynowej (wiarygodność A).",
+        "evaluation": "Jazda z wybitym łożyskiem główki ramy uniemożliwia precyzyjne utrzymanie toru jazdy i jest skrajnie niebezpieczna przy wyższych prędkościach.",
+        "repairSteps": "Wymiana kompletu łożysk (zalecana konwersja ze starych łożysk kulkowych na nowoczesne łożyska stożkowe) z dokręceniem momentem wstępnym 40 Nm i roboczym 15 Nm.",
+        "verification": "Płynny ruch kierownicy z lekkim oporem hydraulicznym i całkowity brak stuków przy ostrym hamowaniu.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "E5",
+        "name": "Regulacja tłumienia odbicia (Rebound) i dobicia (Compression)",
+        "applicable": "Zawieszenia z pełną regulacją hydrauliczną (sport, adventure, quady)",
+        "symptom": "Bujanie motocykla po przejechaniu nierówności, podskakiwanie koła na tarce, twarde uderzenia w nadgarstki.",
+        "causes": "Niezrównoważone tłumienie hydrauliczne, zużyty/spieniony olej w amortyzatorze.",
+        "tools": "Wkrętak płaski, klucz imbusowy, notatnik nastaw zawieszenia.",
+        "when": "Dostrajanie zawieszenia pod styl jazdy i tor.",
+        "steps": [
+          "Wkręć śrubę regulacyjną delikatnie do lekkiego oporu (pozycja w pełni zamknięta = maksymalne tłumienie).",
+          "Odkręcaj o zadaną liczbę kliknięć lub obrotów zgodnie z tabelą ustawień bazowych OEM.",
+          "Test odbicia przodu: wciśnij mocno przód motocykla i puść; widelec powinien powrócić płynnie do góry, minąć punkt równowagi i natychmiast zatrzymać się bez drugiego wahnięcia.",
+          "Ustaw identyczną liczbę kliknięć na obu goleniach widelca."
+        ],
+        "measurementPoint": "Śruby regulacyjne na szczycie korków widelca (Rebound) i na dole goleni (Compression).",
+        "referenceValue": "Ustawienia fabryczne: np. 1.5 obrotu od oporu lub 12 kliknięć (wiarygodność B).",
+        "evaluation": "Zbyt wolne odbicie (zamknięte) powoduje zjawisko „packingu” — zawieszenie nie zdąży się rozprężyć przed kolejną nierównością i twardnieje.",
+        "repairSteps": "Dostrojenie klików tłumienia; w razie braku reakcji wymiana oleju na świeży.",
+        "verification": "Pewne wybieranie nierówności bez utraty kontaktu koła z asfaltem.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "E6",
+        "name": "Kontrola łożyskowania wahacza i kiwaczki tylnego amortyzatora",
+        "applicable": "Wszystkie motocykle i quady z wahaczem wleczonym i kiwaczką Pro-Link / Unit Pro-Link",
+        "symptom": "Pływanie tyłu w zakręcie, skrzypienie z okolic tylnego amortyzatora, luz poprzeczny koła.",
+        "causes": "Wypłukanie smaru z łożysk igiełkowych kiwaczki i wahacza, korozja sworzni i tulei teflonowych.",
+        "tools": "Podnośnik pod silnik, klucze nasadowe, smar litowo-wapniowy wodoodporny.",
+        "when": "Co 15 000 km lub przy wymianie napędu.",
+        "steps": [
+          "Unieś tył motocykla tak, aby wahacz wisiał swobodnie.",
+          "Chwyć koniec wahacza oburącz i szarpnij na boki: wyczuwalny luz poprzeczny oznacza zużyte łożyska osi wahacza.",
+          "Podnieś lekko tylne koło od spodu: luz pionowy na pierwszych milimetrach skoku wskazuje na wybite tuleje i łożyska igiełkowe kiwaczki.",
+          "Rozbierz kiwaczkę, wymyj elementy w nafcie, wymień zużyte tulejki i uszczelniacze wargowe."
+        ],
+        "measurementPoint": "Łożyska igiełkowe osi wahacza i sworznie układu dźwigniowego kiwaczki.",
+        "referenceValue": "Zero luzu poprzecznego na końcu wahacza; płynny ruch dźwigni kiwaczki (wiarygodność A).",
+        "evaluation": "Wybita kiwaczka niszczy mocowanie dolne amortyzatora i destabilizuje motocykl na hamowaniu.",
+        "repairSteps": "Montaż zestawu naprawczego wahacza/kiwaczki (All Balls / Pivot Works) i obfite smarowanie smarem wodoodpornym.",
+        "verification": "Brak jakichkolwiek luzów pionowych i poprzecznych wahacza.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      }
+    ]
+  },
+  {
+    "id": "F",
+    "code": "DZIAŁ F",
+    "title": "UKŁADY NAPĘDOWE I PRZEKŁADNIE",
+    "color": "#ec4899",
+    "icon": "⛓️",
+    "summary": "Sprzęgła mokre wielotarczowe i odśrodkowe, skrzynie biegów (wypadanie 2. biegu, kły i wodziki), napęd łańcuchowy (wyciągnięcie na 20 ogniw, zwis), napęd pasowy, przekładnie bezstopniowe CVT (wariatory, rolki, paski) oraz wały Kardana.",
+    "procedures": [
+      {
+        "id": "F1",
+        "name": "Pomiar sprzęgła wielotarczowego (grubość tarcz, przekładki, sprężyny, kosz)",
+        "applicable": "Wszystkie sprzęgła mokre wielotarczowe motocykli 1–4 cyl",
+        "symptom": "Ślizganie sprzęgła przy przyspieszaniu na wysokich biegach (obroty rosną, prędkość nie), ciągnięcie sprzęgła i trudne wrzucanie luzu na postoju.",
+        "causes": "Zużycie okładzin tarcz ciernych, przegrzanie i zwichrowanie przekładek stalowych, zmęczenie sprężyn dociskowych, rowki na palcach kosza.",
+        "tools": "Suwmiarka precyzyjna, płyta traserska/szyba ze szczelinomierzem, klucz dynamometryczny.",
+        "when": "Ślizganie pod obciążeniem lub trudności ze zmianą biegów.",
+        "steps": [
+          "Przed demontażem sprawdź luz na lince sprzęgła (musi wynosić 10–15 mm na końcu klamki).",
+          "Po wyjęciu pakietu zmierz suwmiarką grubość każdej tarczy ciernej.",
+          "Połóż przekładki stalowe na idealnie płaskiej płycie i zmierz szczelinomierzem ich zwichrowanie.",
+          "Zmierz wolną długość sprężyn dociskowych i porównaj z limitem minimalnym w DTR.",
+          "Oceń palce zewnętrznego kosza sprzęgłowego pod kątem wybitych rowków (notching)."
+        ],
+        "measurementPoint": "Grubość okładzin tarcz ciernych, płaskość przekładek stalowych, długość sprężyn dociskowych.",
+        "referenceValue": "Grubość tarcz: nominał 2.9–3.1 mm (limit zużycia 2.7 mm). Zwichrowanie przekładek: maks. 0.10 mm (wiarygodność B).",
+        "evaluation": "Nowe tarcze cierne przed montażem MUSZĄ być moczone w czystym oleju silnikowym przez minimum 2–4 godziny!",
+        "repairSteps": "Wymiana kompletu tarcz ciernych i sprężyn; w razie rowków na koszu delikatne wyrównanie pilnikiem iglakiem lub wymiana kosza.",
+        "verification": "Płynne ruszanie i idealne wysprzęglanie bez ciągnięcia na wrzuconej jedynce.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "F2",
+        "name": "Diagnostyka skrzyni biegów (wypadanie 2. biegu, kły sprzęgłowe i wodziki)",
+        "applicable": "Manualne skrzynie biegów motocykli (zwłaszcza sportowych 600/1000 cm³)",
+        "symptom": "Gwałtowne szarpnięcie lub wyskakiwanie 2. biegu na luz przy mocnym przyspieszaniu powyżej 6000–8000 obr/min.",
+        "causes": "Zaokrąglenie krawędzi kłów zabierakowych (dogs) kół zębatych 2. i 6. biegu, wygięcie wodzika wybieraka.",
+        "tools": "Suwmiarka, czujnik zegarowy do bicia wałków, mikrometr.",
+        "when": "Wyskakiwanie biegu pod obciążeniem.",
+        "steps": [
+          "Wykonaj jazdę próbną: ostre odkręcenie gazu na 2. biegu powoduje przeskok napędu (jakby łańcuch przeskoczył po zębach).",
+          "Po rozpołowieniu karterów obejrzyj współpracujące kły kół zębatych 2. i 6. biegu: krawędzie muszą mieć ostry kąt ujemny (undercutting).",
+          "Zmierz grubość widełek wodzika i sprawdź czy nie są skrzywione od siły odpychającej zaokrąglonych kłów.",
+          "Sprawdź rowki wodzące bębna programatora zmiany biegów."
+        ],
+        "measurementPoint": "Kły zabierakowe kół zębatych oraz płaszczyzny ślizgowe wodzików skrzyni biegów.",
+        "referenceValue": "Krawędzie kłów bez jakichkolwiek zaokrągleń; skrzywienie wodzika: maks. 0.05 mm (wiarygodność A).",
+        "evaluation": "Nigdy nie wymieniaj samego wygiętego wodzika bez wymiany pary kół zębatych — zaokrąglone kły natychmiast ponownie zegną nowy wodzik!",
+        "repairSteps": "Wymiana pary współpracujących kół zębatych skrzyni, nowego wodzika i wałka wodzików.",
+        "verification": "Pewne trzymanie 2. biegu pod pełnym obciążeniem na hamowni lub w jeździe testowej.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "F3",
+        "name": "Pomiar wyciągnięcia łańcucha napędowego na 20 ogniwach i regulacja zwisu",
+        "applicable": "Wszystkie motocykle i quady z napędem łańcuchowym (rozmiary 428, 520, 525, 530)",
+        "symptom": "Szarpanie przy jeździe ze stałą prędkością, klikanie z okolic napędu, nierównomierny naciąg przy obracaniu kołem.",
+        "causes": "Zużycie sworzni i tulejek łańcucha, zatarte ogniwa O-ring/X-ring, zużyte zęby zębatek napędowych.",
+        "tools": "Suwmiarka 300 mm, liniał warsztatowy, klucz dynamometryczny do osi koła (zwykle 80–110 Nm).",
+        "when": "Co 1000 km smarowanie i kontrola zwisu; co 5000 km pomiar wyciągnięcia.",
+        "steps": [
+          "Obracaj tylnym kołem i znajdź punkt, w którym łańcuch jest NAJBARDZIEJ napięty (w tym punkcie ZAWSZE ustawia się naciąg!).",
+          "Naciśnij łańcuch palcem i zmierz zwis pionowy w połowie odległości między zębatkami (zwykle 25–35 mm na stopce bocznej).",
+          "Obciąż dolną gałąź łańcucha masą ok. 15 kg i zmierz suwmiarką odległość między osiami 21 sworzni (odcinek 20 ogniw).",
+          "Sprawdź stan zębów zębatki zdawczej i tylnej pod kątem wygięcia profilu w tzw. zęby rekina."
+        ],
+        "measurementPoint": "Zwis w połowie wahacza oraz odcinek 20 ogniw łańcucha napędowego.",
+        "referenceValue": "Limit długości 20 ogniw dla łańcucha 520/525/530: maks. 319.4–320.0 mm (nominał: 317.5 mm; wiarygodność B). Zwis: 25–35 mm.",
+        "evaluation": "Zbyt mocno napięty łańcuch niszczy łożysko wałka zdawczego skrzyni biegów i blokuje pracę tylnego amortyzatora!",
+        "repairSteps": "Regulacja naciągu śrubami na końcach wahacza z zachowaniem idealnej osiowości (wg nacięć na wahaczu); wymiana kompletu napędowego (łańcuch + obie zębatki).",
+        "verification": "Płynna, cicha praca napędu bez szarpnięć przy zmianie obciążenia.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "F4",
+        "name": "Serwis i strojenie przekładni bezstopniowej CVT (wariator, rolki, pasek, sprzęgło)",
+        "applicable": "Wszystkie skutery (50–650 cm³) oraz quady ATV/UTV z przekładnią pasową CVT",
+        "symptom": "Spadek prędkości maksymalnej, wycie silnika bez przyspieszania, wibracje i szarpanie przy ruszaniu, zrywanie pasków.",
+        "causes": "Wytarty pasek napędowy poniżej szerokości granicznej, spłaszczone rolki wariatora, wyślizgane talerze, zużyte sprężynki sprzęgła.",
+        "tools": "Blokada wariatora / klucz pneumatyczny, suwmiarka precyzyjna, waga jubilerska z dokładnością do 0.1 g.",
+        "when": "Zgodnie z interwałem serwisowym (co 5000–10 000 km) lub przy spadku osiągów.",
+        "steps": [
+          "Zdemontuj pokrywę napędu CVT i wyjmij pasek napędowy.",
+          "Zmierz szerokość paska suwmiarką w najszerszym punkcie grzbietu i porównaj z limitem zużycia w DTR.",
+          "Rozbierz wariator: sprawdź stan bieżni rolek pod kątem progów i zważeń.",
+          "Zważ każdą rolkę na wadze jubilerskiej i sprawdź czy nie mają spłaszczeń (flats).",
+          "Sprawdź grubość okładzin ciernych szczęk sprzęgła odśrodkowego (min. 1.5–2.0 mm) oraz stan sprężyny centralnej korektora momentu."
+        ],
+        "measurementPoint": "Szerokość paska CVT, masa i kształt rolek wariatora, grubość okładzin sprzęgła odśrodkowego.",
+        "referenceValue": "Pasek: wg DTR (np. GY6 50cc limit 17.0 mm; Piaggio 300cc limit 20.0 mm; Quady limit 28.5–32.5 mm; wiarygodność A). Okładziny sprzęgła: min. 1.5 mm.",
+        "evaluation": "Zużyty o 1.5 mm pasek nie wchodzi na szczyt talerzy wariatora, obniżając prędkość maksymalną nawet o 15–20 km/h!",
+        "repairSteps": "Odtłuszczenie talerzy zmywaczem, montaż nowego paska wzmocnionego kevlarem, nowych rolek o dobranej masie i nowych ślizgów wariatora.",
+        "verification": "Płynne ruszanie bez szarpnięć i stabilne obroty maksymalnej mocy podczas przyspieszania.",
+        "linkedTool": "Tuning CVT (Kalkulator rolek i przełożeń)"
+      },
+      {
+        "id": "F5",
+        "name": "Diagnostyka wału Kardana, wielowypustów i przekładni kątowej (Final Drive)",
+        "applicable": "Motocykle z napędem wałem Kardana (BMW R/K, Yamaha FJR/DragStar, Honda Shadow/VFR)",
+        "symptom": "Stuki przy dodawaniu i ujmowaniu gazu, wycie przekładni kątowej zależne od prędkości, wyciek oleju na tylną felgę.",
+        "causes": "Suchy, skorodowany wielowypust przesuwny wału, zużyte łożysko główne talerzowe przekładni, luz na przegubie krzyżakowym.",
+        "tools": "Czujnik zegarowy ze statywem, klucze dynamometryczne, strzykawka do wymiany oleju przekładniowego, pasta litowo-molibdenowa MoS2.",
+        "when": "Co 10 000–20 000 km serwis olejowy i smarowanie wielowypustu.",
+        "steps": [
+          "Postaw motocykl na stopce centralnej, chwyć tylne koło w pozycjach 12-6 oraz 9-3 i sprawdź luz łożyskowania przekładni kątowej.",
+          "Odchyl przekładnię kątową na wahaczu i wysuń wielowypust wału Kardana.",
+          "Oczyść wielowypust ze starego spieczonego smaru i zbadaj zużycie zębów.",
+          "Sprawdź luzy kątowe i płynność pracy przegubów krzyżakowych Cardana.",
+          "Zlej olej przekładniowy i oceń obecność opiłków na magnesie korka spustowego.",
+          "Nanieś obficie wysokociśnieniowy smar molibdenowy MoS2 (np. Castrol Optimol TA) na wielowypust i złóż przekładnię.",
+          "Nalej świeży syntetyczny olej przekładniowy SAE 75W-90 GL-5 w ściśle odmierzonej ilości (np. 180 ml dla BMW)."
+        ],
+        "measurementPoint": "Wielowypust wału napędowego, łożysko koła talerzowego, magnes korka spustowego.",
+        "referenceValue": "Luz osiowy koła: niewyczuwalny na obwodzie felgi. Ilość oleju: ściśle wg specyfikacji (przelanie wypycha uszczelniacz; wiarygodność A).",
+        "evaluation": "Brak smarowania wielowypustu prowadzi do korozji ciernej i ścięcia zębów wału w trasie!",
+        "repairSteps": "Smarowanie pastą molibdenową, wymiana uszczelniacza promieniowego wałka, wymiana oleju przekładniowego GL-5.",
+        "verification": "Cicha praca przekładni bez wycia i suchy uszczelniacz po dynamicznej jeździe.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "F6",
+        "name": "Diagnostyka napędu pasem zębatym (Harley-Davidson, BMW F800, Can-Am Spyder)",
+        "applicable": "Motocykle z wtórnym napędem pasem zębatym",
+        "symptom": "Piszczenie pasa przy ruszaniu, ząbkowanie, pęknięcia kordu, ściąganie pasa na krawędź koła pasowego.",
+        "causes": "Niewłaściwy naciąg pasa (zbyt luźny przeskakuje, zbyt ciasny niszczy łożysko zdawcze), nieosiowość kół pasowych, kamień wbity w ząb.",
+        "tools": "Miernik ugięcia i naciągu pasa (tensometr zegarowy lub akustyczny miernik częstotliwości drgań pasa Hz).",
+        "when": "Co 8000 km lub przy wymianie opony tylnej.",
+        "steps": [
+          "Zbadaj pas na całej długości: brak ubytków zębów, pęknięć nasady zębów oraz wystających włókien węglowych/aramidowych.",
+          "Sprawdź naciąg tensometrem: przyłóż obciążenie 4.5 kg (10 lbs) w połowie rozpiętości pasa i zmierz ugięcie liniałem.",
+          "Sprawdź osiowość koła pasowego: pas powinien pracować centralnie lub delikatnie opierać się o zewnętrzny kołnierz koła pasowego bez zniekształceń."
+        ],
+        "measurementPoint": "Dolna gałąź pasa zębatego w połowie odległości między kołami pasowymi.",
+        "referenceValue": "Ugięcie pod obciążeniem 4.5 kg: zazwyczaj 8–12 mm (lub częstotliwość akustyczna 60–90 Hz; wiarygodność B).",
+        "evaluation": "Zbyt ciasny pas potrafi ukręcić wałek zdawczy skrzyni biegów lub zniszczyć karkas łożyska!",
+        "repairSteps": "Regulacja naciągu śrubami wahacza; w razie pęknięć kordu natychmiastowa wymiana pasa napędowego.",
+        "verification": "Cichy bieg pasa bez pisków i wibracji przy pełnym przyspieszeniu.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      }
+    ]
+  },
+  {
+    "id": "G",
+    "code": "DZIAŁ G",
+    "title": "UKŁAD WYDECHOWY I EMISJA SPALIN",
+    "color": "#eab308",
+    "icon": "💨",
+    "summary": "Nieszczelności kolektorów i uszczelek głowicy, serwomotory zaworów wydechowych EXUP / Suzuki SET / Yamaha YPVS, sondy lambda wąsko- i szerokopasmowe, katalizatory, dopalanie spalin PAIR/AIS oraz pomiary analizatorem.",
+    "procedures": [
+      {
+        "id": "G1",
+        "name": "Diagnostyka nieszczelności kolektora wydechowego i uszczelek głowicy",
+        "applicable": "Wszystkie silniki 1–4 cyl",
+        "symptom": "Głośne strzały i prychanie w wydech przy zamykaniu gazu i hamowaniu silnikiem, cykliczne cykanie pod zbiornikiem na zimno.",
+        "causes": "Przepalone uszczelki miedziane/aluminiowe pod kolektorem wydechowym, poluzowane szpilki wydechowe, pęknięcie spawu kolektora.",
+        "tools": "Rękawica skórzana, lusterko inspekcyjne, klucz dynamometryczny.",
+        "when": "Zawsze po wymianie układu wydechowego lub przy głośnych strzałach z wydechu.",
+        "steps": [
+          "Zimny silnik: przytknij rękawicę do końcówki tłumika na biegu jałowym — w sprawnym układzie powinno narastać wyraźne ciśnienie bez sykliwych dźwięków z okolic silnika.",
+          "Obejrzyj okolice okien wydechowych głowicy: obecność czarnych śladów sadzy jednoznacznie wskazuje na przedmuch.",
+          "Sprawdź dokręcenie nakrętek szpilek kolektora (uwaga: szpilki wydechowe M6/M8 łatwo ukręcić — dokręcaj momentem 10–14 Nm!)."
+        ],
+        "measurementPoint": "Łączenie rur kolektora wydechowego z głowicą silnika.",
+        "referenceValue": "Zero przedmuchów i sadzy; szczelność ciśnieniowa potwierdzona dławieniem wydechu (wiarygodność A).",
+        "evaluation": "Zasysanie chłodnego powietrza przez nieszczelny kolektor wydechowy grozi szokiem termicznym i pęknięciem grzybków zaworów wydechowych!",
+        "repairSteps": "Wymiana jednorazowych uszczelek zgniatanych (miedzianych lub z oplotem azbestowo-stalowym), splanowanie flanszy kolektora.",
+        "verification": "Cicha praca jednostki i całkowity zanik strzałów przy ostrym hamowaniu silnikiem.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "G2",
+        "name": "Kontrola i kalibracja zaworu wydechowego EXUP / Suzuki SET (serwo i linki)",
+        "applicable": "Motocykle z regulowanym zaworem wydechowym (Yamaha EXUP, Suzuki SET, Honda, Kawasaki)",
+        "symptom": "Błąd FI na zegarach, brak ciągu w dolnym i średnim zakresie obrotów, głośne terkotanie zębatki serwa pod siedzeniem.",
+        "causes": "Zapieczony zawór obrotowy w kolektorze od nagaru, wyciągnięte linki sterujące, wyłamane plastikowe trybiki serwomotoru.",
+        "tools": "Klucze płaskie do regulacji linek, pasta ceramiczna wysokotemperaturowa (do 1400°C), multimetr cyfrowy.",
+        "when": "Błąd zaworu wydechowego lub brak dynamiki przy niskich obrotach.",
+        "steps": [
+          "Włącz zapłon: serwomotor powinien wykonać pełen cykl autotestu (ruch skrajny w lewo, w prawo i powrót do pozycji wyjściowej).",
+          "Zdejmij osłonę bębenka zaworu na kolektorze: sprawdź czy znak na bębenku pokrywa się z otworem inspekcyjnym w korpusie.",
+          "Odłącz linki i obróć zawór ręką: musi obracać się idealnie lekko pod naciskiem palców bez żadnych zacięć.",
+          "Wyreguluj naciąg obu linek: linki muszą mieć minimalny luz roboczy 0.5–1.0 mm, aby nie przeciążać silniczka serwa."
+        ],
+        "measurementPoint": "Bębenek sterujący zaworu EXUP/SET oraz potencjometr zwrotny w serwomotorze.",
+        "referenceValue": "Luz linek: 0.5–1.0 mm; rezystancja potencjometru serwa płynna w zakresie 1.0–4.5 kΩ (wiarygodność B).",
+        "evaluation": "Zapieczony zawór blokuje serwomotor, co prowadzi do spalenia silniczka lub wyłamania zębatek przekładni.",
+        "repairSteps": "Demontaż zaworu, oczyszczenie z nagaru szczotką drucianą, przesmarowanie łożyskowania pastą ceramiczną, regulacja linek.",
+        "verification": "Prawidłowy autotest po włączeniu zapłonu bez zgłoszenia błędu FI na desce rozdzielczej.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      },
+      {
+        "id": "G3",
+        "name": "Test sondy lambda cyrkonowej i szerokopasmowej (amplituda i czas reakcji)",
+        "applicable": "Wszystkie pojazdy z katalizatorem i wtryskiem EFI spełniające normy Euro 3 / 4 / 5",
+        "symptom": "Zwiększone zużycie paliwa o 20–30%, ospała reakcja na gaz, czarny nalot na końcówce wydechu, błąd obwodu O2 sensor.",
+        "causes": "Zatrucie sondy ołowiem/silikonem, nagar z oleju silnikowego, przepalenie grzałki sondy lambda.",
+        "tools": "Multimetr cyfrowy z szybkim bargrafem lub oscyloskop, tester diagnostyczny.",
+        "when": "Wysokie spalanie lub błąd sondy lambda w sterowniku.",
+        "steps": [
+          "Zmierz rezystancję obwodu grzałki sondy na zimno (zwykle dwa przewody tego samego koloru, np. białe): powinna wynosić 6–15 Ω.",
+          "Sprawdź zasilanie 12V podawane na grzałkę po włączeniu zapłonu.",
+          "Podłącz woltomierz/oscyloskop pod przewód sygnałowy na pracującym rozgrzanym silniku na obrotach 2500 obr/min.",
+          "Obserwuj oscylacje napięcia: sprawna sonda cyrkonowa musi szybko przełączać się między 0.1 V (mieszanka uboga) a 0.9 V (mieszanka bogata)."
+        ],
+        "measurementPoint": "Przewód sygnałowy sondy lambda względem masy silnika.",
+        "referenceValue": "Amplituda sygnału: 0.1–0.9 V DC. Czas przełączania: poniżej 300 ms (częstotliwość min. 1–2 oscylacje na sekundę; wiarygodność A).",
+        "evaluation": "Sonda „leniwa” (przełączająca się wolniej niż co sekundę) lub zawieszona na stałym napięciu 0.45V powoduje rozjechanie map wtrysku.",
+        "repairSteps": "Wymiana sondy lambda na nową dedykowaną z gwintem pokrytym smarem przewodzącym wysokotemperaturowym.",
+        "verification": "Prawidłowe oscylacje sygnału w pętli zamkniętej (Closed Loop) i optymalny współczynnik lambda λ = 1.00.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      }
+    ]
+  },
+  {
+    "id": "H",
+    "code": "DZIAŁ H",
+    "title": "QUADY I POJAZDY UŻYTKOWE (ATV/UTV)",
+    "color": "#14b8a6",
+    "icon": "🚜",
+    "summary": "Specyfika napędu 4x4, serwomotory załączania przedniej osi 2WD/4WD, blokady dyferencjałów Diff-Lock, paski CVT Heavy Duty do ciężkich warunków błotnych, wyciągarki i instalacje wysokoprądowe, smarowniczki kalamitki wahaczy oraz przeguby półosi.",
+    "procedures": [
+      {
+        "id": "H1",
+        "name": "Diagnostyka układu dołączania przedniego napędu 4x4 i serwomotoru",
+        "applicable": "Wszystkie quady ATV i pojazdy UTV z dołączanym napędem 4WD (Polaris, Can-Am, CF Moto, Yamaha Grizzly)",
+        "symptom": "Brak dołączania przedniego napędu mimo wciśniętego przycisku 4WD, stuki w przednim dyfrze, migająca kontrolka napędu.",
+        "causes": "Zalanie wodą siłownika elektrycznego (serwomotoru) na dyferencjale, pęknięcie koszyka rolkowego przedniego napędu (Polaris Hilliard), brak zasilania 12V.",
+        "tools": "Multimetr cyfrowy, zasilacz warsztatowy 12V, klucze nasadowe.",
+        "when": "Przed sezonem przeprawowym lub przy braku trakcji przedniej osi.",
+        "steps": [
+          "Sprawdź zasilanie na kostce serwomotoru przedniego dyfra przy przełączaniu przycisku 2WD -> 4WD.",
+          "Zdemontuj silniczek serwa i podaj 12V bezpośrednio na piny: sprawdź czy silniczek wysuwa trzpień załączający widełki.",
+          "W quadach Polaris (sprzęgło wiskotyczne/elektromagnetyczne Hilliard): zmierz rezystancję cewki załączającej w przednim dyfrze (powinna wynosić 22–28 Ω).",
+          "Sprawdź stan koszyka rolkowego wewnątrz dyfra (plastikowy koszyk potrafi pęknąć przy uderzeniu pod obciążeniem)."
+        ],
+        "measurementPoint": "Wtyczka zasilania serwomotoru przedniego dyfra oraz cewka załączająca.",
+        "referenceValue": "Napięcie załączania: 12.0–14.0 V. Rezystancja cewki Polaris: 22–28 Ω (CF Moto serwo: 10–18 Ω; wiarygodność B).",
+        "evaluation": "Jazda z pękniętym koszykiem rolkowym doprowadzi do zmielenia kół zębatych przekładni głównej przedniej osi.",
+        "repairSteps": "Wymiana uszczelnień i regeneracja serwomotora; montaż wzmocnionego aluminiowego koszyka rolkowego w przednim dyfrze.",
+        "verification": "Podniesienie quada na podnośniku — natychmiastowe obracanie wszystkich 4 kół po załączeniu trybu 4WD.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "H2",
+        "name": "Kontrola blokady dyferencjału przedniego i tylnego (Diff-Lock)",
+        "applicable": "Quady przeprawowe z pełną blokadą dyferencjału (Diff-Lock 100%)",
+        "symptom": "Quad nie chce skręcać na twardym (blokada zacięta na stałe) lub jedno przednie koło buksuje w błocie mimo włączonego Diff-Lock.",
+        "causes": "Zapieczony suwak blokady mechanicznej, pęknięte sprężyny powrotne, brak styku na czujniku potwierdzenia blokady.",
+        "tools": "Multimetr, szczypce do pierścieni segera, świeży olej przekładniowy do dyfrów.",
+        "when": "Brak pełnego spięcia osi w ciężkim terenie.",
+        "steps": [
+          "Załącz tryb Diff-Lock: kontrolka na liczniku musi przestać migać i świecić światłem ciągłym (potwierdzenie fizycznego zazębienia suwaka).",
+          "Podnieś przód pojazdu: przy obracaniu jednym przednim kołem drugie koło MUSI obracać się w tym samym kierunku z identyczną prędkością bez żadnego poślizgu.",
+          "Sprawdź stan oleju w dyfrze: obecność szarej emulsji wodnej świadczy o nieszczelności uszczelniaczy półosi lub sparciałym odpowietrzniku dyfra."
+        ],
+        "measurementPoint": "Czujnik potwierdzenia pozycji blokady oraz koła przedniej osi.",
+        "referenceValue": "100% sztywne spięcie obu półosi bez możliwości obrócenia jednego koła względem drugiego (wiarygodność A).",
+        "evaluation": "Nigdy nie załączaj Diff-Lock w czasie poślizgu kół pod gazem — gwałtowne uderzenie ścina kły blokady!",
+        "repairSteps": "Wymiana uszczelniaczy półosi dyferencjału, czyszczenie mechanizmu blokady, wymiana oleju na SAE 80W-90 GL-5.",
+        "verification": "Pewne załączanie i rozłączanie blokady po ruszeniu kierownicą lewo-prawo.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "H3",
+        "name": "Diagnostyka paska napędowego CVT w quadzie i szczelności obudowy",
+        "applicable": "Wszystkie quady i UTV z przekładnią pasową CVT",
+        "symptom": "Zapach spalonej gumy z wylotu obudowy CVT, szarpanie przy ruszaniu, po wjeździe do głębszej wody quad traci napęd (obroty rosną, koła stoją).",
+        "causes": "Spalenie paska na biegu High (H) w błocie zamiast na reduktorze Low (L), zalanie obudowy CVT przez nieszczelny snorkiel lub korek spustowy.",
+        "tools": "Suwmiarka precyzyjna, klucze nasadowe, przyrząd do rozszerzania talerzy sprzęgła wtórnego.",
+        "when": "Po każdym utopieniu quada w wodzie lub po ostrym upalaniu w błocie.",
+        "steps": [
+          "Odkręć korek drenażowy na spodzie pokrywy CVT: wypłynięcie wody oznacza zalanie przekładni i konieczność natychmiastowego serwisu.",
+          "Zdejmij pokrywę CVT: zmierz szerokość paska suwmiarką na zewnętrznym grzbiecie.",
+          "Zegnij pasek zębami na zewnątrz i sprawdź pod kątem pęknięć nasady zębów, wyrwanych kordów kevlarowych i zwęgleń bocznych ścianek ciernych.",
+          "Odtłuszczenie talerzy: zmyj zwęgloną gumę z talerzy wariatora i sprzęgła włókniną ścierną ze zmywaczem."
+        ],
+        "measurementPoint": "Grzbiet paska napędowego oraz powierzchnia stożkowa talerzy aluminiowych.",
+        "referenceValue": "Szerokość paska powyżej limitu zużycia (np. Can-Am: min. 30.5 mm; CF Moto: min. 32.5 mm; wiarygodność A).",
+        "evaluation": "Jazda w ciężkim terenie na biegu H pali pasek w 10 minut — do ciężkich warunków ZAWSZE używaj biegu L (Low)!",
+        "repairSteps": "Montaż wzmocnionego paska Heavy Duty (np. Gates G-Force RedLine / Ultimax), uszczelnienie uszczelki pokrywy CVT silikonem technicznym.",
+        "verification": "Wyprowadzenie odpowietrzenia obudowy CVT snorklami i test szczelności zanurzeniowej.",
+        "linkedTool": "Tuning CVT"
+      },
+      {
+        "id": "H4",
+        "name": "Przegląd zawieszenia niezależnego, smarowanie kalamitek i półosi",
+        "applicable": "Wszystkie quady ATV i pojazdy UTV z niezależnym zawieszeniem IRS",
+        "symptom": "Skrzypienie zawieszenia na wybojach, luzy na kołach, stuki przy dodawaniu gazu w skręcie.",
+        "causes": "Wypłukanie smaru z tulei wahaczy przez wodę i myjkę ciśnieniową, pęknięte gumowe osłony przegubów półosi.",
+        "tools": "Smarownica ciśnieniowa (tawotnica) ze smarem litowo-wapniowym wodoodpornym, podnośnik.",
+        "when": "Obowiązkowo po każdej jeździe w błocie/wodzie lub co 500 km.",
+        "steps": [
+          "Unieś pojazd, zlokalizuj wszystkie punkty smarne (kalamitki / smarowniczki) na wahaczach przednich, tylnych i zwrotnicach (zwykle 8–16 punktów!).",
+          "Oczyść kalamitkę z piasku, załóż końcówkę smarownicy i pompuj świeży smar do momentu, aż wypchnie stary, brudny smar z tulei wahacza.",
+          "Dokładnie obejrzyj gumowe osłony (mańskie) przegubów homokinetycznych półosi: nawet najmniejsza dziurka po gałęzi doprowadzi do zatarcia przegubu piaskiem w 20 km!",
+          "Sprawdź luzy na łożyskach kół i sworzniach wahaczy szarpiąc kołem w pionie i poziomie."
+        ],
+        "measurementPoint": "Tuleje wahaczy, sworznie zwrotnic, osłony gumowe przegubów półosi napędowych.",
+        "referenceValue": "Zero luzu na sworzniach zwrotnic i łożyskach kół; świeży smar we wszystkich węzłach (wiarygodność A).",
+        "evaluation": "Brak regularnego smarowania kalamitek niszczy tuleje wahaczy i ramy w jeden sezon przeprawowy.",
+        "repairSteps": "Tłoczenie wodoodpornego smaru morskiego (Marine Grease); wymiana pękniętych osłon przegubów na elastyczne osłony neoprenowe.",
+        "verification": "Cicha, aksamitna praca zawieszenia bez żadnych pisków i luzów.",
+        "linkedTool": "Automatyczny Plan Serwisowy"
+      },
+      {
+        "id": "H5",
+        "name": "Kontrola instalacji wysokoprądowej wyciągarki (solenoid i hebel)",
+        "applicable": "Wszystkie pojazdy wyposażone w wyciągarkę elektryczną 12V",
+        "symptom": "Wyciągarka nie reaguje na przycisk, słychać tylko ciche cykanie przekaźnika, samoczynne zwijanie liny (sklejone styki!).",
+        "causes": "Sklejenie styków przekaźnika wysokoprądowego (contactor/solenoid) po przeciążeniu prądem > 250A, zaśniedziałe kable masowe, rozładowany akumulator.",
+        "tools": "Multimetr cyfrowy, cęgi prądowe DC dużej mocy (do 400A), klucze nasadowe.",
+        "when": "Przed każdym wyjazdem w teren i po każdym użyciu wyciągarki.",
+        "steps": [
+          "Sprawdź obecność i sprawność głównego wyłącznika prądu (hebla bezpieczeństwa) na zasilaniu wyciągarki — MUSI odcinać zasilanie w razie zablokowania przekaźnika!",
+          "Zmierz napięcie na akumulatorze podczas pracy wyciągarki pod obciążeniem (silnik quada musi pracować na podwyższonych obrotach!).",
+          "Sprawdź stan styków prądowych solenoidu pod kątem przegrzania i stopienia obudowy.",
+          "Oceń stan liny syntetycznej/stalowej pod kątem przetarć i zagnieceń."
+        ],
+        "measurementPoint": "Zaciski prądowe solenoidu wyciągarki oraz zaciski silnika wyciągarki.",
+        "referenceValue": "Spadek napięcia na zaciskach silnika pod pełnym uciągiem: min. 10.5 V (wiarygodność B). Pobór prądu: 150–280 A.",
+        "evaluation": "Sklejenie styków solenoidu bez hebla bezpieczeństwa grozi natychmiastowym spaleniem quada lub urwaniem ramy!",
+        "repairSteps": "Wymiana solenoidu na hermetyczny w klasie IP67/IP68, montaż wyłącznika heblowego 300A, oczyszczenie klem akumulatora.",
+        "verification": "Pewne rozwijanie i zwijanie liny z pilota bez grzania się przewodów zasilających.",
+        "linkedTool": "Karta Zlecenia Serwisowego"
+      },
+      {
+        "id": "H6",
+        "name": "Weryfikacja elektrycznego wspomagania kierownicy (EPS) w quadach",
+        "applicable": "Quady i UTV z układem EPS (Electronic Power Steering)",
+        "symptom": "Ciężka praca kierownicy, wyrywanie kierownicy na kamieniach, migająca kontrolka EPS.",
+        "causes": "Zalanie sterownika lub silnika EPS wodą, brak zasilania z bezpiecznika głównego EPS (40A), rozkalibrowanie czujnika momentu skrętu.",
+        "tools": "Multimetr, tester diagnostyczny, klucze nasadowe.",
+        "when": "Brak wspomagania lub błąd EPS.",
+        "steps": [
+          "Sprawdź bezpiecznik główny EPS (40A) oraz przekaźnik zasilania wspomagania.",
+          "Zmierz napięcie ładowania na akumulatorze (sterownik EPS automatycznie odcina wspomaganie, jeśli napięcie spadnie poniżej 11.8 V lub wzrośnie powyżej 16 V!).",
+          "Sprawdź czy kolumna kierownicza nie ma mechanicznych zacięć po uderzeniu w drzewo/kamień."
+        ],
+        "measurementPoint": "Złącze prądowe modułu EPS i bezpiecznik główny 40A.",
+        "referenceValue": "Napięcie zasilania: 12.8–14.5 V (wiarygodność A). Zero oporu mechanicznego kolumny.",
+        "evaluation": "Spadek ładowania jest najczęstszą przyczyną wyłączania się wspomagania EPS w terenie!",
+        "repairSteps": "Naprawa instalacji ładowania, osuszenie i zabezpieczenie złączy EPS smarem dielektrycznym.",
+        "verification": "Lekka praca kierownicy na postoju jednym palcem i brak kontrolki EPS.",
+        "linkedTool": "Elektroniczne Laboratorium"
+      }
+    ]
+  }
+];
 
   // ============================================================================
   // 5. INTELIGENTNE DRZEWA DIAGNOSTYCZNE (12 OBJAWÓW × 8 OBOWIĄZKOWYCH PUNKTÓW)
@@ -2969,8 +3337,9 @@
   // ============================================================================
   function renderTabDzialy() {
     const q = state.sectionSearch.trim().toLowerCase();
+    const totalCount = DIAGNOSTIC_SECTIONS.reduce((acc, s) => acc + s.procedures.length, 0);
     const filterButtons = [
-      { id: 'ALL', label: 'Wszystkie działy (A–F • 56 procedur)' }
+      { id: 'ALL', label: `Wszystkie działy (A–H • ${totalCount} procedur)` }
     ].concat(DIAGNOSTIC_SECTIONS.map(s => ({ id: s.id, label: `${s.icon} ${s.code}: ${s.title}` })));
 
     const sectionsHtml = DIAGNOSTIC_SECTIONS
@@ -2978,7 +3347,7 @@
       .map(sec => {
         const procs = sec.procedures.filter(p => {
           if (!q) return true;
-          const hay = `${p.id} ${p.name} ${p.tools} ${p.when} ${p.steps.join(' ')} ${p.evaluation}`.toLowerCase();
+          const hay = `${p.id} ${p.name} ${p.applicable || ''} ${p.symptom || ''} ${p.causes || ''} ${p.tools || ''} ${p.when || ''} ${(p.steps || []).join(' ')} ${p.measurementPoint || ''} ${p.referenceValue || ''} ${p.evaluation || ''} ${p.repairSteps || ''} ${p.verification || ''}`.toLowerCase();
           return hay.includes(q);
         });
         if (!procs.length) return '';
@@ -2992,20 +3361,32 @@
                 <div>
                   <span class="mc-badge" style="background:rgba(255,255,255,0.08);color:${sec.color};margin-right:6px">${esc(p.id)}</span>
                   <strong style="font-size:13px;color:#fff">${esc(p.name)}</strong>
+                  ${p.applicable ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">🏍️ ${esc(p.applicable)}</div>` : ''}
                 </div>
-                <span style="color:#94a3b8;font-size:12px">${isOpen ? '▲ Zwiń' : '▼ Rozwiń procedurę'}</span>
+                <span style="color:#94a3b8;font-size:12px;white-space:nowrap">${isOpen ? '▲ Zwiń' : '▼ Rozwiń'}</span>
               </div>
               ${isOpen ? `
                 <div style="padding:0 14px 13px;border-top:1px solid rgba(148,163,184,0.14);font-size:12px;color:#e2e8f0">
+                  ${p.symptom ? `<div style="margin-top:8px;background:rgba(239,68,68,0.12);border-left:3px solid #ef4444;padding:6px 10px;border-radius:6px;color:#fca5a5"><strong>⚠️ Zgłoszony objaw:</strong> ${esc(p.symptom)}</div>` : ''}
+                  ${p.causes ? `<div style="margin-top:6px;background:rgba(234,179,8,0.1);border-left:3px solid #eab308;padding:6px 10px;border-radius:6px;color:#fde047"><strong>🔎 Możliwe przyczyny:</strong> ${esc(p.causes)}</div>` : ''}
                   <div style="margin-top:9px;color:#fde047"><strong>🧰 Wymagane przyrządy:</strong> ${esc(p.tools)}</div>
                   <div style="margin-top:5px;color:#bae6fd"><strong>🔍 Kiedy wykonać:</strong> ${esc(p.when)}</div>
-                  <div style="margin-top:8px;font-weight:800;color:#c084fc">Kroki wykonawcze:</div>
+                  <div style="margin-top:8px;font-weight:800;color:#c084fc">📋 Procedura diagnostyczna krok po kroku:</div>
                   <ol style="margin:5px 0 8px 18px;padding:0;line-height:1.5">
-                    ${p.steps.map(st => `<li style="margin-bottom:4px">${esc(st)}</li>`).join('')}
+                    ${(p.steps || []).map(st => `<li style="margin-bottom:4px">${esc(st)}</li>`).join('')}
                   </ol>
-                  <div style="background:rgba(16,185,129,0.12);border-left:3px solid #10b981;padding:8px 10px;border-radius:6px;color:#a7f3d0">
+                  ${p.measurementPoint ? `<div style="margin-top:6px;color:#7dd3fc"><strong>🎯 Punkt pomiarowy:</strong> ${esc(p.measurementPoint)}</div>` : ''}
+                  ${p.referenceValue ? `<div style="margin-top:6px;background:rgba(56,189,248,0.12);border-left:3px solid #38bdf8;padding:6px 10px;border-radius:6px;color:#bae6fd"><strong>📊 Wartość wzorcowa:</strong> ${esc(p.referenceValue)}</div>` : ''}
+                  <div style="margin-top:6px;background:rgba(16,185,129,0.12);border-left:3px solid #10b981;padding:6px 10px;border-radius:6px;color:#a7f3d0">
                     <strong>✅ Interpretacja wyników:</strong> ${esc(p.evaluation)}
                   </div>
+                  ${p.repairSteps ? `<div style="margin-top:6px;color:#fdba74"><strong>🔧 Czynności naprawcze:</strong> ${esc(p.repairSteps)}</div>` : ''}
+                  ${p.verification ? `<div style="margin-top:6px;color:#86efac"><strong>🏁 Weryfikacja po naprawie:</strong> ${esc(p.verification)}</div>` : ''}
+                  ${p.linkedTool ? `
+                    <div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(148,163,184,0.2);display:flex;align-items:center;gap:8px">
+                      <span style="font-size:11px;color:#94a3b8">Powiązane narzędzie:</span>
+                      <span style="font-size:11px;font-weight:800;color:#38bdf8;background:rgba(56,189,248,0.15);padding:2px 8px;border-radius:6px">${esc(p.linkedTool)}</span>
+                    </div>` : ''}
                 </div>` : ''}
             </div>`;
         }).join('');
@@ -3027,7 +3408,7 @@
               ${esc(b.label)}
             </button>`).join('')}
         </div>
-        <input id="mc-section-search" class="mc-input" placeholder="Szukaj procedury w działach A–F (np. Leak Down, synchronizacja, stojan, 2. bieg, zaworek iglicowy, TPS)..."
+        <input id="mc-section-search" class="mc-input" placeholder="Szukaj procedury w działach A–H (np. Leak Down, synchronizacja, stojan, 2. bieg, zaworek iglicowy, TPS, ABS, SAG, CVT, wyciągarka)..."
           value="${esc(state.sectionSearch)}" oninput="window.NAPRAWNIK_MULTICYL.setSectionSearch(this.value)">
       </div>
       ${sectionsHtml}`;
@@ -3161,8 +3542,8 @@
           <button class="mc-tab-btn ${state.activeTab === 'dzialy' ? 'active' : ''}" onclick="window.NAPRAWNIK_MULTICYL.setTab('dzialy')">
             <span>🔧</span>
             <div>
-              <div>4. DZIAŁY DIAGNOSTYKI A–F</div>
-              <div style="font-size:10px;color:#94a3b8;font-weight:600">Mechanika • Paliwo • Zapłon</div>
+              <div>4. DZIAŁY DIAGNOSTYKI A–H</div>
+              <div style="font-size:10px;color:#94a3b8;font-weight:600">Silnik • Paliwo • Elektryka • Hamulce • Zawieszenie • Napęd • Wydech • Quady</div>
             </div>
           </button>
           <button class="mc-tab-btn ${state.activeTab === 'schematy' ? 'active' : ''}" onclick="window.NAPRAWNIK_MULTICYL.setTab('schematy')">

@@ -27,7 +27,15 @@
     { id: 'ducati', name: 'Ducati', country: 'Włochy', note: 'Pełne pokrycie modeli: Desmodue (Monster 696/796/1100), Testastretta (821/939/1198), Superquadro (1199/1299), DVT oraz Desmosedici Stradale / Granturismo V4.' },
     { id: 'aprilia', name: 'Aprilia', country: 'Włochy', note: 'Pełne pokrycie modeli: 60° V2 Rotax V990 (RSV Mille/Tuono), 90° V2 (Shiver/Dorsoduro 750/900), R2 270° (RS 660) oraz 65° V4 (RSV4 / Tuono V4 1000/1100).' },
     { id: 'benelli', name: 'Benelli', country: 'Włochy / Chiny (QJ)', note: 'Czterocylindrowe modele rodziny TNT 600 / BN600 / BJ600 oraz klasyczne 500 Quattro.' },
-    { id: 'mvagusta', name: 'MV Agusta', country: 'Włochy', note: 'Historyczne 600 Quattro Cilindri (592 cm³ R4). Trzycylindrowe F3/Brutale 675 przekraczają 650 cm³.' }
+    { id: 'mvagusta', name: 'MV Agusta', country: 'Włochy', note: 'Historyczne 600 Quattro Cilindri (592 cm³ R4). Trzycylindrowe F3/Brutale 675 przekraczają 650 cm³.' },
+    { id: 'polaris', name: 'Polaris', country: 'USA', note: 'Quady ATV i pojazdy UTV: Sportsman 570/850/1000, Scrambler, RZR 900/1000 EFI.' },
+    { id: 'canam', name: 'Can-Am (BRP)', country: 'Kanada', note: 'Pojazdy ATV/UTV: Outlander 450/570/650/850/1000, Renegade, Commander, Maverick z silnikami Rotax V-Twin.' },
+    { id: 'cfmoto', name: 'CF Moto', country: 'Chiny', note: 'Quady i UTV: CForce 450/520/625/850/1000, UForce, ZForce z wtryskiem Bosch EFI i przekładnią CVTech.' },
+    { id: 'piaggio', name: 'Piaggio / Vespa', country: 'Włochy', note: 'Skutery i maksiskutery: silniki Leader (125–200), Quasar (250–300), HPE oraz Master 500.' },
+    { id: 'kymco', name: 'Kymco', country: 'Tajwan', note: 'Skutery, maksiskutery i quady: Agility 50/125, Downtown 300/350, Xciting 400/500, AK550 (R2) oraz MXU 450/700.' },
+    { id: 'sym', name: 'SYM', country: 'Tajwan', note: 'Skutery miejskie i turystyczne: GTS 125/250/300, Joyride, Cruisym 300, Maxsym 400/600.' },
+    { id: 'minarelli', name: 'Minarelli / Derbi', country: 'Włochy / Hiszpania', note: 'Dwusuwowe silniki motorowerowe AM6 i D50B0 (50 cm³ 2T ciecz) oraz skutery poziome 2T.' },
+    { id: 'gy6', name: 'GY6 (139QMB / 152QMI)', country: 'Uniwersalne / Azja', note: 'Czterosuwowe silniki skuterowe 50 cm³ i 125 cm³ 4T powietrze z przekładnią bezstopniową CVT.' }
   ];
 
   // ---------- 2. SILNIKI ----------
@@ -892,7 +900,110 @@
       valveIn: P('0,15 – 0,24', 'B', SRC_LIT), valveEx: P('0,20 – 0,29', 'B', SRC_LIT),
       sparkPlug: P('NGK R6252K-105', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
       oilCapacity: P('3,8 L (z filtrem)', 'B', SRC_LIT), firing: FIRING_I4
-    }, faults: ['f_rr_overheat', 'f_tb_sync'] })
+    }, faults: ['f_rr_overheat', 'f_tb_sync'] }),
+
+    // ===== QUAD / ATV & UTV =====
+    E('polaris_prostar570', { brand: 'polaris', code: 'PROSTAR570', codeVerified: true, cc: 567, cyl: 1, layout: 'Single', bore: 99, strokeMm: 73.6, valves: 4, cam: 'DOHC 4V', fuel: 'efi', ignition: 'Bosch EFI', params: {
+      valveIn: P('0,15 – 0,19', 'B', SRC_LIT), valveEx: P('0,25 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('Champion RG6YC / NGK CPR8E', 'B', SRC_LIT), idleRpm: P('1200 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('1,9 L (PS-4 5W-50)', 'B', SRC_LIT), fuelPressure: P('4,0 bar (58 psi)', 'B', SRC_LIT)
+    }, faults: ['f_atv_cvu_belt_burn', 'f_atv_front_diff_actuator', 'f_atv_winch_relay'] }),
+
+    E('polaris_prostar1000', { brand: 'polaris', code: 'PROSTAR1000', codeVerified: true, cc: 952, cyl: 2, layout: 'R2', bore: 93, strokeMm: 73.5, valves: 8, cam: 'DOHC 8V', fuel: 'efi', ignition: 'Bosch Motronic', params: {
+      valveIn: P('0,15 – 0,19', 'B', SRC_LIT), valveEx: P('0,25 – 0,29', 'B', SRC_LIT),
+      sparkPlug: P('NGK MR7F', 'B', SRC_LIT), idleRpm: P('1250 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('2,4 L', 'B', SRC_LIT), fuelPressure: P('4,0 bar (58 psi)', 'B', SRC_LIT)
+    }, faults: ['f_atv_cvu_belt_burn', 'f_atv_front_diff_actuator', 'f_tb_sync'] }),
+
+    E('canam_rotax650', { brand: 'canam', code: 'ROTAX650', codeVerified: true, cc: 649, cyl: 2, layout: 'V2', bore: 82, strokeMm: 61.5, valves: 8, cam: 'SOHC 8V 80° V-Twin', fuel: 'efi', ignition: 'Siemens VDO EFI', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK DCPR8E', 'B', SRC_LIT), idleRpm: P('1250 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('2,1 L (XPS 5W-40)', 'B', SRC_LIT), fuelPressure: P('3,5 bar (51 psi)', 'B', SRC_LIT)
+    }, faults: ['f_atv_cvu_belt_burn', 'f_atv_front_diff_actuator', 'f_stator_burn'] }),
+
+    E('canam_rotax1000', { brand: 'canam', code: 'ROTAX1000', codeVerified: true, cc: 976, cyl: 2, layout: 'V2', bore: 91, strokeMm: 75, valves: 8, cam: 'SOHC 8V 80° V-Twin', fuel: 'efi', ignition: 'Bosch / Siemens EFI', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK DCPR8E', 'B', SRC_LIT), idleRpm: P('1250 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('2,2 L', 'B', SRC_LIT), fuelPressure: P('3,5 bar (51 psi)', 'B', SRC_LIT)
+    }, faults: ['f_atv_cvu_belt_burn', 'f_atv_front_diff_actuator', 'f_sprag_clutch_heavy'] }),
+
+    E('cfmoto_191r', { brand: 'cfmoto', code: '191R', codeVerified: true, cc: 400, cyl: 1, layout: 'Single', bore: 91, strokeMm: 61.5, valves: 4, cam: 'SOHC 4V', fuel: 'efi', ignition: 'Bosch MSE6.0 EFI', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK DPR7EA-9', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,8 L (15W-40)', 'B', SRC_LIT), fuelPressure: P('3,0 bar (43 psi)', 'B', SRC_LIT)
+    }, faults: ['f_atv_cvu_belt_burn', 'f_atv_front_diff_actuator', 'f_rr_overheat'] }),
+
+    E('cfmoto_2v91y', { brand: 'cfmoto', code: '2V91Y', codeVerified: true, cc: 800, cyl: 2, layout: 'V2', bore: 91, strokeMm: 61.5, valves: 8, cam: 'SOHC 8V V-Twin', fuel: 'efi', ignition: 'Delphi EFI', params: {
+      valveIn: P('0,10 – 0,15', 'B', SRC_LIT), valveEx: P('0,15 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK DCPR7E', 'B', SRC_LIT), idleRpm: P('1250 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,2 L', 'B', SRC_LIT), fuelPressure: P('3,0 bar (43 psi)', 'B', SRC_LIT)
+    }, faults: ['f_atv_cvu_belt_burn', 'f_atv_front_diff_actuator', 'f_stator_burn'] }),
+
+    E('yamaha_3b4', { brand: 'yamaha', code: '3B4', codeVerified: true, cc: 686, cyl: 1, layout: 'Single', bore: 102, strokeMm: 84, valves: 4, cam: 'SOHC 4V (Grizzly / Raptor)', fuel: 'efi', ignition: 'TCI EFI', params: {
+      valveIn: P('0,09 – 0,13', 'B', SRC_LIT), valveEx: P('0,16 – 0,20', 'B', SRC_LIT),
+      sparkPlug: P('NGK CPR7EA-9', 'B', SRC_LIT), idleRpm: P('1450 ± 50', 'B', SRC_LIT),
+      oilCapacity: P('2,4 L (z filtrem)', 'B', SRC_LIT), fuelPressure: P('3,24 bar (47 psi)', 'B', SRC_LIT)
+    }, faults: ['f_atv_cvu_belt_burn', 'f_atv_front_diff_actuator', 'f_sprag_clutch_heavy'] }),
+
+    E('honda_trx420e', { brand: 'honda', code: 'TE38E', codeVerified: true, cc: 420, cyl: 1, layout: 'Single', bore: 86.5, strokeMm: 71.5, valves: 2, cam: 'OHV 2V wzdłużny', fuel: 'efi', ignition: 'PGM-FI', params: {
+      valveIn: P('0,15 ± 0,02', 'B', SRC_LIT), valveEx: P('0,15 ± 0,02', 'B', SRC_LIT),
+      sparkPlug: P('NGK BKR5E-11', 'B', SRC_LIT), idleRpm: P('1400 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('3,0 L', 'B', SRC_LIT), fuelPressure: P('3,4 bar (50 psi)', 'B', SRC_LIT)
+    }, faults: ['f_fuel_pump_strainer', 'f_connectors_moisture'] }),
+
+    // ===== SKUTERY & MOTOROWERY (2T & 4T) =====
+    E('piaggio_quasar300', { brand: 'piaggio', code: 'M683M', codeVerified: true, cc: 278, cyl: 1, layout: 'Single', bore: 75, strokeMm: 63, valves: 4, cam: 'SOHC 4V Quasar / HPE', fuel: 'efi', ignition: 'Marelli MIU G3', params: {
+      valveIn: P('0,10', 'B', SRC_LIT), valveEx: P('0,15', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8EKB', 'B', SRC_LIT), idleRpm: P('1650 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('1,3 L (5W-40)', 'B', SRC_LIT), fuelPressure: P('2,5 bar (36 psi)', 'B', SRC_LIT)
+    }, faults: ['f_fuel_pump_strainer', 'f_rr_overheat', 'f_tb_sync'] }),
+
+    E('kymco_sk60', { brand: 'kymco', code: 'SK60', codeVerified: true, cc: 299, cyl: 1, layout: 'Single', bore: 72.7, strokeMm: 72, valves: 4, cam: 'SOHC 4V Downtown 300i', fuel: 'efi', ignition: 'Keihin EFI', params: {
+      valveIn: P('0,10', 'B', SRC_LIT), valveEx: P('0,10', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR7E', 'B', SRC_LIT), idleRpm: P('1600 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('1,5 L (10W-40)', 'B', SRC_LIT), fuelPressure: P('3,0 bar (43 psi)', 'B', SRC_LIT)
+    }, faults: ['f_rr_overheat', 'f_stator_burn'] }),
+
+    E('sym_joyride300', { brand: 'sym', code: 'LM30', codeVerified: true, cc: 278, cyl: 1, layout: 'Single', bore: 75, strokeMm: 63, valves: 4, cam: 'SOHC 4V Cruisym / Joyride', fuel: 'efi', ignition: 'Keihin EFI', params: {
+      valveIn: P('0,12 ± 0,02', 'B', SRC_LIT), valveEx: P('0,15 ± 0,02', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8E', 'B', SRC_LIT), idleRpm: P('1650 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('1,4 L', 'B', SRC_LIT), fuelPressure: P('3,0 bar (43 psi)', 'B', SRC_LIT)
+    }, faults: ['f_rr_overheat', 'f_stator_burn'] }),
+
+    E('minarelli_am6', { brand: 'minarelli', code: 'AM6', codeVerified: true, cc: 50, cyl: 1, layout: 'Single', stroke: 2, bore: 40.3, strokeMm: 39, valves: 0, cam: '2T Zawór membranowy', fuel: 'carb', carbType: 'Dellorto PHBN 16 / SHA 14', ignition: 'Ducati Energia CDI', params: {
+      sparkPlug: P('NGK BR9ES', 'B', SRC_LIT), plugGap: P('0,6 – 0,7', 'B', SRC_LIT),
+      oilCapacity: P('0,75 L (olej skrzyni 75W-90)', 'B', SRC_LIT), idleRpm: P('1400 ± 100', 'B', SRC_LIT)
+    }, faults: ['f_pilot_jets', 'f_intake_boot_crack'] }),
+
+    E('derbi_d50b0', { brand: 'minarelli', code: 'D50B0', codeVerified: true, cc: 50, cyl: 1, layout: 'Single', stroke: 2, bore: 39.9, strokeMm: 40, valves: 0, cam: '2T Zawór membranowy Senda', fuel: 'carb', carbType: 'Dellorto PHVA 17.5', ignition: 'Leonelli / Kokusan CDI', params: {
+      sparkPlug: P('NGK BR9ES', 'B', SRC_LIT), plugGap: P('0,6 – 0,7', 'B', SRC_LIT),
+      oilCapacity: P('0,65 L (olej skrzyni 10W-40)', 'B', SRC_LIT), idleRpm: P('1450 ± 100', 'B', SRC_LIT)
+    }, faults: ['f_pilot_jets', 'f_intake_boot_crack'] }),
+
+    E('gy6_139qmb', { brand: 'gy6', code: '139QMB', codeVerified: true, cc: 50, cyl: 1, layout: 'Single', stroke: 4, bore: 39, strokeMm: 41.5, valves: 2, cam: 'SOHC 2V Chłodzony powietrzem', cooling: 'air', fuel: 'carb', carbType: 'PD18J CV 18 mm', ignition: 'AC-CDI 5-pin / 6-pin', params: {
+      valveIn: P('0,05', 'B', SRC_LIT), valveEx: P('0,07', 'B', SRC_LIT),
+      sparkPlug: P('NGK C7HSA / CR7HSA', 'B', SRC_LIT), plugGap: P('0,6 – 0,7', 'B', SRC_LIT),
+      oilCapacity: P('0,8 L (10W-40)', 'B', SRC_LIT), idleRpm: P('1600 ± 100', 'B', SRC_LIT)
+    }, faults: ['f_tight_ex_valves', 'f_pilot_jets', 'f_intake_boot_crack'] }),
+
+    E('gy6_152qmi', { brand: 'gy6', code: '152QMI', codeVerified: true, cc: 125, cyl: 1, layout: 'Single', stroke: 4, bore: 52.4, strokeMm: 57.8, valves: 2, cam: 'SOHC 2V Chłodzony powietrzem', cooling: 'air', fuel: 'carb', carbType: 'PD24J CV 24 mm', ignition: 'DC-CDI 6-pin', params: {
+      valveIn: P('0,08', 'B', SRC_LIT), valveEx: P('0,10', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR7HSA', 'B', SRC_LIT), plugGap: P('0,6 – 0,7', 'B', SRC_LIT),
+      oilCapacity: P('0,9 L (10W-40)', 'B', SRC_LIT), idleRpm: P('1500 ± 100', 'B', SRC_LIT)
+    }, faults: ['f_tight_ex_valves', 'f_pilot_jets', 'f_stator_burn'] }),
+
+    // ===== MOTOCYKLE V-TWIN & BOXER =====
+    E('suzuki_sv650_v2', { brand: 'suzuki', code: 'P507', codeVerified: true, cc: 645, cyl: 2, layout: 'V2', bore: 81, strokeMm: 62.6, valves: 8, cam: 'DOHC 8V 90° V-Twin', fuel: 'efi', ignition: 'Denso 32-bit EFI', params: {
+      valveIn: P('0,10 – 0,20', 'B', SRC_LIT), valveEx: P('0,20 – 0,30', 'B', SRC_LIT),
+      sparkPlug: P('NGK CR8E / CPR8EA-9', 'B', SRC_LIT), idleRpm: P('1300 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,7 L (z filtrem)', 'B', SRC_LIT), fuelPressure: P('3,0 bar (43 psi)', 'B', SRC_LIT)
+    }, faults: ['f_tb_sync', 'f_rr_overheat', 'f_cct'] }),
+
+    E('honda_vt750_v2', { brand: 'honda', code: 'RC50E', codeVerified: true, cc: 745, cyl: 2, layout: 'V2', bore: 79, strokeMm: 76, valves: 6, cam: 'SOHC 6V (3V/cyl) 52° V-Twin', fuel: 'efi', ignition: 'PGM-FI cyfrowy', params: {
+      valveIn: P('0,15 ± 0,02', 'B', SRC_LIT), valveEx: P('0,20 ± 0,02', 'B', SRC_LIT),
+      sparkPlug: P('NGK DPR7EA-9', 'B', SRC_LIT), idleRpm: P('1100 ± 100', 'B', SRC_LIT),
+      oilCapacity: P('2,5 L', 'B', SRC_LIT), fuelPressure: P('3,4 bar (50 psi)', 'B', SRC_LIT)
+    }, faults: ['f_stator_burn', 'f_fuel_pump_strainer'] })
 
   ];
 
@@ -1106,7 +1217,44 @@
     M('mv_f3_675', 'mvagusta', 'F3 675 / Brutale 675', 'F3', 2012, 2020, 'F3', 'mv_tre_675', 'Supersport / Naked R3 675 cm³ wał przeciwbieżny'),
     M('mv_f3_800', 'mvagusta', 'F3 800 / Brutale 800 / Dragster', 'B3', 2013, 2025, 'B3', 'mv_tre_800', 'Supersport / Naked R3 798 cm³'),
     M('mv_f4_750', 'mvagusta', 'F4 750 Serie Oro / S / SPR', 'F4', 1999, 2004, 'F4', 'mv_f4_750', 'Superbike R4 749 cm³ zawory promieniowe Radial'),
-    M('mv_f4_1000', 'mvagusta', 'F4 1000 / Brutale 1090', 'F4 1000', 2004, 2018, 'F4 1000', 'mv_f4_1000', 'Superbike R4 998/1078 cm³ Radial TSS')
+    M('mv_f4_1000', 'mvagusta', 'F4 1000 / Brutale 1090', 'F4 1000', 2004, 2018, 'F4 1000', 'mv_f4_1000', 'Superbike R4 998/1078 cm³ Radial TSS'),
+
+    // POLARIS (ATV / UTV)
+    M('pol_sportsman570', 'polaris', 'Sportsman 570 EFI EPS / Touring', 'ProStar 570', 2014, 2025, 'SP570', 'polaris_prostar570', 'Quad 4x4, przekładnia PVT, napęd On-Demand AWD'),
+    M('pol_rzr1000', 'polaris', 'Scrambler XP 1000 / RZR 1000', 'ProStar 1000', 2014, 2025, 'XP1000', 'polaris_prostar1000', 'Sport ATV / SSV 4x4 89 KM'),
+
+    // CAN-AM / BRP (ATV / UTV)
+    M('can_outlander650', 'canam', 'Outlander 650 XT / MAX', 'G2', 2013, 2024, 'G2-650', 'canam_rotax650', 'Quad przeprawowy V-Twin 4x4 Visco-Lok'),
+    M('can_renegade1000', 'canam', 'Renegade 1000R / Outlander 1000', 'G2-1000', 2012, 2025, 'G2-1000', 'canam_rotax1000', 'Sport-quad V2 976 cm³ 91 KM'),
+
+    // CF MOTO (ATV / UTV)
+    M('cfm_cforce450', 'cfmoto', 'CForce 450 / 520 Classic & Touring', 'CF400', 2016, 2025, 'CF400AU', 'cfmoto_191r', 'Quad 4x4 z blokadą dyfra, wtrysk Bosch'),
+    M('cfm_cforce850', 'cfmoto', 'CForce 850 / 1000 EPS', 'CF800', 2018, 2025, 'CF800AU', 'cfmoto_2v91y', 'Przeprawowy V2 4x4 ze wspomaganiem EPS'),
+
+    // YAMAHA ATV
+    M('y_grizzly700', 'yamaha', 'Grizzly 700 EPS / Kodiak 700', 'YFM700', 2007, 2025, 'AM09 / AM11', 'yamaha_3b4', 'Quad 4x4 On-Command, pas Ultramatic ze sprzęgłem odśrodkowym'),
+
+    // HONDA ATV
+    M('h_trx420', 'honda', 'TRX 420 FourTrax Rancher', 'TE38', 2007, 2025, 'TE38', 'honda_trx420e', 'Quad 4x4 wzdłużny silnik, opcja ESP / DCT'),
+
+    // SKUTERY & MAXISKUTERY
+    M('piaggio_gts300', 'piaggio', 'Vespa GTS 300 / Beverly 300', 'HPE / Quasar', 2008, 2025, 'MA3 / MD3', 'piaggio_quasar300', 'Maxiskuter miejski 278 cm³ 4V ciecz'),
+    M('kymco_downtown300', 'kymco', 'Downtown 300i / K-XCT 300', 'SK60', 2009, 2020, 'SK60', 'kymco_sk60', 'Maxiskuter turystyczny 299 cm³ 30 KM'),
+    M('sym_cruisym300', 'sym', 'Cruisym 300 / Joyride 300', 'LM30', 2017, 2025, 'LM30', 'sym_joyride300', 'Maxiskuter turystyczny 278 cm³ ABS'),
+
+    // MOTOROWERY 2T (AM6 & D50B0)
+    M('am6_dt50', 'minarelli', 'Yamaha DT50 / Rieju MRT 50', 'AM6 6-bieg', 1997, 2024, 'AM6', 'minarelli_am6', 'Supermoto / Enduro 50 2T chłodzony cieczą'),
+    M('derbi_senda50', 'minarelli', 'Derbi Senda 50 / Aprilia SX50', 'D50B0', 2006, 2024, 'SR1', 'derbi_d50b0', 'Supermoto 50 2T gaźnikowy'),
+
+    // SKUTERY GY6 4T
+    M('gy6_romet727', 'gy6', 'Romet 727 / Junak Vintage 50', '139QMB 4T', 2005, 2025, '139QMB', 'gy6_139qmb', 'Skuter miejski 50 cm³ 4T CVT'),
+    M('gy6_maxi125', 'gy6', 'Junak 125 / Barton B-Max 125', '152QMI 4T', 2014, 2025, '152QMI', 'gy6_152qmi', 'Skuter 125 cm³ 4T CVT'),
+
+    // SUZUKI V-TWIN
+    M('s_sv650_k3', 'suzuki', 'SV650 / SV650S / Gladius / V-Strom', 'K3–M4 (AV/BY/WCX0)', 2003, 2025, 'AV / BY / WCX0', 'suzuki_sv650_v2', 'Naked / Sport / Adventure 90° V2 645 cm³ DOHC'),
+
+    // HONDA V-TWIN
+    M('h_vt750_shadow', 'honda', 'VT750 Shadow / Spirit / Phantom', 'RC50 / RC53', 2004, 2024, 'RC50', 'honda_vt750_v2', 'Cruiser 52° V-Twin 745 cm³ wał Kardana / łańcuch')
 
   ];
 
@@ -1141,6 +1289,15 @@
     f_cp3_cam_chain_tensioner: { title: 'Grzechotanie hydrauliczno-mechanicznego napinacza łańcucha CP3', sec: 'A', conf: 'B', desc: 'Wadliwe blokowanie zapadki napinacza przy spadku ciśnienia oleju na gorąco – głośne dzwonienie łańcucha rozrządu przy 3500–4500 obr/min.', fix: 'Montaż zmodernizowanego napinacza OEM z podwójną zapadką lub precyzyjnego manualnego napinacza śrubowego.' },
     f_tps_sub_throttle: { title: 'Zacięcie silnika krokowego przepustnic pomocniczych (STV / SDTV)', sec: 'B', conf: 'B', desc: 'Zimne luty w czujniku STP lub wyrobienie plastikowej przekładni silnika pomocniczego – kod błędu C28 / C29, silnik w trybie awaryjnym (brak mocy na wyższych biegach).', fix: 'Pomiar rezystancji czujnika położenia przepustnic pomocniczych, przelutowanie styków silnika STVA lub wymiana zespołu przepustnic.' },
     f_sprag_clutch_heavy: { title: 'Zużycie sprzęgiełka jednokierunkowego rozrusznika (duże pojemności V2 / 1-cyl)', sec: 'F', conf: 'B', desc: 'Przy gaszeniu lub cofnięciu wału w silnikach o dużej kompresji klocki sprzęgiełka ulegają obiciu – poślizg rozrusznika z metalicznym trzaskiem.', fix: 'Wymiana wieńca zębatego, sprzęgła jednokierunkowego (sprag clutch) i kontrola sprawności dekompresatora automatycznego.' },
+    f_atv_cvu_belt_burn: { title: 'Spalenie i postrzępienie paska CVT w quadzie (ATV / UTV)', sec: 'F', conf: 'B', desc: 'Jazda na biegu High (H) w głębokim błocie lub holowanie ciężaru – ślizganie i zwęglenie kordu paska na talerzach, wibracje i brak napędu.', fix: 'Wymiana paska na wzmocniony (kevlar Heavy Duty), odtłuszczenie talerzy wariatora i kontrola uszczelnienia obudowy CVT.' },
+    f_atv_front_diff_actuator: { title: 'Awaria serwomotoru załączania przedniego napędu 4WD / Diff-Lock', sec: 'E', conf: 'B', desc: 'Zalanie wodą siłownika elektrycznego na przednim dyfrze – brak załączania 4x4 lub stałe zablokowanie przedniej osi.', fix: 'Kontrola zasilania 12V na kostce serwomotoru, rezystancji silniczka, styków krańcowych położenia i wymiana uszczelnienia oringowego siłownika.' },
+    f_atv_winch_relay: { title: 'Sklejenie styków solenoidu wyciągarki (przekaźnika wysokoprądowego)', sec: 'E', conf: 'B', desc: 'Przeciążenie prądowe (>200 A) lub zalanie błotem skleja styki – wyciągarka kręci w sposób ciągły bez wciskania przycisku na kierownicy.', fix: 'Natychmiastowe rozłączenie hebla głównego akumulatora, wymiana hermetycznego przekaźnika contactor 12V 250A i przegląd instalacji.' },
+    f_abs_modulator_stuck: { title: 'Zacięcie elektrozaworu lub silnika pompy w modulatorze ABS', sec: 'D', conf: 'B', desc: 'Stary, zawodniony płyn hamulcowy powoduje korozję tłoczków elektrozaworów – twarda klamka hamulca, pulsowanie bez poślizgu lub błąd stały ABS.', fix: 'Płukanie i odpowietrzenie ciśnieniowe układu z procedurą wysterowania zaworów ABS w testerze diagnostycznym lub regeneracja modulatora.' },
+    f_fork_seal_leak: { title: 'Wyciek oleju z uszczelniacza widelca teleskopowego USD na zacisk hamulcowy', sec: 'E', conf: 'B', desc: 'Mikrorysa od kamienia na rurze nośnej lub brud pod wargą uszczelniacza – olej zalewa klocki i tarczę hamulcową, drastyczny spadek siły hamowania.', fix: 'Czyszczenie zgarniacza narzędziem Seal Doctor, wymiana kompletu uszczelniaczy olejowych i pyłowych, polerowanie rury nośnej i wymiana klocków.' },
+    f_canbus_termination: { title: 'Zaburzenia komunikacji magistrali CAN-BUS (brak rezystora terminującego)', sec: 'E', conf: 'B', desc: 'Uszkodzenie wiązki lub licznika/ECU rozrywa obwód terminujący – odbicia sygnału, kody braku łączności (U0100, U0121) i wariowanie zegarów.', fix: 'Pomiar rezystancji między CAN-High i CAN-Low na wyłączonym zapłonie (wymagane dokładnie 60 Ω przy dwóch rezystorach 120 Ω połączonych równolegle).' },
+    f_exup_servo_strip: { title: 'Wyłamanie trybów serwomotoru zaworu wydechowego EXUP / SET', sec: 'B', conf: 'B', desc: 'Zapieczona przepustnica w kolektorze wydechowym przeciąża plastikowe zębatki serwa – błąd FI, brak dołu obrotów lub głośne rzężenie pod siedzeniem.', fix: 'Czyszczenie i smarowanie łożyskowania zaworu pastą ceramiczną, regulacja napięcia linek sterujących lub wymiana kółek zębatych serwa.' },
+    f_lambda_heater: { title: 'Przepalenie obwodu grzałki sondy lambda (O2 Sensor)', sec: 'B', conf: 'B', desc: 'Przerwa w obwodzie podgrzewacza sondy – błąd układu wtryskowego FI po uruchomieniu silnika, praca w pętli otwartej i podwyższone spalanie.', fix: 'Pomiar rezystancji grzałki na pinach sondy (nominalnie 6–15 Ω w temperaturze pokojowej); w przypadku przerwy (nieskończoność) wymiana sondy.' },
+    f_kardan_spline_dry: { title: 'Korozja i zużycie wielowypustu wału Kardana / przekładni kątowej', sec: 'F', conf: 'B', desc: 'Brak smaru molibdenowego na wielowypuście połączenia przesuwnego – stuki przy dodawaniu i ujmowaniu gazu, korozja cierna i ścięcie zębów.', fix: 'Demontaż przekładni kątowej, oczyszczenie wielowypustu, inspekcja luzu kątowego, naniesienie smaru litowo-molibdenowego MoS2 i wymiana oringów uszczelniających.' },
   };
 
   // ---------- 5. WALIDACJA DANYCH ----------

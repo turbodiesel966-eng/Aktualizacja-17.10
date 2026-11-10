@@ -3254,37 +3254,43 @@ function updatePlanBadge(){
   b.textContent='· '+PLAN_NAMES[curPlan()];
 }
 function planItems(k){
-  const cat=(typeof modelCatalog!=='undefined'?modelCatalog.length:293), kc=(typeof knowledgeCases!=='undefined'?knowledgeCases.length:39);
+  const cat=(typeof modelCatalog!=='undefined'?modelCatalog.length:293), kc=(typeof knowledgeCases!=='undefined'?knowledgeCases.length:70);
   return {
    amator:[
-     'Pełna diagnostyka: drzewo objawów, krok po kroku i '+kc+' kart przypadków',
-     'Katalog '+cat+' modeli z danymi i momentami ogólnymi',
+     'Darmowy, bez konta — pełna diagnostyka krok po kroku i '+kc+' kart przypadków',
+     'Katalog '+cat+' modeli motocykli i skuterów z danymi OEM i momentami',
+     'Kalkulatory warsztatowe: Squish, CR, przełożenia, dysze gaźnika, regulacja CVT',
      'Elektroniczne Laboratorium: podstawowe pomiary (do 20 zapisów)',
      'Katalog części: do 10 wyszukiwań miesięcznie',
      'Kartoteka: 1 własny pojazd i do 5 przypomnień serwisowych',
      'Zdjęcia usterek: do 10 lokalnie na urządzeniu',
-     'Praca 100% offline, bez synchronizacji w chmurze'
+     'Praca 100% offline w wersji APK, bez reklam i śledzenia'
    ],
    pro:[
-     'Wszystko z AMATOR',
-     'Kartoteka: do 3 własnych pojazdów i 15 przypomnień',
-     'Elektroniczne Laboratorium: do 150 pomiarów z automatyczną oceną i wartościami wzorcowymi',
-     'Inteligentny dobór części: do 50 wyszukiwań/mc z kodami OEM i zamiennikami',
-     'Historia napraw ze zdjęciami: do 50 zdjęć miesięcznie (1 GB w chmurze)',
+     'Wszystko z AMATOR (dla pasjonatów i samodzielnych mechaników)',
+     'Rozbudowane Elektroniczne Laboratorium: do 150 pomiarów z oceną i wzorcami OEM',
+     'Procedury wielocylindrowe (R2, R3, R4, V2, V4, Boxer) i quadów (ATV/UTV 4x4)',
+     'Działy A–H: zaawansowane procedury silnikowe, EFI, ABS, zawieszeń USD i CVT',
+     'Interaktywne schematy techniczne SVG z powiększaniem (Zoom)',
+     'Kalkulatory tuningowe: precyzyjny dobór płytek zaworowych, pinouty CDI/TCI',
+     'Historia napraw ze zdjęciami: do 50 zdjęć/mc (1 GB bezpiecznej chmury)',
      'Asystent diagnostyki zdjęciowej AI: 5 analiz miesięcznie',
      'Automatyczny plan serwisowy wg daty i przebiegu (interwały 2T/4T/CVT)',
-     'Bezpieczna kopia zapasowa w chmurze i synchronizacja między urządzeniami'
+     'Kartoteka: do 3 własnych pojazdów i 15 przypomnień serwisowych',
+     'Bezpieczna kopia zapasowa i synchronizacja między urządzeniami'
    ],
    warsztat:[
-     'Wszystko z PRO',
+     'Wszystko z PRO (kompletny kombajn dla serwisów i warsztatów motocyklowych)',
      'Karta Zlecenia Serwisowego: kompleksowa obsługa zleceń, kosztorysy, protokoły',
      'Generowanie i wydruk PDF ze zleceniem naprawy i podpisem klienta',
-     'Baza do 2000 klientów i 500 pojazdów klientów',
+     'Poufny widok rentowności i marży dla mechanika (wyliczenie zysku na czysto)',
+     'Kartoteka warsztatowa: baza do 2000 klientów i 500 pojazdów klientów',
      'Elektroniczne Laboratorium warsztatowe: do 5000 pomiarów',
      'Do 300 wyszukiwań części miesięcznie oraz do 30 nowych zleceń/mc (500 w archiwum)',
      'Do 300 zdjęć miesięcznie (10 GB w chmurze) i 30 analiz zdjęć AI/mc',
      'Automatyczny plan serwisowy dla floty pojazdów klientów',
-     'Pełny eksport historii zleceń, napraw i kart klientów'
+     'Pełny eksport historii zleceń, napraw i kart klientów do pliku CSV',
+     'Priorytetowa synchronizacja D1 i pełne wsparcie dla wszystkich 6 modułów'
    ]}[k];
 }
 function planBullets(k){return '<div style="margin:8px 0">'+planItems(k).map(x=>'<div style="font-size:12px">✓ '+escapeHtml(x)+'</div>').join('')+'</div>';}

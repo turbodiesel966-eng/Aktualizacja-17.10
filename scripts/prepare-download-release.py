@@ -108,7 +108,11 @@ def main():
         raise SystemExit("APK missing or too small")
     apk = args.apk.read_bytes()
     digest = hashlib.sha256(apk).hexdigest()
-    html = get(BASE).decode("utf-8")
+    template_file = Path(__file__).resolve().parent / "download-page-template.html"
+    if template_file.is_file():
+        html = template_file.read_text(encoding="utf-8")
+    else:
+        html = get(BASE).decode("utf-8")
     if "Raport VirusTotal" not in html or "SHA-256" not in html or "app-debug.apk" not in html:
         raise SystemExit("Download page is missing expected sections; refusing deployment")
     if args.require_existing_checksum:

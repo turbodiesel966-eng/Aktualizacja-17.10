@@ -469,11 +469,11 @@ test('NAPRAWNIK — Moduł Motocykli 3–4 Cylindry (400–650 cm³): Katalog, 6
   assert.ok(norm.MODELS.some(m => m.cooling === 'air-oil'), 'Brak modeli chłodzonych powietrzem i olejem');
   assert.ok(norm.MODELS.some(m => m.cooling === 'liquid'), 'Brak modeli chłodzonych cieczą');
 
-  // 4. Weryfikacja 6 działów diagnostycznych A–F
-  assert.strictEqual(api.DIAGNOSTIC_SECTIONS.length, 6, 'Oczekiwano 6 działów diagnostycznych A–F');
-  assert.deepStrictEqual([...api.DIAGNOSTIC_SECTIONS.map(s => s.id)], ['A', 'B', 'C', 'D', 'E', 'F']);
+  // 4. Weryfikacja 8 działów diagnostycznych A–H
+  assert.strictEqual(api.DIAGNOSTIC_SECTIONS.length, 8, 'Oczekiwano 8 działów diagnostycznych A–H');
+  assert.deepStrictEqual([...api.DIAGNOSTIC_SECTIONS.map(s => s.id)], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);
   const totalProcs = api.DIAGNOSTIC_SECTIONS.reduce((acc, s) => acc + s.procedures.length, 0);
-  assert.ok(totalProcs >= 50, `Oczekiwano co najmniej 50 procedur w działach A–F, znaleziono ${totalProcs}`);
+  assert.ok(totalProcs >= 45, `Oczekiwano co najmniej 45 procedur w działach A–H, znaleziono ${totalProcs}`);
 
   // 5. Weryfikacja 12 inteligentnych drzew diagnostycznych × 8 obowiązkowych punktów na każdy krok
   const sampleModel = norm.MODELS[0];

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAPRAWNIK v5.49 — Cyfrowy Mózg Warsztatu Motocyklowego | Pobierz APK</title>
+  <meta name="description" content="NAPRAWNIK v5.49 — Profesjonalny kombajn warsztatowy i encyklopedia techniczna dla mechaników motocykli, skuterów i quadów ATV/UTV. Pobierz aplikację APK dla systemu Android.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2367e8f9'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg-dark: #0a0f1d;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border: #334155;
+      --border-accent: #0ea5e9;
+      --cyan: #67e8f9;
+      --amber: #ffd166;
+      --purple: #c4b5fd;
+      --green: #4ade80;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    a {
+      color: var(--cyan);
+      text-decoration: underline;
+      transition: color 0.15s ease;
+    }
+    a:visited { color: var(--purple); }
+    a:hover, a:focus { color: var(--amber); outline: 2px solid var(--amber); }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      width: 100%;
+    }
+    header {
+      text-align: center;
+      padding: 3.5rem 1.5rem 2rem;
+      background: radial-gradient(circle at 50% 20%, rgba(14, 165, 233, 0.15), transparent 70%);
+      border-bottom: 1px solid var(--border);
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 1rem;
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid var(--cyan);
+      border-radius: 9999px;
+      color: var(--cyan);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 40%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .lead {
+      font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 760px;
+      margin: 0 auto 2rem;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff !important;
+      text-decoration: none !important;
+      font-size: 1.15rem;
+      font-weight: 700;
+      padding: 1rem 2.25rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4), 0 0 20px rgba(103, 232, 249, 0.2);
+      border: 1px solid var(--cyan);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-download:hover, .btn-download:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -5px rgba(2, 132, 199, 0.6), 0 0 25px rgba(255, 209, 102, 0.4);
+      outline: none;
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text) !important;
+      text-decoration: none !important;
+      padding: 1rem 1.75rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-secondary:hover, .btn-secondary:focus {
+      background: var(--bg-card-hover);
+      border-color: var(--cyan);
+      outline: none;
+    }
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .hero-badges span {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .section-title {
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 3.5rem 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 28px;
+      background: var(--cyan);
+      border-radius: 4px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .card:hover {
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+    }
+    .card-num {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .card h3 {
+      font-size: 1.25rem;
+      color: #ffffff;
+      margin-bottom: 0.25rem;
+    }
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      flex-grow: 1;
+    }
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .tag {
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      color: #cbd5e1;
+    }
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .flow-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      position: relative;
+    }
+    .flow-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--cyan);
+      color: #000000;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+    .flow-step h4 {
+      font-size: 1rem;
+      color: #ffffff;
+      margin-bottom: 0.35rem;
+    }
+    .flow-step p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .pricing-table-wrap {
+      overflow-x: auto;
+      margin-top: 1.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    table.pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+      background: var(--bg-card);
+    }
+    table.pricing-table th, table.pricing-table td {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    table.pricing-table th {
+      background: #0b1329;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    table.pricing-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .plan-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .plan-badge.amator { background: #334155; color: #f8fafc; }
+    .plan-badge.pro { background: rgba(14, 165, 233, 0.2); border: 1px solid var(--cyan); color: var(--cyan); }
+    .plan-badge.warsztat { background: rgba(255, 209, 102, 0.2); border: 1px solid var(--amber); color: var(--amber); }
+    .price-num {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+    .price-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .trial-tag {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--green);
+      font-weight: 600;
+    }
+    .box-info {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    .code-block {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.85rem 1.25rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      color: var(--cyan);
+      word-break: break-all;
+      margin: 1rem 0;
+      display: block;
+    }
+    ol.steps-list {
+      padding-left: 1.5rem;
+      margin-top: 1rem;
+    }
+    ol.steps-list li {
+      margin-bottom: 0.75rem;
+      color: #cbd5e1;
+    }
+    ol.steps-list li strong {
+      color: #ffffff;
+    }
+    footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      background: #080d19;
+    }
+    footer a { margin: 0 0.5rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container" style="padding-top:0;padding-bottom:0;">
+      <div class="badge-pill">Wersja produkcyjna APK v5.49 &bull; Standalone Offline</div>
+      <h1>NAPRAWNIK &bull; MÓZG MECHANIKA</h1>
+      <p class="lead">
+        Kompleksowy warsztatowy kombajn techniczny dla motocykli, skuterów, motorowerów i quadów ATV/UTV.
+        Wszystkie procedury, momenty OEM, kalkulatory i karty zleceń 100% offline w Twoim telefonie.
+      </p>
+      <div class="hero-actions">
+        <a href="app-debug.apk" class="btn-download" download>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Pobierz NAPRAWNIK APK (v5.49)
+        </a>
+        <a href="https://turbodiesel966-eng.github.io/Aktualizacja-17.10/" class="btn-secondary" target="_blank" rel="noopener noreferrer">
+          Uruchom wersję PWA w przeglądarce &rarr;
+        </a>
+      </div>
+      <div class="hero-badges">
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 100% Offline (Brak reklam i telemetrii)</span>
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> 229+ Modeli OEM &bull; 8 Działów A–H</span>
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Izolacja APK &bull; Bezpieczeństwo Danych</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <h2 class="section-title">6 Głównych Modułów Warsztatowych</h2>
+    <div class="grid-3">
+      <div class="card">
+        <span class="card-num">Moduł 01</span>
+        <h3>Klienci &amp; Zlecenia Warsztatowe</h3>
+        <p>Cyfrowa kartoteka napraw motocyklowych. Ewidencja pojazdów, koszyk części, automatyczna kalkulacja robocizny, poufna analiza marży oraz gotowe zlecenia i protokoły wydruku PDF dla klienta.</p>
+        <div class="card-tags">
+          <span class="tag">Wydruk PDF</span>
+          <span class="tag">Kalkulacja marży</span>
+          <span class="tag">Baza klientów</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="card-num">Moduł 02</span>
+        <h3>Baza Wiedzy &amp; Przypadki Warsztatowe</h3>
+        <p>Rozbudowana encyklopedia ponad 70 realnych usterek warsztatowych. Od objawu przez weryfikację aż po trwałą naprawę. Zawiera zdjęcia defektów, typowe błędy montażowe i ostrzeżenia BHP.</p>
+        <div class="card-tags">
+          <span class="tag">70+ Awarii</span>
+          <span class="tag">Objawy &amp; Przyczyny</span>
+          <span class="tag">Zdjęcia makro</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="card-num">Moduł 03</span>
+        <h3>Katalog Techniczny &amp; Dane OEM</h3>
+        <p>Baza 229+ modeli motocykli szosowych, enduro, skuterów i quadów ATV/UTV. Dokładne momenty dokręcania głowic, cylindrów, kół i zawieszenia, kody świec, luzy zaworowe, pojemności i specyfikacje olejowe.</p>
+        <div class="card-tags">
+          <span class="tag">Momenty dokręcania</span>
+          <span class="tag">Luzy zaworowe</span>
+          <span class="tag">Specyfikacje OEM</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="card-num">Moduł 04</span>
+        <h3>Narzędzia &amp; Kalkulatory Warsztatowe</h3>
+        <p>Precyzyjne kalkulatory dla mechaników i tunerów: pomiar i dobór Squish, stopień sprężania (CR), dobór dysz gaźnika, strojenie napędu CVT (waga rolek, twardość sprężyn), precyzyjny dobór płytek zaworowych.</p>
+        <div class="card-tags">
+          <span class="tag">Kalkulator Squish</span>
+          <span class="tag">Strojenie CVT</span>
+          <span class="tag">Płytki zaworowe</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="card-num">Moduł 05</span>
+        <h3>Elektroniczne Laboratorium</h3>
+        <p>Diagnostyka instalacji 12V, rezystancji uzwojeń statora, cewek zapłonowych i impulsatorów. Rozpiski pinoutów modułów CDI/TCI, regulatorów napięcia oraz schematy instalacji elektrycznych.</p>
+        <div class="card-tags">
+          <span class="tag">Pinouty CDI / TCI</span>
+          <span class="tag">Testy regulatora</span>
+          <span class="tag">Ocena rezystancji</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="card-num">Moduł 06</span>
+        <h3>Silniki Wielocylindrowe &amp; Quady (A–H)</h3>
+        <p>Dedykowany mózg serwisowy dla układów R2, R3, R4, V2, V4, Boxer, silników 2T/4T oraz quadów ATV/UTV 4x4. 8 wyspecjalizowanych działów (A–H) z ponad 47 procedurami naprawczymi.</p>
+        <div class="card-tags">
+          <span class="tag">R2-R4 / V2-V4 / Boxer</span>
+          <span class="tag">ATV / UTV 4x4</span>
+          <span class="tag">47 procedur A–H</span>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">9-Krokowy Standaryzowany Algorytm Diagnostyczny</h2>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-step-num">1</div>
+        <h4>Wywiad i Objawy</h4>
+        <p>Identyfikacja zgłoszenia klienta, warunki występowania (na zimno/na gorąco, pod obciążeniem).</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">2</div>
+        <h4>Inspekcja Wizualna</h4>
+        <p>Wycieki płynów, stan wiązek i mas, nieszczelności dolotu, pęknięcia kolektorów.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">3</div>
+        <h4>Pomiary Elektryczne</h4>
+        <p>Napięcie akumulatora pod obciążeniem, ładowanie, oporności czujników i cewek.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">4</div>
+        <h4>Kompresja i Paliwo</h4>
+        <p>Manometr ciśnienia sprężania cylindrów (próba olejowa) oraz ciśnienie magistrali paliwa.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">5</div>
+        <h4>Układ Zapłonowy</h4>
+        <p>Energia iskry, stan elektrod świecy, kąt wyprzedzenia zapłonu i synchronizacja wałków.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">6</div>
+        <h4>Skład Mieszanki</h4>
+        <p>Analiza AFR, podciśnienia w kolektorach dolotowych, synchronizacja przepustnic.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">7</div>
+        <h4>Układ Napędowy</h4>
+        <p>Weryfikacja CVT (pasek, wariator), sprzęgła, łańcucha, kardana lub dyferencjałów 4x4.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">8</div>
+        <h4>Naprawa i Momenty</h4>
+        <p>Wymiana uszkodzonych podzespołów z użyciem klucza dynamometrycznego i danych OEM.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">9</div>
+        <h4>Weryfikacja Końcowa</h4>
+        <p>Jazda próbna, odczyt parametrów roboczych i protokół odbioru dla klienta.</p>
+      </div>
+    </div>
+
+    <h2 class="section-title">Porównanie Pakietów i Cennik</h2>
+    <div class="pricing-table-wrap">
+      <table class="pricing-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Pakiet</th>
+            <th style="width: 25%;">Cena i Okres</th>
+            <th style="width: 50%;">Zawartość i Przeznaczenie</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="plan-badge amator">AMATOR</span>
+              <div style="font-weight: 700; margin-top: 0.5rem; color: #ffffff;">Dla Każdego</div>
+            </td>
+            <td>
+              <div class="price-num">0 zł</div>
+              <div class="price-sub">Bezpłatnie &bull; Bez konta</div>
+              <span class="trial-tag">100% Offline &bull; Bez reklam</span>
+            </td>
+            <td>
+              Katalog 229+ motocykli i skuterów, 70 kart usterek, podstawowe kalkulatory (Squish, CR, dysze gaźnika, CVT), Elektroniczne Lab (do 20 zapisów), 1 własny pojazd, do 10 wyszukiwań części i zdjęć lokalnie.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="plan-badge pro">PRO</span>
+              <div style="font-weight: 700; margin-top: 0.5rem; color: #ffffff;">Dla Pasjonatów</div>
+            </td>
+            <td>
+              <div class="price-num">14,99 zł <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">/ mc</span></div>
+              <div class="price-sub">lub 149,99 zł / rok</div>
+              <span class="trial-tag">Test: 7 dni za 7,00 zł (jednorazowo)</span>
+            </td>
+            <td>
+              Wszystko z AMATOR + pełne Elektroniczne Laboratorium (150 pomiarów), procedury wielocylindrowe (R2-R4, V2-V4, Boxer) i quadów (ATV/UTV 4x4), działy A–H, interaktywne schematy SVG Zoom, dobór płytek zaworowych, pinouty modułów, do 3 pojazdów w garażu i bezpieczna kopia w chmurze.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="plan-badge warsztat">WARSZTAT</span>
+              <div style="font-weight: 700; margin-top: 0.5rem; color: #ffffff;">Dla Serwisów</div>
+            </td>
+            <td>
+              <div class="price-num">29,00 zł <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">/ mc</span></div>
+              <div class="price-sub">lub 300,00 zł / rok</div>
+              <span class="trial-tag">Test: 7 dni za 10,00 zł (jednorazowo)</span>
+            </td>
+            <td>
+              Wszystko z PRO + kompletny system warsztatowy: Karty Zleceń Serwisowych, generowanie i wydruk PDF z podpisem klienta, poufny kalkulator zysku i marży mechanika, kartoteka do 2000 klientów i 500 pojazdów, 5000 pomiarów, archiwum zleceń i pełny eksport do CSV.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="section-title">Bezpieczeństwo i Plik APK</h2>
+    <div class="box-info">
+      <h3>Plik Instalacyjny Android APK (v5.49)</h3>
+      <p style="margin-top: 0.5rem; color: var(--text-muted);">
+        Aplikacja APK jest w pełni niezależna od sieci. Wszystkie dane, procedury, kalkulatory i tabele momentów są wbudowane bezpośrednio w pakiet instalacyjny.
+      </p>
+      
+      <p style="margin-top: 1rem;"><strong>Oficjalna suma kontrolna SHA-256 wydania:</strong></p>
+      <code class="code-block">1e41d72e135366db7f92d282e9f9be90194a1b30b7a267bb2a65fe1ffa1894dd</code>
+
+      <h2>Raport VirusTotal</h2>
+      <!-- NAPRAWNIK_VT_NOTE_START --><!-- NAPRAWNIK_VT_NOTE_END -->
+
+      <h3 style="margin-top: 2rem; color: #ffffff;">Jak zainstalować plik APK na telefonie Android?</h3>
+      <ol class="steps-list">
+        <li><strong>Pobierz plik:</strong> Kliknij przycisk „Pobierz NAPRAWNIK APK” na górze tej strony.</li>
+        <li><strong>Otwórz pobrany plik:</strong> Przejdź do paska powiadomień lub folderu <em>Pobrane (Downloads)</em> i kliknij <code>app-debug.apk</code>.</li>
+        <li><strong>Zezwól na instalację:</strong> Jeśli system Android wyświetli monit o bezpieczeństwie, wejdź w Ustawienia monitu i zaznacz opcję <em>„Zezwalaj z tego źródła”</em> (standardowa procedura dla instalacji spoza sklepu Google Play).</li>
+        <li><strong>Zainstaluj i uruchom:</strong> Wybierz „Zainstaluj”. Po zakończeniu instalacji aplikacja pojawi się na Twoim ekranie głównym z pełnym dostępem offline.</li>
+      </ol>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="container" style="padding-top:0;padding-bottom:0;">
+      <p><strong>NAPRAWNIK &bull; Profesjonalny System Diagnostyki Motocyklowej</strong></p>
+      <p style="margin-top: 0.5rem;">
+        <a href="https://turbodiesel966-eng.github.io/Aktualizacja-17.10/" target="_blank" rel="noopener noreferrer">Wersja Web (PWA)</a> &bull;
+        <a href="https://github.com/turbodiesel966-eng/Aktualizacja-17.10" target="_blank" rel="noopener noreferrer">Repozytorium GitHub</a> &bull;
+        <a href="app-debug.apk" download>Pobierz APK</a>
+      </p>
+      <p style="margin-top: 1rem; font-size: 0.8rem; color: #64748b;">
+        Wszelkie prawa zastrzeżone &copy; 2026 NAPRAWNIK. Bezpieczeństwo i niezależność serwisowa.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>
