@@ -30,7 +30,8 @@
     "tile-pinouts.jpg",
     "tile-squish.jpg",
     "tile-orders.jpg",
-    "tile-druciarstwo.jpg"
+    "tile-druciarstwo.jpg",
+    "naprawnik-market-icon.svg"
   ],
   "requiredWebFiles": [
     "index.html",
@@ -53,7 +54,11 @@
     "./motocykle-multi-data.js",
     "./motocykle-multi.js",
     "./vin-decoder.js",
-    "./manifest.webmanifest"
+    "./manifest.webmanifest",
+    "./affiliate/catalog.js",
+    "./affiliate/catalog.json",
+    "./affiliate/market-ui.js",
+    "./assets/naprawnik-market-icon.svg"
   ],
   "apkPrecache": [
     "./index.html",

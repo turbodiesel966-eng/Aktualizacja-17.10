@@ -31,7 +31,8 @@ const PRECACHE=[
   './assets/tile-pinouts.jpg',
   './assets/tile-squish.jpg',
   './assets/tile-orders.jpg',
-  './assets/tile-druciarstwo.jpg'
+  './assets/tile-druciarstwo.jpg',
+  './assets/naprawnik-market-icon.svg'
 ];
 
 self.addEventListener('install', e => {

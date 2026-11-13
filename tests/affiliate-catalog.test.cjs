@@ -30,24 +30,26 @@ test("NAPRAWNIK MARKET tile has dedicated icon and is wired without replacing re
   const path = require("node:path");
   const ui = fs.readFileSync(path.join(__dirname, "../affiliate/market-ui.js"), "utf8");
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
-  const prepare = fs.readFileSync(path.join(__dirname, "../scripts/prepare-mobile.mjs"), "utf8");
   const icon = fs.readFileSync(path.join(__dirname, "../assets/naprawnik-market-icon.svg"), "utf8");
-  assert.doesNotMatch(html, /data-market-open|naprawnik-market-icon\.svg/);
-  assert.match(prepare, /marketTile/);
-  assert.match(prepare, /data-market-open/);
-  assert.match(prepare, /naprawnik-market-icon\.svg/);
+  assert.match(html, /data-market-open/);
+  assert.match(html, /naprawnik-market-icon\.svg/);
   assert.match(ui, /data-market-open/);
   assert.doesNotMatch(ui, /window\.renderHome\s*=/);
   assert.match(icon, /<svg[\s\S]*viewBox="0 0 512 512"/);
 });
 
-test("PWA source remains free of APK-only Market UI and Market icon", () => {
+test("NAPRAWNIK MARKET is wired across both Web PWA and APK with shared backend", () => {
   const fs = require("node:fs");
-  const html = fs.readFileSync(require("node:path").join(__dirname, "../index.html"), "utf8");
-  const manifest = JSON.parse(fs.readFileSync(require("node:path").join(__dirname, "../scripts/shared-manifest.json"), "utf8"));
-  assert.doesNotMatch(html, /data-market-open|naprawnik-market-icon\.svg/);
-  assert.ok(!manifest.pwaPrecache.includes("./affiliate/market-ui.js"));
-  assert.ok(!manifest.pwaPrecache.includes("./assets/naprawnik-market-icon.svg"));
+  const path = require("node:path");
+  const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "../scripts/shared-manifest.json"), "utf8"));
+  const ui = fs.readFileSync(path.join(__dirname, "../affiliate/market-ui.js"), "utf8");
+  assert.match(html, /data-market-open/);
+  assert.match(html, /naprawnik-market-icon\.svg/);
+  assert.match(html, /affiliate\/market-ui\.js/);
+  assert.ok(manifest.pwaPrecache.includes("./affiliate/market-ui.js"));
+  assert.ok(manifest.pwaPrecache.includes("./assets/naprawnik-market-icon.svg"));
   assert.ok(manifest.apkPrecache.includes("./affiliate/market-ui.js"));
   assert.ok(manifest.apkPrecache.includes("./assets/naprawnik-market-icon.svg"));
+  assert.match(ui, /https:\/\/naprawnik-market-live\.turbodiesel966\.workers\.dev/);
 });

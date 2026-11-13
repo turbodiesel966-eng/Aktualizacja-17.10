@@ -222,8 +222,13 @@ if (!mobileHtml.includes("./affiliate/catalog.js")) {
   mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
     '  <script src="./affiliate/catalog.js"></script>\n' +
     '  <script src="./affiliate/market-ui.js"></script>\n' +
-    '  <script src="./native-bridge.js"></script>\n' +
     mobileHtml.slice(closingBodyIndex);
+}
+if (!mobileHtml.includes("./native-bridge.js")) {
+  const bodyIdx = mobileHtml.lastIndexOf(closingBody);
+  mobileHtml = mobileHtml.slice(0, bodyIdx) +
+    '  <script src="./native-bridge.js"></script>\n' +
+    mobileHtml.slice(bodyIdx);
 }
 
 // Weryfikacja poprawności składniowej wszystkich skryptów inline w wygenerowanym HTML dla APK

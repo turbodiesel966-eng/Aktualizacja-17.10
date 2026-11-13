@@ -28,3 +28,4 @@ crons = ["0 */6 * * *"]
 
 [env.staging.vars]
 WEBEPARTNERS_LOGIN = "johnnyszalony36@gmail.com"
+
