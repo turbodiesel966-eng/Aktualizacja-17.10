@@ -1,28 +1,36 @@
 # NAPRAWNIK — katalog afiliacyjny APK
 
-## Zakres
-Moduł jest przygotowany jako osobna warstwa danych dla wydania APK. Nie zawiera loginów, haseł, kluczy API ani automatycznego scrapowania sklepów. Nie zmienia produkcyjnego PWA ani gałęzi `main`.
+## Status integracji (13.11.2026)
+Katalog działa przez osobny Cloudflare Worker i osobną bazę D1. To integracja APK-only; produkcyjne PWA, Worker subskrypcji, Stripe i baza płatności nie są zmieniane.
 
-## Stan partnerów
-- **Motolak** — zachowany istniejący link WebePartners: `https://webep1.com/go/37a852f559`. Link jest znany z wcześniejszej integracji; nie oznacza to weryfikacji aktualnych produktów, cen ani dostępności feedu.
-- **Tooles.pl, TopBuy.eu, eTOMNAR** — zapisane jako partnerzy do weryfikacji. Nie ma jeszcze potwierdzonych linków ani danych ofert, więc nie pokazujemy fikcyjnych produktów.
+## Partnerzy i rzeczywiste dane
+- **Motolak** — program zaakceptowany; 14 054 rekordy w staging. Feed zawiera dużo lakiernictwa samochodowego, dlatego publiczne wyszukiwanie filtruje ofertę pod zastosowania warsztatowe i jednoślady.
+- **Tooles.pl** — program zaakceptowany; 4 553 rekordy w staging.
+- **Gadżety Rajdowe** — program zaakceptowany; 3 242 rekordy w staging.
+- **TopBuy.eu** — feed wykryty, ale import kończy się Cloudflare 1102; tymczasowo wyłączony z rotacji synchronizacji.
+- **eTOMNAR** — brak potwierdzonego zaakceptowanego feedu w API; nie publikować ofert.
 
-## Import ofert
-Po uzyskaniu dostępu do WebePartners należy pobrać wyłącznie udostępnione dla konta feedy CSV/XML. Przed publikacją:
-1. potwierdzić akceptację programu,
-2. zweryfikować docelowy URL HTTPS i merchantId,
-3. zweryfikować kategorię,
-4. nie uzupełniać brakujących cen, zdjęć ani opisów zgadywaniem,
-5. odrzucać rekordy partnerów bez statusu `verified`.
+## Baza i API
+- Worker: `https://naprawnik-market-staging.turbodiesel966.workers.dev`
+- D1: `naprawnik-market-staging` (oddzielna baza).
+- `GET /health` — status usługi.
+- `GET /products?q=&category=&limit=&cursor=` — wyszukiwanie ofert, domyślnie ograniczone do zakresu warsztatowo-motocyklowego.
+- `GET /categories` — kategorie i liczebność w tym samym zakresie.
+- Linki produktowe są URL-ami trackingowymi zwróconymi przez WebePartners; nie generujemy ich samodzielnie.
+- Ceny, waluta i zdjęcia pochodzą z feedów; przed zakupem należy potwierdzić aktualność w sklepie.
+- Widoczne ujawnienie afiliacji: NAPRAWNIK może otrzymać prowizję, cena użytkownika nie wzrasta.
 
-## Kontrakt danych
-Źródło ofert: `catalog.json`. Do publikacji oferty wymagane są: `title`, `merchantId`, `categoryId`, `affiliateUrl`. Cena, zdjęcie i opis są opcjonalne. Waluta obsługiwana w pierwszym etapie: PLN.
+## Synchronizacja
+- Cron Workera: co 6 godzin.
+- Jeden feed na jedno uruchomienie; indeks feedu jest rotowany w tabeli `market_sync_state`, aby uniknąć limitu CPU przy pobieraniu wszystkich feedów jednocześnie.
+- Aktualnie w rotacji: Motolak, Tooles.pl, Gadżety Rajdowe.
+- TopBuy pozostaje poza rotacją do czasu rozwiązania błędu 1102.
+- Historia synchronizacji: `market_sync_runs`.
 
-## Moduł JS
-`catalog.js` udostępnia:
-- `safeAffiliateUrl(url)` — dopuszcza tylko HTTPS na domenie WebePartners,
-- `normalizeOffer(raw, merchants, categories)` — waliduje i normalizuje rekord, ale tylko dla partnera ze statusem `verified`,
-- `filterOffers(offers, query, categoryId)` — filtruje zatwierdzone oferty.
+## APK
+`affiliate/market-ui.js` jest dołączany wyłącznie przez `scripts/prepare-mobile.mjs` do wygenerowanej kopii Androida w `www/`. PWA nie otrzymuje tego modułu. Katalog online wymaga połączenia z internetem; pozostałe funkcje APK pozostają lokalne.
 
-## Następny krok wymagający konta
-Po powrocie do komputera zalogować się samodzielnie do WebePartners i pobrać feedy/linki dla zaakceptowanych programów. Nie przesyłać hasła ani kodów 2FA w czacie. Dopiero wtedy można oznaczyć partnera jako `verified` i dodać rzeczywiste oferty.
+## Zasady bezpieczeństwa
+- Sekret WebePartners jest przechowywany jako Cloudflare Worker secret `WEBEPARTNERS_API_KEY`; login API jako zmienna Worker.
+- Nie umieszczać sekretów, feed URL ani tokenu administracyjnego w APK ani repozytorium.
+- Produkcyjna PWA i produkcyjny Worker subskrypcji są poza zakresem tej integracji.
