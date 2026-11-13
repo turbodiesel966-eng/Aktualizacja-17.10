@@ -26,6 +26,10 @@ with zipfile.ZipFile(apk) as bundle:
         "assets/public/sw.js",
         "assets/public/manifest.webmanifest",
         "assets/public/native-bridge.js",
+        "assets/public/affiliate/catalog.js",
+        "assets/public/affiliate/catalog.json",
+        "assets/public/affiliate/market-ui.js",
+        "assets/public/assets/naprawnik-market-icon.svg",
         "assets/public/assets/naprawnik-icon.svg",
         "assets/public/assets/naprawnik-icon-192.svg",
         "assets/public/assets/naprawnik-icon-512.svg",
@@ -110,6 +114,18 @@ with zipfile.ZipFile(apk) as bundle:
     for marker in ["exportBackup()", "importBackup(event)", "paExportCases()", "paImportCases(event)", "paCamera", "paGallery"]:
         if marker not in html:
             raise SystemExit(f"Missing app capability in APK HTML: {marker}")
+    market_ui = bundle.read("assets/public/affiliate/market-ui.js").decode("utf-8")
+    affiliate_data = json.loads(bundle.read("assets/public/affiliate/catalog.json").decode("utf-8"))
+    html_text = bundle.read("assets/public/index.html").decode("utf-8")
+    if "NAPRAWNIK MARKET" not in market_ui or "NaprawnikMarket" not in market_ui or "naprawnik-market-icon.svg" not in html_text or "data-market-open" not in html_text:
+        raise SystemExit("APK-only NAPRAWNIK MARKET UI/tile is missing.")
+    if "assets/public/assets/naprawnik-market-icon.svg" not in names:
+        raise SystemExit("Dedicated NAPRAWNIK MARKET icon is missing from the APK.")
+
+    if not affiliate_data.get("categories") or not affiliate_data.get("merchants"):
+        raise SystemExit("Affiliate catalog categories or merchant registry is missing.")
+    if "./affiliate/market-ui.js" not in service_worker or "./affiliate/catalog.json" not in service_worker:
+        raise SystemExit("Affiliate catalog and Market UI are not included in the APK offline precache.")
     if "NAPRAWNIK_KATALOG" not in catalog:
         raise SystemExit("Technical catalogue module is present but not initialized.")
     if "naprawnik-subscriptions-live.turbodiesel966.workers.dev" not in billing:
@@ -150,6 +166,6 @@ with zipfile.ZipFile(apk) as bundle:
 print(
     f"OK: {apk.name}; {len(case_ids)} unique diagnostic cases; "
     f"multicylinder motorcycle modules, unified platform adapter, complete PWA isolation (zero OTA), "
-    f"backup/import, assistant photo/history, billing/admin, catalogue, "
+    f"backup/import, assistant photo/history, billing/admin, catalogue, affiliate Market, "
     f"{len(launcher_paths)} launcher densities and {len(splash_paths)} splash sizes verified."
 )

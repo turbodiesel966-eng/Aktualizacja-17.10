@@ -105,7 +105,10 @@ await mkdir(webDir, { recursive: true });
 for (const file of requiredFiles) {
   await cp(path.join(root, file), path.join(webDir, file));
 }
+// APK-only affiliate catalog and Market UI; never copied into the published PWA.
+await cp(path.join(root, "affiliate"), path.join(webDir, "affiliate"), { recursive: true });
 await mkdir(path.join(webDir, "assets"), { recursive: true });
+await cp(path.join(sourceAssets, "naprawnik-market-icon.svg"), path.join(webDir, "assets", "naprawnik-market-icon.svg"));
 for (const file of sharedAssets) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
 }
@@ -114,6 +117,14 @@ for (const file of sharedAssets) {
 const mobileIndexPath = path.join(webDir, "index.html");
 let mobileHtml = await readFile(mobileIndexPath, "utf8");
 const navMarker = "function nav(view, arg, restoreState){";
+// Add the dedicated Market tile only to the generated Android HTML, never to the PWA source.
+const marketTile = "<button type=\"button\" class=\"market-hero-tile\" data-market-open style=\"width:100%;display:flex;align-items:center;gap:14px;text-align:left;padding:14px;margin:10px 0 14px;border-radius:18px;border:1px solid rgba(255,142,46,.75);background:linear-gradient(118deg,#151a27 0%,#202638 55%,#101c27 100%);box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);color:#fff;\">\n    <span style=\"width:66px;height:66px;flex:0 0 66px;border-radius:17px;overflow:hidden;background:#0b0e17;border:1px solid rgba(255,145,48,.55);box-shadow:0 0 18px rgba(255,132,38,.18);display:grid;place-items:center\">\n      <img src=\"./assets/naprawnik-market-icon.svg\" alt=\"\" width=\"66\" height=\"66\" style=\"display:block;width:66px;height:66px\">\n    </span>\n    <span style=\"min-width:0;flex:1;display:block\">\n      <span style=\"display:block;font-size:17px;font-weight:900;letter-spacing:.7px;color:#fff\">NAPRAWNIK <span style=\"color:#ff9a3a\">MARKET</span></span>\n      <span style=\"display:block;font-size:11px;line-height:1.4;color:#cbd5e1;margin-top:4px\">Części, narzędzia i wyposażenie warsztatu</span>\n      <span style=\"display:inline-flex;align-items:center;margin-top:8px;padding:5px 10px;border-radius:999px;background:linear-gradient(90deg,#ff8b2b,#e95e24);font-size:10px;font-weight:900;color:#111827\">OTWÓRZ KATALOG →</span>\n    </span>\n    <span aria-hidden=\"true\" style=\"font-size:26px;color:#29d7e7;font-weight:900\">›</span>\n</button>\n";
+const homeMarker = '<div class="special-section-header" style="margin:10px 0 8px">';
+if (!mobileHtml.includes("data-market-open")) {
+  if (!mobileHtml.includes(homeMarker)) throw new Error("Could not find home module section for APK-only Market tile.");
+  mobileHtml = mobileHtml.replace(homeMarker, marketTile + homeMarker);
+}
+
 if (!mobileHtml.includes(navMarker)) {
   throw new Error("Could not uniquely locate NAPRAWNIK navigation function for the Android back button.");
 }
@@ -207,10 +218,17 @@ const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
 if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
-if (!mobileHtml.includes("./native-bridge.js")) {
+if (!mobileHtml.includes("./affiliate/catalog.js")) {
   mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
-    '  <script src="./native-bridge.js"></script>\n' +
+    '  <script src="./affiliate/catalog.js"></script>\n' +
+    '  <script src="./affiliate/market-ui.js"></script>\n' +
     mobileHtml.slice(closingBodyIndex);
+}
+if (!mobileHtml.includes("./native-bridge.js")) {
+  const bodyIdx = mobileHtml.lastIndexOf(closingBody);
+  mobileHtml = mobileHtml.slice(0, bodyIdx) +
+    '  <script src="./native-bridge.js"></script>\n' +
+    mobileHtml.slice(bodyIdx);
 }
 
 // Weryfikacja poprawności składniowej wszystkich skryptów inline w wygenerowanym HTML dla APK
@@ -239,6 +257,9 @@ if (!sourceCacheMatch || mobileSw.match(/^const CACHE=/gm)?.length !== 1) {
 const nativeCacheName = sourceCacheMatch[1] + "-native";
 
 const precacheList = await getApkPrecache();
+for (const file of ["./affiliate/catalog.js", "./affiliate/catalog.json", "./affiliate/market-ui.js"]) {
+  if (!precacheList.includes(file)) precacheList.push(file);
+}
 const precacheFormatted = precacheList.map(item => `  '${item}'`).join(",\n");
 
 const nativeSwContent = `const CACHE='${nativeCacheName}';
@@ -306,4 +327,4 @@ for (const term of allBlockedInApk) {
   }
 }
 
-console.log(`NAPRAWNIK v${appVersion} (${nativeCacheName}): Android web assets, synced versions, native bridge and isolated offline precache prepared.`);
+console.log(`NAPRAWNIK v${appVersion} (${nativeCacheName}): Android web assets, affiliate catalog, Market UI, native bridge and isolated offline precache prepared.`);

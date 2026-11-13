@@ -1,0 +1,31 @@
+name = "naprawnik-market-live"
+main = "src/index.mjs"
+compatibility_date = "2026-11-13"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "naprawnik-market-live"
+database_id = "8219e883-97d7-42e5-a406-c1f5e50a4767"
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[vars]
+WEBEPARTNERS_LOGIN = "johnnyszalony36@gmail.com"
+
+[env.staging]
+name = "naprawnik-market-staging"
+workers_dev = true
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "naprawnik-market-staging"
+database_id = "9a7df893-d350-45dc-81c6-aa71c4fe373b"
+
+[env.staging.triggers]
+crons = ["0 */6 * * *"]
+
+[env.staging.vars]
+WEBEPARTNERS_LOGIN = "johnnyszalony36@gmail.com"
+

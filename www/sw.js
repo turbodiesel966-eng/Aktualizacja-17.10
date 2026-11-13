@@ -10,6 +10,10 @@ const PRECACHE=[
   './motocykle-multi.js',
   './vin-decoder.js',
   './manifest.webmanifest',
+  './affiliate/catalog.js',
+  './affiliate/catalog.json',
+  './affiliate/market-ui.js',
+  './assets/naprawnik-market-icon.svg',
   './assets/naprawnik-icon.svg',
   './assets/naprawnik-icon-192.svg',
   './assets/naprawnik-icon-512.svg',
@@ -27,7 +31,8 @@ const PRECACHE=[
   './assets/tile-pinouts.jpg',
   './assets/tile-squish.jpg',
   './assets/tile-orders.jpg',
-  './assets/tile-druciarstwo.jpg'
+  './assets/tile-druciarstwo.jpg',
+  './assets/naprawnik-market-icon.svg'
 ];
 
 self.addEventListener('install', e => {
