@@ -48,24 +48,9 @@
     query.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(search,300);});
     category.addEventListener("change",search);
   }
-  function attachHomeEntry() {
-    if (typeof window.renderHome !== "function" || window.renderHome.__marketWrapped) return;
-    const original = window.renderHome;
-    const wrapped = function () {
-      original.apply(this,arguments);
-      const screen = document.querySelector(".screen");
-      if (!screen || screen.querySelector("[data-market-entry]")) return;
-      const card = document.createElement("div");
-      card.className = "diag-card";
-      card.style.borderColor = "var(--cyan)";
-      card.setAttribute("data-market-entry","true");
-      card.innerHTML = '<h2>🛒 NAPRAWNIK MARKET</h2><div class="diag-sub">Części, narzędzia, elektronika i wyposażenie warsztatu — katalog ofert partnerów.</div><div class="btn" data-open-market>Otwórz katalog produktów</div>';
-      screen.insertBefore(card,screen.firstChild);
-      card.querySelector("[data-open-market]").addEventListener("click",open);
-    };
-    wrapped.__marketWrapped = true;
-    window.renderHome = wrapped;
-  }
-  attachHomeEntry();
+  document.addEventListener("click", event => {
+    const entry = event.target.closest("[data-market-open]");
+    if (entry) { event.preventDefault(); open(); }
+  });
   window.NaprawnikMarket = Object.freeze({open});
 })();
