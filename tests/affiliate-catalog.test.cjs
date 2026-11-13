@@ -32,8 +32,10 @@ test("NAPRAWNIK MARKET tile has dedicated icon and is wired without replacing re
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
   const prepare = fs.readFileSync(path.join(__dirname, "../scripts/prepare-mobile.mjs"), "utf8");
   const icon = fs.readFileSync(path.join(__dirname, "../assets/naprawnik-market-icon.svg"), "utf8");
-  assert.match(html, /data-market-open/);
-  assert.match(html, /naprawnik-market-icon\.svg/);
+  assert.doesNotMatch(html, /data-market-open|naprawnik-market-icon\.svg/);
+  assert.match(prepare, /marketTile/);
+  assert.match(prepare, /data-market-open/);
+  assert.match(prepare, /naprawnik-market-icon\.svg/);
   assert.match(ui, /data-market-open/);
   assert.doesNotMatch(ui, /window\.renderHome\s*=/);
   assert.match(icon, /<svg[\s\S]*viewBox="0 0 512 512"/);
