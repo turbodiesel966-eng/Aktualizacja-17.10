@@ -105,6 +105,8 @@ await mkdir(webDir, { recursive: true });
 for (const file of requiredFiles) {
   await cp(path.join(root, file), path.join(webDir, file));
 }
+// APK-only affiliate catalog and Market UI; never copied into the published PWA.
+await cp(path.join(root, "affiliate"), path.join(webDir, "affiliate"), { recursive: true });
 await mkdir(path.join(webDir, "assets"), { recursive: true });
 for (const file of sharedAssets) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
@@ -207,8 +209,10 @@ const closingBodyIndex = mobileHtml.lastIndexOf(closingBody);
 if (closingBodyIndex < 0) {
   throw new Error("Could not locate the document body close tag for the Android bridge.");
 }
-if (!mobileHtml.includes("./native-bridge.js")) {
+if (!mobileHtml.includes("./affiliate/catalog.js")) {
   mobileHtml = mobileHtml.slice(0, closingBodyIndex) +
+    '  <script src="./affiliate/catalog.js"></script>\n' +
+    '  <script src="./affiliate/market-ui.js"></script>\n' +
     '  <script src="./native-bridge.js"></script>\n' +
     mobileHtml.slice(closingBodyIndex);
 }
@@ -239,6 +243,9 @@ if (!sourceCacheMatch || mobileSw.match(/^const CACHE=/gm)?.length !== 1) {
 const nativeCacheName = sourceCacheMatch[1] + "-native";
 
 const precacheList = await getApkPrecache();
+for (const file of ["./affiliate/catalog.js", "./affiliate/catalog.json", "./affiliate/market-ui.js"]) {
+  if (!precacheList.includes(file)) precacheList.push(file);
+}
 const precacheFormatted = precacheList.map(item => `  '${item}'`).join(",\n");
 
 const nativeSwContent = `const CACHE='${nativeCacheName}';
@@ -306,4 +313,4 @@ for (const term of allBlockedInApk) {
   }
 }
 
-console.log(`NAPRAWNIK v${appVersion} (${nativeCacheName}): Android web assets, synced versions, native bridge and isolated offline precache prepared.`);
+console.log(`NAPRAWNIK v${appVersion} (${nativeCacheName}): Android web assets, affiliate catalog, Market UI, native bridge and isolated offline precache prepared.`);
