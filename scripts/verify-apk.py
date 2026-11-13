@@ -116,8 +116,12 @@ with zipfile.ZipFile(apk) as bundle:
             raise SystemExit(f"Missing app capability in APK HTML: {marker}")
     market_ui = bundle.read("assets/public/affiliate/market-ui.js").decode("utf-8")
     affiliate_data = json.loads(bundle.read("assets/public/affiliate/catalog.json").decode("utf-8"))
-    if "NAPRAWNIK MARKET" not in market_ui or "NaprawnikMarket" not in market_ui or "naprawnik-market-icon.svg" not in bundle.read("assets/public/index.html").decode("utf-8"):
-        raise SystemExit("APK-only NAPRAWNIK MARKET UI is missing.")
+    html_text = bundle.read("assets/public/index.html").decode("utf-8")
+    if "NAPRAWNIK MARKET" not in market_ui or "NaprawnikMarket" not in market_ui or "naprawnik-market-icon.svg" not in html_text or "data-market-open" not in html_text:
+        raise SystemExit("APK-only NAPRAWNIK MARKET UI/tile is missing.")
+    if "assets/public/assets/naprawnik-market-icon.svg" not in names:
+        raise SystemExit("Dedicated NAPRAWNIK MARKET icon is missing from the APK.")
+
     if not affiliate_data.get("categories") or not affiliate_data.get("merchants"):
         raise SystemExit("Affiliate catalog categories or merchant registry is missing.")
     if "./affiliate/market-ui.js" not in service_worker or "./affiliate/catalog.json" not in service_worker:
