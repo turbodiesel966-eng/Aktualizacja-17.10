@@ -68,7 +68,8 @@
     "./manifest.webmanifest",
     "./affiliate/catalog.js",
     "./affiliate/catalog.json",
-    "./affiliate/market-ui.js"
+    "./affiliate/market-ui.js",
+    "./assets/naprawnik-market-icon.svg"
   ],
   "blockedOtaTerms": [
     "WEB_LIVE_BASE",
