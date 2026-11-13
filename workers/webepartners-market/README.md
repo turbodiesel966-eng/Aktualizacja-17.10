@@ -1,32 +1,26 @@
-# NAPRAWNIK MARKET — WebePartners
+# NAPRAWNIK MARKET — WebePartners (staging)
 
-This is an isolated APK-only integration. It must not be wired into the production PWA, production subscription Worker, Stripe secrets, or production D1 database.
+## Deployment status — 2026-11-13
+- Worker: `naprawnik-market-staging`
+- D1: `naprawnik-market-staging`, oddzielna od płatności.
+- WebePartners API key stored as Cloudflare secret `WEBEPARTNERS_API_KEY`; publisher login stored as `WEBEPARTNERS_LOGIN`.
+- Cron: `0 */6 * * *` (every six hours).
+- Sync rotates one approved feed per run using D1 table `market_sync_state`.
+- Imported rows: Motolak 14,054; TOOLES.PL 4,553; gadzetyrajdowe.pl 3,242 (21,849 total).
+- TopBuy.eu is excluded from feed discovery/rotation after repeated Worker 1102 resource-limit failure.
+- eTOMNAR has no confirmed accepted XML feed in the current API discovery response.
 
-## Architecture
-- Android APK / local HTML UI calls a dedicated Cloudflare Worker.
-- Dedicated D1 database stores normalized catalog rows and sync history.
-- Worker fetches only explicit HTTPS feed URLs copied from the publisher's WebePartners Datafeeds panel.
-- Feed URLs and admin token are Worker secrets; never ship them in the APK or Git.
-- Scheduled refresh runs every six hours after the staging Worker is provisioned.
-- Public endpoints expose product search and categories. Admin endpoints require a bearer token.
+## Public API
+- `GET /health`
+- `GET /products?q=&category=&limit=&cursor=`
+- `GET /categories`
+Public product and category endpoints apply a workshop/motorcycle relevance filter. Affiliate destinations are copied from WebePartners feed records and use tracking URLs.
 
-## Initial deployment prerequisites
-1. Create a NEW D1 database named `naprawnik-market-staging`; do not reuse any subscriptions database.
-2. Apply `schema.sql` to that new database.
-3. Create a separate Worker named `naprawnik-market-staging` with binding `DB`.
-4. Set Worker secrets `MARKET_ADMIN_TOKEN`, `FEED_CONFIG` and `FEED_ALLOWED_HOSTS` (comma-separated exact hostnames copied from the approved feed URLs).
-5. FEED_CONFIG is a JSON array of approved feeds, for example:
-   `[{"program":"Program name","url":"https://exact-feed-url-from-panel","category":"narzedzia"}]`
-6. Verify `GET /health`, then admin sync and product search.
+## APK-only wiring
+`affiliate/market-ui.js` is included by `scripts/prepare-mobile.mjs` in the generated Android web assets. The production PWA source and production subscription/payment Worker are not changed. This PR remains unmerged; do not merge or deploy the GitHub production branch as part of this staging operation.
 
-## Supported category vocabulary
-`czesci`, `motocykle`, `narzedzia`, `diagnostyka`, `elektronika`, `chemia-eksploatacja`, `wyposazenie-warsztatu`, `akcesoria`, `inne`.
-
-## Feed handling
-The adapter accepts common XML product/item/entry feeds and JSON arrays or products/items/data/offers arrays. It maps common fields such as title/name, product ID/SKU, price, brand, category, image URL and affiliate deep link. Feed hostnames must be explicitly allowlisted; arbitrary URLs are rejected. Real WebePartners feed schema must be checked against an actual feed before production use. Unrecognized XML formats must be mapped explicitly rather than silently treated as valid.
-
-## Current known blockers
-- No WebePartners API key has been generated yet.
-- Exact feed URLs and schemas have not yet been supplied/verified.
-- Program participation/approval is required before using each merchant's feed and links.
-- No Worker or database is deployed by this source-only commit.
+## Operational constraints
+- Do not run all feeds in one invocation; CPU limits can be exceeded.
+- One feed is synchronized per scheduled execution.
+- TopBuy needs a separate investigation/streaming parser before it can re-enter rotation.
+- No fabricated links, prices, stock or product details.
