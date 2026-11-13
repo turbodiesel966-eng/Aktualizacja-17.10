@@ -30,6 +30,7 @@ test("NAPRAWNIK MARKET tile has dedicated icon and is wired without replacing re
   const path = require("node:path");
   const ui = fs.readFileSync(path.join(__dirname, "../affiliate/market-ui.js"), "utf8");
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  const prepare = fs.readFileSync(path.join(__dirname, "../scripts/prepare-mobile.mjs"), "utf8");
   const icon = fs.readFileSync(path.join(__dirname, "../assets/naprawnik-market-icon.svg"), "utf8");
   assert.match(html, /data-market-open/);
   assert.match(html, /naprawnik-market-icon\.svg/);
