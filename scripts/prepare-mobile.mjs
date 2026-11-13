@@ -108,6 +108,7 @@ for (const file of requiredFiles) {
 // APK-only affiliate catalog and Market UI; never copied into the published PWA.
 await cp(path.join(root, "affiliate"), path.join(webDir, "affiliate"), { recursive: true });
 await mkdir(path.join(webDir, "assets"), { recursive: true });
+await cp(path.join(sourceAssets, "naprawnik-market-icon.svg"), path.join(webDir, "assets", "naprawnik-market-icon.svg"));
 for (const file of sharedAssets) {
   await cp(path.join(sourceAssets, file), path.join(webDir, "assets", file));
 }
