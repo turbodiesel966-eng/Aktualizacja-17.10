@@ -45,7 +45,8 @@ function xmlTag(block, names) {
   return "";
 }
 function parseFeed(body, feed, contentType) {
-  if (/json/i.test(contentType) || /^[\\s]*[\\[{]/.test(body)) {
+  const trimmedBody = body.trimStart();
+  if (/json/i.test(contentType) || trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
     let parsed;
     try { parsed = JSON.parse(body); } catch { throw new Error("Feed declares JSON but could not be parsed"); }
     const rows = Array.isArray(parsed) ? parsed :
@@ -74,7 +75,7 @@ function parseFeed(body, feed, contentType) {
       };
     }).filter(Boolean);
   }
-  const items = xml.match(/<(?:[\w.-]+:)?(?:product|item|entry)(?:\s[^>]*)?>[\s\S]*?<\/(?:[\w.-]+:)?(?:product|item|entry)\s*>/gi) || [];
+  const items = body.match(/<(?:[\w.-]+:)?(?:product|item|entry)(?:\s[^>]*)?>[\s\S]*?<\/(?:[\w.-]+:)?(?:product|item|entry)\s*>/gi) || [];
   return items.slice(0, MAX_PRODUCTS_PER_FEED).map((block, i) => {
     const get = (...names) => xmlTag(block, names);
     const title = get("name", "title", "product_name");
