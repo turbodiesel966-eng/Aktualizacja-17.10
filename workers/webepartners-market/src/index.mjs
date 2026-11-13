@@ -105,9 +105,10 @@ async function feedConfig(env) {
   const allowed = allowedFeedHosts(env);
   if (feeds.length && !allowed.size) throw new Error("FEED_ALLOWED_HOSTS must list exact approved feed hostnames");
   for (const f of feeds) {
-    const u = new URL(f.url);
-    if (u.protocol !== "https:" || !allowed.has(u.hostname.toLowerCase())) {
-      throw new Error("Feed host is not allowlisted: " + u.hostname);
+    let u;
+    try { u = new URL(f.url); } catch { throw new Error("Each feed requires a valid HTTPS URL"); }
+    if (u.protocol !== "https:" || u.username || u.password || u.hash || (u.port && u.port !== "443") || !allowed.has(u.hostname.toLowerCase())) {
+      throw new Error("Feed URL must use an allowlisted HTTPS hostname without credentials or custom ports");
     }
   }
   return feeds;
@@ -126,11 +127,14 @@ async function syncFeeds(env) {
   for (const feed of feeds) {
     const started = Date.now();
     try {
-      const response = await fetch(feed.url, { headers: { "Accept": "application/xml,text/xml" }, signal: AbortSignal.timeout(25000) });
+      const response = await fetch(feed.url, { headers: { "Accept": "application/xml,text/xml,application/json" }, redirect: "manual", signal: AbortSignal.timeout(25000) });
+      if (response.status >= 300 && response.status < 400) throw new Error("Feed redirects are blocked; use the final HTTPS feed URL from WebePartners");
       if (!response.ok) throw new Error("Feed HTTP " + response.status);
-      const xml = await response.text();
-      if (xml.length > 25 * 1024 * 1024) throw new Error("Feed exceeds 25 MB limit");
-      const products = parseFeed(xml, feed);
+      const declaredLength = Number(response.headers.get("content-length") || 0);
+      if (declaredLength > 25 * 1024 * 1024) throw new Error("Feed exceeds 25 MB limit");
+      const body = await response.text();
+      if (body.length > 25 * 1024 * 1024) throw new Error("Feed exceeds 25 MB limit");
+      const products = parseFeed(body, feed, response.headers.get("content-type") || "");
       let imported = 0;
       for (let i=0;i<products.length;i+=50) {
         const batch = products.slice(i,i+50);
