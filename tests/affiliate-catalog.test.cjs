@@ -24,3 +24,27 @@ test("normalizes and filters a verified offer without inventing optional data", 
   assert.equal(offer.imageUrl, null);
   assert.equal(api.filterOffers([offer], "dynamometryczny", "tools").length, 1);
 });
+
+test("NAPRAWNIK MARKET tile has dedicated icon and is wired without replacing renderHome", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const ui = fs.readFileSync(path.join(__dirname, "../affiliate/market-ui.js"), "utf8");
+  const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  const icon = fs.readFileSync(path.join(__dirname, "../assets/naprawnik-market-icon.svg"), "utf8");
+  assert.match(html, /data-market-open/);
+  assert.match(html, /naprawnik-market-icon\.svg/);
+  assert.match(ui, /data-market-open/);
+  assert.doesNotMatch(ui, /window\.renderHome\s*=/);
+  assert.match(icon, /<svg[\s\S]*viewBox="0 0 512 512"/);
+});
+
+test("PWA source remains free of APK-only Market UI and Market icon", () => {
+  const fs = require("node:fs");
+  const html = fs.readFileSync(require("node:path").join(__dirname, "../index.html"), "utf8");
+  const manifest = JSON.parse(fs.readFileSync(require("node:path").join(__dirname, "../scripts/shared-manifest.json"), "utf8"));
+  assert.doesNotMatch(html, /data-market-open|naprawnik-market-icon\.svg/);
+  assert.ok(!manifest.pwaPrecache.includes("./affiliate/market-ui.js"));
+  assert.ok(!manifest.pwaPrecache.includes("./assets/naprawnik-market-icon.svg"));
+  assert.ok(manifest.apkPrecache.includes("./affiliate/market-ui.js"));
+  assert.ok(manifest.apkPrecache.includes("./assets/naprawnik-market-icon.svg"));
+});
