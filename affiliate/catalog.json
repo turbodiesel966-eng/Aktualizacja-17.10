@@ -37,36 +37,36 @@
       "id": "motolak",
       "name": "Motolak",
       "network": "WebePartners",
-      "status": "link_available",
+      "status": "verified",
       "affiliateUrl": "https://webep1.com/go/37a852f559",
       "categoryIds": [
         "chemistry"
       ],
-      "note": "Istniejący link z aplikacji; katalog produktów, ceny i feed nie zostały jeszcze zweryfikowane."
+      "note": "Program zaakceptowany w WebePartners; feed XML zaimportowany do staging. W bazie 14 054 oferty, ale duża część to lakiernictwo samochodowe. Publiczny Market filtruje ofertę pod warsztat i jednoślady."
     },
     {
       "id": "tooles",
       "name": "Tooles.pl",
       "network": "WebePartners",
-      "status": "pending_account_verification",
+      "status": "verified",
       "affiliateUrl": null,
       "categoryIds": [
         "tools"
       ],
-      "note": "Nie dodawać ofert do czasu potwierdzenia akceptacji programu i pobrania linków/feedu."
+      "note": "Program zaakceptowany w WebePartners; feed XML zaimportowany do staging. W bazie 4 553 oferty. Linki produktów pochodzą bezpośrednio z feedu WebePartners."
     },
     {
       "id": "topbuy",
       "name": "TopBuy.eu",
       "network": "WebePartners",
-      "status": "pending_account_verification",
+      "status": "temporarily_disabled",
       "affiliateUrl": null,
       "categoryIds": [
         "tools",
         "electronics",
         "consumables"
       ],
-      "note": "Nie dodawać ofert do czasu potwierdzenia akceptacji programu i pobrania linków/feedu."
+      "note": "Feed wykryty w WebePartners, ale import powoduje Cloudflare Worker error 1102. Nie publikować ofert do czasu optymalizacji feedu."
     },
     {
       "id": "etomnar",
@@ -78,7 +78,19 @@
         "parts",
         "consumables"
       ],
-      "note": "Nie dodawać ofert do czasu potwierdzenia akceptacji programu i pobrania linków/feedu."
+      "note": "Brak potwierdzonego zaakceptowanego feedu XML w API WebePartners."
+    },
+    {
+      "id": "gadzetyrajdowe",
+      "name": "Gadżety Rajdowe",
+      "network": "WebePartners",
+      "status": "verified",
+      "affiliateUrl": null,
+      "categoryIds": [
+        "tuning",
+        "parts"
+      ],
+      "note": "Program zaakceptowany w WebePartners; feed XML zaimportowany do staging. W bazie 3 242 oferty; linki produktów pochodzą bezpośrednio z feedu."
     }
   ],
   "offers": [],
