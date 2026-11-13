@@ -122,7 +122,7 @@ const marketTile = "<button type=\"button\" class=\"market-hero-tile\" data-mark
 const homeMarker = '<div class="special-section-header" style="margin:10px 0 8px">';
 if (!mobileHtml.includes("data-market-open")) {
   if (!mobileHtml.includes(homeMarker)) throw new Error("Could not find home module section for APK-only Market tile.");
-  mobileHtml = mobileHtml.replace(homeMarker, marketTile + "\\n" + homeMarker);
+  mobileHtml = mobileHtml.replace(homeMarker, marketTile + homeMarker);
 }
 
 if (!mobileHtml.includes(navMarker)) {

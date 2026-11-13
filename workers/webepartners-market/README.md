@@ -1,8 +1,9 @@
-# NAPRAWNIK MARKET — WebePartners (staging)
+# NAPRAWNIK MARKET — WebePartners (production & staging)
 
 ## Deployment status — 2026-11-13
-- Worker: `naprawnik-market-staging`
-- D1: `naprawnik-market-staging`, oddzielna od płatności.
+- Worker (produkcja): `naprawnik-market-live` (`https://naprawnik-market-live.turbodiesel966.workers.dev`)
+- Worker (staging): `naprawnik-market-staging` (`https://naprawnik-market-staging.turbodiesel966.workers.dev`)
+- D1: `naprawnik-market-live` (8219e883-97d7-42e5-a406-c1f5e50a4767) oraz `naprawnik-market-staging` (9a7df893-d350-45dc-81c6-aa71c4fe373b), oddzielone od bazy płatności i subskrypcji.
 - WebePartners API key stored as Cloudflare secret `WEBEPARTNERS_API_KEY`; publisher login stored as `WEBEPARTNERS_LOGIN`.
 - Cron: `0 */6 * * *` (every six hours).
 - Sync rotates one approved feed per run using D1 table `market_sync_state`.

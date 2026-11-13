@@ -15,9 +15,10 @@
  * Admin API:
  *   POST /admin/sync (Authorization: Bearer ...)
  *   GET /admin/status (Authorization: Bearer ...)
+ *   GET /admin/discover (Authorization: Bearer ...)
  */
 const CORS = {
-  "Access-Control-Allow-Origin": "https://localhost",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
   "Vary": "Origin"
@@ -26,6 +27,8 @@ const MAX_FEEDS = 50;
 const MAX_PRODUCTS_PER_FEED = 20000;
 const MAX_QUERY = 100;
 const MAX_LIMIT = 60;
+const WORKSHOP_SCOPE = `(lower(title || ' ' || category) LIKE '%motocykl%' OR lower(title || ' ' || category) LIKE '%skuter%' OR lower(title || ' ' || category) LIKE '%scooter%' OR lower(title || ' ' || category) LIKE '%cross%' OR lower(title || ' ' || category) LIKE '%enduro%' OR lower(title || ' ' || category) LIKE '%quad%' OR lower(title || ' ' || category) LIKE '%off-road%' OR lower(title || ' ' || category) LIKE '%warsztat%' OR lower(category) LIKE '%narzędzia i sprzęt warsztatowy%' OR lower(category) LIKE '%akcesoria samochodowe%' OR lower(title || ' ' || category) LIKE '%gaźnik%' OR lower(title || ' ' || category) LIKE '%olej silnikowy%' OR lower(title || ' ' || category) LIKE '%filtr oleju%')`;
+
 function allowedFeedHosts(env) {
   return new Set(String(env.FEED_ALLOWED_HOSTS || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean));
 }
@@ -33,17 +36,20 @@ function allowedFeedHosts(env) {
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { ...CORS, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 }
+
 function safeText(value, max = 500) {
-  return String(value ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+  return String(value ?? "").replace(/<[^>]*>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim().slice(0, max);
 }
+
 function xmlTag(block, names) {
   for (const name of names) {
-    const re = new RegExp("<(?:[\\w.-]+:)?"+name+"(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:[\\w.-]+:)?"+name+"\\s*>", "i");
+    const re = new RegExp("<(?:[\\w.-]+:)?" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:[\\w.-]+:)?" + name + "\\s*>", "i");
     const match = block.match(re);
     if (match) return safeText(match[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"), 2000);
   }
   return "";
 }
+
 function parseFeed(body, feed, contentType) {
   const trimmedBody = body.trimStart();
   if (/json/i.test(contentType) || trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
@@ -57,25 +63,27 @@ function parseFeed(body, feed, contentType) {
         for (const key of keys) if (p?.[key] != null && p[key] !== "") return p[key];
         return "";
       };
-      const title = safeText(pick("name","title","product_name"),300);
-      const url = safeText(pick("aw_deep_link","deeplink","link","url","product_url"),2000);
-      const image = safeText(pick("aw_image_url","image_link","image","image_url"),2000);
-      const priceRaw = pick("search_price","price","sale_price","amount");
-      const price = Number(String(priceRaw).replace(",",".").replace(/[^0-9.]/g,""));
+      const title = safeText(pick("name", "title", "product_name"), 300);
+      const url = safeText(pick("aw_deep_link", "deeplink", "link", "url", "product_url"), 2000);
+      const image = safeText(pick("aw_image_url", "image_link", "image", "image_url"), 2000);
+      const priceRaw = pick("search_price", "price", "sale_price", "amount");
+      const price = Number(String(priceRaw).replace(",", ".").replace(/[^0-9.]/g, ""));
       if (!title || !/^https:\/\//i.test(url)) return null;
       return {
-        external_id:safeText(pick("aw_product_id","id","product_id","sku") || url || title,180) || String(i),
-        title, description:safeText(pick("description","product_description"),2000),
-        brand:safeText(pick("brand","manufacturer"),200),
-        category:safeText(feed.category || pick("category","product_type") || "inne",100),
-        price:Number.isFinite(price)&&price>0?price:null,
-        currency:safeText(pick("currency","currency_code") || "PLN",3).toUpperCase(),
-        product_url:url,image_url:/^https:\/\//i.test(image)?image:null,
-        program:safeText(feed.program,120)
+        external_id: safeText(pick("aw_product_id", "id", "product_id", "sku") || url || title, 180) || String(i),
+        title,
+        description: safeText(pick("description", "product_description"), 2000),
+        brand: safeText(pick("brand", "manufacturer"), 200),
+        category: safeText(pick("category", "shopcategory", "product_type") || feed.category || "inne", 100),
+        price: Number.isFinite(price) && price > 0 ? price : null,
+        currency: safeText(pick("currency", "currency_code") || "PLN", 3).toUpperCase(),
+        product_url: url,
+        image_url: /^https:\/\//i.test(image) ? image : null,
+        program: safeText(feed.program, 120)
       };
     }).filter(Boolean);
   }
-  const items = body.match(/<(?:[\w.-]+:)?(?:product|item|entry)(?:\s[^>]*)?>[\s\S]*?<\/(?:[\w.-]+:)?(?:product|item|entry)\s*>/gi) || [];
+  const items = body.match(/<(?:[\w.-]+:)?(?:product|item|entry|offer)(?:\s[^>]*)?>[\s\S]*?<\/(?:[\w.-]+:)?(?:product|item|entry|offer)\s*>/gi) || [];
   return items.slice(0, MAX_PRODUCTS_PER_FEED).map((block, i) => {
     const get = (...names) => xmlTag(block, names);
     const title = get("name", "title", "product_name");
@@ -89,8 +97,8 @@ function parseFeed(body, feed, contentType) {
       external_id: safeText(id, 180) || String(i),
       title: safeText(title, 300),
       description: get("description", "product_description"),
-      brand: get("brand", "manufacturer"),
-      category: safeText(feed.category || get("category", "product_type") || "inne", 100),
+      brand: get("brand", "manufacturer", "producer"),
+      category: safeText(get("shopcategory", "category", "product_type") || feed.category || "inne", 100),
       price: Number.isFinite(price) && price > 0 ? price : null,
       currency: safeText(get("currency", "currency_code") || "PLN", 3).toUpperCase(),
       product_url: url,
@@ -99,31 +107,81 @@ function parseFeed(body, feed, contentType) {
     };
   }).filter(Boolean);
 }
-async function feedConfig(env) {
-  let feeds;
-  try { feeds = JSON.parse(env.FEED_CONFIG || "[]"); } catch { throw new Error("FEED_CONFIG is not valid JSON"); }
-  if (!Array.isArray(feeds) || feeds.length > MAX_FEEDS) throw new Error("FEED_CONFIG must be an array of up to 50 feeds");
-  const allowed = allowedFeedHosts(env);
-  if (feeds.length && !allowed.size) throw new Error("FEED_ALLOWED_HOSTS must list exact approved feed hostnames");
-  for (const f of feeds) {
-    let u;
-    try { u = new URL(f.url); } catch { throw new Error("Each feed requires a valid HTTPS URL"); }
-    if (u.protocol !== "https:" || u.username || u.password || u.hash || (u.port && u.port !== "443") || !allowed.has(u.hostname.toLowerCase())) {
-      throw new Error("Feed URL must use an allowlisted HTTPS hostname without credentials or custom ports");
+
+async function webepartnersGet(path, env) {
+  if (!env.WEBEPARTNERS_API_KEY || !env.WEBEPARTNERS_LOGIN) throw new Error("WebePartners API credentials are not configured");
+  const auth = btoa(env.WEBEPARTNERS_LOGIN + ":" + env.WEBEPARTNERS_API_KEY);
+  const response = await fetch("https://api2.webepartners.pl" + path, {
+    headers: { "Authorization": "Basic " + auth, "Accept": "application/json" },
+    redirect: "manual",
+    signal: AbortSignal.timeout(20000)
+  });
+  if (!response.ok) throw new Error("WebePartners API HTTP " + response.status + " at " + path);
+  const data = await response.json();
+  if (!Array.isArray(data)) throw new Error("Unexpected WebePartners response at " + path);
+  return data;
+}
+
+const MARKET_TERMS = /(motoryz|motocykl|skuter|scooter|cross|enduro|quad|atv|gadzetyrajdowe|tooles|topbuy|etomnar)/i;
+
+async function discoverWebeFeeds(env) {
+  const programs = await webepartnersGet("/Wydawca/GetPrograms", env);
+  const accepted = programs.filter(p => Number(p.relationId) === 4 && p.isXml === true &&
+    !/topbuy/i.test(String(p.programName || "")) &&
+    MARKET_TERMS.test([p.programName, p.categoryName].filter(Boolean).join(" ")));
+  const feeds = [];
+  for (const p of accepted.slice(0, 40)) {
+    const rows = await webepartnersGet("/Wydawca/GetFeeds?programId=" + encodeURIComponent(p.programId), env);
+    for (const f of rows) {
+      if (f.programId != null && Number(f.programId) !== Number(p.programId)) continue;
+      const rawUrl = String(f.feedUrl || "").trim();
+      if (!rawUrl) continue;
+      let u;
+      try { u = new URL(rawUrl); } catch { continue; }
+      if (u.protocol !== "https:" || u.username || u.password || u.hash || (u.port && u.port !== "443")) continue;
+      feeds.push({
+        program: safeText(f.programName || p.programName, 120),
+        url: u.href,
+        category: safeText(p.categoryName || "motocykle", 100),
+        feedName: safeText(f.feedName || "", 120)
+      });
     }
   }
-  return feeds;
+  const unique = new Map();
+  for (const f of feeds) unique.set(f.url, f);
+  return { programs: accepted, feeds: [...unique.values()].slice(0, MAX_FEEDS) };
 }
+
+async function feedConfig(env) {
+  const configured = String(env.FEED_CONFIG || "").trim();
+  if (configured) {
+    let feeds;
+    try { feeds = JSON.parse(configured); } catch { throw new Error("FEED_CONFIG is not valid JSON"); }
+    if (!Array.isArray(feeds) || feeds.length > MAX_FEEDS) throw new Error("FEED_CONFIG must be an array of up to 50 feeds");
+    const allowed = allowedFeedHosts(env);
+    if (!allowed.size) throw new Error("FEED_ALLOWED_HOSTS must list exact approved feed hostnames");
+    for (const f of feeds) {
+      let u;
+      try { u = new URL(f.url); } catch { throw new Error("Each feed requires a valid HTTPS URL"); }
+      if (u.protocol !== "https:" || u.username || u.password || u.hash || (u.port && u.port !== "443")) throw new Error("Feed URL must use an allowlisted HTTPS hostname without credentials or custom ports");
+      if (!allowed.has(u.hostname.toLowerCase())) throw new Error("Feed URL must use an allowlisted HTTPS hostname without credentials or custom ports");
+    }
+    return feeds;
+  }
+  return (await discoverWebeFeeds(env)).feeds;
+}
+
 async function authorized(request, env) {
   const expected = env.MARKET_ADMIN_TOKEN;
   const supplied = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!expected || !supplied || supplied.length !== expected.length) return false;
   const a = new TextEncoder().encode(supplied), b = new TextEncoder().encode(expected);
-  let diff = 0; for (let i=0;i<a.length;i++) diff |= a[i] ^ b[i];
+  let diff = 0; for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
   return diff === 0;
 }
-async function syncFeeds(env) {
-  const feeds = await feedConfig(env);
+
+async function syncFeeds(env, feedOverride = null) {
+  const feeds = feedOverride || await feedConfig(env);
   const results = [];
   for (const feed of feeds) {
     const started = Date.now();
@@ -137,8 +195,8 @@ async function syncFeeds(env) {
       if (body.length > 25 * 1024 * 1024) throw new Error("Feed exceeds 25 MB limit");
       const products = parseFeed(body, feed, response.headers.get("content-type") || "");
       let imported = 0;
-      for (let i=0;i<products.length;i+=50) {
-        const batch = products.slice(i,i+50);
+      for (let i = 0; i < products.length; i += 50) {
+        const batch = products.slice(i, i + 50);
         const stmts = batch.map(p => env.DB.prepare(`INSERT INTO market_products
           (program, external_id, title, description, brand, category, price, currency, product_url, image_url, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
@@ -146,22 +204,23 @@ async function syncFeeds(env) {
           title=excluded.title, description=excluded.description, brand=excluded.brand,
           category=excluded.category, price=excluded.price, currency=excluded.currency,
           product_url=excluded.product_url, image_url=excluded.image_url, updated_at=datetime('now')`)
-          .bind(p.program,p.external_id,p.title,p.description,p.brand,p.category,p.price,p.currency,p.product_url,p.image_url));
+          .bind(p.program, p.external_id, p.title, p.description, p.brand, p.category, p.price, p.currency, p.product_url, p.image_url));
         await env.DB.batch(stmts);
         imported += batch.length;
       }
       await env.DB.prepare(`INSERT INTO market_sync_runs(program,status,product_count,duration_ms,message)
-        VALUES (?, 'ok', ?, ?, ?)`).bind(feed.program, imported, Date.now()-started, "Feed synchronized").run();
+        VALUES (?, 'ok', ?, ?, ?)`).bind(feed.program, imported, Date.now() - started, "Feed synchronized").run();
       results.push({ program: feed.program, status: "ok", imported });
     } catch (e) {
       const message = safeText(e?.message || "Unknown error", 300);
       await env.DB.prepare(`INSERT INTO market_sync_runs(program,status,product_count,duration_ms,message)
-        VALUES (?, 'error', 0, ?, ?)`).bind(safeText(feed.program,120), Date.now()-started, message).run();
+        VALUES (?, 'error', 0, ?, ?)`).bind(safeText(feed.program, 120), Date.now() - started, message).run();
       results.push({ program: feed.program, status: "error", message });
     }
   }
   return results;
 }
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -172,16 +231,26 @@ export default {
       const category = safeText(url.searchParams.get("category"), 100);
       const limit = Math.max(1, Math.min(MAX_LIMIT, Number(url.searchParams.get("limit")) || 30));
       const cursor = Math.max(0, Number(url.searchParams.get("cursor")) || 0);
-      const where = [], values = [];
-      if (q) { where.push("(title LIKE ? OR brand LIKE ? OR description LIKE ?)"); values.push("%"+q+"%","%"+q+"%","%"+q+"%"); }
+      const where = [WORKSHOP_SCOPE], values = [];
+      if (q) { where.push("(title LIKE ? OR brand LIKE ? OR description LIKE ?)"); values.push("%" + q + "%", "%" + q + "%", "%" + q + "%"); }
       if (category) { where.push("category = ?"); values.push(category); }
-      const sql = "SELECT id,program,external_id,title,description,brand,category,price,currency,product_url,image_url,updated_at FROM market_products "+(where.length?"WHERE "+where.join(" AND "):"")+" ORDER BY title COLLATE NOCASE LIMIT ? OFFSET ?";
-      const rows = await env.DB.prepare(sql).bind(...values,limit,cursor).all();
-      return json({ items: rows.results || [], next_cursor: (rows.results || []).length === limit ? cursor+limit : null });
+      const sql = "SELECT id,program,external_id,title,description,brand,category,price,currency,product_url,image_url,updated_at FROM market_products " + (where.length ? "WHERE " + where.join(" AND ") : "") + " ORDER BY title COLLATE NOCASE LIMIT ? OFFSET ?";
+      const rows = await env.DB.prepare(sql).bind(...values, limit, cursor).all();
+      return json({ items: rows.results || [], next_cursor: (rows.results || []).length === limit ? cursor + limit : null });
     }
     if (url.pathname === "/categories" && request.method === "GET") {
-      const rows = await env.DB.prepare("SELECT category, COUNT(*) AS count FROM market_products GROUP BY category ORDER BY category").all();
+      const rows = await env.DB.prepare("SELECT category, COUNT(*) AS count FROM market_products WHERE " + WORKSHOP_SCOPE + " GROUP BY category ORDER BY category").all();
       return json({ categories: rows.results || [] });
+    }
+    if (url.pathname === "/admin/discover" && request.method === "GET") {
+      if (!(await authorized(request, env))) return json({ error: "Unauthorized" }, 401);
+      const discovered = await discoverWebeFeeds(env);
+      return json({
+        accepted_xml_programs: discovered.programs.map(p => ({ programId: p.programId, programName: p.programName, categoryName: p.categoryName, relationId: p.relationId, isXml: p.isXml })),
+        feeds: discovered.feeds.map(f => ({ program: f.program, feedName: f.feedName, category: f.category, host: new URL(f.url).hostname })),
+        program_count: discovered.programs.length,
+        feed_count: discovered.feeds.length
+      });
     }
     if (url.pathname.startsWith("/admin/")) {
       if (!(await authorized(request, env))) return json({ error: "Unauthorized" }, 401);
@@ -197,7 +266,16 @@ export default {
     return json({ error: "Not found" }, 404);
   },
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(syncFeeds(env));
+    ctx.waitUntil((async () => {
+      const feeds = await feedConfig(env);
+      if (!feeds.length) return;
+      const row = await env.DB.prepare("SELECT value FROM market_sync_state WHERE key = 'next_feed'").first();
+      const index = Math.max(0, Number(row?.value) || 0) % feeds.length;
+      const result = await syncFeeds(env, [feeds[index]]);
+      await env.DB.prepare("INSERT INTO market_sync_state(key,value,updated_at) VALUES ('next_feed',?,datetime('now')) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=datetime('now')")
+        .bind(String((index + 1) % feeds.length)).run();
+      console.log(JSON.stringify({ event: "market_feed_rotation", index, feed_count: feeds.length, result }));
+    })());
   }
 };
 

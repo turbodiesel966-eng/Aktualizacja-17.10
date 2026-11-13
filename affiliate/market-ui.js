@@ -1,7 +1,7 @@
 /* APK-only NAPRAWNIK MARKET UI. Production PWA source is not modified. */
 (function () {
   "use strict";
-  const API = "https://naprawnik-market-staging.turbodiesel966.workers.dev";
+  const API = "https://naprawnik-market-live.turbodiesel966.workers.dev";
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const money = p => p == null ? "Cena w sklepie" : new Intl.NumberFormat("pl-PL",{style:"currency",currency:"PLN"}).format(p);
   async function request(path) {
@@ -10,6 +10,7 @@
     return response.json();
   }
   async function open() {
+    if (typeof window !== "undefined") window.__naprawnikView = "market";
     const screen = document.querySelector(".screen");
     if (!screen) return;
     screen.innerHTML = '<div class="btn back" onclick="renderHome()">← Wróć</div><div class="brand-hero"><div class="app-title">NAPRAWNIK MARKET</div><div class="app-sub">CZĘŚCI • NARZĘDZIA • DIAGNOSTYKA</div></div><div class="card"><h2>🔎 Wyszukiwarka produktów</h2><input id="marketQuery" placeholder="np. multimetr, gaźnik, klucz..." autocomplete="off"><select id="marketCategory"><option value="">Wszystkie kategorie</option></select><div id="marketStatus" class="empty">Łączenie z katalogiem…</div><div id="marketResults"></div></div><div class="card"><small style="color:var(--dim);font-size:10px;line-height:1.5">Linki afiliacyjne mogą przynosić NAPRAWNIKOWI prowizję. Nie podwyższa to ceny zakupu. Ceny i dostępność potwierdź w sklepie przed zakupem.</small></div>';

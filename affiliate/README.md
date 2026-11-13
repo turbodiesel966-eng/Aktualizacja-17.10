@@ -11,8 +11,9 @@ Katalog działa przez osobny Cloudflare Worker i osobną bazę D1. To integracja
 - **eTOMNAR** — brak potwierdzonego zaakceptowanego feedu w API; nie publikować ofert.
 
 ## Baza i API
-- Worker: `https://naprawnik-market-staging.turbodiesel966.workers.dev`
-- D1: `naprawnik-market-staging` (oddzielna baza).
+- Worker (produkcja): `https://naprawnik-market-live.turbodiesel966.workers.dev`
+- Worker (staging): `https://naprawnik-market-staging.turbodiesel966.workers.dev`
+- D1: `naprawnik-market-live` (produkcja) oraz `naprawnik-market-staging` (staging) — obie oddzielone od bazy płatności i PWA.
 - `GET /health` — status usługi.
 - `GET /products?q=&category=&limit=&cursor=` — wyszukiwanie ofert, domyślnie ograniczone do zakresu warsztatowo-motocyklowego.
 - `GET /categories` — kategorie i liczebność w tym samym zakresie.
