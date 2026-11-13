@@ -200,3 +200,5 @@ export default {
     ctx.waitUntil(syncFeeds(env));
   }
 };
+
+export { parseFeed, feedConfig };
