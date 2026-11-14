@@ -10,7 +10,7 @@
  *
  * Public API:
  *   GET /health
- *   GET /products?q=&category=&limit=&cursor=
+ *   GET /products?q=&category=&limit=&cursor=&sort=
  *   GET /categories
  * Admin API:
  *   POST /admin/sync (Authorization: Bearer ...)
@@ -28,6 +28,36 @@ const MAX_PRODUCTS_PER_FEED = 20000;
 const MAX_QUERY = 100;
 const MAX_LIMIT = 60;
 const WORKSHOP_SCOPE = `(lower(title || ' ' || category) LIKE '%motocykl%' OR lower(title || ' ' || category) LIKE '%skuter%' OR lower(title || ' ' || category) LIKE '%scooter%' OR lower(title || ' ' || category) LIKE '%cross%' OR lower(title || ' ' || category) LIKE '%enduro%' OR lower(title || ' ' || category) LIKE '%quad%' OR lower(title || ' ' || category) LIKE '%off-road%' OR lower(title || ' ' || category) LIKE '%warsztat%' OR lower(category) LIKE '%narzędzia i sprzęt warsztatowy%' OR lower(category) LIKE '%akcesoria samochodowe%' OR lower(title || ' ' || category) LIKE '%gaźnik%' OR lower(title || ' ' || category) LIKE '%olej silnikowy%' OR lower(title || ' ' || category) LIKE '%filtr oleju%')`;
+
+function isWorkshopProduct(title, category, description) {
+  const t = `${title || ""} ${category || ""} ${description || ""}`.toLowerCase();
+  const c = String(category || "").toLowerCase();
+  return (
+    t.includes("motocykl") ||
+    t.includes("skuter") ||
+    t.includes("scooter") ||
+    t.includes("cross") ||
+    t.includes("enduro") ||
+    t.includes("quad") ||
+    t.includes("off-road") ||
+    t.includes("warsztat") ||
+    c.includes("narzędzia i sprzęt warsztatowy") ||
+    c.includes("akcesoria samochodowe") ||
+    t.includes("gaźnik") ||
+    t.includes("olej silnikowy") ||
+    t.includes("filtr oleju")
+  ) ? 1 : 0;
+}
+
+function sanitizeFtsQuery(raw) {
+  const tokens = String(raw || "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!tokens.length) return "";
+  return tokens.map(t => `"${t}"*`).join(" AND ");
+}
 
 function allowedFeedHosts(env) {
   return new Set(String(env.FEED_ALLOWED_HOSTS || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean));
@@ -69,17 +99,20 @@ function parseFeed(body, feed, contentType) {
       const priceRaw = pick("search_price", "price", "sale_price", "amount");
       const price = Number(String(priceRaw).replace(",", ".").replace(/[^0-9.]/g, ""));
       if (!title || !/^https:\/\//i.test(url)) return null;
+      const desc = safeText(pick("description", "product_description"), 2000);
+      const cat = safeText(pick("category", "shopcategory", "product_type") || feed.category || "inne", 100);
       return {
         external_id: safeText(pick("aw_product_id", "id", "product_id", "sku") || url || title, 180) || String(i),
         title,
-        description: safeText(pick("description", "product_description"), 2000),
+        description: desc,
         brand: safeText(pick("brand", "manufacturer"), 200),
-        category: safeText(pick("category", "shopcategory", "product_type") || feed.category || "inne", 100),
+        category: cat,
         price: Number.isFinite(price) && price > 0 ? price : null,
         currency: safeText(pick("currency", "currency_code") || "PLN", 3).toUpperCase(),
         product_url: url,
         image_url: /^https:\/\//i.test(image) ? image : null,
-        program: safeText(feed.program, 120)
+        program: safeText(feed.program, 120),
+        is_workshop: isWorkshopProduct(title, cat, desc)
       };
     }).filter(Boolean);
   }
@@ -93,17 +126,20 @@ function parseFeed(body, feed, contentType) {
     const priceRaw = get("search_price", "price", "sale_price", "amount");
     const price = Number(String(priceRaw).replace(",", ".").replace(/[^0-9.]/g, ""));
     if (!title || !url || !/^https:\/\//i.test(url)) return null;
+    const desc = get("description", "product_description");
+    const cat = safeText(get("shopcategory", "category", "product_type") || feed.category || "inne", 100);
     return {
       external_id: safeText(id, 180) || String(i),
       title: safeText(title, 300),
-      description: get("description", "product_description"),
+      description: desc,
       brand: get("brand", "manufacturer", "producer"),
-      category: safeText(get("shopcategory", "category", "product_type") || feed.category || "inne", 100),
+      category: cat,
       price: Number.isFinite(price) && price > 0 ? price : null,
       currency: safeText(get("currency", "currency_code") || "PLN", 3).toUpperCase(),
       product_url: url,
       image_url: /^https:\/\//i.test(image) ? image : null,
-      program: safeText(feed.program, 120)
+      program: safeText(feed.program, 120),
+      is_workshop: isWorkshopProduct(title, cat, desc)
     };
   }).filter(Boolean);
 }
@@ -198,13 +234,14 @@ async function syncFeeds(env, feedOverride = null) {
       for (let i = 0; i < products.length; i += 50) {
         const batch = products.slice(i, i + 50);
         const stmts = batch.map(p => env.DB.prepare(`INSERT INTO market_products
-          (program, external_id, title, description, brand, category, price, currency, product_url, image_url, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+          (program, external_id, title, description, brand, category, price, currency, product_url, image_url, is_workshop, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
           ON CONFLICT(program, external_id) DO UPDATE SET
           title=excluded.title, description=excluded.description, brand=excluded.brand,
           category=excluded.category, price=excluded.price, currency=excluded.currency,
-          product_url=excluded.product_url, image_url=excluded.image_url, updated_at=datetime('now')`)
-          .bind(p.program, p.external_id, p.title, p.description, p.brand, p.category, p.price, p.currency, p.product_url, p.image_url));
+          product_url=excluded.product_url, image_url=excluded.image_url,
+          is_workshop=excluded.is_workshop, updated_at=datetime('now')`)
+          .bind(p.program, p.external_id, p.title, p.description, p.brand, p.category, p.price, p.currency, p.product_url, p.image_url, p.is_workshop ?? 1));
         await env.DB.batch(stmts);
         imported += batch.length;
       }
@@ -229,17 +266,73 @@ export default {
     if (url.pathname === "/products" && request.method === "GET") {
       const q = safeText(url.searchParams.get("q"), MAX_QUERY);
       const category = safeText(url.searchParams.get("category"), 100);
+      const sort = safeText(url.searchParams.get("sort"), 20);
       const limit = Math.max(1, Math.min(MAX_LIMIT, Number(url.searchParams.get("limit")) || 30));
       const cursor = Math.max(0, Number(url.searchParams.get("cursor")) || 0);
-      const where = [WORKSHOP_SCOPE], values = [];
-      if (q) { where.push("(title LIKE ? OR brand LIKE ? OR description LIKE ?)"); values.push("%" + q + "%", "%" + q + "%", "%" + q + "%"); }
-      if (category) { where.push("category = ?"); values.push(category); }
-      const sql = "SELECT id,program,external_id,title,description,brand,category,price,currency,product_url,image_url,updated_at FROM market_products " + (where.length ? "WHERE " + where.join(" AND ") : "") + " ORDER BY title COLLATE NOCASE LIMIT ? OFFSET ?";
-      const rows = await env.DB.prepare(sql).bind(...values, limit, cursor).all();
-      return json({ items: rows.results || [], next_cursor: (rows.results || []).length === limit ? cursor + limit : null });
+
+      let orderBy = "p.title COLLATE NOCASE ASC";
+      if (sort === "price_asc") orderBy = "p.price ASC NULLS LAST, p.title COLLATE NOCASE ASC";
+      else if (sort === "price_desc") orderBy = "p.price DESC NULLS LAST, p.title COLLATE NOCASE ASC";
+
+      const ftsQuery = q ? sanitizeFtsQuery(q) : "";
+      let rows;
+
+      if (ftsQuery) {
+        try {
+          const where = ["p.is_workshop = 1"];
+          const values = [ftsQuery];
+          if (category) {
+            where.push("p.category = ?");
+            values.push(category);
+          }
+          const sql = `SELECT p.id, p.program, p.external_id, p.title, p.description, p.brand, p.category, p.price, p.currency, p.product_url, p.image_url, p.updated_at
+            FROM market_products_fts f
+            JOIN market_products p ON f.rowid = p.id
+            WHERE market_products_fts MATCH ? AND ${where.join(" AND ")}
+            ORDER BY ${orderBy}
+            LIMIT ? OFFSET ?`;
+          rows = await env.DB.prepare(sql).bind(...values, limit, cursor).all();
+        } catch (e) {
+          const where = ["is_workshop = 1"];
+          const values = [];
+          if (category) {
+            where.push("category = ?");
+            values.push(category);
+          }
+          where.push("(title LIKE ? OR brand LIKE ? OR description LIKE ?)");
+          values.push("%" + q + "%", "%" + q + "%", "%" + q + "%");
+          const orderByNoPrefix = orderBy.replace(/p\./g, "");
+          const sql = `SELECT id, program, external_id, title, description, brand, category, price, currency, product_url, image_url, updated_at
+            FROM market_products
+            WHERE ${where.join(" AND ")}
+            ORDER BY ${orderByNoPrefix}
+            LIMIT ? OFFSET ?`;
+          rows = await env.DB.prepare(sql).bind(...values, limit, cursor).all();
+        }
+      } else {
+        const where = ["is_workshop = 1"];
+        const values = [];
+        if (category) {
+          where.push("category = ?");
+          values.push(category);
+        }
+        const orderByNoPrefix = orderBy.replace(/p\./g, "");
+        const sql = `SELECT id, program, external_id, title, description, brand, category, price, currency, product_url, image_url, updated_at
+          FROM market_products
+          WHERE ${where.join(" AND ")}
+          ORDER BY ${orderByNoPrefix}
+          LIMIT ? OFFSET ?`;
+        rows = await env.DB.prepare(sql).bind(...values, limit, cursor).all();
+      }
+
+      const items = rows.results || [];
+      return json({
+        items,
+        next_cursor: items.length === limit ? cursor + limit : null
+      });
     }
     if (url.pathname === "/categories" && request.method === "GET") {
-      const rows = await env.DB.prepare("SELECT category, COUNT(*) AS count FROM market_products WHERE " + WORKSHOP_SCOPE + " GROUP BY category ORDER BY category").all();
+      const rows = await env.DB.prepare("SELECT category, COUNT(*) AS count FROM market_products WHERE is_workshop = 1 GROUP BY category ORDER BY category").all();
       return json({ categories: rows.results || [] });
     }
     if (url.pathname === "/admin/discover" && request.method === "GET") {
@@ -279,4 +372,4 @@ export default {
   }
 };
 
-export { parseFeed, feedConfig };
+export { parseFeed, feedConfig, isWorkshopProduct, sanitizeFtsQuery, WORKSHOP_SCOPE };

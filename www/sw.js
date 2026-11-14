@@ -1,4 +1,4 @@
-const CACHE='naprawnik-v5-49-native';
+const CACHE='naprawnik-v5-49-market-final-native';
 const PRECACHE=[
   './index.html',
   './platform-adapter.js',

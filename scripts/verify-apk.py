@@ -7,7 +7,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-apk = Path(sys.argv[1] if len(sys.argv) > 1 else "android/app/build/outputs/apk/debug/app-debug.apk")
+apk = Path(sys.argv[1] if len(sys.argv) > 1 else ("android/app/build/outputs/apk/release/app-release.apk" if Path("android/app/build/outputs/apk/release/app-release.apk").is_file() else "android/app/build/outputs/apk/debug/app-debug.apk"))
 if not apk.is_file():
     raise SystemExit(f"APK not found: {apk}")
 

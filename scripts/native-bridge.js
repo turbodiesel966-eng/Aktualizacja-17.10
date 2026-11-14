@@ -204,7 +204,7 @@ if (Capacitor.isNativePlatform()) {
   // =========================================================================
   (function setupNativeApkUpdater() {
     const APK_META_URL = "https://naprawnik-download.pages.dev/apk-version.json";
-    const APK_FALLBACK_URL = "https://naprawnik-download.pages.dev/app-debug.apk";
+    const APK_FALLBACK_URL = "https://naprawnik-download.pages.dev/naprawnik-release.apk";
     const AUTO_CHECK_THROTTLE_MS = 15 * 60 * 1000;
     const LS_LAST_CHECK = "naprawnik_apk_last_check_ts";
     const LS_PENDING_INSTALL = "naprawnik_apk_pending_install";

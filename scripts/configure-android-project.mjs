@@ -20,9 +20,9 @@ export function computeVersionMeta(versionJson, runNumber = 0) {
   const versionName = String(versionJson?.version || "5.49").trim();
   const rawBuild = Number(versionJson?.build || 1730653000000);
   const baseCode = rawBuild > 1700000000000
-    ? Math.max(2, Math.floor((rawBuild - 1700000000000) / 10000))
-    : Math.max(2, Math.floor(rawBuild));
-  const versionCode = Math.min(2147000000, baseCode + Math.max(0, Number(runNumber) || 0));
+    ? Math.max(3065334, Math.floor((rawBuild - 1700000000000) / 10000))
+    : Math.max(3065334, Math.floor(rawBuild));
+  const versionCode = Math.min(2147000000, baseCode + Math.max(1, Number(runNumber) || 1));
   return { versionName, versionCode, build: rawBuild };
 }
 
@@ -98,11 +98,15 @@ export function patchBuildGradle(gradle, { versionCode, versionName, keystoreCon
     }
     buildTypes {`;
     out = out.replace(/\s*buildTypes\s*\{/, "\n" + signingBlock);
-    out = out.replace(/(buildTypes\s*\{[\s\S]*?release\s*\{)/, "$1\n            signingConfig signingConfigs.naprawnik");
+    out = out.replace(/(buildTypes\s*\{[\s\S]*?release\s*\{)/, "$1\n            signingConfig signingConfigs.naprawnik\n            debuggable false");
     if (/(buildTypes\s*\{[\s\S]*?)debug\s*\{/.test(out)) {
       out = out.replace(/(buildTypes\s*\{[\s\S]*?debug\s*\{)/, "$1\n            signingConfig signingConfigs.naprawnik");
     } else {
       out = out.replace(/(buildTypes\s*\{)/, "$1\n        debug {\n            signingConfig signingConfigs.naprawnik\n        }");
+    }
+  } else {
+    if (out.includes("buildTypes {")) {
+      out = out.replace(/(buildTypes\s*\{[\s\S]*?release\s*\{)/, "$1\n            debuggable false");
     }
   }
   return out;

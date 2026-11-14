@@ -79,7 +79,7 @@ try {
 // B) Synchronizacja sw.js
 const rootSwPath = path.join(root, "sw.js");
 let rootSwContent = await readFile(rootSwPath, "utf8");
-const updatedRootSw = rootSwContent.replace(/^const CACHE='naprawnik-v[\d-]+';$/m, `const CACHE='${expectedCacheName}';`);
+const updatedRootSw = rootSwContent.replace(/^const CACHE='naprawnik-v[a-zA-Z0-9-]+';$/m, `const CACHE='${expectedCacheName}';`);
 if (updatedRootSw !== rootSwContent) {
   await writeFile(rootSwPath, updatedRootSw, "utf8");
 }
@@ -250,7 +250,7 @@ await writeFile(mobileIndexPath, mobileHtml, "utf8");
 // pre-packaged assets in www, ensuring 100% reliable offline operation with zero remote OTA fetching.
 const mobileSwPath = path.join(webDir, "sw.js");
 let mobileSw = await readFile(mobileSwPath, "utf8");
-const sourceCacheMatch = mobileSw.match(/^const CACHE='(naprawnik-v[\d-]+)';$/m);
+const sourceCacheMatch = mobileSw.match(/^const CACHE='(naprawnik-v[a-zA-Z0-9-]+?)(?:-native)?';$/m);
 if (!sourceCacheMatch || mobileSw.match(/^const CACHE=/gm)?.length !== 1) {
   throw new Error("Unexpected source service-worker cache version; refusing to patch the Android cache blindly.");
 }

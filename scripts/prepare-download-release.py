@@ -83,7 +83,7 @@ def local_url(raw, base):
         return None
     url = urllib.parse.urljoin(base, raw)
     p = urllib.parse.urlparse(url)
-    if p.scheme not in ("http", "https") or p.netloc != HOST or p.path.rstrip("/").endswith("app-debug.apk") or not p.path.strip("/"):
+    if p.scheme not in ("http", "https") or p.netloc != HOST or p.path.rstrip("/").endswith(("naprawnik-release.apk", "app-debug.apk")) or not p.path.strip("/"):
         return None
     return urllib.parse.urlunparse((p.scheme, p.netloc, p.path, "", p.query, ""))
 
@@ -159,7 +159,7 @@ def main():
         html = template_file.read_text(encoding="utf-8")
     else:
         html = get(BASE).decode("utf-8")
-    if "Raport VirusTotal" not in html or "SHA-256" not in html or "app-debug.apk" not in html:
+    if "Raport VirusTotal" not in html or "SHA-256" not in html:
         raise SystemExit("Download page is missing expected sections; refusing deployment")
     html, count = re.subn(r"(?is)(SHA-256.{0,700}?)([a-f0-9]{64})",
                           lambda m: m.group(1) + digest, html, count=1)
@@ -193,6 +193,8 @@ def main():
                 nested = local_url(raw, url)
                 if nested and nested not in seen:
                     pending.append(nested)
+    (args.output / "naprawnik-release.apk").write_bytes(apk)
+    (args.output / "naprawnik-release.apk.sha256").write_text(digest + "  naprawnik-release.apk\n", encoding="utf-8")
     (args.output / "app-debug.apk").write_bytes(apk)
     (args.output / "app-debug.apk.sha256").write_text(digest + "  app-debug.apk\n", encoding="utf-8")
 
@@ -202,7 +204,7 @@ def main():
         "versionName": vmeta["versionName"],
         "versionCode": vmeta["versionCode"],
         "build": vmeta["build"],
-        "apkUrl": BASE + "app-debug.apk",
+        "apkUrl": BASE + "naprawnik-release.apk",
         "sha256": digest,
         "size": len(apk),
         "changelog": args.changelog,
@@ -215,6 +217,8 @@ def main():
     (args.output / "_headers").write_text(
         "/apk-version.json\n"
         "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
+        "/naprawnik-release.apk.sha256\n"
+        "  Cache-Control: no-store, max-age=0\n"
         "/app-debug.apk.sha256\n"
         "  Cache-Control: no-store, max-age=0\n",
         encoding="utf-8",

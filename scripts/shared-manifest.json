@@ -1,8 +1,9 @@
 {
   "$schema": "./shared-manifest.schema.json",
   "appVersion": "5.49",
-  "cacheVersion": "naprawnik-v5-49",
-  "nativeCacheVersion": "naprawnik-v5-49-native",
+  "cacheVersion": "naprawnik-v5-49-market-final",
+  "cacheName": "naprawnik-v5-49-market-final",
+  "nativeCacheVersion": "naprawnik-v5-49-market-final-native",
   "sharedScripts": [
     "platform-adapter.js",
     "billing.js",
