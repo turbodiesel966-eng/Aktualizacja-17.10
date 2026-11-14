@@ -30,25 +30,30 @@ const MAX_LIMIT = 60;
 const WORKSHOP_SCOPE = `(lower(title || ' ' || category) LIKE '%motocykl%' OR lower(title || ' ' || category) LIKE '%skuter%' OR lower(title || ' ' || category) LIKE '%scooter%' OR lower(title || ' ' || category) LIKE '%cross%' OR lower(title || ' ' || category) LIKE '%enduro%' OR lower(title || ' ' || category) LIKE '%quad%' OR lower(title || ' ' || category) LIKE '%off-road%' OR lower(title || ' ' || category) LIKE '%warsztat%' OR lower(category) LIKE '%narzędzia i sprzęt warsztatowy%' OR lower(category) LIKE '%akcesoria samochodowe%' OR lower(title || ' ' || category) LIKE '%gaźnik%' OR lower(title || ' ' || category) LIKE '%olej silnikowy%' OR lower(title || ' ' || category) LIKE '%filtr oleju%')`;
 
 function isWorkshopProduct(title, category, description) {
-  const t = `${title || ""} ${category || ""} ${description || ""}`.toLowerCase();
-  const c = String(category || "").toLowerCase();
+  const t = `${title || ""} ${category || ""} ${description || ""}`.toLocaleLowerCase("pl-PL");
+  const c = String(category || "").toLocaleLowerCase("pl-PL");
+  const explicitVehicleFit = /(motocykl|motocykla|motocykli|skuter|scooter|motorower|moped|cross|enduro|quad|atv)/i.test(t);
+  const gardenOnly = /(kosiark|podkaszark|wykaszark|kosy spalin|kos spalin|pilark[aię]? łańcuchow|pił[ayę] łańcuchow|dmuchaw[ayę] do liści|żywopłot|sekator|opryskiwacz|glebogryzark|traktor ogrodow|gleba ogrodow)/i.test(t);
+  const carOnly = /(dywaniki samochodow|wycieraczki samochodow|kołpaki|bagażnik dachow|fotelik samochodow|kamera cofania|czujniki parkowania|hak holowniczy|pokrowiec na samochod|pokrowce samochodow)/i.test(t);
+
+  // Explicit motorcycle/scooter/ATV fit wins over a broad partner category label.
+  if (explicitVehicleFit) return 1;
+  // Remove obvious garden-only and passenger-car-only false positives.
+  if (gardenOnly || carOnly) return 0;
+
   return (
-    t.includes("motocykl") ||
-    t.includes("skuter") ||
-    t.includes("scooter") ||
-    t.includes("cross") ||
-    t.includes("enduro") ||
-    t.includes("quad") ||
-    t.includes("off-road") ||
     t.includes("warsztat") ||
     c.includes("narzędzia i sprzęt warsztatowy") ||
-    c.includes("akcesoria samochodowe") ||
     t.includes("gaźnik") ||
     t.includes("olej silnikowy") ||
-    t.includes("filtr oleju")
+    t.includes("filtr oleju") ||
+    t.includes("cdi") ||
+    t.includes("regulator napięcia") ||
+    t.includes("świeca zapłonowa") ||
+    t.includes("łańcuch motocyklowy") ||
+    t.includes("zębatka motocyklowa")
   ) ? 1 : 0;
 }
-
 function sanitizeFtsQuery(raw) {
   const tokens = String(raw || "")
     .replace(/[^\p{L}\p{N}\s]/gu, " ")

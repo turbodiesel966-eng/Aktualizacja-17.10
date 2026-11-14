@@ -53,6 +53,13 @@ test("isWorkshopProduct correctly identifies workshop and motorcycle scope", () 
   assert.equal(isWorkshopProduct("Kosiarka elektryczna ogrodowa", "ogród", "zielony trawnik"), 0);
 });
 
+test("excludes garden-only and car-only products while retaining explicit motorcycle fit", () => {
+  assert.equal(isWorkshopProduct("Kosiarka elektryczna ogrodowa", "ogród", "do trawnika"), 0);
+  assert.equal(isWorkshopProduct("Gaźnik do kosy spalinowej", "części do urządzeń ogrodowych", "silnik 2T"), 0);
+  assert.equal(isWorkshopProduct("Dywaniki samochodowe gumowe", "akcesoria samochodowe", ""), 0);
+  assert.equal(isWorkshopProduct("Podnośnik motocyklowy", "akcesoria samochodowe", "do motocykla"), 1);
+  assert.equal(isWorkshopProduct("Regulator napięcia 12V", "elektronika i diagnostyka", "do skutera 4T"), 1);
+});
 test("sanitizeFtsQuery produces safe FTS5 prefix tokens", () => {
   assert.equal(sanitizeFtsQuery("multimetr"), '"multimetr"*');
   assert.equal(sanitizeFtsQuery('klucz 1/2"'), '"klucz"* AND "1"* AND "2"*');
