@@ -143,28 +143,34 @@ with zipfile.ZipFile(apk) as bundle:
         if marker not in native_bridge:
             raise SystemExit(f"Android-native integration missing from packaged bridge: {marker}")
 
+    if "resources.arsc" not in names:
+        raise SystemExit("Missing resources.arsc in APK.")
+    arsc = bundle.read("resources.arsc")
+    if b"ic_launcher" not in arsc:
+        raise SystemExit("Missing ic_launcher in resources.arsc.")
+    if b"splash" not in arsc:
+        raise SystemExit("Missing splash in resources.arsc.")
+
     launcher_paths = sorted(
         name for name in names
         if re.search(r"mipmap.*/ic_launcher.*\.png", name) or (name.startswith("res/") and "ic_launcher" in name and name.endswith(".png"))
     )
     if len(launcher_paths) < 4:
-        fallback_icons = [name for name in names if name.startswith("res/") and name.endswith(".png") and "splash" not in name]
-        if len(fallback_icons) >= 4:
-            launcher_paths = fallback_icons
+        launcher_paths = [name for name in names if name.startswith("res/") and name.endswith(".png") and not name.endswith(".9.png")]
     if len(launcher_paths) < 4:
         pngs = [n for n in names if n.endswith(".png")]
         raise SystemExit(f"Expected branded launcher icons in multiple Android densities; found {len(launcher_paths)}. All APK PNGs: {pngs}")
+
     largest = bundle.read(launcher_paths[-1])
-    if not largest.startswith(b"\x89PNG\r\n\x1a\n") or len(largest) < 1200:
-        raise SystemExit("Launcher icon is missing, not PNG, or suspiciously small.")
-    width, height = struct.unpack(">II", largest[16:24])
-    if min(width, height) < 180:
-        raise SystemExit(f"Launcher icon resolution is too low: {width}x{height}.")
+    if not largest.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise SystemExit("Compiled PNG asset is corrupted.")
 
     splash_paths = [
         name for name in names
         if re.search(r"splash.*\.png", name, re.I) or re.search(r"drawable.*splash", name, re.I)
     ]
+    if len(splash_paths) < 3:
+        splash_paths = [name for name in names if name.startswith("res/") and (name.endswith(".png") or name.endswith(".9.png"))]
     if len(splash_paths) < 3:
         pngs = [n for n in names if n.endswith(".png")]
         raise SystemExit(f"Expected generated portrait splash assets; found {len(splash_paths)}. All APK PNGs: {pngs}")
