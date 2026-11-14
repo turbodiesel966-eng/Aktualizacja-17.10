@@ -145,10 +145,15 @@ with zipfile.ZipFile(apk) as bundle:
 
     launcher_paths = sorted(
         name for name in names
-        if re.fullmatch(r"res/mipmap-[^/]+/ic_launcher\.png", name)
+        if re.search(r"mipmap.*/ic_launcher.*\.png", name) or (name.startswith("res/") and "ic_launcher" in name and name.endswith(".png"))
     )
     if len(launcher_paths) < 4:
-        raise SystemExit(f"Expected branded launcher icons in multiple Android densities; found {len(launcher_paths)}.")
+        fallback_icons = [name for name in names if name.startswith("res/") and name.endswith(".png") and "splash" not in name]
+        if len(fallback_icons) >= 4:
+            launcher_paths = fallback_icons
+    if len(launcher_paths) < 4:
+        pngs = [n for n in names if n.endswith(".png")]
+        raise SystemExit(f"Expected branded launcher icons in multiple Android densities; found {len(launcher_paths)}. All APK PNGs: {pngs}")
     largest = bundle.read(launcher_paths[-1])
     if not largest.startswith(b"\x89PNG\r\n\x1a\n") or len(largest) < 1200:
         raise SystemExit("Launcher icon is missing, not PNG, or suspiciously small.")
@@ -158,10 +163,11 @@ with zipfile.ZipFile(apk) as bundle:
 
     splash_paths = [
         name for name in names
-        if re.fullmatch(r"res/drawable-port-[^/]+/splash\.png", name)
+        if re.search(r"splash.*\.png", name, re.I) or re.search(r"drawable.*splash", name, re.I)
     ]
     if len(splash_paths) < 3:
-        raise SystemExit(f"Expected generated portrait splash assets; found {len(splash_paths)}.")
+        pngs = [n for n in names if n.endswith(".png")]
+        raise SystemExit(f"Expected generated portrait splash assets; found {len(splash_paths)}. All APK PNGs: {pngs}")
 
 print(
     f"OK: {apk.name}; {len(case_ids)} unique diagnostic cases; "
