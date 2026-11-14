@@ -114,8 +114,37 @@ for (const file of sharedAssets) {
 }
 
 // Instrument only the generated Android copy. The published web/PWA source is unchanged.
+
 const mobileIndexPath = path.join(webDir, "index.html");
 let mobileHtml = await readFile(mobileIndexPath, "utf8");
+// Keep the bottom Market navigation tab in the generated Android app.
+// The source index owns the canonical five-tab navigation; the generator
+// also patches older builds safely if the Market item is absent.
+const marketNavOld = `  <div class="nav">
+    <div class="nav-item" data-nav="home">🏠 Home</div>
+    <div class="nav-item" data-nav="vehicles">🛵 Garaż</div>
+    <div class="nav-item" data-nav="search">🔍 Szukaj</div>
+    <div class="nav-item" data-nav="settings">⚙️ Ustawienia</div>
+  </div>`;
+const marketNavNew = `  <div class="nav">
+    <div class="nav-item" data-nav="home"><span aria-hidden="true">🏠</span><span>Home</span></div>
+    <div class="nav-item" data-nav="market" aria-label="NAPRAWNIK MARKET"><img src="./assets/naprawnik-market-icon.svg" alt="" width="25" height="25" style="display:block;width:25px;height:25px;object-fit:contain;margin:0 auto 2px"><span>Market</span></div>
+    <div class="nav-item" data-nav="vehicles"><span aria-hidden="true">🛵</span><span>Garaż</span></div>
+    <div class="nav-item" data-nav="search"><span aria-hidden="true">🔍</span><span>Szukaj</span></div>
+    <div class="nav-item" data-nav="settings"><span aria-hidden="true">⚙️</span><span>Ustawienia</span></div>
+  </div>`;
+if (!mobileHtml.includes('data-nav="market"') && mobileHtml.includes(marketNavOld)) {
+  mobileHtml = mobileHtml.replace(marketNavOld, marketNavNew);
+}
+const marketActiveOld = "currentNav = (view==='search'||view==='settings'||view==='vehicles'||view==='vehicleDetail') ? (view==='vehicleDetail'?'vehicles':view) : 'home';";
+const marketActiveNew = "currentNav = view==='market' ? 'market' : (view==='search'||view==='settings'||view==='vehicles'||view==='vehicleDetail') ? (view==='vehicleDetail'?'vehicles':view) : 'home';";
+if (!mobileHtml.includes("currentNav = view==='market'") && mobileHtml.includes(marketActiveOld)) {
+  mobileHtml = mobileHtml.replace(marketActiveOld, marketActiveNew);
+}
+mobileHtml = mobileHtml.replace(
+  "else if(view==='market') { if(window.NaprawnikMarket && window.NaprawnikMarket.open) window.NaprawnikMarket.open(); }",
+  "else if(view==='market') { if(window.NaprawnikMarket && window.NaprawnikMarket.open) window.NaprawnikMarket.open(arg || ''); }"
+);
 const navMarker = "function nav(view, arg, restoreState){";
 // Add the dedicated Market tile only to the generated Android HTML, never to the PWA source.
 const marketTile = "<button type=\"button\" class=\"market-hero-tile\" data-market-open style=\"width:100%;display:flex;align-items:center;gap:14px;text-align:left;padding:14px;margin:10px 0 14px;border-radius:18px;border:1px solid rgba(255,142,46,.75);background:linear-gradient(118deg,#151a27 0%,#202638 55%,#101c27 100%);box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);color:#fff;\">\n    <span style=\"width:66px;height:66px;flex:0 0 66px;border-radius:17px;overflow:hidden;background:#0b0e17;border:1px solid rgba(255,145,48,.55);box-shadow:0 0 18px rgba(255,132,38,.18);display:grid;place-items:center\">\n      <img src=\"./assets/naprawnik-market-icon.svg\" alt=\"\" width=\"66\" height=\"66\" style=\"display:block;width:66px;height:66px\">\n    </span>\n    <span style=\"min-width:0;flex:1;display:block\">\n      <span style=\"display:block;font-size:17px;font-weight:900;letter-spacing:.7px;color:#fff\">NAPRAWNIK <span style=\"color:#ff9a3a\">MARKET</span></span>\n      <span style=\"display:block;font-size:11px;line-height:1.4;color:#cbd5e1;margin-top:4px\">Części, narzędzia i wyposażenie warsztatu</span>\n      <span style=\"display:inline-flex;align-items:center;margin-top:8px;padding:5px 10px;border-radius:999px;background:linear-gradient(90deg,#ff8b2b,#e95e24);font-size:10px;font-weight:900;color:#111827\">OTWÓRZ KATALOG →</span>\n    </span>\n    <span aria-hidden=\"true\" style=\"font-size:26px;color:#29d7e7;font-weight:900\">›</span>\n</button>\n";
@@ -257,7 +286,7 @@ if (!sourceCacheMatch || mobileSw.match(/^const CACHE=/gm)?.length !== 1) {
 const nativeCacheName = sourceCacheMatch[1] + "-native";
 
 const precacheList = await getApkPrecache();
-for (const file of ["./affiliate/catalog.js", "./affiliate/catalog.json", "./affiliate/market-ui.js"]) {
+for (const file of ["./affiliate/catalog.js", "./affiliate/catalog.json", "./affiliate/market-ui.js", "./affiliate/market-recommendations.js"]) {
   if (!precacheList.includes(file)) precacheList.push(file);
 }
 const precacheFormatted = precacheList.map(item => `  '${item}'`).join(",\n");

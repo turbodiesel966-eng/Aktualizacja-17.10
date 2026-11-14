@@ -10,7 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="./assets/naprawnik-icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NAPRAWNIK v5.49 — diagnostyka i naprawy</title>
+<title>NAPRAWNIK v5.50 — diagnostyka i naprawy</title>
 <style>
 :root{
   --bg:#0a0a14; --panel:#15151f; --border:#33334d; --accent:#ff8c1a; --cyan:#22d3ee; --hero:#ffe14d; --text:#e8e8f5; --dim:#8888aa;
@@ -45,8 +45,8 @@ textarea{resize:vertical;min-height:60px}
 .entry{border-bottom:1px solid var(--border);padding:8px 0;font-size:12px}
 .entry b{color:var(--accent)}
 .entry small{color:var(--dim);display:block;margin-top:3px}
-.nav{display:flex;justify-content:space-around;border-top:1px solid var(--border);padding-top:8px;margin-top:10px;font-size:11px;color:var(--dim);flex-shrink:0}
-.nav-item{text-align:center;cursor:pointer;padding:2px 6px}
+.nav{display:flex;justify-content:space-around;gap:2px;border-top:1px solid var(--border);padding-top:8px;margin-top:10px;font-size:10px;color:var(--dim);flex-shrink:0}
+.nav-item{text-align:center;cursor:pointer;padding:3px 2px;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;white-space:nowrap;font-size:10px}
 .nav-item.active{color:var(--cyan);text-shadow:0 0 5px var(--cyan)}
 .empty{color:var(--dim);font-size:12px;text-align:center;padding:14px 0}
 .alert{border:2px dashed var(--accent);color:var(--accent);padding:8px;text-align:center;font-size:11px;border-radius:4px;margin-bottom:10px}
@@ -97,7 +97,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .nav{background:rgba(9,6,20,.88);border-color:#663b91}
 
 
-/* NAPRAWNIK v5.49 — diagnostyka powiązana; bez różowego */
+/* NAPRAWNIK v5.50 — diagnostyka powiązana; bez różowego */
 .brand-hero{
   padding:28px 8px 24px !important;
   margin:10px 0 14px !important;
@@ -127,7 +127,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .brand-hero:before{background:radial-gradient(ellipse at 15% 50%,rgba(255,122,0,.18),transparent 35%),radial-gradient(ellipse at 85% 50%,rgba(40,123,255,.20),transparent 38%) !important;}
 
 
-/* NAPRAWNIK v5.49 — asystent zdjęciowy i historia offline */
+/* NAPRAWNIK v5.50 — asystent zdjęciowy i historia offline */
 .pa-intro{border:1px solid #7c3aed;background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(34,211,238,.07));border-radius:12px;padding:13px;margin-bottom:10px}
 .pa-status{font-size:11px;border:1px solid var(--border);border-radius:8px;padding:8px;margin:8px 0;color:var(--dim);line-height:1.45}
 .pa-status.online{border-color:#16875a;color:#8df0ba}.pa-status.offline{border-color:#b7791f;color:#ffd58a}.pa-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:8px 0}
@@ -838,7 +838,7 @@ body{
   margin-top:4px;
 }
 
-/* ===== NAPRAWNIK v5.49 — CAŁKOWITY REDESIGN HOME WORKSHOP UI (3D CYBER-WORKSHOP) ===== */
+/* ===== NAPRAWNIK v5.50 — CAŁKOWITY REDESIGN HOME WORKSHOP UI (3D CYBER-WORKSHOP) ===== */
 :root{
   --nap-grad-purple-orange:linear-gradient(96deg,rgba(62,16,118,.96) 0%,rgba(142,34,158,.92) 48%,rgba(248,118,12,.96) 100%);
   --nap-grad-cta:linear-gradient(92deg,#6b21a8 0%,#b832c8 44%,#ff7a00 84%,#ffd43b 100%);
@@ -1500,7 +1500,7 @@ a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
 </head>
 <body>
 <div class="frame">
-  <div class="topbar"><span>⚙️ NAPRAWNIK v5.49 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b></span><span id="clock"></span></div>
+  <div class="topbar"><span>⚙️ NAPRAWNIK v5.50 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b></span><span id="clock"></span></div>
   <div id="topUpdateBar" class="top-update-bar" style="display:none !important">
     <button id="btnAppUpdate" class="btn-update normal" type="button" style="display:none" title="Sprawdź lub zainstaluj aktualizację">
       <span id="updateBtnIcon" class="update-icon">🔄</span>
@@ -1509,10 +1509,11 @@ a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
   </div>
   <div class="screen" id="screen"></div>
   <div class="nav">
-    <div class="nav-item" data-nav="home">🏠 Home</div>
-    <div class="nav-item" data-nav="vehicles">🛵 Garaż</div>
-    <div class="nav-item" data-nav="search">🔍 Szukaj</div>
-    <div class="nav-item" data-nav="settings">⚙️ Ustawienia</div>
+    <div class="nav-item" data-nav="home"><span aria-hidden="true">🏠</span><span>Home</span></div>
+    <div class="nav-item" data-nav="market" aria-label="NAPRAWNIK MARKET"><img src="./assets/naprawnik-market-icon.svg" alt="" width="25" height="25" style="display:block;width:25px;height:25px;object-fit:contain;margin:0 auto 2px"><span>Market</span></div>
+    <div class="nav-item" data-nav="vehicles"><span aria-hidden="true">🛵</span><span>Garaż</span></div>
+    <div class="nav-item" data-nav="search"><span aria-hidden="true">🔍</span><span>Szukaj</span></div>
+    <div class="nav-item" data-nav="settings"><span aria-hidden="true">⚙️</span><span>Ustawienia</span></div>
   </div>
 </div>
 <div id="lockScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:999;align-items:center;justify-content:center;padding:20px"></div>
@@ -2620,6 +2621,7 @@ function renderDiagFlow(){
       <div class="btn" style="border-color:#00f57a;color:#00f57a" onclick="saveFlowResultToContext('${escapeHtml(st.result).replace(/'/g,"\\'")}', '${escapeHtml(st.detail).replace(/'/g,"\\'")}')">💾 Zapisz wynik w historii pojazdu / zlecenia</div>
       <div class="btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="nav('lab')">⚡ Potwierdź pomiarem w Laboratorium</div>
       <div class="btn" onclick="nav('parts')">🔩 Dobierz części dla tej naprawy</div>
+      ${window.NaprawnikMarketRecommendations ? window.NaprawnikMarketRecommendations.render({context:'diagnosis',query:f.title+' '+st.result,title:'Market — części i narzędzia do diagnozy',reason:'Wynik diagnozy wymaga potwierdzenia pomiarem. Dopasowanie części sprawdź po numerze OEM i wersji pojazdu.'}) : ''}
       <div class="btn" onclick="resetDiagFlow()">🔁 Nowa diagnoza</div>`;
     return;
   }
@@ -4200,6 +4202,7 @@ function renderManuals(filter='Wszystkie'){
       <div class="btn" onclick="renderManuals('2T')">🛵 Skutery 2T</div>
       <div class="btn" onclick="renderManuals('4T')">🛵 Skutery 4T</div>
       <input id="manualSearch" placeholder="Szukaj marki lub modelu…" oninput="filterManualCards()" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin:8px 0">
+      ${window.NaprawnikMarketRecommendations ? window.NaprawnikMarketRecommendations.render({context:'service',query:'narzędzia warsztatowe multimetr klucz dynamometryczny szczelinomierz',title:'Market — wyposażenie do prac serwisowych',reason:'Wybierz narzędzia wymagane w instrukcji konkretnego pojazdu.'}) : ''}
       <div id="manualList">${items.map((m,i)=>`<div class="card manual-entry" data-search="${(m.name+' '+m.type+' '+m.source).toLowerCase()}" style="margin:10px 0"><b>${i+1}. ${m.name}</b><div style="margin:5px 0;color:var(--dim);font-size:12px">${m.type} · ${m.kind}</div><small>Źródło: ${m.source}</small><a class="btn" style="display:block;text-decoration:none;text-align:center;margin-top:8px" href="${m.url}" target="_blank" rel="noopener">Otwórz źródło ↗</a></div>`).join('')}</div>
     </div>
     <div class="card"><h3>⚠️ Ważne</h3><p>To baza linków i poradników, a nie komplet pobranych plików PDF. Priorytetem są źródła bezpłatne, oficjalne instrukcje i publiczne repozytoria. Część producentów udostępnia bezpłatnie tylko instrukcję obsługi, a pełne manuale warsztatowe ogranicza do autoryzowanych serwisów. Nie oznaczamy takiej instrukcji jako pełnej serwisówki.</p><p>Instrukcja obsługi nie zastępuje Service Manuala: do momentów dokręcania, rezystancji, luzów zaworowych i schematów używaj dokumentacji warsztatowej właściwej dla konkretnego rocznika.</p></div>`;
@@ -5968,7 +5971,7 @@ function renderClients(){
   screen.querySelectorAll('.cl-hit').forEach(el=>el.addEventListener('click', ()=>{ clientFilter = el.dataset.key; renderClients(); }));
 }
 
-const APP_VERSION = 'NAPRAWNIK v5.49';
+const APP_VERSION = 'NAPRAWNIK v5.50';
 function sendReport(kind){
   const ta = $('#' + kind + 'Text');
   const txt = ta.value.trim();
@@ -6515,7 +6518,7 @@ function nav(view, arg, restoreState){
     };
   }
 
-  currentNav = (view==='search'||view==='settings'||view==='vehicles'||view==='vehicleDetail') ? (view==='vehicleDetail'?'vehicles':view) : 'home';
+  currentNav = view==='market' ? 'market' : (view==='search'||view==='settings'||view==='vehicles'||view==='vehicleDetail') ? (view==='vehicleDetail'?'vehicles':view) : 'home';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===currentNav));
   updatePlanBadge();
 
@@ -6537,7 +6540,7 @@ function nav(view, arg, restoreState){
   if(NAV_MIN[view] && !hasPlan(NAV_MIN[view])){ renderLocked(NAV_MIN[view], NAV_LABEL[view]||view); return; }
   recordRecentActivity(view, arg);
   if(view==='plans') renderPlans();
-  else if(view==='market') { if(window.NaprawnikMarket && window.NaprawnikMarket.open) window.NaprawnikMarket.open(); }
+  else if(view==='market') { if(window.NaprawnikMarket && window.NaprawnikMarket.open) window.NaprawnikMarket.open(arg || ''); }
   else if(view==='module') renderModuleView(arg);
   else if(view==='home') renderHome();
   else if(view==='orders') renderOrders(arg);
@@ -8050,6 +8053,7 @@ function renderPinouts(){
     </div>
 
     <div class="btn" style="border-color:#ffe066;color:#ffe066;margin-top:12px" onclick="nav('multimeter')">📏 Przejdź do procedur pomiarów multimetrem</div>
+    ${window.NaprawnikMarketRecommendations ? window.NaprawnikMarketRecommendations.render({context:'pinout',query:'multimetr sondy pomiarowe przewody pomiarowe konektory zaciskarka',title:'Narzędzia do pracy z pinoutem',reason:'Dobierz zakres miernika oraz końcówki do konkretnego złącza. Nie kupuj części układu zapłonowego bez potwierdzenia pomiarami.'}) : ''}
   </div>`;
 }
 
@@ -8131,6 +8135,7 @@ function renderJettingWizard(){
         ⚠️ <b>Złota zasada bezpieczeństwa:</b> Zawsze montuj dyszę główną o 5–8 numerów większą na pierwsze odpalenie. Zrób test na pełnym gazie, odetnij zapłon w trakcie jazdy (Plug Chop) i oceń kolor świecy!
       </div>
     </div>
+    ${window.NaprawnikMarketRecommendations ? window.NaprawnikMarketRecommendations.render({context:'jetting',query:'dysza gaźnika zestaw dysz iglica śrubokręt regulacyjny',title:'Market — narzędzia i części do strojenia gaźnika',reason:'Rozmiar dyszy i typ gwintu muszą być zgodne z gaźnikiem. Kalkulator podaje punkt startowy, a nie potwierdzony numer części.'}) : ''}
   </div>`;
   calcJettingUI();
 }
@@ -10109,6 +10114,7 @@ function renderVehicleServiceSchedule(v){
         </div>`;
       }).join('')}
     </div>
+    ${window.NaprawnikMarketRecommendations ? window.NaprawnikMarketRecommendations.render({context:'service',query:applicable.map(item=>item.name+' '+item.desc).join(' '),title:'Market — części i materiały do harmonogramu',reason:'Dobierz normę, wymiar oraz numer katalogowy do dokładnego wariantu pojazdu. Nie każda pozycja harmonogramu wymaga zakupu części.'}) : ''}
   </div>`;
 }
 
@@ -10162,7 +10168,7 @@ function zoomPhoto(dataUrl){
 
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
-const CURRENT_APP_VERSION = "5.49";
+const CURRENT_APP_VERSION = "5.50";
 const CURRENT_APP_BUILD = 1731571200000;
 let isAppUpdateAvailable = false;
 function triggerUpdateState(){}
@@ -10220,6 +10226,7 @@ if(pin){ showLock(); } else { nav('home'); }
 <script src="./billing.js?v=17"></script>
 <script src="./affiliate/catalog.js"></script>
 <script src="./affiliate/market-ui.js"></script>
+<script src="./affiliate/market-recommendations.js"></script>
   <script src="./native-bridge.js"></script>
 </body>
 </html>

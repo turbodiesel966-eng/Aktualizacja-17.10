@@ -11,19 +11,20 @@
     return response.json();
   }
 
-  async function open() {
+  async function open(initialQuery) {
     if (typeof window !== "undefined") window.__naprawnikView = "market";
     const screen = document.querySelector(".screen");
     if (!screen) return;
 
+    const startQuery = String(initialQuery || "").slice(0, 100);
     screen.innerHTML = '<div class="btn back" onclick="if(typeof nav===\'function\'){nav(\'home\');}else{renderHome();}">← Wróć do warsztatu</div>' +
       '<div class="brand-hero"><div class="app-title">NAPRAWNIK MARKET</div><div class="app-sub">CZĘŚCI • NARZĘDZIA • DIAGNOSTYKA</div></div>' +
       '<div class="card"><h2>🔎 Wyszukiwarka produktów</h2>' +
-      '<input id="marketQuery" placeholder="np. multimetr, gaźnik, klucz, podnośnik..." autocomplete="off">' +
+      '<input id="marketQuery" placeholder="np. multimetr, gaźnik, klucz, podnośnik..." autocomplete="off" value="' + esc(startQuery) + '">' +
       '<select id="marketCategory"><option value="">Wszystkie kategorie</option></select>' +
       '<div id="marketStatus" class="empty">Łączenie z katalogiem…</div>' +
       '<div id="marketResults"></div></div>' +
-      '<div class="card"><small style="color:var(--dim);font-size:10px;line-height:1.5">Linki afiliacyjne mogą przynosić NAPRAWNIKOWI prowizję. Nie podwyższa to ceny zakupu. Ceny i dostępność potwierdź w sklepie przed zakupem.</small></div>';
+      '<div class="card"><button type="button" class="btn" onclick="window.NaprawnikMarketRecommendations&&window.NaprawnikMarketRecommendations.showList()">🛒 Otwórz listę zakupów</button><small style="color:var(--dim);font-size:10px;line-height:1.5">Linki afiliacyjne mogą przynosić NAPRAWNIKOWI prowizję. Nie podwyższa to ceny zakupu. Ceny i dostępność potwierdź w sklepie przed zakupem.</small></div>';
 
     const query = document.getElementById("marketQuery");
     const category = document.getElementById("marketCategory");
@@ -46,7 +47,7 @@
           '<div style="font-weight:700;font-size:13px;line-height:1.35;color:var(--text);margin-bottom:3px">' + esc(item.title) + '</div>' +
           '<div style="font-size:11px;color:var(--dim);margin-bottom:3px">' + esc(item.program) + ' • ' + esc(item.brand || item.category) + '</div>' +
           '<div style="font-size:13px;font-weight:700;color:var(--hero)">' + esc(money(item.price)) + '</div>' +
-          '<a class="btn" style="margin:6px 0 0;text-decoration:none;display:inline-block;width:auto;padding:6px 14px;border-color:var(--accent);color:var(--accent)" href="' + esc(item.product_url) + '" target="_blank" rel="noopener noreferrer sponsored">Otwórz ofertę ↗</a>' +
+          '<a class="btn" style="margin:6px 0 0;text-decoration:none;display:inline-block;width:auto;padding:6px 14px;border-color:var(--accent);color:var(--accent)" href="' + esc(item.product_url) + '" target="_blank" rel="noopener noreferrer sponsored" onclick="window.NaprawnikMarketRecommendations&&window.NaprawnikMarketRecommendations.clicked(\'market-search\',' + Number(item.id) + ')">Otwórz ofertę ↗</a>' +
           '</div></div>').join("");
       } catch (error) {
         status.textContent = error.message || "Nie udało się pobrać katalogu.";

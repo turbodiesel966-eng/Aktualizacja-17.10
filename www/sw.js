@@ -1,4 +1,4 @@
-const CACHE='naprawnik-v5-49-market-final-native';
+const CACHE='naprawnik-v5-50-market-integration-native';
 const PRECACHE=[
   './index.html',
   './platform-adapter.js',
@@ -14,6 +14,7 @@ const PRECACHE=[
   './affiliate/catalog.json',
   './affiliate/market-ui.js',
   './assets/naprawnik-market-icon.svg',
+  './affiliate/market-recommendations.js',
   './assets/naprawnik-icon.svg',
   './assets/naprawnik-icon-192.svg',
   './assets/naprawnik-icon-512.svg',
