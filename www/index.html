@@ -5494,7 +5494,7 @@ function renderLegal(){
 }
 function renderAndroidApkCard(){
   if (typeof window !== 'undefined' && window.__naprawnikNative) {
-    return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div></div>`;
+    return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div><button type="button" class="btn" style="border-color:#00e5ff;color:#00e5ff;margin-top:8px" onclick="if(window.__naprawnikApkUpdater)window.__naprawnikApkUpdater.openModal(true)">🔄 Sprawdź aktualizacje APK</button></div>`;
   }
   return `<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa w 100% offline w warsztacie.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>`;
 }
@@ -10163,7 +10163,7 @@ function zoomPhoto(dataUrl){
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
 const CURRENT_APP_VERSION = "5.49";
-const CURRENT_APP_BUILD = 1730653000000;
+const CURRENT_APP_BUILD = 1731571200000;
 let isAppUpdateAvailable = false;
 function triggerUpdateState(){}
 

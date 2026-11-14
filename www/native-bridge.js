@@ -270,18 +270,30 @@ if (Capacitor.isNativePlatform()) {
       }
       const rCode = Number(remote.versionCode || 0);
       const iCode = Number(installed.versionCode || 0);
-      const semCmp = compareSemver(remote.versionName || "0", installed.versionName || "0");
 
+      // 1. Android versionCode jest głównym, autorytatywnym wyznacznikiem aktualizacji Androida
+      // Nie blokujemy aktualizacji dlatego, że versionName pozostał 5.49
       if (rCode > 0 && iCode > 0) {
-        if (rCode < iCode) return false;
-        if (semCmp < 0) return false;
-        if (rCode > iCode) return true;
-        return semCmp > 0;
+        return rCode > iCode;
       }
+
+      // 2. Semver fallback (np. testy jednostkowe lub środowisko bez odczytanego natywnego versionCode)
+      const semCmp = compareSemver(remote.versionName || "0", installed.versionName || "0");
       if (semCmp !== 0) return semCmp > 0;
+
+      // 3. Sygnatura znacznika build (timestamp)
       const rBuild = Number(remote.build || 0);
-      const iBuild = Number(installed.build || 0);
-      return rBuild > 0 && iBuild > 0 && rBuild > iBuild;
+      const iBuild = Number(installed.build || (typeof window !== "undefined" ? window.CURRENT_APP_BUILD : 0) || 0);
+      if (rBuild > 0 && iBuild > 0 && rBuild !== iBuild) {
+        return rBuild > iBuild;
+      }
+
+      // 4. Gdy remote ma prawidłowy kod versionCode > 0, a zainstalowany nie miał odczytanego kodu (iCode === 0)
+      if (rCode > 0 && iCode === 0) {
+        return true;
+      }
+
+      return false;
     }
 
     function formatBytes(bytes) {
@@ -321,14 +333,21 @@ if (Capacitor.isNativePlatform()) {
     async function readInstalledInfo() {
       const plugin = getPlugin();
       if (plugin && typeof plugin.getInstalledInfo === "function") {
-        const info = await plugin.getInstalledInfo();
-        state.installed = info;
-        return info;
+        try {
+          const info = await plugin.getInstalledInfo();
+          if (info && (info.versionCode || info.versionName)) {
+            state.installed = info;
+            return info;
+          }
+        } catch (e) {
+          console.warn("readInstalledInfo fallback:", e);
+        }
       }
       const fallback = {
         packageName: "pl.turbodiesel.naprawnik",
         versionName: typeof window.CURRENT_APP_VERSION === "string" ? window.CURRENT_APP_VERSION : "0.0",
         versionCode: 0,
+        build: typeof window.CURRENT_APP_BUILD === "number" ? window.CURRENT_APP_BUILD : 0,
         canRequestPackageInstalls: false,
         hasDownloadedApk: false,
       };
@@ -615,7 +634,18 @@ if (Capacitor.isNativePlatform()) {
       if (plugin && typeof plugin.fetchUpdateMetadata === "function") {
         return await plugin.fetchUpdateMetadata({ url: bustUrl });
       }
-      const res = await fetch(bustUrl, { cache: "no-store" });
+      if (typeof fetch !== "function") {
+        const err = new Error("Brak połączenia sieciowego z serwerem aktualizacji.");
+        err.code = "NETWORK_ERROR";
+        throw err;
+      }
+      const res = await fetch(bustUrl, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache"
+        }
+      });
       if (!res.ok) {
         const err = new Error(`HTTP ${res.status}`);
         err.code = "HTTP_ERROR";

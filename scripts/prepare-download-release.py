@@ -121,8 +121,8 @@ def resolve_apk_version_meta(args):
     if not version_name:
         version_name = "5.49"
     if not version_code:
-        base_code = max(2, (build_ts - 1700000000000) // 10000) if build_ts > 1700000000000 else max(2, build_ts)
-        version_code = int(base_code)
+        calc_code = (build_ts - 1700000000000) // 10000 if build_ts > 1700000000000 else build_ts
+        version_code = max(3070000, int(calc_code))
 
     return {
         "appId": "pl.turbodiesel.naprawnik",
@@ -138,7 +138,7 @@ def main():
     ap.add_argument("--output", type=Path, default=Path("site"))
     ap.add_argument("--version-name", default="")
     ap.add_argument("--version-code", type=int, default=0)
-    ap.add_argument("--changelog", default="Zaktualizowana baza techniczna, ulepszona diagnostyka i poprawki stabilności aplikacji offline.")
+    ap.add_argument("--changelog", default="Wdrożenie NAPRAWNIK MARKET (narzędzia i części warsztatowe), automatyczny aktualizator APK i ulepszona stabilność offline.")
     ap.add_argument(
         "--require-existing-checksum",
         action="store_true",
@@ -215,12 +215,17 @@ def main():
         encoding="utf-8",
     )
     (args.output / "_headers").write_text(
+        "/*\n"
+        "  Access-Control-Allow-Origin: *\n"
         "/apk-version.json\n"
         "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
+        "  Access-Control-Allow-Origin: *\n"
         "/naprawnik-release.apk.sha256\n"
-        "  Cache-Control: no-store, max-age=0\n"
+        "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
+        "  Access-Control-Allow-Origin: *\n"
         "/app-debug.apk.sha256\n"
-        "  Cache-Control: no-store, max-age=0\n",
+        "  Cache-Control: no-store, no-cache, must-revalidate, max-age=0\n"
+        "  Access-Control-Allow-Origin: *\n",
         encoding="utf-8",
     )
     print("Prepared download site; APK SHA-256:", digest)

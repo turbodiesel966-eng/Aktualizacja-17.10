@@ -18,10 +18,12 @@ const pkgDir = path.join(mainDir, "java", "pl", "turbodiesel", "naprawnik");
 
 export function computeVersionMeta(versionJson, runNumber = 0) {
   const versionName = String(versionJson?.version || "5.49").trim();
-  const rawBuild = Number(versionJson?.build || 1730653000000);
-  const baseCode = rawBuild > 1700000000000
-    ? Math.max(3065334, Math.floor((rawBuild - 1700000000000) / 10000))
-    : Math.max(3065334, Math.floor(rawBuild));
+  const rawBuild = Number(versionJson?.build || 1731571200000);
+  const calculatedBase = rawBuild > 1700000000000
+    ? Math.floor((rawBuild - 1700000000000) / 10000)
+    : Math.floor(rawBuild);
+  // baseCode musi być bezwzględnie większy od 3065474 (najwyższy build testowy/debug u użytkowników)
+  const baseCode = Math.max(3070000, calculatedBase);
   const versionCode = Math.min(2147000000, baseCode + Math.max(1, Number(runNumber) || 1));
   return { versionName, versionCode, build: rawBuild };
 }

@@ -176,7 +176,7 @@ if (apkCardStart !== -1) {
     mobileHtml = mobileHtml.slice(0, apkCardStart) +
       `function renderAndroidApkCard(){\n` +
       `  if (typeof window !== 'undefined' && window.__naprawnikNative) {\n` +
-      `    return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div></div>\`;\n` +
+      `    return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📱 Aplikacja Android (Wersja Warsztatowa Offline)</h2><div class="diag-sub">Zainstalowany pakiet APK działa w 100% lokalnie w warsztacie bez konieczności połączenia z internetem.</div><button type="button" class="btn" style="border-color:#00e5ff;color:#00e5ff;margin-top:8px" onclick="if(window.__naprawnikApkUpdater)window.__naprawnikApkUpdater.openModal(true)">🔄 Sprawdź aktualizacje APK</button></div>\`;\n` +
       `  }\n` +
       `  return \`<div class="diag-card" style="border-color:#00f57a"><h2 style="color:#00f57a">📲 Aplikacja Android (APK)</h2><div class="diag-sub">Pobierz oficjalny instalator NAPRAWNIKA na telefon Android — działa w 100% offline w warsztacie.</div><a class="btn" style="border-color:#00f57a;color:#00f57a;text-decoration:none" href="https://naprawnik-download.pages.dev/" target="_blank" rel="noopener noreferrer">📲 Pobierz aplikację Android (APK) ↗</a></div>\`;\n` +
       `}` +

@@ -180,6 +180,7 @@ function loadNativeBridgeInVm({ pluginOverrides = {}, initialStorage = {} } = {}
     localStorage,
     document,
     navigator: {},
+    fetch: globalThis.fetch || (() => Promise.reject(new Error("fetch offline"))),
     alert: () => {},
     confirm: () => true,
     location: { href: "https://localhost/", origin: "https://localhost" },
@@ -222,10 +223,11 @@ function loadNativeBridgeInVm({ pluginOverrides = {}, initialStorage = {} } = {}
 test("configure-android-project computes monotonic versionCode and patches files safely", async () => {
   const mod = await import(pathToFileURL(path.join(root, "scripts", "configure-android-project.mjs")).href);
 
-  const m1 = mod.computeVersionMeta({ version: "5.49", build: 1730653000000 }, 10);
-  const m2 = mod.computeVersionMeta({ version: "5.50", build: 1730653000000 }, 11);
+  const m1 = mod.computeVersionMeta({ version: "5.49", build: 1731571200000 }, 10);
+  const m2 = mod.computeVersionMeta({ version: "5.49", build: 1731571200000 }, 11);
   assert.equal(m1.versionName, "5.49");
-  assert.ok(m1.versionCode > 1, "versionCode musi być większy od domyślnego Capacitor 1");
+  assert.ok(m1.versionCode >= 3070000, "versionCode musi być większy lub równy 3070000");
+  assert.ok(m1.versionCode > 3065474, "versionCode musi przewyższać build testowy/debug (3065474)");
   assert.ok(m2.versionCode > m1.versionCode, "kolejny build CI musi zwiększać versionCode");
 
   const origMain = `package pl.turbodiesel.naprawnik;\n\nimport com.getcapacitor.BridgeActivity;\n\npublic class MainActivity extends BridgeActivity {}\n`;
@@ -252,11 +254,14 @@ test("APK updater rejects downgrade, older/equal versions and cross-package payl
   const { updater } = loadNativeBridgeInVm();
   assert.ok(updater, "window.__naprawnikApkUpdater musi być zarejestrowany");
 
-  const installed = { packageName: "pl.turbodiesel.naprawnik", versionName: "5.50", versionCode: 3065310 };
-  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.51", versionCode: 3065311 }, installed), true);
-  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.50", versionCode: 3065310 }, installed), false);
-  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.49", versionCode: 3065305 }, installed), false);
-  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.48", versionCode: 3065399 }, installed), false);
+  const installed = { packageName: "pl.turbodiesel.naprawnik", versionName: "5.49", versionCode: 3065474 };
+  // Wyższy versionCode aktualizuje aplikację nawet gdy versionName pozostał 5.49
+  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.49", versionCode: 3070001 }, installed), true);
+  // Równy versionCode jest traktowany jako brak aktualizacji (aplikacja aktualna)
+  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.49", versionCode: 3065474 }, installed), false);
+  // Niższy versionCode jest odrzucany (ochrona przed downgrade) nawet gdyby versionName było wyższe
+  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.50", versionCode: 3065372 }, installed), false);
+  // Odrzucenie obcego pakietu
   assert.equal(updater.isUpdateNewer({ appId: "com.other.app", versionName: "9.99", versionCode: 9999999 }, installed), false);
 });
 

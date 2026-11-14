@@ -22,6 +22,7 @@ import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -75,6 +76,56 @@ public class ApkUpdaterPlugin extends Plugin {
         } catch (Exception e) {
             call.reject("Błąd odczytu wersji aplikacji: " + e.getMessage(), "INFO_ERROR", e);
         }
+    }
+
+    @PluginMethod
+    public void fetchUpdateMetadata(PluginCall call) {
+        String urlString = call.getString("url", "");
+        if (urlString == null || !urlString.startsWith(ALLOWED_DOWNLOAD_PREFIX)) {
+            call.reject("Nieprawidłowy lub nieoficjalny adres manifestu aktualizacji.", "UNTRUSTED_URL");
+            return;
+        }
+
+        executor.execute(() -> {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL(urlString);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setUseCaches(false);
+                conn.setDefaultUseCaches(false);
+                conn.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate");
+                conn.setRequestProperty("Pragma", "no-cache");
+                conn.setRequestProperty("User-Agent", "NAPRAWNIK-Android-Updater/1.0");
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(15000);
+                conn.connect();
+
+                int status = conn.getResponseCode();
+                if (status != HttpURLConnection.HTTP_OK) {
+                    call.reject("Serwer aktualizacji zwrócił błąd HTTP " + status, "HTTP_ERROR");
+                    return;
+                }
+
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int read;
+                try (InputStream in = new BufferedInputStream(conn.getInputStream())) {
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                }
+                String jsonStr = out.toString("UTF-8");
+                JSObject ret = new JSObject(jsonStr);
+                call.resolve(ret);
+            } catch (Exception e) {
+                call.reject("Błąd pobierania manifestu aktualizacji: " + e.getMessage(), "NETWORK_ERROR", e);
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
+            }
+        });
     }
 
     @PluginMethod
