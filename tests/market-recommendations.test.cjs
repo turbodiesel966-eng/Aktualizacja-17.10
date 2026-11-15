@@ -36,7 +36,7 @@ test('Market recommendation scripts and assets are cached separately for web and
   assert.match(mobileSw, /market-recommendations\.js/);
   assert.match(sw, new RegExp(manifest.cacheVersion));
   assert.match(mobileSw, new RegExp(manifest.nativeCacheVersion));
-  assert.equal(manifest.appVersion, '5.50');
+  assert.equal(manifest.appVersion, '5.51');
 });
 test('diagnostic, pinout, jetting, manuals and service schedule contain contextual Market cards', () => {
   for (const needle of ["context:'diagnosis'","context:'pinout'","context:'jetting'","context:'service'","context:'manuals'"]) {

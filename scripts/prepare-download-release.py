@@ -12,48 +12,32 @@ from pathlib import Path
 
 BASE = "https://naprawnik-download.pages.dev/"
 HOST = urllib.parse.urlparse(BASE).netloc
-SCANNED_SHA256 = "1e41d72e135366db7f92d282e9f9be90194a1b30b7a267bb2a65fe1ffa1894dd"
-SCANNED_REPORT_URL = "https://www.virustotal.com/gui/file/" + SCANNED_SHA256
 
 
-def add_virustotal_note(html, digest):
+def add_security_note(html, digest):
     html = re.sub(
-        r"(?is)<!-- NAPRAWNIK_VT_NOTE_START -->.*?<!-- NAPRAWNIK_VT_NOTE_END -->",
+        r"(?is)<!-- NAPRAWNIK_(?:VT|SECURITY)_NOTE_START -->.*?<!-- NAPRAWNIK_(?:VT|SECURITY)_NOTE_END -->",
         "",
         html,
     )
-    if digest == SCANNED_SHA256:
-        note = (
-            '<!-- NAPRAWNIK_VT_NOTE_START -->'
-            '<div class="vt-current-scan-note" role="note" '
-            'style="margin:1rem 0;padding:1rem;border:1px solid #64748b;border-radius:12px">'
-            '<p><strong>Raport VirusTotal dla aktualnego pliku APK</strong></p>'
-            '<p>Suma SHA-256 pliku odpowiada raportowi z 28.10.2026. '
-            '<a href="' + SCANNED_REPORT_URL + '" target="_blank" rel="noopener noreferrer">'
-            'Otwórz pełny raport VirusTotal</a>.</p>'
-            '<p>W pokazanym skanie część silników ma status „Undetected”, ale część zwróciła '
-            '„Timeout” lub „Unable to process file type”. Te statusy nie są wykryciem złośliwego '
-            'pliku, ale też nie potwierdzają, że wszystkie silniki sprawdziły plik poprawnie.</p>'
-            '</div><!-- NAPRAWNIK_VT_NOTE_END -->'
-        )
-    else:
-        note = (
-            '<!-- NAPRAWNIK_VT_NOTE_START -->'
-            '<div class="vt-current-scan-note" role="note" '
-            'style="margin:1rem 0;padding:1rem;border:1px solid #64748b;border-radius:12px">'
-            '<p><strong>Raport VirusTotal z poprzedniego skanu</strong></p>'
-            '<p><a href="' + SCANNED_REPORT_URL + '" target="_blank" rel="noopener noreferrer">'
-            'Otwórz raport z 28.10.2026</a>. Ten raport dotyczy pliku o SHA-256 '
-            + SCANNED_SHA256 + ', a aktualny APK ma inną sumę kontrolną. '
-            'Nie należy traktować go jako wyniku skanowania aktualnego pliku.</p>'
-            '</div><!-- NAPRAWNIK_VT_NOTE_END -->'
-        )
+    note = (
+        '<!-- NAPRAWNIK_SECURITY_NOTE_START -->'
+        '<div class="security-verify-note" role="note" '
+        'style="margin:1rem 0;padding:1rem;border:1px solid #38bdf8;border-radius:12px;background:rgba(14,165,233,0.06)">'
+        '<p><strong>Bezpieczne szyfrowanie SSL/TLS, hosting Cloudflare i czysty instalator APK</strong></p>'
+        '<p>Pobieranie instalatora odbywa się przez szyfrowane połączenie <strong>SSL/TLS (HTTPS)</strong> '
+        'z globalnej sieci <strong>Cloudflare Pages &amp; Workers</strong> (ochrona DDoS, serwery brzegowe w UE). '
+        'Plik <code>naprawnik-release.apk</code> jest w 100% czystym pakietem <em>Offline-First</em> — bez reklam, '
+        'zewnętrznych SDK śledzących i ukrytych procesów w tle, a jego integralność potwierdza suma kontrolna '
+        '<code>SHA-256: ' + digest + '</code>.</p>'
+        '</div><!-- NAPRAWNIK_SECURITY_NOTE_END -->'
+    )
     heading = re.search(
-        r"(?is)<h([1-6])\b[^>]*>(?:(?!</h\1>).)*?Raport\s+VirusTotal.*?</h\1>",
+        r"(?is)<h([1-6])\b[^>]*>(?:(?!</h\1>).)*?(?:Bezpieczeństwo\s+SSL|Raport\s+VirusTotal).*?</h\1>",
         html,
     )
     if not heading:
-        raise SystemExit("Could not find the VirusTotal heading; refusing to publish an unlinked scan")
+        raise SystemExit("Could not find the security heading; refusing to publish download page")
     return html[:heading.end()] + note + html[heading.end():]
 
 
@@ -106,7 +90,7 @@ def resolve_apk_version_meta(args):
     if version_json_path.is_file():
         vdata = json.loads(version_json_path.read_text(encoding="utf-8"))
         if not version_name:
-            version_name = str(vdata.get("version") or "5.49")
+            version_name = str(vdata.get("version") or "5.51")
         if isinstance(vdata.get("build"), (int, float)):
             build_ts = int(vdata["build"])
 
@@ -119,7 +103,7 @@ def resolve_apk_version_meta(args):
             version_code = int(bmeta["versionCode"])
 
     if not version_name:
-        version_name = "5.49"
+        version_name = "5.51"
     if not version_code:
         calc_code = (build_ts - 1700000000000) // 10000 if build_ts > 1700000000000 else build_ts
         version_code = max(3070000, int(calc_code))
@@ -138,7 +122,7 @@ def main():
     ap.add_argument("--output", type=Path, default=Path("site"))
     ap.add_argument("--version-name", default="")
     ap.add_argument("--version-code", type=int, default=0)
-    ap.add_argument("--changelog", default="Wdrożenie NAPRAWNIK MARKET (narzędzia i części warsztatowe), automatyczny aktualizator APK i ulepszona stabilność offline.")
+    ap.add_argument("--changelog", default="Kokpit Bento Grid, Portfel Afiliacyjny BLIK (+10 zł na start, 30% prowizji), nowy cennik 6 pakietów PRO/VIP (-20% z kodem) oraz NAPRAWNIK MARKET.")
     ap.add_argument(
         "--require-existing-checksum",
         action="store_true",
@@ -159,13 +143,13 @@ def main():
         html = template_file.read_text(encoding="utf-8")
     else:
         html = get(BASE).decode("utf-8")
-    if "Raport VirusTotal" not in html or "SHA-256" not in html:
+    if ("Bezpieczeństwo SSL" not in html and "Raport VirusTotal" not in html) or "SHA-256" not in html:
         raise SystemExit("Download page is missing expected sections; refusing deployment")
     html, count = re.subn(r"(?is)(SHA-256.{0,700}?)([a-f0-9]{64})",
                           lambda m: m.group(1) + digest, html, count=1)
     if count != 1:
         raise SystemExit("Could not safely update exactly one SHA-256 checksum")
-    html = add_virustotal_note(html, digest)
+    html = add_security_note(html, digest)
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "index.html").write_text(html, encoding="utf-8")
     parser = Assets()

@@ -10,7 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="./assets/naprawnik-icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NAPRAWNIK v5.50 — diagnostyka i naprawy</title>
+<title>NAPRAWNIK v5.51 — diagnostyka i naprawy</title>
 <style>
 :root{
   --bg:#0a0a14; --panel:#15151f; --border:#33334d; --accent:#ff8c1a; --cyan:#22d3ee; --hero:#ffe14d; --text:#e8e8f5; --dim:#8888aa;
@@ -97,7 +97,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .nav{background:rgba(9,6,20,.88);border-color:#663b91}
 
 
-/* NAPRAWNIK v5.50 — diagnostyka powiązana; bez różowego */
+/* NAPRAWNIK v5.51 — diagnostyka powiązana; bez różowego */
 .brand-hero{
   padding:28px 8px 24px !important;
   margin:10px 0 14px !important;
@@ -127,7 +127,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,
 .brand-hero:before{background:radial-gradient(ellipse at 15% 50%,rgba(255,122,0,.18),transparent 35%),radial-gradient(ellipse at 85% 50%,rgba(40,123,255,.20),transparent 38%) !important;}
 
 
-/* NAPRAWNIK v5.50 — asystent zdjęciowy i historia offline */
+/* NAPRAWNIK v5.51 — asystent zdjęciowy i historia offline */
 .pa-intro{border:1px solid #7c3aed;background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(34,211,238,.07));border-radius:12px;padding:13px;margin-bottom:10px}
 .pa-status{font-size:11px;border:1px solid var(--border);border-radius:8px;padding:8px;margin:8px 0;color:var(--dim);line-height:1.45}
 .pa-status.online{border-color:#16875a;color:#8df0ba}.pa-status.offline{border-color:#b7791f;color:#ffd58a}.pa-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:8px 0}
@@ -838,7 +838,7 @@ body{
   margin-top:4px;
 }
 
-/* ===== NAPRAWNIK v5.50 — CAŁKOWITY REDESIGN HOME WORKSHOP UI (3D CYBER-WORKSHOP) ===== */
+/* ===== NAPRAWNIK v5.51 — CAŁKOWITY REDESIGN HOME WORKSHOP UI (3D CYBER-WORKSHOP) ===== */
 :root{
   --nap-grad-purple-orange:linear-gradient(96deg,rgba(62,16,118,.96) 0%,rgba(142,34,158,.92) 48%,rgba(248,118,12,.96) 100%);
   --nap-grad-cta:linear-gradient(92deg,#6b21a8 0%,#b832c8 44%,#ff7a00 84%,#ffd43b 100%);
@@ -1606,7 +1606,7 @@ a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
 </head>
 <body>
 <div class="frame">
-  <div class="topbar"><span>⚙️ NAPRAWNIK v5.50 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b><button type="button" id="topWalletBtn" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')" style="background:linear-gradient(135deg,#10b981,#eab308);color:#04120a;border:1px solid #fde047;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:900;cursor:pointer;margin-left:6px;box-shadow:0 0 10px rgba(16,185,129,0.45)">💰 Portfel / Zarabiaj</button></span><span id="clock"></span></div>
+  <div class="topbar"><span>⚙️ NAPRAWNIK v5.51 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b><button type="button" id="topWalletBtn" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')" style="background:linear-gradient(135deg,#10b981,#eab308);color:#04120a;border:1px solid #fde047;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:900;cursor:pointer;margin-left:6px;box-shadow:0 0 10px rgba(16,185,129,0.45)">💰 Portfel / Zarabiaj</button></span><span id="clock"></span></div>
   <div id="topUpdateBar" class="top-update-bar">
     <button id="btnAppUpdate" class="btn-update normal" type="button" onclick="handleAppUpdateClick()" title="Sprawdź lub zainstaluj aktualizację">
       <span id="updateBtnIcon" class="update-icon">🔄</span>
@@ -3483,7 +3483,7 @@ function planItems(k){
   return {
    amator:[
      'Darmowy, bez konta — pełna diagnostyka krok po kroku i '+kc+' kart przypadków',
-     'Katalog '+cat+' modeli motocykli i skuterów z danymi OEM i momentami',
+     'Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi) z danymi OEM i momentami',
      'Kalkulatory warsztatowe: Squish, CR, przełożenia, dysze gaźnika, regulacja CVT',
      'Elektroniczne Laboratorium: podstawowe pomiary (do 20 zapisów)',
      'Katalog części: do 10 wyszukiwań miesięcznie',
@@ -3499,7 +3499,7 @@ function planItems(k){
      'Interaktywne schematy techniczne SVG z powiększaniem (Zoom)',
      'Kalkulatory tuningowe: precyzyjny dobór płytek zaworowych, pinouty CDI/TCI',
      'Historia napraw ze zdjęciami: do 50 zdjęć/mc (1 GB bezpiecznej chmury)',
-     'Asystent diagnostyki zdjęciowej AI: 5 analiz miesięcznie',
+     'Asystent diagnostyki zdjęciowej AI (Chwilowo niedostępne / Wkrótce)',
      'Automatyczny plan serwisowy wg daty i przebiegu (interwały 2T/4T/CVT)',
      'Kartoteka: do 3 własnych pojazdów i 15 przypomnień serwisowych',
      'Bezpieczna kopia zapasowa i synchronizacja między urządzeniami'
@@ -3512,7 +3512,7 @@ function planItems(k){
      'Kartoteka warsztatowa: baza do 2000 klientów i 500 pojazdów klientów',
      'Elektroniczne Laboratorium warsztatowe: do 5000 pomiarów',
      'Do 300 wyszukiwań części miesięcznie oraz do 30 nowych zleceń/mc (500 w archiwum)',
-     'Do 300 zdjęć miesięcznie (10 GB w chmurze) i 30 analiz zdjęć AI/mc',
+     'Do 300 zdjęć miesięcznie (10 GB w chmurze) oraz moduł AI (Chwilowo niedostępne / Wkrótce)',
      'Automatyczny plan serwisowy dla floty pojazdów klientów',
      'Pełny eksport historii zleceń, napraw i kart klientów do pliku CSV',
      'Priorytetowa synchronizacja D1 i pełne wsparcie dla wszystkich 6 modułów'
@@ -3702,18 +3702,18 @@ const MAIN_MODULES = [
     icon: '📘',
     title: 'BAZA TECHNICZNA',
     shortTitle: 'Baza Techniczna',
-    sublabel: '196 MODELI OEM • SILNIKI • CZĘŚCI',
+    sublabel: 'PONAD 480 MODELI • SILNIKI • CZĘŚCI',
     theme: 'red',
     spriteIdx: 6,
     image: './assets/mod-tech.jpg',
-    shortDesc: 'Katalog 196 modeli • Profile silników<br>Dobór części OEM • CVT • Druciarstwo',
-    desc: 'Katalog 196 modeli pojazdów OEM, profile silników, gaźniki, napęd CVT, dobór części i zamienników, momenty dokręcania, płyny, serwisówki i Druciarstwo.',
-    pills: ['196 modeli OEM', 'Profile silników', 'Napęd CVT', 'Dobór części', 'Serwisówki'],
+    shortDesc: 'Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)<br>Dobór części OEM • CVT • Druciarstwo',
+    desc: 'Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi), profile silników, gaźniki, napęd CVT, dobór części i zamienników, momenty dokręcania, płyny, serwisówki i Druciarstwo.',
+    pills: ['480+ modeli OEM', 'Profile silników', 'Napęd CVT', 'Dobór części', 'Serwisówki'],
     groups: [
       {
         groupTitle: 'Katalogi Pojazdów, Silników i Części',
         items: [
-          { id: 'item_catalog', icon: '🛵', theme: 'red', spriteIdx: 3, title: 'Katalog Pojazdów i Danych Serwisowych (196 Modeli)', desc: 'Modele • Dane fabryczne OEM • Świeca, dysza, rolki, pasek, luzy.', view: 'catalog', arg: null, min: '' },
+          { id: 'item_catalog', icon: '🛵', theme: 'red', spriteIdx: 3, title: 'Katalog Pojazdów i Danych Serwisowych (Ponad 480 Modeli)', desc: 'Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi) • Dane fabryczne OEM • Świeca, dysza, rolki, pasek, luzy.', view: 'catalog', arg: null, min: '' },
           { id: 'item_multicyl_katalog', icon: '🏍️', theme: 'orange', spriteIdx: 18, title: 'Katalog Motocykli 3–4 Cylindry (400–650 cm³) i Parametry', desc: '10 marek • 95 modeli • 86 silników (Honda, Yamaha, Suzuki, Kawasaki, Triumph, Ducati, MV Agusta).', view: 'multicyl', arg: 'katalog', min: '' },
           { id: 'item_models', icon: '⏱️', theme: 'red', spriteIdx: 18, title: 'Profile Konkretnych Silników', desc: 'Ustawienia • Modyfikacje • Minarelli, Piaggio, GY6, AM6, D50B0.', view: 'models', arg: null, min: 'pro' },
           { id: 'item_parts', icon: '⚙️', theme: 'orange', spriteIdx: 1, title: 'Inteligentny Dobór Części OEM i Zamienników', desc: 'Numery katalogowe OEM • Dokładne wymiary • Zamienniki i linki.', view: 'parts', arg: null, min: 'pro' },
@@ -4090,7 +4090,7 @@ function renderHome(){
           <span style="font-size:10.5px;color:#eab308;font-weight:800">2T • 4T • R3/R4 • EFI</span>
         </div>
         <h2 style="margin:6px 0 4px;font-size:19px;font-weight:900;color:#f8fafc;letter-spacing:0.3px">🩺 INTERAKTYWNA DIAGNOSTYKA</h2>
-        <p style="font-size:12px;color:#cbd5e1;line-height:1.45;margin:0 0 12px">Drzewo objawów krok po kroku (TAK/NIE), 152 karty usterek silnikowych i elektrycznych oraz 12 drzew dla motocykli 3–4 cylindrowych.</p>
+        <p style="font-size:12px;color:#cbd5e1;line-height:1.45;margin:0 0 12px">Drzewo objawów krok po kroku (TAK/NIE), 152 karty usterek silnikowych i elektrycznych oraz 12 drzew wielocylindrowych. Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi).</p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button type="button" class="btn" style="width:auto;margin:0;padding:8px 14px;background:linear-gradient(90deg,#f97316,#eab308);color:#0f172a;border:none;font-weight:900" onclick="event.stopPropagation();resetDiagFlow()">⚡ Start Diagnozy TAK/NIE →</button>
@@ -4135,7 +4135,7 @@ function renderHome(){
     <div style="flex:1;min-width:220px">
       <div style="font-size:10px;font-weight:900;color:#10b981;letter-spacing:0.7px;text-transform:uppercase">🎁 PROGRAM PARTNERSKI NAPRAWNIK • RABAT -20% Z KODEM • PROWIZJA 30%</div>
       <h2 style="margin:4px 0 3px;color:#ffffff;font-size:15.5px;font-weight:900">💰 Twój Portfel Warsztatowy: 10,00 zł na start!</h2>
-      <div style="font-size:12px;color:#cbd5e1;line-height:1.4">Polecaj aplikację i odbieraj do <b style="color:#eab308">132 zł na BLIK</b> z jednego polecenia (PRO: 19/39/299 zł • WARSZTAT VIP: 39/69/549 zł).</div>
+      <div style="font-size:12px;color:#cbd5e1;line-height:1.4">10 zł bonusu na start, -20% zniżki dla znajomego z kodem, oraz do <b style="color:#eab308">132 zł prowizji (30%)</b> z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł.</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button type="button" class="btn" style="width:auto;margin:0;padding:10px 16px;background:linear-gradient(135deg,#10b981,#eab308);color:#04120a;border:none;font-weight:900;font-size:12.5px;box-shadow:0 0 14px rgba(16,185,129,0.4)" onclick="event.stopPropagation();window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')">Odbierz / Zarabiaj →</button>
@@ -4147,7 +4147,7 @@ function renderHome(){
   </button>
 
   <div class="special-section-header" style="margin:10px 0 8px">
-    <div class="special-section-badge">⭐ PANEL WARSZTATOWY v5.49</div>
+    <div class="special-section-badge">⭐ PANEL WARSZTATOWY v5.51</div>
     <div class="special-section-title">SZEŚĆ GŁÓWNYCH MODUŁÓW WARSZTATU</div>
     <div class="special-section-sub">Wybierz dział główny: Klienci i Pojazdy, Zlecenia, Diagnostyka, Elektryka, Baza Techniczna lub Kalkulatory</div>
   </div>
@@ -6151,7 +6151,7 @@ function renderClients(){
   screen.querySelectorAll('.cl-hit').forEach(el=>el.addEventListener('click', ()=>{ clientFilter = el.dataset.key; renderClients(); }));
 }
 
-const APP_VERSION = 'NAPRAWNIK v5.50';
+const APP_VERSION = 'NAPRAWNIK v5.51';
 function sendReport(kind){
   const ta = $('#' + kind + 'Text');
   const txt = ta.value.trim();
@@ -6906,7 +6906,7 @@ function renderPhotoAssistant(){
     <div id="paSelectedPreview" class="pa-small">Nie dodano jeszcze zdjęć.</div>
     <div class="pa-small">Zdjęcia są zmniejszane przed zapisem. Nie fotografuj dokumentów, twarzy ani danych osobowych, jeśli nie są potrzebne do diagnozy.</div>
     <button class="btn" onclick="paSaveNewCase(false)">💾 Zapisz przypadek offline</button>
-    <button class="btn" style="border-color:#8b5cf6;color:#ddd6fe" onclick="paSaveNewCase(true)">🧠 Zapisz i przeanalizuj zdjęcia przez AI</button>
+    <button class="btn" type="button" disabled style="border-color:#64748b;color:#94a3b8;opacity:0.6;cursor:not-allowed">🧠 Analiza zdjęć AI — Chwilowo niedostępne / Wkrótce</button>
   </div>
   <div class="card"><h2>🗂️ Historia przypadków</h2><div id="paHistory"><div class="empty">Ładowanie zapisanych przypadków…</div></div><button class="btn" onclick="paExportCases()">⬇️ Eksportuj historię asystenta</button><label class="btn" for="paImportFile">⬆️ Importuj historię asystenta</label><input id="paImportFile" type="file" accept="application/json,.json" onchange="paImportCases(event)" style="display:none"><div class="pa-small">Historia i zdjęcia są przechowywane w pamięci tej przeglądarki dla tej domeny. Kopia JSON może zawierać zdjęcia i informacje o pojeździe — przechowuj ją bezpiecznie.</div></div>`;
   paLoadHistory();
@@ -6962,8 +6962,8 @@ async function renderPhotoAssistantCase(id){
     if(!Array.isArray(r.checklist)||!r.checklist.length)r.checklist=paChecklistFor(r.category);
     if(r.analysisStatus==='running'&&!paActive.has(id)){r.analysisStatus='error';r.analysis='Analiza została przerwana (np. zamknięto aplikację). Użyj przycisku, aby ponowić analizę.';r.analysisAt=new Date().toISOString();await paDbRequest('readwrite','put',r);}
     const photos=(r.photos||[]).map((p,i)=>{const url=p&&paSafeImageUrl(p.dataUrl);return url?`<a href="#" class="pa-photo-link" data-i="${i}"><img class="pa-photo" src="${url}" alt="Zdjęcie przypadku"></a>`:'';}).join('');
-    screen.innerHTML=back()+`<div class="card" id="paCaseMarker" data-case="${paEscape(r.id)}"><h2>🧠 Przypadek diagnostyczny</h2><div class="pa-case-title">${paEscape([r.make,r.model,r.year].filter(Boolean).join(' ')||'Pojazd niepodany')}</div><div class="pa-meta">Zapisano: ${paDate(r.createdAt)} • ${paEscape(r.engine||'Silnik niepodany')}</div><p style="font-size:12px;line-height:1.55;margin:10px 0">${paEscape(r.symptoms)}</p>${r.extra?`<div class="entry"><b>Dodatkowe informacje</b><small>${paEscape(r.extra)}</small></div>`:''}<div class="pa-photo-grid">${photos||'<div class="pa-small">Brak zdjęć w tym przypadku.</div>'}</div><button class="btn" type="button" disabled>🧠 Analiza AI — w przygotowaniu</button><button class="btn" onclick="paEditCase('${paEscape(r.id)}')">✏️ Dodaj notatkę do przypadku</button></div>
-    <div class="card"><h2>🔎 Analiza zdjęć AI</h2>${r.analysisStatus==='running'?'<div class="pa-status">Analizuję zdjęcia na serwerze…</div>':''}${r.analysis?`<div class="pa-result">${paEscape(r.analysis)}</div><div class="pa-meta">${r.analysisStatus==='done'?'Analiza zakończona':r.analysisStatus==='error'?'Analiza nieudana':'Status: '+paEscape(r.analysisStatus)} ${r.analysisAt?'• '+paDate(r.analysisAt):''}</div>`:'<div class="pa-status offline">Analiza AI jest tymczasowo wyłączona. Zapis zdjęć, historii i checklist działa offline.</div>'}<div class="pa-small" style="margin-top:8px">AI podaje możliwe przyczyny, nie potwierdza usterki na pewno. Wnioski weryfikuj pomiarami i dokumentacją dokładnego modelu.</div></div>
+    screen.innerHTML=back()+`<div class="card" id="paCaseMarker" data-case="${paEscape(r.id)}"><h2>🧠 Przypadek diagnostyczny</h2><div class="pa-case-title">${paEscape([r.make,r.model,r.year].filter(Boolean).join(' ')||'Pojazd niepodany')}</div><div class="pa-meta">Zapisano: ${paDate(r.createdAt)} • ${paEscape(r.engine||'Silnik niepodany')}</div><p style="font-size:12px;line-height:1.55;margin:10px 0">${paEscape(r.symptoms)}</p>${r.extra?`<div class="entry"><b>Dodatkowe informacje</b><small>${paEscape(r.extra)}</small></div>`:''}<div class="pa-photo-grid">${photos||'<div class="pa-small">Brak zdjęć w tym przypadku.</div>'}</div><button class="btn" type="button" disabled style="border-color:#64748b;color:#94a3b8;opacity:0.6;cursor:not-allowed">🧠 Analiza zdjęć AI — Chwilowo niedostępne / Wkrótce</button><button class="btn" onclick="paEditCase('${paEscape(r.id)}')">✏️ Dodaj notatkę do przypadku</button></div>
+    <div class="card"><h2>🔎 Analiza zdjęć AI</h2>${r.analysisStatus==='running'?'<div class="pa-status">Analizuję zdjęcia na serwerze…</div>':''}${r.analysis?`<div class="pa-result">${paEscape(r.analysis)}</div><div class="pa-meta">${r.analysisStatus==='done'?'Analiza zakończona':r.analysisStatus==='error'?'Analiza nieudana':'Status: '+paEscape(r.analysisStatus)} ${r.analysisAt?'• '+paDate(r.analysisAt):''}</div>`:'<div class="pa-status offline">Analiza zdjęć AI: Chwilowo niedostępne / Wkrótce. Zapis zdjęć, historii i checklist działa offline.</div>'}<div class="pa-small" style="margin-top:8px">AI podaje możliwe przyczyny, nie potwierdza usterki na pewno. Wnioski weryfikuj pomiarami i dokumentacją dokładnego modelu.</div></div>
     <div class="card"><h2>✅ Checklista offline</h2><div class="pa-small">Zaznaczenia są zapisywane na urządzeniu i pozostają dostępne bez internetu.</div>${r.checklist.map((c,i)=>`<label class="pa-check"><input type="checkbox" ${c.done?'checked':''} onchange="paToggleCheck('${paEscape(r.id)}',${i},this.checked)"><span>${paEscape(c.label)}</span></label>`).join('')}<button class="btn" onclick="paResetChecklist('${paEscape(r.id)}')">Resetuj checklistę</button></div>
     <div class="card"><button class="btn" onclick="navBack()">← Wróć do asystenta i historii</button><button class="btn pa-danger" onclick="paDeleteCase('${paEscape(r.id)}')">🗑️ Usuń ten przypadek i zdjęcia</button></div>`;paBindPhotoLinks(r);
   }catch(e){alert('Nie udało się otworzyć przypadku: '+(e.message||e));nav('photoAssistant');}
@@ -10347,8 +10347,8 @@ function zoomPhoto(dataUrl){
 
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
-const CURRENT_APP_VERSION = "5.50";
-const CURRENT_APP_BUILD = 1731712000000;
+const CURRENT_APP_VERSION = "5.51";
+const CURRENT_APP_BUILD = 1731716000000;
 let isAppUpdateAvailable = false;
 function triggerUpdateState(){
   if (isAppUpdateAvailable) return;

@@ -1,4 +1,4 @@
-const CACHE='naprawnik-v5-50-affiliate-wallet-v4-native';
+const CACHE='naprawnik-v5-51-unified-native';
 const PRECACHE=[
   './index.html',
   './platform-adapter.js',

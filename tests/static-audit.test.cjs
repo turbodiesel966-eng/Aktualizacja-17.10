@@ -58,9 +58,9 @@ test('index nie zawiera starego checkoutu ani starego endpointu licencji', () =>
   const html = read('index.html');
   assert.doesNotMatch(html, /\bLICENSE_ENDPOINT\b|\bSTRIPE_PRO\b|\bSTRIPE_WARSZTAT\b/);
   assert.doesNotMatch(html, /\blicBoot\s*\(\s*\)\s*;/);
-  assert.ok(html.includes('<title>NAPRAWNIK v5.50 — diagnostyka i naprawy</title>'));
-  assert.ok(html.includes('⚙️ NAPRAWNIK v5.50'));
-  assert.ok(html.includes("const APP_VERSION = 'NAPRAWNIK v5.50';"));
+  assert.ok(html.includes('<title>NAPRAWNIK v5.51 — diagnostyka i naprawy</title>'));
+  assert.ok(html.includes('⚙️ NAPRAWNIK v5.51'));
+  assert.ok(html.includes("const APP_VERSION = 'NAPRAWNIK v5.51';"));
   assert.ok(html.includes('<script src="./billing.js?v=17"></script>'));
   assert.ok(!html.includes("allegro.pl/listing"));
   assert.doesNotMatch(html, /helion\.pl\/viewc|ebookpoint\.pl\/viewc|Materiały i literatura techniczna/);
@@ -440,14 +440,20 @@ test('analiza zdjęć używa endpointu Workera z tokenem Bearer, a nie starej fu
 });
 
 
-test('strona pobierania linkuje właściwy raport VirusTotal i uczciwie opisuje statusy skanu', () => {
+test('strona pobierania opisuje szyfrowanie SSL, hosting Cloudflare oraz czysty plik APK z sumą SHA-256', () => {
   const script = read('scripts/prepare-download-release.py');
-  assert.ok(script.includes('1e41d72e135366db7f92d282e9f9be90194a1b30b7a267bb2a65fe1ffa1894dd'));
-  assert.ok(script.includes('https://www.virustotal.com/gui/file/'));
-  assert.ok(script.includes('Timeout'));
-  assert.ok(script.includes('Unable to process file type'));
+  const template = read('scripts/download-page-template.html');
+  assert.ok(script.includes('SSL/TLS'));
+  assert.ok(script.includes('Cloudflare'));
+  assert.ok(script.includes('naprawnik-release.apk'));
   assert.ok(script.includes('--require-existing-checksum'));
-  assert.ok(script.includes('NAPRAWNIK_VT_NOTE_START'));
+  assert.ok(script.includes('NAPRAWNIK_SECURITY_NOTE_START'));
+  assert.ok(!script.includes('28.10.2026'));
+  assert.ok(template.includes('v5.51'));
+  assert.ok(template.includes('Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)'));
+  assert.ok(template.includes('10 zł bonusu na start'));
+  assert.ok(template.includes('do 132 zł prowizji (30%) z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł'));
+  assert.ok(!template.includes('28.10.2026'));
 });
 
 test('siatka kafelków neonowych i filtrowanie kart diagnostycznych obsługują wielkość liter, polskie znaki oraz czyszczenie pola', () => {

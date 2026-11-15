@@ -1,4 +1,4 @@
-# NAPRAWNIK v5.49 — Cyfrowy Mózg Warsztatu Motocyklowego
+# NAPRAWNIK v5.51 — Cyfrowy Mózg Warsztatu Motocyklowego
 
 Profesjonalny kombajn warsztatowy, encyklopedia techniczna i asystent diagnostyczny dla mechaników motocykli, skuterów, motorowerów oraz quadów ATV/UTV. Działa w architekturze PWA (Web) oraz jako samodzielna, w 100% izolowana aplikacja Android APK bez konieczności połączenia z internetem.
 

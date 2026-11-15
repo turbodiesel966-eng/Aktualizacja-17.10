@@ -436,7 +436,7 @@
           '<h2 style="margin:0;color:#10b981;font-size:17px">💼 Portfel / Zarabiaj (30% prowizji + 10 zł na start)</h2>' +
           '<span style="background:linear-gradient(90deg,#10b981,#eab308);color:#04120a;font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:999px">🎁 +10 ZŁ NA START • WYPŁATY BLIK</span>' +
         '</div>' +
-        '<p style="font-size:12px;line-height:1.5;color:#cbd5e1;margin:0 0 12px">Polecaj NAPRAWNIKA znajomym mechanikom i na grupach motocyklowych — kupujący z Twoim kodem ma <b>-20% rabatu</b>, a Ty otrzymujesz <b>30% prowizji</b> (do <b>132 zł</b> z jednego polecenia!) prosto na BLIK.</p>' +
+        '<p style="font-size:12px;line-height:1.5;color:#cbd5e1;margin:0 0 12px">Zasady programu afiliacyjnego: <b>10 zł bonusu na start</b>, <b>-20% zniżki dla znajomego z kodem</b>, oraz <b>do 132 zł prowizji (30%) z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł</b>.</p>' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:10px 0">' +
           '<div class="entry" style="border:2px solid #10b981;background:linear-gradient(160deg,rgba(16,185,129,0.12) 0%,rgba(15,23,42,0.96) 100%);padding:14px;border-radius:14px;margin:0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.1)">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px">' +
@@ -978,7 +978,7 @@
     }
     root.innerHTML = (typeof back === 'function' ? back() : '') +
       affiliatePackagesHtml +
-      '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka i pomiary (1 pojazd). PRO to 3 pojazdy, 150 pomiarów z automatyczną diagnozą, 50 dobierań części i zdjęć (analiza zdjęć AI jest chwilowo wyłączona) oraz kopia w chmurze. WARSZTAT to kompleksowe narzędzie: zlecenia, PDF z podpisem klienta, do 500 pojazdów, 5000 pomiarów i 30 nowych zleceń/mc. Subskrypcją zarządzasz w portalu Stripe.</p></div>' +
+      '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka i pomiary (1 pojazd) oraz Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi). PRO to 3 pojazdy, 150 pomiarów z automatyczną diagnozą, 50 dobierań części i zdjęć (analiza zdjęć AI jest chwilowo wyłączona — Chwilowo niedostępne / Wkrótce) oraz kopia w chmurze. WARSZTAT to kompleksowe narzędzie: zlecenia, PDF z podpisem klienta, do 500 pojazdów, 5000 pomiarów i 30 nowych zleceń/mc. Subskrypcją zarządzasz w portalu Stripe.</p></div>' +
       activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
       '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small><div class="btn" onclick="if(typeof nav===\'function\')nav(\'legal\')" style="margin-top:8px">📜 Regulamin i Polityka prywatności (RODO)</div></div>';
     if (!cachedWalletState && API && typeof window.npLoadWallet === 'function') {

@@ -56,7 +56,7 @@ const blockedTerms = await getBlockedOtaTerms();
 // ============================================================================
 // 1. AUTOMATYCZNA SYNCHRONIZACJA WERSJI (Jedno źródło prawdy z manifestu)
 // ============================================================================
-const appVersion = String(manifest.appVersion || "5.49").trim();
+const appVersion = String(manifest.appVersion || "5.51").trim();
 const expectedCacheName = manifest.cacheName || `naprawnik-v${appVersion.replace(/\./g, "-")}`;
 
 // A) Synchronizacja version.json

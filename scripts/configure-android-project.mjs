@@ -17,7 +17,7 @@ const mainDir = path.join(appDir, "src", "main");
 const pkgDir = path.join(mainDir, "java", "pl", "turbodiesel", "naprawnik");
 
 export function computeVersionMeta(versionJson, runNumber = 0) {
-  const versionName = String(versionJson?.version || "5.49").trim();
+  const versionName = String(versionJson?.version || "5.51").trim();
   const rawBuild = Number(versionJson?.build || 1731571200000);
   const calculatedBase = rawBuild > 1700000000000
     ? Math.floor((rawBuild - 1700000000000) / 10000)
