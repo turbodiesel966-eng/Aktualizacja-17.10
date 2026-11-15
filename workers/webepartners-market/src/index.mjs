@@ -27,32 +27,25 @@ const MAX_FEEDS = 50;
 const MAX_PRODUCTS_PER_FEED = 20000;
 const MAX_QUERY = 100;
 const MAX_LIMIT = 60;
-const WORKSHOP_SCOPE = `(lower(title || ' ' || category) LIKE '%motocykl%' OR lower(title || ' ' || category) LIKE '%skuter%' OR lower(title || ' ' || category) LIKE '%scooter%' OR lower(title || ' ' || category) LIKE '%cross%' OR lower(title || ' ' || category) LIKE '%enduro%' OR lower(title || ' ' || category) LIKE '%quad%' OR lower(title || ' ' || category) LIKE '%off-road%' OR lower(title || ' ' || category) LIKE '%warsztat%' OR lower(category) LIKE '%narzędzia i sprzęt warsztatowy%' OR lower(category) LIKE '%akcesoria samochodowe%' OR lower(title || ' ' || category) LIKE '%gaźnik%' OR lower(title || ' ' || category) LIKE '%olej silnikowy%' OR lower(title || ' ' || category) LIKE '%filtr oleju%')`;
+const WORKSHOP_SCOPE = "(lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%motocykl%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%skuter%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%scooter%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%motorower%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%moped%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%motocross%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%enduro%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%quad%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%atv%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%off-road%' OR lower(p.category) LIKE '%motocykl%' OR lower(p.category) LIKE '%skuter%' OR lower(p.category) LIKE '%motorower%' OR lower(p.category) LIKE '%quad%' OR lower(p.category) LIKE '%atv%' OR (lower(p.title) LIKE '%synchronizacj%' AND lower(p.title) LIKE '%gaźnik%') OR (lower(p.category) LIKE '%narzędzia i sprzęt warsztatowy%' AND (lower(p.title) LIKE '%klucz%' OR lower(p.title) LIKE '%nasadk%' OR lower(p.title) LIKE '%grzechotk%' OR lower(p.title) LIKE '%szczypc%' OR lower(p.title) LIKE '%kombinerk%' OR lower(p.title) LIKE '%multimetr%' OR lower(p.title) LIKE '%miernik%' OR lower(p.title) LIKE '%tester%' OR lower(p.title) LIKE '%diagnost%' OR lower(p.title) LIKE '%kompresor%' OR lower(p.title) LIKE '%podnośnik%' OR lower(p.title) LIKE '%stojak%' OR lower(p.title) LIKE '%imadło%' OR lower(p.title) LIKE '%ściągacz%' OR lower(p.title) LIKE '%honownic%' OR lower(p.title) LIKE '%nitownic%' OR lower(p.title) LIKE '%suwmiark%' OR lower(p.title) LIKE '%mikrometr%' OR lower(p.title) LIKE '%prostownik%' OR lower(p.title) LIKE '%zestaw narzędzi%' OR lower(p.title) LIKE '%śrubokręt%' OR lower(p.title) LIKE '%wkrętak%' OR lower(p.title) LIKE '%lampa warsztatow%' OR lower(p.title) LIKE '%latarka czołow%' OR lower(p.title) LIKE '%ładowarka akumulator%' OR lower(p.title) LIKE '%spawark%' OR lower(p.title) LIKE '%szlifierk%' OR lower(p.title) LIKE '%wiertark%'))) AND NOT (lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%kosiark%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%podkaszark%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%wykaszark%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%kosy spalin%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%pilark%łańcuchow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%piły łańcuchow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%żywopłot%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%sekator%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%opryskiwacz%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%glebogryzark%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%dywaniki samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%kamera cofania%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%czujniki parkowania%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%hak holowniczy%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%kobyłki samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%podstawki samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%spinki samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%kołki samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%klipsy samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%tapicerka samochodow%' OR (lower(p.category) LIKE '%akcesoria samochodowe%' AND NOT (lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%motocykl%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%skuter%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%scooter%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%motorower%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%quad%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%atv%')) OR (lower(p.category) LIKE '%dom i ogród%' AND NOT (lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%motocykl%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%skuter%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%quad%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%atv%')) OR lower(p.category) LIKE '%koszulki%' OR lower(p.category) LIKE '%bluzy%' OR lower(p.category) LIKE '%czapki%' OR lower(p.category) LIKE '%kurtki%' OR lower(p.category) LIKE '%breloczki%' OR lower(p.category) LIKE '%torby%' OR lower(p.category) LIKE '%modele samochodów%' OR lower(p.category) LIKE '%na prezent%' OR lower(p.category) LIKE '%bezrękawniki%' OR (lower(p.category) LIKE '%fotele%' AND lower(p.title) NOT LIKE '%motocykl%' AND lower(p.title) NOT LIKE '%quad%' AND lower(p.title) NOT LIKE '%atv%') OR (lower(p.category) LIKE '%przetwornice napięcia%' AND lower(p.category) LIKE '%akumulatory%' AND lower(p.title) NOT LIKE '%motocykl%' AND lower(p.title) NOT LIKE '%skuter%') OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%do szlifowania drewna%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%frez tarnik%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%toyota gazoo%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%rally-raid%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%w2rc%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%breloczek%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%wycieraczki samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%kołpaki%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%bagażnik dachow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%fotelik samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%pokrowiec na samochod%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%pokrowce samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%wyciągarki samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%prostownik samochodow%' OR lower(p.title || ' ' || coalesce(p.description, '')) LIKE '%ładowarka samochodow%')";
 
 function isWorkshopProduct(title, category, description) {
-  const t = `${title || ""} ${category || ""} ${description || ""}`.toLocaleLowerCase("pl-PL");
+  const titleText = String(title || "");
+  const descriptionText = String(description || "");
+  const t = (titleText + " " + String(category || "") + " " + descriptionText).toLocaleLowerCase("pl-PL");
+  const fitmentText = (titleText + " " + descriptionText).toLocaleLowerCase("pl-PL");
   const c = String(category || "").toLocaleLowerCase("pl-PL");
-  const explicitVehicleFit = /(motocykl|motocykla|motocykli|skuter|scooter|motorower|moped|cross|enduro|quad|atv)/i.test(t);
-  const gardenOnly = /(kosiark|podkaszark|wykaszark|kosy spalin|kos spalin|pilark[aię]? łańcuchow|pił[ayę] łańcuchow|dmuchaw[ayę] do liści|żywopłot|sekator|opryskiwacz|glebogryzark|traktor ogrodow|gleba ogrodow)/i.test(t);
-  const carOnly = /(dywaniki samochodow|wycieraczki samochodow|kołpaki|bagażnik dachow|fotelik samochodow|kamera cofania|czujniki parkowania|hak holowniczy|pokrowiec na samochod|pokrowce samochodow)/i.test(t);
-
-  // Explicit motorcycle/scooter/ATV fit wins over a broad partner category label.
+  const explicitVehicleFit = /(motocykl|motocykla|motocykli|skuter|scooter|motorower|moped|motocross|enduro|quad|atv|off[- ]road)/i.test(fitmentText) || /(motocykl|skuter|motorower|quad|atv)/i.test(c);
+  const gardenOnly = /(kosiark|podkaszark|wykaszark|kosy spalin|kos spalin|pilark.{0,8}łańcuchow|pił.{0,8}łańcuchow|dmuchaw.{0,8}liści|żywopłot|sekator|opryskiwacz|glebogryzark|traktor ogrodow|gleba ogrodow)/i.test(t);
+  const carOnly = /(dywaniki samochodow|wycieraczki samochodow|kołpaki|bagażnik dachow|fotelik samochodow|kamera cofania|czujniki parkowania|hak holowniczy|pokrowiec na samochod|pokrowce samochodow|wyciągarki samochodow|spinki samochodow|kołki samochodow|klipsy samochodow|tapicerka samochodow|prostownik samochodow|ładowarka samochodow)/i.test(t) || c.includes("akcesoria samochodowe");
+  const merchandiseOnly = /(koszulki|t-shirt|bluzy|czapki|kurtki|breloczki|torby|modele samochodow|na prezent|bezrękawniki)/i.test(c) || /(toyota gazoo|rally-raid|w2rc|sparco|breloczek|koszulka|bluza z kapturem)/i.test(t);
+  const nonMotorcycleOnly = (c.includes("fotele") && !/(motocykl|quad|atv)/i.test(fitmentText)) || (c.includes("przetwornice napięcia") && c.includes("akumulatory") && !/(motocykl|skuter)/i.test(titleText)) || /(do szlifowania drewna|frez tarnik|obróbki drewna)/i.test(t);
+  if (gardenOnly || merchandiseOnly || nonMotorcycleOnly) return 0;
+  if (carOnly) return explicitVehicleFit ? 1 : 0;
   if (explicitVehicleFit) return 1;
-  // Remove obvious garden-only and passenger-car-only false positives.
-  if (gardenOnly || carOnly) return 0;
-
-  return (
-    t.includes("warsztat") ||
-    c.includes("narzędzia i sprzęt warsztatowy") ||
-    t.includes("gaźnik") ||
-    t.includes("olej silnikowy") ||
-    t.includes("filtr oleju") ||
-    t.includes("cdi") ||
-    t.includes("regulator napięcia") ||
-    t.includes("świeca zapłonowa") ||
-    t.includes("łańcuch motocyklowy") ||
-    t.includes("zębatka motocyklowa")
-  ) ? 1 : 0;
+  const universalTool = /(klucz|nasadk|grzechotk|szczypc|kombinerk|śrubokręt|wkrętak|multimetr|miernik|tester|diagnost|kompresor|podnośnik|stojak|imadło|ściągacz|honownic|nitownic|suwmiark|mikrometr|lampa warsztatow|latarka czołow|ładowarka akumulator|prostownik|spawark|szlifierk|wiertark|zestaw narzędzi|synchronizacj.{0,30}gaźnik)/i.test(t);
+  if (universalTool && (c.includes("narzędzia i sprzęt warsztatowy") || t.includes("warsztat") || t.includes("synchronizacj"))) return 1;
+  return /(łańcuch motocyklowy|zębatka motocyklowa)/i.test(t) ? 1 : 0;
 }
 function sanitizeFtsQuery(raw) {
   const tokens = String(raw || "")
@@ -284,7 +277,7 @@ export default {
 
       if (ftsQuery) {
         try {
-          const where = ["p.is_workshop = 1"];
+          const where = ["p.is_workshop = 1", WORKSHOP_SCOPE];
           const values = [ftsQuery];
           if (category) {
             where.push("p.category = ?");
@@ -298,7 +291,7 @@ export default {
             LIMIT ? OFFSET ?`;
           rows = await env.DB.prepare(sql).bind(...values, limit, cursor).all();
         } catch (e) {
-          const where = ["is_workshop = 1"];
+          const where = ["is_workshop = 1", WORKSHOP_SCOPE.replace(/p\./g, "")];
           const values = [];
           if (category) {
             where.push("category = ?");
@@ -315,7 +308,7 @@ export default {
           rows = await env.DB.prepare(sql).bind(...values, limit, cursor).all();
         }
       } else {
-        const where = ["is_workshop = 1"];
+        const where = ["is_workshop = 1", WORKSHOP_SCOPE.replace(/p\./g, "")];
         const values = [];
         if (category) {
           where.push("category = ?");
@@ -337,7 +330,8 @@ export default {
       });
     }
     if (url.pathname === "/categories" && request.method === "GET") {
-      const rows = await env.DB.prepare("SELECT category, COUNT(*) AS count FROM market_products WHERE is_workshop = 1 GROUP BY category ORDER BY category").all();
+      const categoryScope = WORKSHOP_SCOPE.replace(/p\./g, "");
+      const rows = await env.DB.prepare("SELECT category, COUNT(*) AS count FROM market_products WHERE is_workshop = 1 AND " + categoryScope + " GROUP BY category ORDER BY category").all();
       return json({ categories: rows.results || [] });
     }
     if (url.pathname === "/admin/discover" && request.method === "GET") {
