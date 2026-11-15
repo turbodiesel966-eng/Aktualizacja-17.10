@@ -14,6 +14,7 @@ const PRECACHE=[
   './affiliate/catalog.json',
   './affiliate/market-ui.js',
   './assets/naprawnik-market-icon.svg',
+  './assets/naprawnik-market-banner.png',
   './affiliate/market-recommendations.js',
   './assets/naprawnik-icon.svg',
   './assets/naprawnik-icon-192.svg',
