@@ -2075,11 +2075,64 @@ async function registerAnonymousUser(request, env) {
 }
 
 const AFFILIATE_PLANS = {
-  weekend: { name: "NAPRAWNIK PRO - Pass Weekendowy (3 dni)", priceGrosze: 1900, days: 3, tier: "pro" },
-  month: { name: "NAPRAWNIK PRO - Pass Miesięczny (30 dni)", priceGrosze: 3900, days: 30, tier: "pro" },
-  year: { name: "NAPRAWNIK PRO - Na Sezon / Rok (365 dni)", priceGrosze: 7900, days: 365, tier: "pro" },
-  workshop: { name: "NAPRAWNIK PRO - Warsztat VIP (365 dni)", priceGrosze: 14900, days: 365, tier: "warsztat" },
+  pro_7d: { name: "NAPRAWNIK PRO - 7 dni", priceGrosze: 1900, days: 7, tier: "pro" },
+  pro_30d: { name: "NAPRAWNIK PRO - 30 dni", priceGrosze: 3900, days: 30, tier: "pro" },
+  pro_365d: { name: "NAPRAWNIK PRO - 365 dni (Rok)", priceGrosze: 29900, days: 365, tier: "pro" },
+  workshop_7d: { name: "NAPRAWNIK WARSZTAT VIP - 7 dni", priceGrosze: 3900, days: 7, tier: "warsztat" },
+  workshop_30d: { name: "NAPRAWNIK WARSZTAT VIP - 30 dni", priceGrosze: 6900, days: 30, tier: "warsztat" },
+  workshop_365d: { name: "NAPRAWNIK WARSZTAT VIP - 365 dni (Rok)", priceGrosze: 54900, days: 365, tier: "warsztat" },
+  // Aliasy wstecznej kompatybilności
+  weekend: { name: "NAPRAWNIK PRO - 7 dni", priceGrosze: 1900, days: 7, tier: "pro" },
+  month: { name: "NAPRAWNIK PRO - 30 dni", priceGrosze: 3900, days: 30, tier: "pro" },
+  year: { name: "NAPRAWNIK PRO - 365 dni (Rok)", priceGrosze: 29900, days: 365, tier: "pro" },
+  workshop: { name: "NAPRAWNIK WARSZTAT VIP - 365 dni (Rok)", priceGrosze: 54900, days: 365, tier: "warsztat" },
 };
+
+async function sendAdminNotification(env, title, fields, colorHex = 0x00f57a) {
+  try {
+    const safeFields = Array.isArray(fields) ? fields : [];
+    const numericColor = typeof colorHex === "string"
+      ? parseInt(colorHex.replace(/^#/, ""), 16) || 0x00f57a
+      : (Number.isFinite(colorHex) ? colorHex : 0x00f57a);
+
+    if (env?.DISCORD_WEBHOOK_URL && isString(env.DISCORD_WEBHOOK_URL, 2048)) {
+      await fetch(env.DISCORD_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          embeds: [{
+            title: String(title || "Powiadomienie NAPRAWNIK"),
+            color: numericColor,
+            fields: safeFields.map(f => ({
+              name: String(f?.name || "Pole"),
+              value: String(f?.value ?? "—"),
+              inline: Boolean(f?.inline !== false),
+            })),
+            timestamp: new Date().toISOString(),
+          }],
+        }),
+      }).catch(() => {});
+    }
+
+    if (env?.TELEGRAM_BOT_TOKEN && env?.TELEGRAM_CHAT_ID) {
+      const lines = [
+        `<b>${String(title || "Powiadomienie NAPRAWNIK")}</b>`,
+        ...safeFields.map(f => `• <b>${String(f?.name || "Pole")}:</b> ${String(f?.value ?? "—")}`),
+      ];
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          chat_id: env.TELEGRAM_CHAT_ID,
+          text: lines.join("\n"),
+          parse_mode: "HTML",
+        }),
+      }).catch(() => {});
+    }
+  } catch {
+    // Powiadomienia admina nigdy nie mogą blokować płatności ani wypłat.
+  }
+}
 
 async function ensureAffiliateSchema(env) {
   try {
@@ -2137,12 +2190,7 @@ async function createAffiliateCheckout(request, env, auth) {
   if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
   await ensureAffiliateSchema(env);
   const body = await readJson(request, 8192);
-  const plans = {
-    weekend: { name: "NAPRAWNIK PRO - Pass Weekendowy (3 dni)", priceGrosze: 1900, days: 3, tier: "pro" },
-    month: { name: "NAPRAWNIK PRO - Pass Miesięczny (30 dni)", priceGrosze: 3900, days: 30, tier: "pro" },
-    year: { name: "NAPRAWNIK PRO - Na Sezon / Rok (365 dni)", priceGrosze: 7900, days: 365, tier: "pro" },
-    workshop: { name: "NAPRAWNIK PRO - Warsztat VIP (365 dni)", priceGrosze: 14900, days: 365, tier: "warsztat" },
-  };
+  const plans = AFFILIATE_PLANS;
   const planKey = typeof body?.plan === "string" ? body.plan.trim().toLowerCase() : "";
   const selectedPlan = plans[planKey];
   if (!selectedPlan) return err("Nieprawidłowy plan subskrypcyjny.", 400);
@@ -2259,12 +2307,13 @@ async function grantAffiliatePlanFromWebhook(env, event, eventObject) {
       .bind(refCode).first().catch(() => null);
     if (refOwner?.id) referrerId = refOwner.id;
   }
+  const grossPln = Number((amountTotalGrosze / 100).toFixed(2));
+  let commissionPln = 0;
   if (referrerId && referrerId !== userId) {
-    const grossPln = Number((amountTotalGrosze / 100).toFixed(2));
     const basePln = Number((planInfo.priceGrosze / 100).toFixed(2));
     const discountPln = Math.max(0, Number((basePln - grossPln).toFixed(2)));
     // 30% prowizji dla polecającego
-    const commissionPln = Number((grossPln * 0.30).toFixed(2));
+    commissionPln = Number((grossPln * 0.30).toFixed(2));
     const refInsert = await env.DB.prepare(`
       INSERT INTO referrals
         (id, referrer_id, buyer_id, ref_code, plan_key, amount_gross, discount_amount, commission_amount, stripe_session_id, status, created_at)
@@ -2277,6 +2326,13 @@ async function grantAffiliatePlanFromWebhook(env, event, eventObject) {
     }
   }
   await recalcUserTier(env, userId);
+  await sendAdminNotification(env, "💰 Nowy zakup NAPRAWNIK (Stripe)!", [
+    { name: "Pakiet", value: `${planInfo.name} (${planKey})`, inline: true },
+    { name: "Kwota PLN", value: `${grossPln.toFixed(2)} zł`, inline: true },
+    { name: "Kupujący", value: String(userId), inline: false },
+    { name: "Kod polecający", value: refCode || "Brak", inline: true },
+    { name: "Prowizja 30%", value: `${commissionPln.toFixed(2)} zł`, inline: true },
+  ], 0x00f57a);
 }
 
 async function buyProWithWallet(request, env, auth) {
@@ -2313,6 +2369,11 @@ async function buyProWithWallet(request, env, auth) {
   `).bind(walletSessionId, auth.userId, now, expiresAt, now).run().catch(() => {});
 
   const effectiveTier = await recalcUserTier(env, auth.userId);
+  await sendAdminNotification(env, "🔄 Aktywacja PRO 30 dni z Portfela (39 zł)", [
+    { name: "Użytkownik", value: String(auth.userId), inline: false },
+    { name: "Z bonusu", value: `${usedFromBonus.toFixed(2)} zł`, inline: true },
+    { name: "Z prowizji", value: `${usedFromWallet.toFixed(2)} zł`, inline: true },
+  ], 0x00e5ff);
   return json({
     ok: true,
     tier: effectiveTier,
@@ -2324,7 +2385,7 @@ async function buyProWithWallet(request, env, auth) {
     usedFromBonus,
     usedFromWallet,
     expiresAt,
-    message: "Aktywowano NAPRAWNIK PRO - Pass Miesięczny (30 dni) ze środków w portfelu!"
+    message: "Aktywowano NAPRAWNIK PRO - 30 dni ze środków w portfelu!"
   }, 200);
 }
 
@@ -2358,9 +2419,10 @@ async function requestWalletPayout(request, env, auth) {
   if (!/^\d{9}$/.test(rawPhone)) {
     return err("Podaj prawidłowy 9-cyfrowy numer telefonu do wypłaty BLIK.", 400);
   }
-  const user = await env.DB.prepare("SELECT bonus_balance, wallet_balance FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
+  const user = await env.DB.prepare("SELECT ref_code, bonus_balance, wallet_balance FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
   const walletBalance = Number(user?.wallet_balance || 0);
   const bonusBalance = user && user.bonus_balance !== undefined && user.bonus_balance !== null ? Number(user.bonus_balance) : 10.00;
+  const userRefCode = String(user?.ref_code || "—");
   const amount = body?.amount !== undefined && body?.amount !== null && body?.amount !== ""
     ? Number(body.amount)
     : walletBalance;
@@ -2377,6 +2439,12 @@ async function requestWalletPayout(request, env, auth) {
     .bind(newWalletBalance, now, auth.userId, amount).run();
   await env.DB.prepare("INSERT INTO payouts (id, user_id, amount, method, payout_details, status, created_at) VALUES (?, ?, ?, 'blik', ?, 'pending', ?)")
     .bind(crypto.randomUUID(), auth.userId, amount, rawPhone, now).run();
+  await sendAdminNotification(env, "🚨 ZLECENIE WYPŁATY BLIK!", [
+    { name: "Kwota PLN", value: `${amount.toFixed(2)} zł`, inline: true },
+    { name: "Telefon BLIK", value: rawPhone, inline: true },
+    { name: "Użytkownik", value: String(auth.userId), inline: false },
+    { name: "Kod polecający", value: userRefCode, inline: true },
+  ], 0xff8c1a);
   return json({
     ok: true,
     amount,
@@ -2577,6 +2645,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, getUsage, postUsageConsume, postUsageRefund, userPlanContext, AFFILIATE_PLANS, createAffiliateCheckout, grantAffiliatePlanFromWebhook, buyProWithWallet, getWalletStatus, requestWalletPayout };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, getUsage, postUsageConsume, postUsageRefund, userPlanContext, AFFILIATE_PLANS, sendAdminNotification, createAffiliateCheckout, grantAffiliatePlanFromWebhook, buyProWithWallet, getWalletStatus, requestWalletPayout };
 
 

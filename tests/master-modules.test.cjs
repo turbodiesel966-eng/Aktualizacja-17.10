@@ -630,27 +630,37 @@ test('NAPRAWNIK MASTER — Zintegrowany system warsztatowy: diagnostyka różnic
   assert.strictEqual(resMap['inv_1'], 2, 'Otwarte zlecenie musi rezerwować 2 szt. w magazynie');
 });
 
-test('Cennik pakietów afiliacyjnych NAPRAWNIK PRO / VIP (-20% zniżki, 30% prowizji i portfel 39 zł)', () => {
+test('Cennik 6 pakietów afiliacyjnych NAPRAWNIK PRO / VIP (7/30/365 dni, -20% zniżki, 30% prowizji, portfel 39 zł i powiadomienia admina)', () => {
   const rootDir = path.resolve(__dirname, '..');
   const billingSource = fs.readFileSync(path.join(rootDir, 'billing.js'), 'utf8');
   const workerSource = fs.readFileSync(path.join(rootDir, 'workers/subscriptions/src/index.mjs'), 'utf8');
   const migrationSource = fs.readFileSync(path.join(rootDir, 'workers/subscriptions/migrations/0009_affiliate_wallet_plans.sql'), 'utf8');
 
-  // 1. Worker plans (priceGrosze: 1900, 3900, 7900, 14900)
-  assert.match(workerSource, /weekend:\s*\{\s*name:\s*"NAPRAWNIK PRO - Pass Weekendowy \(3 dni\)",\s*priceGrosze:\s*1900,\s*days:\s*3/);
-  assert.match(workerSource, /month:\s*\{\s*name:\s*"NAPRAWNIK PRO - Pass Miesięczny \(30 dni\)",\s*priceGrosze:\s*3900,\s*days:\s*30/);
-  assert.match(workerSource, /year:\s*\{\s*name:\s*"NAPRAWNIK PRO - Na Sezon \/ Rok \(365 dni\)",\s*priceGrosze:\s*7900,\s*days:\s*365/);
-  assert.match(workerSource, /workshop:\s*\{\s*name:\s*"NAPRAWNIK PRO - Warsztat VIP \(365 dni\)",\s*priceGrosze:\s*14900,\s*days:\s*365/);
+  // 1. Worker 6 pakietów (PRO: 1900, 3900, 29900; WARSZTAT VIP: 3900, 6900, 54900)
+  assert.match(workerSource, /pro_7d:\s*\{\s*name:\s*"NAPRAWNIK PRO - 7 dni",\s*priceGrosze:\s*1900,\s*days:\s*7,\s*tier:\s*"pro"/);
+  assert.match(workerSource, /pro_30d:\s*\{\s*name:\s*"NAPRAWNIK PRO - 30 dni",\s*priceGrosze:\s*3900,\s*days:\s*30,\s*tier:\s*"pro"/);
+  assert.match(workerSource, /pro_365d:\s*\{\s*name:\s*"NAPRAWNIK PRO - 365 dni \(Rok\)",\s*priceGrosze:\s*29900,\s*days:\s*365,\s*tier:\s*"pro"/);
+  assert.match(workerSource, /workshop_7d:\s*\{\s*name:\s*"NAPRAWNIK WARSZTAT VIP - 7 dni",\s*priceGrosze:\s*3900,\s*days:\s*7,\s*tier:\s*"warsztat"/);
+  assert.match(workerSource, /workshop_30d:\s*\{\s*name:\s*"NAPRAWNIK WARSZTAT VIP - 30 dni",\s*priceGrosze:\s*6900,\s*days:\s*30,\s*tier:\s*"warsztat"/);
+  assert.match(workerSource, /workshop_365d:\s*\{\s*name:\s*"NAPRAWNIK WARSZTAT VIP - 365 dni \(Rok\)",\s*priceGrosze:\s*54900,\s*days:\s*365,\s*tier:\s*"warsztat"/);
 
-  // 2. Worker /api/buy-pro-wallet z proCost = 39.00
+  // 2. Worker /api/buy-pro-wallet z proCost = 39.00 oraz powiadomienia sendAdminNotification (Discord / Telegram)
   assert.match(workerSource, /const proCost = 39\.00;/);
   assert.match(workerSource, /Za mało środków w portfelu \(wymagane 39 zł\)/);
+  assert.match(workerSource, /async function sendAdminNotification\(env, title, fields/);
+  assert.match(workerSource, /env\?\.DISCORD_WEBHOOK_URL/);
+  assert.match(workerSource, /env\?\.TELEGRAM_BOT_TOKEN && env\?\.TELEGRAM_CHAT_ID/);
+  assert.match(workerSource, /💰 Nowy zakup NAPRAWNIK \(Stripe\)!/);
+  assert.match(workerSource, /🔄 Aktywacja PRO 30 dni z Portfela \(39 zł\)/);
+  assert.match(workerSource, /🚨 ZLECENIE WYPŁATY BLIK!/);
 
-  // 3. Frontend billing.js — 4 karty i przelicznik -20% (15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł)
-  assert.match(billingSource, /basePrice:\s*19,\s*priceGrosze:\s*1900,\s*durationDays:\s*3/);
-  assert.match(billingSource, /basePrice:\s*39,\s*priceGrosze:\s*3900,\s*durationDays:\s*30/);
-  assert.match(billingSource, /basePrice:\s*79,\s*priceGrosze:\s*7900,\s*durationDays:\s*365/);
-  assert.match(billingSource, /basePrice:\s*149,\s*priceGrosze:\s*14900,\s*durationDays:\s*365/);
+  // 3. Frontend billing.js — 6 kart w dwóch liniach (PRO: 19/39/299 zł, VIP: 39/69/549 zł) i przelicznik -20%
+  assert.match(billingSource, /key:\s*'pro_7d'[\s\S]*?basePrice:\s*19,\s*priceGrosze:\s*1900,\s*durationDays:\s*7/);
+  assert.match(billingSource, /key:\s*'pro_30d'[\s\S]*?basePrice:\s*39,\s*priceGrosze:\s*3900,\s*durationDays:\s*30/);
+  assert.match(billingSource, /key:\s*'pro_365d'[\s\S]*?basePrice:\s*299,\s*priceGrosze:\s*29900,\s*durationDays:\s*365/);
+  assert.match(billingSource, /key:\s*'workshop_7d'[\s\S]*?basePrice:\s*39,\s*priceGrosze:\s*3900,\s*durationDays:\s*7/);
+  assert.match(billingSource, /key:\s*'workshop_30d'[\s\S]*?basePrice:\s*69,\s*priceGrosze:\s*6900,\s*durationDays:\s*30/);
+  assert.match(billingSource, /key:\s*'workshop_365d'[\s\S]*?basePrice:\s*549,\s*priceGrosze:\s*54900,\s*durationDays:\s*365/);
   assert.match(billingSource, /\(basePrice \* 0\.8\)\.toFixed\(2\)\.replace\('\.', ','\) \+ ' zł'/);
   assert.match(billingSource, /const proCost = 39\.00;/);
 
@@ -679,6 +689,6 @@ test('Cennik pakietów afiliacyjnych NAPRAWNIK PRO / VIP (-20% zniżki, 30% prow
   assert.match(billingSource, /Zdiagnozuj swój skuter\/motocykl w aplikacji NAPRAWNIK! Użyj mojego kodu:/);
   assert.match(billingSource, /canvas\.toDataURL\('image\/png'\)/);
   assert.match(billingSource, /navigator\.share/);
-  assert.match(indexSource, /Pokaż diagnozę na grupie \(Zgarnij \+19 zł\)/);
+  assert.match(indexSource, /Pokaż diagnozę na grupie \(Zgarnij do \+132 zł\)/);
 });
 

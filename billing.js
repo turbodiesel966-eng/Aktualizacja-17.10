@@ -315,10 +315,12 @@
   }
 
   const AFFILIATE_PRO_PACKAGES = [
-    { key: 'weekend', title: 'NAPRAWNIK PRO - Pass Weekendowy (3 dni)', badge: '⚡ WEEKEND · 3 DNI', basePrice: 19, priceGrosze: 1900, durationDays: 3, planTier: 'pro', desc: 'Szybki dostęp na weekendową naprawę — pełna diagnostyka, schematy i kalkulatory.' },
-    { key: 'month', title: 'NAPRAWNIK PRO - Pass Miesięczny (30 dni)', badge: '💎 MIESIĄC · 30 DNI', basePrice: 39, priceGrosze: 3900, durationDays: 30, planTier: 'pro', desc: 'Pełny dostęp PRO na 30 dni — laboratorium 150 pomiarów, 3 pojazdy, chmura.' },
-    { key: 'year', title: 'NAPRAWNIK PRO - Na Sezon / Rok (365 dni)', badge: '🏆 SEZON / ROK · 365 DNI', basePrice: 79, priceGrosze: 7900, durationDays: 365, planTier: 'pro', desc: 'Cały rok dostępu PRO — najbardziej opłacalny wybór na cały sezon motocyklowy.' },
-    { key: 'workshop', title: 'NAPRAWNIK PRO - Warsztat VIP (365 dni)', badge: '🛠️ WARSZTAT VIP · 365 DNI', basePrice: 149, priceGrosze: 14900, durationDays: 365, planTier: 'warsztat', desc: 'Kompleksowy kombajn WARSZTAT VIP na 365 dni — zlecenia, PDF z podpisem, marża, 500 pojazdów.' }
+    { key: 'pro_7d', title: 'NAPRAWNIK PRO - 7 dni', badge: '⚡ PRO · 7 DNI', basePrice: 19, priceGrosze: 1900, durationDays: 7, planTier: 'pro', commissionLabel: '4,56 zł', desc: 'Pełny dostęp PRO na 7 dni — diagnostyka, schematy, kalkulatory i laboratorium.' },
+    { key: 'pro_30d', title: 'NAPRAWNIK PRO - 30 dni', badge: '💎 PRO · 30 DNI', basePrice: 39, priceGrosze: 3900, durationDays: 30, planTier: 'pro', commissionLabel: '9,36 zł', desc: 'Pełny dostęp PRO na 30 dni — laboratorium 150 pomiarów, 3 pojazdy, chmura.' },
+    { key: 'pro_365d', title: 'NAPRAWNIK PRO - 365 dni (Rok)', badge: '🏆 PRO · 365 DNI', basePrice: 299, priceGrosze: 29900, durationDays: 365, planTier: 'pro', commissionLabel: '71,76 zł', desc: 'Cały rok dostępu PRO — pełny sezon warsztatowy bez ograniczeń czasowych.' },
+    { key: 'workshop_7d', title: 'NAPRAWNIK WARSZTAT VIP - 7 dni', badge: '🛠️ WARSZTAT VIP · 7 DNI', basePrice: 39, priceGrosze: 3900, durationDays: 7, planTier: 'warsztat', commissionLabel: '9,36 zł', desc: 'Pełny dostęp WARSZTAT VIP na 7 dni — zlecenia serwisowe, wyceny PDF, magazyn i marża.' },
+    { key: 'workshop_30d', title: 'NAPRAWNIK WARSZTAT VIP - 30 dni', badge: '🔥 WARSZTAT VIP · 30 DNI', basePrice: 69, priceGrosze: 6900, durationDays: 30, planTier: 'warsztat', commissionLabel: '16,56 zł', desc: 'Miesiąc pełnego systemu WARSZTAT VIP — do 500 pojazdów, 30 zleceń/mc, podpis klienta PDF.' },
+    { key: 'workshop_365d', title: 'NAPRAWNIK WARSZTAT VIP - 365 dni (Rok)', badge: '👑 WARSZTAT VIP · 365 DNI', basePrice: 549, priceGrosze: 54900, durationDays: 365, planTier: 'warsztat', commissionLabel: '131,76 zł', desc: 'Roczny kombajn WARSZTAT VIP (365 dni) — pełna automatyzacja serwisu, flota 500 pojazdów i eksport CSV.' }
   ];
   let currentAffiliatePromoCode = '';
   let cachedWalletState = null;
@@ -332,29 +334,43 @@
   }
   window.npCalcAffiliatePrice = calcAffiliateDiscountedZl;
 
+  function renderAffiliatePackageCard(pkg, hasCode) {
+    const finalPriceStr = calcAffiliateDiscountedZl(pkg.basePrice, currentAffiliatePromoCode);
+    const baseStr = pkg.basePrice + ' zł';
+    const isWarsztat = pkg.planTier === 'warsztat';
+    const borderCol = isWarsztat ? 'var(--hero)' : 'var(--accent)';
+    return '<div class="card" data-aff-card="' + pkg.key + '" style="border-color:' + borderCol + ';margin-bottom:8px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<span style="font-size:10px;font-weight:bold;color:var(--cyan);letter-spacing:0.6px">' + esc(pkg.badge) + '</span>' +
+        '<span data-aff-discount-pill="' + pkg.key + '" style="display:' + (hasCode ? 'inline-block' : 'none') + ';font-size:10px;background:#00f57a22;color:#00f57a;border:1px solid #00f57a;padding:2px 6px;border-radius:999px;font-weight:bold">-20% Z KODEM</span>' +
+      '</div>' +
+      '<h2 style="margin-top:6px">' + esc(pkg.title) + '</h2>' +
+      '<p style="font-size:12px;color:var(--dim);line-height:1.45;margin-bottom:8px">' + esc(pkg.desc) + '</p>' +
+      '<div style="display:flex;align-items:baseline;gap:10px;margin:8px 0">' +
+        '<span data-aff-price="' + pkg.key + '" style="font-size:22px;font-weight:900;color:var(--hero)">' + esc(finalPriceStr) + '</span>' +
+        '<span data-aff-old-price="' + pkg.key + '" style="display:' + (hasCode ? 'inline' : 'none') + ';font-size:13px;color:var(--dim);text-decoration:line-through">' + esc(baseStr) + '</span>' +
+      '</div>' +
+      '<button type="button" class="btn" data-aff-buy="' + pkg.key + '" style="border-color:' + borderCol + ';color:' + (isWarsztat ? 'var(--hero)' : 'var(--accent)') + '" onclick="window.npStartAffiliateCheckout && window.npStartAffiliateCheckout(\'' + pkg.key + '\')">' +
+        '⚡ Wybieram ' + esc(pkg.title) + ' — <span data-aff-btn-price="' + pkg.key + '">' + esc(finalPriceStr) + '</span>' +
+      '</button>' +
+    '</div>';
+  }
+
   function buildAffiliatePackagesCardHtml(currentTier) {
     const hasCode = String(currentAffiliatePromoCode || '').trim().length >= 3;
-    const cardsHtml = AFFILIATE_PRO_PACKAGES.map(pkg => {
-      const finalPriceStr = calcAffiliateDiscountedZl(pkg.basePrice, currentAffiliatePromoCode);
-      const baseStr = pkg.basePrice + ' zł';
-      const isWarsztat = pkg.key === 'workshop';
-      const borderCol = isWarsztat ? 'var(--hero)' : 'var(--accent)';
-      return '<div class="card" data-aff-card="' + pkg.key + '" style="border-color:' + borderCol + ';margin-bottom:8px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
-          '<span style="font-size:10px;font-weight:bold;color:var(--cyan);letter-spacing:0.6px">' + esc(pkg.badge) + '</span>' +
-          '<span data-aff-discount-pill="' + pkg.key + '" style="display:' + (hasCode ? 'inline-block' : 'none') + ';font-size:10px;background:#00f57a22;color:#00f57a;border:1px solid #00f57a;padding:2px 6px;border-radius:999px;font-weight:bold">-20% Z KODEM</span>' +
-        '</div>' +
-        '<h2 style="margin-top:6px">' + esc(pkg.title) + '</h2>' +
-        '<p style="font-size:12px;color:var(--dim);line-height:1.45;margin-bottom:8px">' + esc(pkg.desc) + '</p>' +
-        '<div style="display:flex;align-items:baseline;gap:10px;margin:8px 0">' +
-          '<span data-aff-price="' + pkg.key + '" style="font-size:22px;font-weight:900;color:var(--hero)">' + esc(finalPriceStr) + '</span>' +
-          '<span data-aff-old-price="' + pkg.key + '" style="display:' + (hasCode ? 'inline' : 'none') + ';font-size:13px;color:var(--dim);text-decoration:line-through">' + esc(baseStr) + '</span>' +
-        '</div>' +
-        '<button type="button" class="btn" data-aff-buy="' + pkg.key + '" style="border-color:' + borderCol + ';color:' + (isWarsztat ? 'var(--hero)' : 'var(--accent)') + '" onclick="window.npStartAffiliateCheckout && window.npStartAffiliateCheckout(\'' + pkg.key + '\')">' +
-          '⚡ Wybieram ' + esc(pkg.title) + ' — <span data-aff-btn-price="' + pkg.key + '">' + esc(finalPriceStr) + '</span>' +
-        '</button>' +
-      '</div>';
-    }).join('');
+    const proCardsHtml = AFFILIATE_PRO_PACKAGES
+      .filter(pkg => pkg.planTier === 'pro')
+      .map(pkg => renderAffiliatePackageCard(pkg, hasCode))
+      .join('');
+    const workshopCardsHtml = AFFILIATE_PRO_PACKAGES
+      .filter(pkg => pkg.planTier === 'warsztat')
+      .map(pkg => renderAffiliatePackageCard(pkg, hasCode))
+      .join('');
+    const cardsHtml =
+      '<div style="margin:10px 0 6px;font-size:13px;font-weight:900;color:var(--accent);letter-spacing:0.4px">💎 LINIA 1: NAPRAWNIK PRO (7 dni: 19 zł • 30 dni: 39 zł • 365 dni: 299 zł)</div>' +
+      proCardsHtml +
+      '<div style="margin:14px 0 6px;font-size:13px;font-weight:900;color:var(--hero);letter-spacing:0.4px">🛠️ LINIA 2: NAPRAWNIK WARSZTAT VIP (7 dni: 39 zł • 30 dni: 69 zł • 365 dni: 549 zł)</div>' +
+      workshopCardsHtml;
 
     const bonusNum = cachedWalletState && cachedWalletState.bonusBalance !== undefined && cachedWalletState.bonusBalance !== null
       ? Number(cachedWalletState.bonusBalance)
@@ -374,12 +390,12 @@
 
     return '<div class="card" id="npAffiliateSection" style="border-color:var(--cyan)">' +
       '<h2>🚀 Pakiety NAPRAWNIK PRO i WARSZTAT VIP (Program Partnerski)</h2>' +
-      '<p style="font-size:12px;line-height:1.5;color:var(--dim);margin-bottom:10px">Wybierz pakiet czasowy dopasowany do potrzeb. Z kodem polecającym otrzymujesz <b>-20% zniżki</b> (15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł), a polecający zyskuje <b>30% prowizji</b> do portfela afiliacyjnego.</p>' +
+      '<p style="font-size:12px;line-height:1.5;color:var(--dim);margin-bottom:10px">Wybierz pakiet czasowy dopasowany do potrzeb (7, 30 lub 365 dni). Z kodem polecającym otrzymujesz <b>-20% zniżki</b> (PRO: 15,20 zł / 31,20 zł / 239,20 zł • WARSZTAT VIP: 31,20 zł / 55,20 zł / 439,20 zł), a polecający zyskuje <b>30% prowizji</b> (nawet do <b>131,76 zł</b> za jedno polecenie!).</p>' +
       '<div class="entry" style="margin-bottom:10px">' +
-        '<label for="npAffiliatePromoInput" style="font-size:11px;color:var(--cyan);font-weight:bold;display:block;margin-bottom:4px">🎟️ Kod rabatowy / polecający (-20% na każdy pakiet):</label>' +
+        '<label for="npAffiliatePromoInput" style="font-size:11px;color:var(--cyan);font-weight:bold;display:block;margin-bottom:4px">🎟️ Kod rabatowy / polecający (-20% na każdy z 6 pakietów):</label>' +
         '<input id="npAffiliatePromoInput" placeholder="Wpisz kod rabatowy (np. NAP-XXXXXX)" value="' + esc(currentAffiliatePromoCode) + '" oninput="window.npUpdateAffiliatePromoUI && window.npUpdateAffiliatePromoUI(this.value)">' +
         '<small id="npAffiliatePromoStatus" style="color:' + (hasCode ? '#00f57a' : 'var(--dim)') + '">' +
-          (hasCode ? '✅ Aktywowano rabat -20%! Ceny po zniżce: 15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł.' : 'Wpisz kod polecający, aby obniżyć ceny o 20% (19 zł → 15,20 zł, 39 zł → 31,20 zł, 79 zł → 63,20 zł, 149 zł → 119,20 zł).') +
+          (hasCode ? '✅ Aktywowano rabat -20%! Ceny PRO: 15,20 zł / 31,20 zł / 239,20 zł • WARSZTAT VIP: 31,20 zł / 55,20 zł / 439,20 zł.' : 'Wpisz kod polecający, aby obniżyć ceny wszystkich 6 pakietów o 20% (PRO: 19→15,20 zł, 39→31,20 zł, 299→239,20 zł | WARSZTAT VIP: 39→31,20 zł, 69→55,20 zł, 549→439,20 zł).') +
         '</small>' +
       '</div>' +
       cardsHtml +
@@ -465,13 +481,13 @@
     if (statusEl) {
       statusEl.style.color = hasCode ? '#00f57a' : 'var(--dim)';
       statusEl.textContent = hasCode
-        ? '✅ Aktywowano rabat -20%! Ceny po zniżce: 15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł.'
-        : 'Wpisz kod polecający, aby obniżyć ceny o 20% (19 zł → 15,20 zł, 39 zł → 31,20 zł, 79 zł → 63,20 zł, 149 zł → 119,20 zł).';
+        ? '✅ Aktywowano rabat -20%! Ceny PRO: 15,20 zł / 31,20 zł / 239,20 zł • WARSZTAT VIP: 31,20 zł / 55,20 zł / 439,20 zł.'
+        : 'Wpisz kod polecający, aby obniżyć ceny wszystkich 6 pakietów o 20% (PRO: 19→15,20 zł, 39→31,20 zł, 299→239,20 zł | WARSZTAT VIP: 39→31,20 zł, 69→55,20 zł, 549→439,20 zł).';
     }
   };
 
   window.npStartAffiliateCheckout = async function(planKey, customPromoCode) {
-    if (!['weekend', 'month', 'year', 'workshop'].includes(planKey)) return;
+    if (!['pro_7d', 'pro_30d', 'pro_365d', 'workshop_7d', 'workshop_30d', 'workshop_365d', 'weekend', 'month', 'year', 'workshop'].includes(planKey)) return;
     if (!API) { alert('Płatności są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.'); return; }
     try {
       const token = await accountEnsure();
