@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAPRAWNIK v5.51 — Warsztatowy Kombajn i Encyklopedia Techniczna dla Mechaników Motocyklowych | APK &amp; PWA</title>
+  <meta name="description" content="NAPRAWNIK v5.51 — profesjonalny system diagnostyczno-serwisowy i encyklopedia techniczna OEM. Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi). Pobierz APK offline na Androida lub uruchom PWA.">
+  <meta name="keywords" content="diagnostyka motocykli, serwis skuterów, mechanika motocyklowa, dane techniczne OEM, momenty dokręcania motocykl, luzy zaworowe, kody błędów OBD motocykl, pinouty CDI, dekoder VIN motocykl, warsztat motocyklowy, quady ATV UTV, NAPRAWNIK APK">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NAPRAWNIK v5.51 — Cyfrowy Mózg Warsztatu Motocyklowego">
+  <meta property="og:description" content="Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi), 229 rekordów OEM (2 284 parametry), 158 przypadków usterek, 47 procedur A–H, Elektroniczne Lab, kalkulatory, VIN, zlecenia warsztatowe i Portfel BLIK. 100% offline w APK.">
+  <meta property="og:url" content="https://naprawnik-download.pages.dev/">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2367e8f9'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg-deep: #060a14;
+      --bg-dark: #0a0f1d;
+      --bg-card: #0f172a;
+      --bg-card-alt: #131d36;
+      --border: #28354f;
+      --border-hi: #38bdf8;
+      --cyan: #67e8f9;
+      --amber: #ffd166;
+      --purple: #c4b5fd;
+      --green: #4ade80;
+      --orange: #fb923c;
+      --red: #f87171;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --text-soft: #cbd5e1;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.62;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    a {
+      color: var(--cyan);
+      font-family: var(--sans);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.15s ease;
+    }
+    a:visited { color: var(--purple); }
+    a:hover, a:focus-visible {
+      color: var(--amber);
+      outline: 2px solid var(--amber);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
+
+    /* Sticky navigation */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(6, 10, 20, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 900;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      color: #ffffff !important;
+      text-decoration: none !important;
+    }
+    .brand-ver {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(103, 232, 249, 0.15);
+      border: 1px solid rgba(103, 232, 249, 0.45);
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.95rem;
+      align-items: center;
+      font-size: 0.88rem;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-soft);
+      font-weight: 600;
+    }
+    .nav-links a:hover, .nav-links a:focus-visible {
+      color: var(--amber);
+      text-decoration: underline;
+    }
+    .nav-cta {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff !important;
+      padding: 0.45rem 0.95rem;
+      border-radius: 8px;
+      border: 1px solid var(--cyan);
+      font-weight: 700 !important;
+      text-decoration: none !important;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+      width: 100%;
+    }
+
+    /* Hero */
+    header.hero {
+      padding: 4rem 1.25rem 3.25rem;
+      text-align: center;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(14, 165, 233, 0.18), transparent 70%),
+        radial-gradient(ellipse 60% 45% at 85% 30%, rgba(255, 209, 102, 0.08), transparent 70%),
+        var(--bg-dark);
+      border-bottom: 1px solid var(--border);
+    }
+    .pill-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: rgba(14, 165, 233, 0.14);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+    }
+    .badge-pill.offline {
+      background: rgba(74, 222, 128, 0.12);
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .badge-pill.scope {
+      background: rgba(255, 209, 102, 0.12);
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    header.hero h1 {
+      font-size: clamp(2.1rem, 5vw, 3.6rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      max-width: 960px;
+      margin: 0 auto 1.25rem;
+      background: linear-gradient(135deg, #ffffff 35%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+      color: var(--text-soft);
+      max-width: 850px;
+      margin: 0 auto 0.9rem;
+    }
+    .hero-vehicles {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+      max-width: 780px;
+      margin: 0 auto 2.25rem;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff !important;
+      text-decoration: none !important;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      border: 1px solid var(--cyan);
+      box-shadow: 0 10px 28px -6px rgba(2, 132, 199, 0.55), 0 0 22px rgba(103, 232, 249, 0.22);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-download:hover, .btn-download:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px -6px rgba(2, 132, 199, 0.7), 0 0 26px rgba(255, 209, 102, 0.45);
+      outline: 2px solid var(--amber);
+    }
+    .btn-pwa {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      background: var(--bg-card);
+      color: var(--text) !important;
+      text-decoration: none !important;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 1rem 1.75rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-pwa:hover, .btn-pwa:focus-visible {
+      background: var(--bg-card-alt);
+      border-color: var(--amber);
+      color: var(--amber) !important;
+    }
+    .trust-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.25rem 2rem;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+    }
+    .trust-strip span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Section headings */
+    .sec-head {
+      margin: 3.75rem 0 1.5rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+    .sec-head h2 {
+      font-size: clamp(1.45rem, 3.2vw, 2.05rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: #ffffff;
+    }
+    .sec-head h2::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 28px;
+      border-radius: 4px;
+      background: var(--cyan);
+      flex-shrink: 0;
+    }
+    .sec-head p {
+      color: var(--text-dim);
+      margin-top: 0.45rem;
+      font-size: 0.98rem;
+    }
+
+    /* Real Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.15rem 1rem;
+      text-align: left;
+    }
+    .metric-val {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--cyan);
+      line-height: 1.1;
+    }
+    .metric-card.amber .metric-val { color: var(--amber); }
+    .metric-card.green .metric-val { color: var(--green); }
+    .metric-card.purple .metric-val { color: var(--purple); }
+    .metric-lbl {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 0.35rem;
+    }
+    .metric-sub {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    /* Deep Modules Grid */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 1.35rem;
+      margin-top: 1.5rem;
+    }
+    .mod-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .mod-card:hover {
+      border-color: var(--border-hi);
+    }
+    .mod-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .mod-num {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(103, 232, 249, 0.12);
+      border: 1px solid rgba(103, 232, 249, 0.35);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+    }
+    .mod-tier {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+    .mod-card h3 {
+      font-size: 1.22rem;
+      color: #ffffff;
+      line-height: 1.25;
+    }
+    .mod-card > p {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+    }
+    .mod-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-top: 0.25rem;
+      font-size: 0.88rem;
+      color: var(--text-soft);
+    }
+    .mod-list li {
+      padding-left: 1.15rem;
+      position: relative;
+    }
+    .mod-list li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-weight: 900;
+    }
+    .pill-mini {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.08rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.25rem;
+      vertical-align: middle;
+    }
+    .pill-mini.free { background: rgba(74, 222, 128, 0.16); color: var(--green); }
+    .pill-mini.pro { background: rgba(103, 232, 249, 0.16); color: var(--cyan); }
+    .pill-mini.war { background: rgba(255, 209, 102, 0.18); color: var(--amber); }
+
+    /* Departments A-H */
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 0.95rem;
+      margin-top: 1.25rem;
+    }
+    .dept-box {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+    }
+    .dept-box .dept-id {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .dept-box h4 {
+      font-size: 0.98rem;
+      color: #ffffff;
+      margin: 0.2rem 0 0.35rem;
+    }
+    .dept-box p {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+    }
+
+    /* Plans & Limits */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1.35rem;
+      margin-top: 1.5rem;
+    }
+    .plan-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.65rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .plan-card.pro { border-color: rgba(103, 232, 249, 0.65); }
+    .plan-card.warsztat {
+      border-color: rgba(255, 209, 102, 0.75);
+      box-shadow: 0 0 32px rgba(255, 209, 102, 0.08);
+    }
+    .plan-badge {
+      display: inline-block;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      align-self: flex-start;
+    }
+    .plan-badge.amator { background: rgba(74, 222, 128, 0.16); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.4); }
+    .plan-badge.pro { background: rgba(103, 232, 249, 0.16); color: var(--cyan); border: 1px solid rgba(103, 232, 249, 0.45); }
+    .plan-badge.warsztat { background: rgba(255, 209, 102, 0.18); color: var(--amber); border: 1px solid rgba(255, 209, 102, 0.55); }
+    .plan-price {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin-top: 0.85rem;
+      line-height: 1.15;
+    }
+    .plan-price span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+    .plan-alt {
+      font-size: 0.86rem;
+      color: var(--text-soft);
+      margin-top: 0.3rem;
+    }
+    .plan-trial {
+      margin-top: 0.65rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed var(--border);
+      font-size: 0.82rem;
+      color: var(--green);
+      font-weight: 600;
+    }
+    .plan-ul {
+      list-style: none;
+      margin-top: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      font-size: 0.88rem;
+      color: var(--text-soft);
+    }
+    .plan-ul li {
+      padding-left: 1.25rem;
+      position: relative;
+    }
+    .plan-ul li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 1.5rem;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    table.cmp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+      min-width: 660px;
+    }
+    table.cmp-table th, table.cmp-table td {
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    table.cmp-table th {
+      background: #0b1223;
+      color: #ffffff;
+      font-weight: 800;
+    }
+    table.cmp-table tr:last-child td { border-bottom: none; }
+    table.cmp-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .td-yes { color: var(--green); font-weight: 700; }
+    .td-no { color: var(--text-dim); }
+    .td-hi { color: var(--amber); font-weight: 700; }
+
+    /* Info boxes & Legal */
+    .split-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.35rem;
+      margin-top: 1.5rem;
+    }
+    .info-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.65rem;
+    }
+    .info-box h3 {
+      font-size: 1.18rem;
+      color: #ffffff;
+      margin-bottom: 0.75rem;
+    }
+    .info-box p, .info-box li {
+      font-size: 0.92rem;
+      color: var(--text-soft);
+    }
+    .info-box ul, .info-box ol {
+      padding-left: 1.25rem;
+      margin-top: 0.65rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .code-block {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.85rem 1.1rem;
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      color: var(--cyan);
+      word-break: break-all;
+      margin: 0.85rem 0;
+      display: block;
+    }
+    .note-box {
+      margin-top: 1.15rem;
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 209, 102, 0.4);
+      background: rgba(255, 209, 102, 0.06);
+      font-size: 0.88rem;
+      color: var(--text-soft);
+    }
+    .contact-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .btn-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.6rem 1.05rem;
+      border-radius: 9px;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border);
+      text-decoration: none !important;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .btn-link:hover, .btn-link:focus-visible {
+      border-color: var(--amber);
+    }
+
+    footer {
+      margin-top: auto;
+      background: #050811;
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 1.25rem;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+    }
+    footer .foot-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem 1.4rem;
+      margin: 0.85rem 0;
+    }
+
+    /* Hero Bento Showcase & 9-Screenshot Bento Gallery (v5.51) */
+    .hero-showcase {
+      margin-top: 2.5rem;
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 1.15rem;
+      text-align: left;
+      align-items: stretch;
+    }
+    @media (max-width: 920px) {
+      .hero-showcase { grid-template-columns: 1fr; }
+    }
+    .hero-main-shot {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0f172a;
+      border: 1px solid rgba(249, 115, 22, 0.55);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 28px rgba(249, 115, 22, 0.16);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .hero-main-shot:hover {
+      transform: translateY(-3px);
+      border-color: #f97316;
+    }
+    .hero-main-shot img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+    }
+    .hero-shot-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.7rem 1rem;
+      background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+    .hero-dots {
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
+    }
+    .hero-dots i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .hero-shot-caption {
+      padding: 0.9rem 1.15rem;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .hero-side-shots {
+      display: grid;
+      grid-template-rows: repeat(3, 1fr);
+      gap: 0.85rem;
+    }
+    .hero-thumb-card {
+      display: grid;
+      grid-template-columns: 135px 1fr;
+      gap: 0.85rem;
+      align-items: center;
+      background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.65rem;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+    .hero-thumb-card:hover {
+      transform: translateX(3px);
+      border-color: var(--cyan);
+    }
+    .hero-thumb-card img {
+      width: 100%;
+      height: 86px;
+      object-fit: cover;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .hero-thumb-card h4 {
+      font-size: 0.92rem;
+      color: #ffffff;
+      margin-bottom: 0.2rem;
+      line-height: 1.25;
+    }
+    .hero-thumb-card p {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.35;
+    }
+
+    /* Filterable Bento Gallery */
+    .gallery-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin: 1rem 0 1.35rem;
+    }
+    .gal-btn {
+      background: #0f172a;
+      color: var(--text-soft);
+      border: 1px solid var(--border);
+      padding: 0.48rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.83rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .gal-btn:hover, .gal-btn.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #ffffff;
+      border-color: #fb923c;
+      box-shadow: 0 6px 18px rgba(249, 115, 22, 0.3);
+    }
+    .bento-gallery {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.15rem;
+    }
+    .bento-shot {
+      grid-column: span 4;
+      background: linear-gradient(160deg, #0f172a 0%, #162038 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .bento-shot.span-6 { grid-column: span 6; }
+    .bento-shot.span-8 { grid-column: span 8; }
+    @media (max-width: 980px) {
+      .bento-shot, .bento-shot.span-6, .bento-shot.span-8 { grid-column: span 6; }
+    }
+    @media (max-width: 640px) {
+      .bento-shot, .bento-shot.span-6, .bento-shot.span-8 { grid-column: span 12; }
+      .hero-thumb-card { grid-template-columns: 105px 1fr; }
+    }
+    .bento-shot:hover {
+      transform: translateY(-4px);
+      border-color: #06b6d4;
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 22px rgba(6, 182, 212, 0.2);
+    }
+    .bento-shot.accent-orange:hover { border-color: #f97316; box-shadow: 0 16px 34px rgba(0,0,0,0.55), 0 0 22px rgba(249,115,22,0.22); }
+    .bento-shot.accent-gold:hover { border-color: #eab308; box-shadow: 0 16px 34px rgba(0,0,0,0.55), 0 0 22px rgba(234,179,8,0.22); }
+    .bento-shot.accent-emerald:hover { border-color: #10b981; box-shadow: 0 16px 34px rgba(0,0,0,0.55), 0 0 22px rgba(16,185,129,0.22); }
+    .bento-img-wrap {
+      position: relative;
+      background: #050914;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .bento-img-wrap img {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .bento-shot.span-8 .bento-img-wrap img,
+    .bento-shot.span-6 .bento-img-wrap img {
+      height: 270px;
+    }
+    .bento-shot:hover .bento-img-wrap img {
+      transform: scale(1.03);
+    }
+    .shot-badge {
+      position: absolute;
+      top: 0.65rem;
+      left: 0.65rem;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(103, 232, 249, 0.5);
+      color: var(--cyan);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 0.22rem 0.6rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .shot-badge.orange { border-color: rgba(249, 115, 22, 0.65); color: #fb923c; }
+    .shot-badge.gold { border-color: rgba(234, 179, 8, 0.65); color: #fde047; }
+    .shot-badge.emerald { border-color: rgba(16, 185, 129, 0.65); color: #34d399; }
+    .shot-zoom-pill {
+      position: absolute;
+      bottom: 0.65rem;
+      right: 0.65rem;
+      background: rgba(6, 10, 20, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      font-size: 0.73rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+    }
+    .bento-shot-body {
+      padding: 1.05rem 1.15rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex: 1;
+    }
+    .bento-shot-body h3 {
+      font-size: 1.04rem;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+    .bento-shot-body p {
+      font-size: 0.84rem;
+      color: var(--text-dim);
+      line-height: 1.45;
+    }
+
+    /* Module Card Preview Thumbnail */
+    .mod-shot-preview {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #060a14;
+      cursor: pointer;
+      position: relative;
+    }
+    .mod-shot-preview img {
+      width: 100%;
+      height: 155px;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+      transition: transform 0.25s ease;
+    }
+    .mod-shot-preview:hover img {
+      transform: scale(1.03);
+    }
+
+    /* Disabled AI Module Box (Visible but inactive) */
+    .ai-status-card {
+      margin-top: 1.5rem;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.75));
+      border: 1px dashed rgba(148, 163, 184, 0.45);
+      border-radius: 16px;
+      padding: 1.35rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.15rem;
+    }
+    .ai-status-info {
+      max-width: 700px;
+    }
+    .ai-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.16);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      margin-bottom: 0.45rem;
+    }
+    .btn-ai-disabled {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: #94a3b8;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: not-allowed;
+      opacity: 0.65;
+      filter: grayscale(1);
+      user-select: none;
+    }
+
+    /* Bento Affiliate & BLIK Wallet Card */
+    .affiliate-bento {
+      background: linear-gradient(145deg, #0f172a 0%, #1e293b 60%, rgba(16, 185, 129, 0.12) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      border-radius: 18px;
+      padding: 1.6rem;
+      margin-bottom: 1.6rem;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 26px rgba(16, 185, 129, 0.1);
+    }
+    .aff-step-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+      margin-top: 1.15rem;
+    }
+    .aff-step {
+      background: rgba(6, 10, 20, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+    }
+    .aff-step .aff-val {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #10b981;
+      margin-bottom: 0.25rem;
+    }
+    .aff-step.gold .aff-val { color: #eab308; }
+    .aff-step.cyan .aff-val { color: #06b6d4; }
+    .aff-step.orange .aff-val { color: #f97316; }
+
+    /* Lightbox Modal */
+    .shot-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(3, 7, 18, 0.92);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+    .shot-lightbox.open {
+      display: flex;
+    }
+    .shot-lightbox-inner {
+      max-width: 1120px;
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--cyan);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+    }
+    .shot-lightbox-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 1.2rem;
+      background: #090e1c;
+      border-bottom: 1px solid var(--border);
+    }
+    .shot-lightbox-close {
+      background: #1e293b;
+      color: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.4rem 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .shot-lightbox-body {
+      text-align: center;
+      background: #040711;
+      max-height: 78vh;
+      overflow: auto;
+    }
+    .shot-lightbox-body img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="topbar" aria-label="Nawigacja strony">
+    <div class="topbar-inner">
+      <a href="#top" class="brand">
+        <span>NAPRAWNIK</span>
+        <span class="brand-ver">v5.51</span>
+      </a>
+      <div class="nav-links">
+        <a href="#galeria">Galeria ekranów (v5.51)</a>
+        <a href="#baza-techniczna">Baza i dane OEM</a>
+        <a href="#moduly">Wszystkie moduły</a>
+        <a href="#plany">Abonamenty i Portfel BLIK</a>
+        <a href="#apk-vs-pwa">APK vs PWA</a>
+        <a href="#bezpieczenstwo">Bezpieczeństwo SSL i instalacja</a>
+        <a href="#zaufanie">RODO i kontakt</a>
+        <a href="naprawnik-release.apk" class="nav-cta" download>Pobierz APK</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="container" style="padding-top:0;padding-bottom:0;">
+      <div class="pill-row">
+        <span class="badge-pill">Wersja produkcyjna v5.51</span>
+        <span class="badge-pill offline">APK 100% Offline w warsztacie</span>
+        <span class="badge-pill scope">Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)</span>
+      </div>
+      <h1>NAPRAWNIK — Warsztatowy Kombajn i Encyklopedia Mechanika Motocyklowego</h1>
+      <p class="hero-sub">
+        Rozbudowany system diagnostyczno-serwisowy łączący encyklopedię danych technicznych OEM, interaktywną diagnostykę usterek, elektroniczne laboratorium pomiarowe, dekoder VIN, kalkulatory warsztatowe, Portfel Afiliacyjny BLIK oraz pełną obsługę zleceń, klientów i marży serwisu.
+      </p>
+      <p class="hero-vehicles">
+        <strong>Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)</strong> — układy <strong>1-cylindrowe, R2, R3, R4, V2, V4 i Boxer</strong>, przekładnie bezstopniowe <strong>CVT</strong>, motorowery (AM6 / D50B0), motocykle drogowe i enduro (<strong>400–650 cm³ i więcej</strong>) oraz quady użytkowe <strong>ATV / UTV 4×4</strong>.
+      </p>
+      <div class="hero-actions">
+        <a href="naprawnik-release.apk" class="btn-download" download>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Pobierz Android APK (v5.51 Offline)
+        </a>
+        <a href="https://turbodiesel966-eng.github.io/Aktualizacja-17.10/" class="btn-pwa" target="_blank" rel="noopener noreferrer">
+          Uruchom wersję Web (PWA) &rarr;
+        </a>
+      </div>
+      <div class="trust-strip">
+        <span>✓ Wersja APK izolowana od sieci — działa bez zasięgu w garażu</span>
+        <span>✓ Darmowy plan AMATOR bez zakładania konta i bez reklam</span>
+        <span>✓ Bezpieczne szyfrowanie SSL i hosting Cloudflare</span>
+        <span>✓ Program Afiliacyjny BLIK: 10 zł na start, -20% z kodem i 30% prowizji (do 132 zł)</span>
+      </div>
+
+      <!-- HERO BENTO SHOWCASE (REALNE SCREENY v5.51) -->
+      <div class="hero-showcase" aria-label="Podgląd ekranu głównego NAPRAWNIK v5.51">
+        <div class="hero-main-shot" onclick="openShotLightbox('assets/screenshots/screen-01-6-modulow.jpg', 'Kokpit Główny v5.51 — Sześć Głównych Modułów Warsztatu (Klienci i Pojazdy, Zlecenia, Diagnostyka, Elektryka, Baza Techniczna, Kalkulatory)')">
+          <div class="hero-shot-bar">
+            <span class="hero-dots">
+              <i style="background:#ef4444"></i>
+              <i style="background:#eab308"></i>
+              <i style="background:#10b981"></i>
+              <strong style="margin-left:0.4rem;color:#ffffff;">NAPRAWNIK v5.51 • Kafelkowy Kokpit Warsztatowy (Bento Grid 3D)</strong>
+            </span>
+            <span style="color:#fb923c;font-weight:800;">🔍 Kliknij, aby powiększyć</span>
+          </div>
+          <img src="assets/screenshots/screen-01-6-modulow.jpg" alt="NAPRAWNIK v5.51 — Sześć Głównych Modułów Warsztatu w układzie Bento Grid" loading="eager">
+          <div class="hero-shot-caption">
+            <span><strong>6 GŁÓWNYCH FILARÓW WARSZTATU:</strong> Klienci i Pojazdy • Zlecenia • Diagnostyka • Elektryka • Baza Techniczna (ponad 480 modeli i wariantów) • Kalkulatory 3D</span>
+            <a href="#galeria" onclick="event.stopPropagation();" style="color:#fb923c;font-weight:800;text-decoration:none;">Zobacz wszystkie 9 ekranów &darr;</a>
+          </div>
+        </div>
+
+        <div class="hero-side-shots">
+          <div class="hero-thumb-card" onclick="openShotLightbox('assets/screenshots/screen-02-diagnostyka.jpg', 'Moduł 03: Diagnostyka — Drzewo Objawów 2T/4T, Ścieżki TAK/NIE, 152+38 usterek, R3/R4/V4 i kody OBD/EFI')">
+            <img src="assets/screenshots/screen-02-diagnostyka.jpg" alt="Moduł 03 Diagnostyka — Drzewo Objawów 2T/4T i Kody OBD/EFI" loading="eager">
+            <div>
+              <span class="pill-mini free" style="margin-left:0;margin-bottom:0.25rem;">MODUŁ 03 • DIAGNOSTYKA</span>
+              <h4>Drzewa Objawowe 2T/4T, Ścieżki TAK/NIE i Kody OBD</h4>
+              <p>37 drzew 2T/4T, 12 drzew Multi/ATV, 47 procedur A–H oraz 91 kodów błyskowych i OBD-II.</p>
+            </div>
+          </div>
+
+          <div class="hero-thumb-card" onclick="openShotLightbox('assets/screenshots/screen-03-elektryka.jpg', 'Moduł 04: Elektryka i Pomiary — Elektroniczne Laboratorium, Pinouty CDI i Regulatorów, Multimetr i Schematy SVG')">
+            <img src="assets/screenshots/screen-03-elektryka.jpg" alt="Moduł 04 Elektryka i Pomiary — Pinouty CDI i Elektroniczne Laboratorium" loading="eager">
+            <div>
+              <span class="pill-mini pro" style="margin-left:0;margin-bottom:0.25rem;">MODUŁ 04 • ELEKTRYKA &amp; LAB</span>
+              <h4>Elektroniczne Lab, Pinouty CDI i Schematy SVG</h4>
+              <p>Pomiary multimetrem krok po kroku, 10 interaktywnych pinoutów CDI/Reg i 7 schematów z zoomem.</p>
+            </div>
+          </div>
+
+          <div class="hero-thumb-card" onclick="openShotLightbox('assets/screenshots/screen-07-ulubione-3d.jpg', 'Szybkie Akcje Warsztatowe i Ulubione Narzędzia 3D — Tryb HUD, Stroiciel Gaźnika, Tuning CVT, Pinouty CDI i Druciarstwo')">
+            <img src="assets/screenshots/screen-07-ulubione-3d.jpg" alt="Szybkie Akcje Warsztatowe i Ulubione Narzędzia 3D" loading="eager">
+            <div>
+              <span class="pill-mini war" style="margin-left:0;margin-bottom:0.25rem;">SZYBKI START • NARZĘDZIA 3D</span>
+              <h4>Tryb HUD, Stroiciel Gaźnika, Tuning CVT i Szybkie Akcje</h4>
+              <p>Błyskawiczny dostęp z ekranu głównego do najczęstszych kalkulatorów i kart zleceń PDF.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- SEKCJA GALERII ZRZUTÓW EKRANU (9 REALNYCH EKRANÓW v5.51 W BENTO GRID) -->
+    <section id="galeria">
+      <div class="sec-head">
+        <h2>Podgląd interfejsu NAPRAWNIK v5.51 — Galeria Bento Grid (9 ekranów)</h2>
+        <p>Prawdziwe zrzuty ekranu z najnowszej wersji produkcyjnej v5.51 w ciemnym, warsztatowym motywie (grafit, neonowy pomarańcz, cyjan, szmaragd i złoto). Kliknij dowolny kafelek, aby otworzyć pełnoekranowy podgląd.</p>
+      </div>
+
+      <div class="gallery-filters" role="tablist" aria-label="Filtruj zrzuty ekranu">
+        <button type="button" class="gal-btn active" onclick="filterGallery('all', this)">Wszystkie ekrany (9)</button>
+        <button type="button" class="gal-btn" onclick="filterGallery('kokpit', this)">Kokpit i Narzędzia 3D (3)</button>
+        <button type="button" class="gal-btn" onclick="filterGallery('diag-elek', this)">Diagnostyka i Elektryka (2)</button>
+        <button type="button" class="gal-btn" onclick="filterGallery('baza-silniki', this)">Baza OEM i Silniki (2)</button>
+        <button type="button" class="gal-btn" onclick="filterGallery('zlecenia-status', this)">Zlecenia, APK i Status (2)</button>
+      </div>
+
+      <div class="bento-gallery" id="bentoGalleryGrid">
+        <!-- Screen 01 -->
+        <article class="bento-shot span-8 accent-orange" data-cat="kokpit" onclick="openShotLightbox('assets/screenshots/screen-01-6-modulow.jpg', 'Ekran 1/9: Sześć Głównych Modułów Warsztatu — Kafelkowy Kokpit Bento Grid')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge orange">01 • Kokpit Główny Bento</span>
+            <img src="assets/screenshots/screen-01-6-modulow.jpg" alt="Sześć Głównych Modułów Warsztatu — Klienci, Zlecenia, Diagnostyka, Elektryka, Baza Techniczna, Kalkulatory" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ ekran</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Sześć Głównych Modułów Warsztatu — Centrum Dowodzenia</h3>
+            <p>Przejrzysty podział na 6 działów głównych: Klienci i Pojazdy (6 funkcji), Zlecenia Warsztatowe (6 funkcji), Diagnostyka (8 funkcji), Elektryka i Pomiary (8 funkcji), Baza Techniczna (12 funkcji) oraz Kalkulatory i Narzędzia (10 funkcji).</p>
+          </div>
+        </article>
+
+        <!-- Screen 07 -->
+        <article class="bento-shot span-4 accent-gold" data-cat="kokpit" onclick="openShotLightbox('assets/screenshots/screen-07-ulubione-3d.jpg', 'Ekran 2/9: Szybkie Akcje Warsztatowe i Ulubione Narzędzia 3D')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge gold">02 • Szybkie Akcje &amp; 3D</span>
+            <img src="assets/screenshots/screen-07-ulubione-3d.jpg" alt="Szybkie Akcje Warsztatowe i Ulubione Narzędzia 3D — Tryb HUD, Stroiciel Gaźnika, Tuning CVT" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Szybkie Akcje i Ulubione Narzędzia Warsztatowe (3D)</h3>
+            <p>Natychmiastowy start: Nowe Zlecenie PDF, Dodaj Pojazd (VIN), Szybka Diagnostyka TAK/NIE oraz przypinane gwiazdką narzędzia 3D (Tryb HUD, Stroiciel Gaźnika, Kalkulator CVT).</p>
+          </div>
+        </article>
+
+        <!-- Screen 02 -->
+        <article class="bento-shot span-6" data-cat="diag-elek" onclick="openShotLightbox('assets/screenshots/screen-02-diagnostyka.jpg', 'Ekran 3/9: Moduł 03 Diagnostyka — Drzewa Objawowe 2T/4T, Ścieżki TAK/NIE, Motocykle 3–4 Cylindry i Kody OBD/EFI')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge">03 • Moduł Diagnostyka</span>
+            <img src="assets/screenshots/screen-02-diagnostyka.jpg" alt="Moduł 03 Diagnostyka — Drzewo Objawów 2T/4T, Ścieżka TAK/NIE, 152 Usterki, Kody OBD/EFI" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Moduł 03: Interaktywna Diagnostyka 2T / 4T / Multi / ATV</h3>
+            <p>Drzewo Objawów (37 drzew 2T/4T), Diagnostyka Krok po Kroku (TAK/NIE), Baza Przypadków Diagnostycznych, 12 drzew dla motocykli 3–4 cylindrowych (400–650 cm³+) oraz Baza Kodów OBD / EFI Blink.</p>
+          </div>
+        </article>
+
+        <!-- Screen 03 -->
+        <article class="bento-shot span-6 accent-emerald" data-cat="diag-elek" onclick="openShotLightbox('assets/screenshots/screen-03-elektryka.jpg', 'Ekran 4/9: Moduł 04 Elektryka i Pomiary — Elektroniczne Laboratorium, Pinouty CDI, Multimetr i Schematy')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge emerald">04 • Moduł Elektryka i Pomiary</span>
+            <img src="assets/screenshots/screen-03-elektryka.jpg" alt="Moduł 04 Elektryka i Pomiary — Elektroniczne Laboratorium, Pinouty CDI i Regulatorów, Multimetr i Schematy" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Moduł 04: Elektryka, Pinouty CDI i Elektroniczne Laboratorium</h3>
+            <p>Automatyczne porównanie pomiarów z normami (OK/UWAGA/KRYTYCZNY), interaktywne złącza CDI i regulatorów napięcia, procedury pomiarowe multimetrem, baza wiązek i 7 schematów SVG z zoomem.</p>
+          </div>
+        </article>
+
+        <!-- Screen 04 -->
+        <article class="bento-shot span-4 accent-orange" data-cat="baza-silniki" onclick="openShotLightbox('assets/screenshots/screen-04-baza-techniczna.jpg', 'Ekran 5/9: Moduł 05 Baza Techniczna — Katalog Pojazdów OEM, Motocykle 3–4 Cylindry, Profile Silników i Dobór Części')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge orange">05 • Baza Techniczna OEM</span>
+            <img src="assets/screenshots/screen-04-baza-techniczna.jpg" alt="Moduł 05 Baza Techniczna — Katalog Pojazdów OEM, Profile Silników i Dobór Części" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Moduł 05: Baza ponad 480 modeli i wariantów</h3>
+            <p>Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi), 229 rekordów OEM, katalog motocykli wielocylindrowych, profile silników (Minarelli, Piaggio, GY6, AM6, D50B0) i dobór części.</p>
+          </div>
+        </article>
+
+        <!-- Screen 05 -->
+        <article class="bento-shot span-4 accent-gold" data-cat="baza-silniki" onclick="openShotLightbox('assets/screenshots/screen-05-silniki-cvt.jpg', 'Ekran 6/9: Silniki 2T/4T, Napęd CVT, Momenty Dokręcania Śrub (Nm), Płyny i Interwały Wymian')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge gold">06 • Silniki, CVT i Momenty Nm</span>
+            <img src="assets/screenshots/screen-05-silniki-cvt.jpg" alt="Silniki 2T i 4T, Napęd CVT, Momenty Dokręcania Śrub Nm, Płyny Eksploatacyjne i Interwały" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Silniki 2T/4T, Napęd CVT i Specyfikacje Warsztatowe</h3>
+            <p>Rozrząd, głowica, luzy zaworowe, wariator i sprzęgło CVT, tabele momentów dokręcania (Nm), specyfikacje olejów/płynów oraz wzorcowe interwały wymian eksploatacyjnych.</p>
+          </div>
+        </article>
+
+        <!-- Screen 06 -->
+        <article class="bento-shot span-4 accent-emerald" data-cat="zlecenia-status" onclick="openShotLightbox('assets/screenshots/screen-06-zlecenia.jpg', 'Ekran 7/9: Moduł 02 Zlecenia Warsztatowe — Wycena z marżą, Nowe Zlecenie z VIN, Checklisty i Asystent Zdjęć Offline')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge emerald">07 • Moduł Zlecenia Warsztatowe</span>
+            <img src="assets/screenshots/screen-06-zlecenia.jpg" alt="Moduł 02 Zlecenia Warsztatowe — Zlecenia Serwisowe, Wycena, Checklisty, Notatnik i Logi Zdjęć Offline" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Moduł 02: Zlecenia Serwisowe, Wycena, PDF i Checklisty</h3>
+            <p>Obsługa zleceń z poufną marżą mechanika, szybkie przyjęcie po VIN, listy kontrolne przed/po naprawie, przypomnienia przeglądów oraz lokalna dokumentacja zdjęciowa offline.</p>
+          </div>
+        </article>
+
+        <!-- Screen 08 -->
+        <article class="bento-shot span-6 accent-orange" data-cat="kokpit" onclick="openShotLightbox('assets/screenshots/screen-08-druciarstwo.jpg', 'Ekran 8/9: Druciarstwo Ultimate — Baza 47 Patentów Garażowych, Recykling Części i Narzędzia Eksperckie 3D')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge orange">08 • Druciarstwo Ultimate (47 Patentów)</span>
+            <img src="assets/screenshots/screen-08-druciarstwo.jpg" alt="Druciarstwo Ultimate — Baza 47 Patentów i Recykling oraz Wyróżnione Narzędzia Eksperckie 3D" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Druciarstwo Ultimate — 47 Patentów Garażowych i Odzysk Części</h3>
+            <p>Kreatywne naprawy awaryjne na powrót do domu, zamienniki warsztatowe 0 zł, odzysk części oraz generator wycen Janusz 3000.</p>
+          </div>
+        </article>
+
+        <!-- Screen 09 -->
+        <article class="bento-shot span-6 accent-emerald" data-cat="zlecenia-status" onclick="openShotLightbox('assets/screenshots/screen-09-panel-status.jpg', 'Ekran 9/9: Panel Statusu, Ostatnia Aktywność, Przypomnienia Serwisowe, Instalator APK i Status Offline / AI')">
+          <div class="bento-img-wrap">
+            <span class="shot-badge emerald">09 • Panel Statusu, APK i Tryb Offline</span>
+            <img src="assets/screenshots/screen-09-panel-status.jpg" alt="Ostatnia Aktywność, Przypomnienia Serwisowe, Twój Plan, Aplikacja Android APK i Praca Offline" loading="lazy">
+            <span class="shot-zoom-pill">🔍 Powiększ</span>
+          </div>
+          <div class="bento-shot-body">
+            <h3>Panel Statusu, Szybki Powrót, Przypomnienia i Praca Offline</h3>
+            <p>Podgląd ostatnio używanych narzędzi, nadchodzących przeglądów, statusu planu licencyjnego, instalatora Android APK oraz czytelna informacja o pracy offline i statusie modułu AI.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SEKCJA TECHNICZNA: RZECZYWISTE LICZBY Z BAZY APLIKACJI -->
+    <section id="baza-techniczna">
+      <div class="sec-head">
+        <h2>Rzeczywiste zasoby bazy technicznej NAPRAWNIKA (v5.51)</h2>
+        <p>Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi) — zweryfikowane parametry serwisowe wbudowane bezpośrednio w aplikację i paczkę APK offline.</p>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-val">480+</div>
+          <div class="metric-lbl">Modeli i wariantów</div>
+          <div class="metric-sub">Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi) — 294 rodziny skuterów/2T/4T + 193 modele Multi/ATV.</div>
+        </div>
+        <div class="metric-card amber">
+          <div class="metric-val">229</div>
+          <div class="metric-lbl">Rekordów OEM</div>
+          <div class="metric-sub">2 284 konkretnych parametrów serwisowych: momenty, luzy zaworowe, świece, paski, dysze.</div>
+        </div>
+        <div class="metric-card purple">
+          <div class="metric-val">193</div>
+          <div class="metric-lbl">Motocykle Multi &amp; ATV</div>
+          <div class="metric-sub">19 marek, 183 silniki (R2–R4, V2–V4, Boxer, ATV/UTV) i 961 wpisów parametrów.</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-val">158 + 38</div>
+          <div class="metric-lbl">Przypadki usterek</div>
+          <div class="metric-sub">158 kart łączonych (silnik/elektryka/CVT) + 38 rozbudowanych usterek multi/ATV.</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">47</div>
+          <div class="metric-lbl">Procedur w 8 działach A–H</div>
+          <div class="metric-sub">Standaryzowane procedury warsztatowe od objawu i pomiaru po weryfikację.</div>
+        </div>
+        <div class="metric-card amber">
+          <div class="metric-val">37 + 12 + 10</div>
+          <div class="metric-lbl">Drzew i ścieżek</div>
+          <div class="metric-sub">37 drzew objawowych 2T/4T, 12 drzew 8-pkt multi/ATV i 10 ścieżek decyzyjnych TAK/NIE.</div>
+        </div>
+        <div class="metric-card purple">
+          <div class="metric-val">91 + 10</div>
+          <div class="metric-lbl">Kody OBD &amp; Pinouty</div>
+          <div class="metric-sub">91 kodów usterek OBD/EFI Blink oraz 10 interaktywnych pinoutów CDI i regulatorów.</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-val">70 + 94</div>
+          <div class="metric-lbl">Kody WMI VIN &amp; Manuale</div>
+          <div class="metric-sub">70 producentów w dekoderze ISO 3779 oraz 94 odniesienia do instrukcji serwisowych DTR.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WSZYSTKIE MODUŁY I GŁĘBOKOŚĆ SYSTEMU -->
+    <section id="moduly">
+      <div class="sec-head">
+        <h2>Kompletna architektura warsztatowa — wszystkie moduły i narzędzia</h2>
+        <p>NAPRAWNIK to nie prosta tabela danych. To 6 zintegrowanych filarów obejmujących pełny cykl pracy przy pojeździe: od przyjęcia i dekodowania VIN, przez diagnostykę i pomiary, aż po kosztorys, marżę i protokół wydania.</p>
+      </div>
+
+      <div class="modules-grid">
+        <article class="mod-card">
+          <div class="mod-top">
+            <span class="mod-num">Moduł 01</span>
+            <span class="mod-tier">AMATOR + WARSZTAT</span>
+          </div>
+          <h3>Klienci, Pojazdy, VIN i Czarna Skrzynka</h3>
+          <p>Ewidencja pojazdów własnych i klientów wraz z odczytem numeru nadwozia oraz kontrolą terminów serwisowych.</p>
+          <ul class="mod-list">
+            <li><strong>Kartoteka Pojazdów:</strong> przebiegi, dane techniczne, historia napraw, wydruk PDF <span class="pill-mini free">AMATOR</span> (pełna edycja od PRO).</li>
+            <li><strong>Czytnik i Dekoder VIN:</strong> walidacja ISO 3779/3780, baza <strong>70 kodów WMI</strong> (motocykle, skutery, quady), skaner aparatem HTML5 bez płatnych API <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Automatyczny Plan Serwisowy:</strong> automatyczne przypomnienia i interwały wg kilometrów oraz daty <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Baza Klientów Warsztatu:</strong> kartoteka do 2 000 klientów i 500 pojazdów klientów z historią obsługi <span class="pill-mini war">WARSZTAT</span>.</li>
+            <li><strong>Czarna Skrzynka (Historia VIN):</strong> rejestr błędów, ostrzeżeń i napraw przypisanych do konkretnego VIN <span class="pill-mini war">WARSZTAT</span>.</li>
+            <li><strong>Eksport CSV:</strong> zestawienia pojazdów, klientów i kosztów gotowe do arkusza kalkulacyjnego <span class="pill-mini war">WARSZTAT</span>.</li>
+          </ul>
+        </article>
+
+        <article class="mod-card">
+          <div class="mod-top">
+            <span class="mod-num">Moduł 02</span>
+            <span class="mod-tier">WARSZTAT + AMATOR</span>
+          </div>
+          <h3>Zlecenia Serwisowe, Wycena, Marża i Dokumentacja</h3>
+          <p>Narzędzia do prowadzenia realnych zleceń naprawczych, kontroli jakości oraz rozliczeń warsztatu.</p>
+          <ul class="mod-list">
+            <li><strong>Karta Zlecenia &amp; Nowe Zlecenie z VIN:</strong> przyjęcie pojazdu, opis usterki, koszyk części i robocizna <span class="pill-mini war">WARSZTAT</span>.</li>
+            <li><strong>Poufny widok rentowności i marży:</strong> ukryte wyliczenie zysku na czysto z części i robocizny tylko dla mechanika <span class="pill-mini war">WARSZTAT</span>.</li>
+            <li><strong>Wydruk PDF, Karty i Zawieszki:</strong> generowanie karty serwisowej z danymi warsztatu, kosztorysów i zawieszek olejowych <span class="pill-mini war">WARSZTAT</span>.</li>
+            <li><strong>Powiadomienia WhatsApp / SMS:</strong> szybkie wysyłanie gotowego statusu i kosztu naprawy do klienta <span class="pill-mini war">WARSZTAT</span>.</li>
+            <li><strong>Checklisty Warsztatowe (10 pkt):</strong> kontrola stanu przed i po naprawie przy przyjęciu/wydaniu <span class="pill-mini war">WARSZTAT</span>.</li>
+            <li><strong>Notatnik, Przeglądy i Zdjęcia Offline:</strong> dyktowanie głosowe notatek, terminy oraz zapis zdjęć usterek w pamięci IndexedDB <span class="pill-mini free">AMATOR</span>.</li>
+          </ul>
+        </article>
+
+        <article class="mod-card">
+          <div class="mod-top">
+            <span class="mod-num">Moduł 03</span>
+            <span class="mod-tier">AMATOR + PRO</span>
+          </div>
+          <h3>Diagnostyka Objawowa, Działy A–H i Kody OBD/EFI</h3>
+          <p>Prowadzi od objawu zgłoszonego przez klienta przez weryfikację pomiarową aż do usunięcia przyczyny.</p>
+          <ul class="mod-list">
+            <li><strong>Drzewo Objawów 2T/4T (37 drzew):</strong> szybkie kojarzenie objawu z prawdopodobnymi przyczynami i procedurą <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Diagnostyka Krok po Kroku TAK/NIE (10 ścieżek):</strong> interaktywna ścieżka decyzyjna eliminująca kolejne układy <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Baza Przypadków (158 + 38 kart):</strong> łączone awarie silnika, elektryki, CVT, EFI i quadów 4×4 z oceną pewności źródła <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Motocykle Multi &amp; Quady (8 Działów A–H):</strong> 47 procedur naprawczych i 12 drzew 8-punktowych dla R2/R3/R4/V2/V4/Boxer/ATV <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Baza Kodów Błędów OBD / EFI Blink (91 kodów):</strong> kody OBD-II oraz kody błyskowe kontrolki MIL układów wtryskowych <span class="pill-mini pro">PRO</span>.</li>
+          </ul>
+        </article>
+
+        <article class="mod-card">
+          <div class="mod-top">
+            <span class="mod-num">Moduł 04</span>
+            <span class="mod-tier">AMATOR + PRO</span>
+          </div>
+          <h3>Elektryka, Pomiary i Elektroniczne Laboratorium</h3>
+          <p>Kompletny zestaw do lokalizowania zwarć, przerw w masie, usterek statorów, impulsatorów i modułów zapłonowych.</p>
+          <ul class="mod-list">
+            <li><strong>Elektroniczne Laboratorium:</strong> zapis własnych pomiarów rezystancji/napięć z porównaniem do norm i statusem OK/UWAGA/KRYTYCZNY <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Multimetr (12 procedur) i Schematy (20 układów):</strong> pomiary statora, cewki WN, fajki, przekaźnika i ładowania <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>7 Interaktywnych Schematów SVG z Zoomem:</strong> Wasted Spark 1-4/2-3, cewkofajki 4× COP, stojan 3-fazowy, synchronizacja <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Kolory Przewodów i Checklista Elektryczna:</strong> standardy barwne Yamaha/Minarelli, Honda, Piaggio, GY6 <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Wizualne Pinouty CDI i Regulatorów (10 złączy):</strong> interaktywne rozkładanie pinów z wytycznymi pomiarowymi <span class="pill-mini pro">PRO</span>.</li>
+            <li><strong>Baza Instalacji (18 rodzin) &amp; Oporności wg rodziny:</strong> punkty przetarć wiązki i dane z serwisówek rodzin <span class="pill-mini pro">PRO</span>.</li>
+          </ul>
+        </article>
+
+        <article class="mod-card">
+          <div class="mod-top">
+            <span class="mod-num">Moduł 05</span>
+            <span class="mod-tier">AMATOR + PRO</span>
+          </div>
+          <h3>Baza Techniczna OEM, Silniki i Dobór Części</h3>
+          <p>Encyklopedia parametrów fabrycznych z wyraźnym oddzieleniem danych potwierdzonych w DTR od orientacyjnych.</p>
+          <ul class="mod-list">
+            <li><strong>Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi):</strong> katalog rodzin pojazdów (294) &amp; rekordy OEM (229) — świeca, szczelina, dysze, rolki, pasek, luzy zaworowe i momenty dokręcania <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Katalog Multi &amp; ATV (193 modele / 19 marek / 183 silniki):</strong> Honda, Yamaha, Suzuki, Kawasaki, Triumph, BMW, KTM, Ducati, Polaris, Can-Am, CF Moto, Piaggio, Kymco, SYM i in. <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Mechanika 2T, 4T, CVT, Momenty, Płyny, Interwały i 94 Manuale:</strong> baza wiedzy warsztatowej + 47 patentów i 12 opisów recyklingu w module DRUCIARSTWO <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Profile Konkretnych Silników (15):</strong> charakterystyka regulacyjna Minarelli, Piaggio, GY6, AM6, D50B0 <span class="pill-mini pro">PRO</span>.</li>
+            <li><strong>Inteligentny Dobór Części (36 kart):</strong> numery katalogowe OEM, dokładne wymiary, zamienniki i oceny pewności dopasowania <span class="pill-mini pro">PRO</span>.</li>
+            <li><strong>Momenty Dokręcania wg rodziny silnika:</strong> szczegółowe tabele głowicy, magneta, wariatora i sprzęgła z DTR <span class="pill-mini pro">PRO</span>.</li>
+          </ul>
+        </article>
+
+        <article class="mod-card">
+          <div class="mod-top">
+            <span class="mod-num">Moduł 06</span>
+            <span class="mod-tier">AMATOR</span>
+          </div>
+          <h3>Kalkulatory Warsztatowe, Tuning i Tryb HUD</h3>
+          <p>Specjalistyczne narzędzia obliczeniowe dostępne od razu w garażu, bez dostępu do sieci.</p>
+          <ul class="mod-list">
+            <li><strong>Tryb Warsztatowy HUD:</strong> duży, kontrastowy ekran na stojak/stół z kluczowymi momentami, luzami i squish <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Porównanie Cylindrów 1–4 &amp; Kalkulator Płytek Zaworowych:</strong> arkusz pomiarowy (kompresja, Leak Down, podciśnienia, temp.) + wyliczanie nowych płytek (Shim Calculator) <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Kalkulator Squish, CR &amp; Mieszanka 2T:</strong> szczelina tłok–głowica, stopień sprężania i 8 gotowych presetów 2T/4T (AM6, Aerox, GY6 itd.) <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Stroiciel Gaźnika:</strong> dobór dyszy głównej i iglicy dla 50cc, 70cc i filtrów stożkowych <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Kalkulator Tuningu CVT:</strong> strojenie wagi rolek, sprężyny centralnej, sprzęgła i obrotów mocy <span class="pill-mini free">AMATOR</span>.</li>
+            <li><strong>Cennik Części + Generator Patentów Janusz 3000 &amp; Quiz BHP:</strong> wycena naprawy i 20 pozycji kalkulatora oszczędności <span class="pill-mini free">AMATOR</span>.</li>
+          </ul>
+        </article>
+      </div>
+
+      <!-- WIDOCZNY, ALE NIEAKTYWNY MODUŁ AI (BEZ ZAPYTAŃ DO API) -->
+      <div class="ai-status-card" role="region" aria-label="Status modułu analizy zdjęć AI">
+        <div class="ai-status-info">
+          <span class="ai-status-badge">🧠 Moduł AI • Chwilowo niedostępne (Wyłączony w v5.51)</span>
+          <h3 style="color:#ffffff;font-size:1.12rem;margin-bottom:0.35rem;">Zdalna Analiza Zdjęć AI — Chwilowo niedostępne</h3>
+          <p style="font-size:0.88rem;color:var(--text-dim);">
+            Moduł analizy obrazowej AI pozostaje widoczny w interfejsie aplikacji ze statusem <strong>Chwilowo niedostępne</strong> (wyszarzony, zablokowany <code>disabled</code>) i <strong>nie wykonuje żadnych zapytań do zewnętrznego API</strong>. Lokalny <strong>Asystent Zdjęć Offline</strong> (dokumentacja przed/po naprawie w bazie IndexedDB oraz checklisty warsztatowe) działa w 100% offline.
+          </p>
+        </div>
+        <div>
+          <button type="button" class="btn-ai-disabled" disabled aria-disabled="true" title="Chwilowo niedostępne — moduł AI nie generuje zapytań do API">
+            🧠 Analiza zdjęć AI — Chwilowo niedostępne
+          </button>
+        </div>
+      </div>
+
+      <h3 style="margin-top:2.25rem; color:#ffffff; font-size:1.18rem;">Zakres 8 Działów Diagnostycznych A–H (47 procedur wielocylindrowych, motocyklowych i ATV/UTV)</h3>
+      <div class="dept-grid">
+        <div class="dept-box">
+          <div class="dept-id">Dział A • 8 procedur</div>
+          <h4>Silniki i Mechanika</h4>
+          <p>Kompresja i próba olejowa, Leak Down, rozrząd i napinacze, luzy zaworowe płytkowe/śrubowe, panewki i uszczelniacze 2T.</p>
+        </div>
+        <div class="dept-box">
+          <div class="dept-id">Dział B • 7 procedur</div>
+          <h4>Układy Paliwowe i Wtrysk EFI</h4>
+          <p>Ciśnienie pompy paliwa, wtryskiwacze, kalibracja TPS/IACV/STVA, synchronizacja przepustnic/gaźników, lewe powietrze.</p>
+        </div>
+        <div class="dept-box">
+          <div class="dept-id">Dział C • 6 procedur</div>
+          <h4>Układy Elektryczne i Elektronika</h4>
+          <p>Test cewkofajek COP i Wasted Spark, sygnał CKP/CMP, ładowanie 3-fazowe, upływ prądu, magistrala CAN-Bus.</p>
+        </div>
+        <div class="dept-box">
+          <div class="dept-id">Dział D • 5 procedur</div>
+          <h4>Układy Hamulcowe i ABS</h4>
+          <p>Bicie tarcz i zaciski pływające, odpowietrzanie układów z modulatorem ABS, czujniki prędkości kół i pompy hamulcowe.</p>
+        </div>
+        <div class="dept-box">
+          <div class="dept-id">Dział E • 6 procedur</div>
+          <h4>Zawieszenie i Układ Kierowniczy</h4>
+          <p>Lagi USD i tradycyjne (uszczelniacze, poziom oleju), łożyska główki ramy, kiwak i geometria podwozia.</p>
+        </div>
+        <div class="dept-box">
+          <div class="dept-id">Dział F • 6 procedur</div>
+          <h4>Układy Napędowe i Przekładnie</h4>
+          <p>Sprzęgło wielopłytkowe, wariator i pasek CVT, przekładnia wałem Kardana, łańcuch i luz skrzyni biegów.</p>
+        </div>
+        <div class="dept-box">
+          <div class="dept-id">Dział G • 3 procedury</div>
+          <h4>Układ Wydechowy i Emisja</h4>
+          <p>Zawory wydechowe EXUP/YPVS, grzałka i sygnał sondy Lambda O2, drożność katalizatora i dyfuzora 2T.</p>
+        </div>
+        <div class="dept-box">
+          <div class="dept-id">Dział H • 6 procedur</div>
+          <h4>Quady i Pojazdy Użytkowe (ATV/UTV)</h4>
+          <p>Przegrzewanie i palenie paska CVT 4×4, siłownik przedniego dyferencjału, przekaźnik wyciągarki, półosie i chłodzenie błotne.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABONAMENTY, LIMITY I CENNIK -->
+    <section id="plany">
+      <div class="sec-head">
+        <h2>Pakiety AMATOR, PRO i WARSZTAT VIP oraz Program Afiliacyjny BLIK</h2>
+        <p>6 pakietów czasowych w dwóch liniach (PRO oraz WARSZTAT VIP na 7, 30 i 365 dni) oraz Portfel Afiliacyjny: 10 zł bonusu na start, -20% zniżki dla znajomego z kodem, oraz do 132 zł prowizji (30%) z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł.</p>
+      </div>
+
+      <div class="affiliate-bento" role="region" aria-label="Program Afiliacyjny i Zarabianie BLIK">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+          <div>
+            <span class="plan-badge amator" style="margin-bottom:0.4rem;">💰 PORTFEL AFILIACYJNY &amp; ZARABIANIE BLIK (v5.51)</span>
+            <h3 style="color:#ffffff;font-size:1.3rem;">Zarabiaj na polecaniu NAPRAWNIKA i odbieraj wypłaty na telefon BLIK</h3>
+            <p style="font-size:0.9rem;color:var(--text-soft);margin-top:0.25rem;">
+              Wbudowany w aplikację moduł <strong>Portfel / Zarabiaj BLIK</strong> pozwala obniżać ceny pakietów i wypłacać realną gotówkę na numer telefonu:
+            </p>
+          </div>
+        </div>
+        <div class="aff-step-grid">
+          <div class="aff-step">
+            <div class="aff-val">10 zł na start</div>
+            <strong style="color:#ffffff;font-size:0.92rem;">Bonus powitalny w Portfelu</strong>
+            <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.2rem;">Każde nowe konto otrzymuje <strong>10 zł bonusu na start</strong> do wykorzystania na zakup pakietu PRO (30 dni za 39 zł) prosto z salda portfela.</p>
+          </div>
+          <div class="aff-step cyan">
+            <div class="aff-val">-20% z kodem</div>
+            <strong style="color:#ffffff;font-size:0.92rem;">Zniżka dla znajomego</strong>
+            <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.2rem;">Twój indywidualny kod polecający daje <strong>-20% zniżki dla znajomego z kodem</strong> na wszystkie 6 pakietów PRO oraz WARSZTAT VIP.</p>
+          </div>
+          <div class="aff-step gold">
+            <div class="aff-val">Do 132 zł (30%)</div>
+            <strong style="color:#ffffff;font-size:0.92rem;">Prowizja 30% z każdego zakupu</strong>
+            <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.2rem;">Otrzymujesz aż <strong>do 132 zł prowizji (30%) z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł</strong>.</p>
+          </div>
+          <div class="aff-step orange">
+            <div class="aff-val">Wypłata BLIK od 50 zł</div>
+            <strong style="color:#ffffff;font-size:0.92rem;">Szybki przelew na telefon</strong>
+            <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.2rem;">Zgromadzone prowizje gotówkowe ze Stripe wypłacisz bezpośrednio na swój numer telefonu BLIK po przekroczeniu progu 50 zł.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="plans-grid">
+        <!-- AMATOR -->
+        <div class="plan-card amator">
+          <span class="plan-badge amator">AMATOR</span>
+          <div class="plan-price">0 zł <span>/ zawsze za darmo</span></div>
+          <div class="plan-alt">Bez rejestracji, bez karty, bez reklam</div>
+          <div class="plan-trial" style="color:var(--text-soft);">Pełna praca 100% offline w APK</div>
+          <ul class="plan-ul">
+            <li>Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi), 229 rekordów OEM oraz 158+38 przypadków usterek</li>
+            <li>Wszystkie drzewa diagnostyczne (37 + 12), ścieżki TAK/NIE (10), działy A–H (47 procedur), 7 schematów SVG</li>
+            <li>Wszystkie kalkulatory (HUD, Squish/CR, Gaźnik, CVT, Płytki zaworowe), Dekoder VIN (70 WMI) i DRUCIARSTWO</li>
+            <li>Kartoteka: <strong>1 własny pojazd</strong> i do <strong>5 przypomnień serwisowych</strong></li>
+            <li>Elektroniczne Lab: do <strong>20 zapisanych pomiarów</strong></li>
+            <li>Dobór części: limit <strong>10 wyszukiwań</strong> (bez bazy PRO nr OEM)</li>
+            <li>Zdjęcia usterek: do <strong>10 zdjęć lokalnie na urządzeniu</strong> (IndexedDB)</li>
+            <li>Lokalny eksport i import kopii zapasowej JSON + blokada ekranu PIN</li>
+          </ul>
+        </div>
+
+        <!-- PRO -->
+        <div class="plan-card pro">
+          <span class="plan-badge pro">NAPRAWNIK PRO</span>
+          <div class="plan-price">39 zł <span>/ 30 dni (z kodem: 31,20 zł)</span></div>
+          <div class="plan-alt">7 dni: <strong>19 zł</strong> (z kodem: <strong>15,20 zł</strong>) &bull; 365 dni: <strong>299 zł</strong> (z kodem: <strong>239,20 zł</strong>)</div>
+          <div class="plan-trial">Prowizja polecającego 30%: +4,56 zł (7d) / +9,36 zł (30d) / +71,76 zł (365d)</div>
+          <ul class="plan-ul">
+            <li><strong>Wszystko z planu AMATOR</strong> + odblokowane moduły zaawansowane</li>
+            <li><strong>Baza 91 kodów OBD / EFI Blink</strong> (OBD-II i kody błyskowe MIL)</li>
+            <li><strong>10 wizualnych pinoutów CDI i regulatorów</strong> oraz <strong>18 baz instalacji elektrycznych</strong></li>
+            <li><strong>15 profili konkretnych silników</strong> oraz fabryczne oporności i momenty wg rodziny silnika</li>
+            <li><strong>Inteligentny Dobór Części (36 kart OEM/zamienniki)</strong> — limit <strong>50/mc</strong></li>
+            <li>Kartoteka: do <strong>3 własnych pojazdów</strong> (z pełną edycją) i <strong>15 przypomnień</strong></li>
+            <li>Elektroniczne Lab: do <strong>150 zapisanych pomiarów</strong></li>
+            <li>Dokumentacja zdjęciowa: do <strong>50 zdjęć/mc (1 GB w chmurze)</strong> + kopia zapasowa w chmurze D1 (region UE)</li>
+          </ul>
+        </div>
+
+        <!-- WARSZTAT -->
+        <div class="plan-card warsztat">
+          <span class="plan-badge warsztat">WARSZTAT VIP</span>
+          <div class="plan-price">69 zł <span>/ 30 dni (z kodem: 55,20 zł)</span></div>
+          <div class="plan-alt">7 dni: <strong>39 zł</strong> (z kodem: <strong>31,20 zł</strong>) &bull; 365 dni: <strong>549 zł</strong> (z kodem: <strong>439,20 zł</strong>)</div>
+          <div class="plan-trial">Prowizja polecającego 30%: +9,36 zł (7d) / +16,56 zł (30d) / +131,76 zł (do 132 zł z pakietu 365d!)</div>
+          <ul class="plan-ul">
+            <li><strong>Wszystko z planu PRO</strong> + kompletny system obsługi serwisu</li>
+            <li><strong>Karta Zlecenia Serwisowego &amp; Wycena:</strong> do <strong>30 nowych zleceń/mc</strong> i <strong>500 w archiwum</strong></li>
+            <li><strong>Poufny widok rentowności i marży mechanika</strong> (czysty zysk z części i robocizny)</li>
+            <li><strong>Baza Klientów Warsztatu:</strong> do <strong>2 000 klientów</strong>, <strong>500 pojazdów</strong> i <strong>200 przypomnień</strong></li>
+            <li><strong>Czarna Skrzynka (Historia VIN)</strong> oraz <strong>Checklisty Warsztatowe (10 pkt)</strong></li>
+            <li><strong>Wydruk PDF:</strong> karty serwisowe z danymi Twojego warsztatu, zawieszki i kosztorysy</li>
+            <li><strong>WhatsApp / SMS</strong> do klienta z podsumowaniem zlecenia + pełny <strong>eksport CSV</strong></li>
+            <li>Lab do <strong>5 000 pomiarów</strong>, <strong>300 wyszukiwań części/mc</strong>, <strong>300 zdjęć/mc (10 GB chmury)</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- TABELA RÓŻNIC I LIMITÓW -->
+      <div class="table-wrap">
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th>Funkcja / Limit systemowy (zgodny z serwerem D1)</th>
+              <th>AMATOR (0 zł)</th>
+              <th>PRO (19 / 39 / 299 zł)</th>
+              <th>WARSZTAT VIP (39 / 69 / 549 zł)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi), 158+38 usterek, działy A–H, kalkulatory, VIN, Druciarstwo</td>
+              <td class="td-yes">Pełny dostęp</td>
+              <td class="td-yes">Pełny dostęp</td>
+              <td class="td-yes">Pełny dostęp</td>
+            </tr>
+            <tr>
+              <td>Własne pojazdy w kartotece</td>
+              <td>1 pojazd</td>
+              <td>3 pojazdy (+ edycja)</td>
+              <td class="td-hi">500 pojazdów</td>
+            </tr>
+            <tr>
+              <td>Przypomnienia serwisowe</td>
+              <td>5 przypomnień</td>
+              <td>15 przypomnień</td>
+              <td class="td-hi">200 przypomnień</td>
+            </tr>
+            <tr>
+              <td>Pomiary w Elektronicznym Laboratorium</td>
+              <td>20 zapisów</td>
+              <td>150 zapisów</td>
+              <td class="td-hi">5 000 zapisów</td>
+            </tr>
+            <tr>
+              <td>Katalog części (limit miesięczny) &amp; Inteligentny dobór OEM</td>
+              <td>10 / mc (podstawowy)</td>
+              <td>50 / mc (pełne karty OEM)</td>
+              <td class="td-hi">300 / mc (pełne karty OEM)</td>
+            </tr>
+            <tr>
+              <td>Baza OBD (91), Pinouty CDI (10), Profile silników (15), Baza instalacji (18), Momenty wg rodziny</td>
+              <td class="td-no">Zablokowane (dane ogólne)</td>
+              <td class="td-yes">Odblokowane</td>
+              <td class="td-yes">Odblokowane</td>
+            </tr>
+            <tr>
+              <td>Zdjęcia i dokumentacja napraw (IndexedDB offline + przestrzeń chmurowa)</td>
+              <td>10 zdjęć lokalnie (offline)</td>
+              <td>50 zdjęć/mc • 1 GB chmury</td>
+              <td class="td-hi">300 zdjęć/mc • 10 GB chmury</td>
+            </tr>
+            <tr>
+              <td>Kopia zapasowa w chmurze Cloudflare D1 (region UE)</td>
+              <td class="td-no">Tylko lokalnie (.json)</td>
+              <td class="td-yes">Tak (synchronizacja D1)</td>
+              <td class="td-yes">Tak (synchronizacja D1)</td>
+            </tr>
+            <tr>
+              <td>Klienci warsztatu &amp; pojazdy klientów</td>
+              <td class="td-no">0 (brak modułu)</td>
+              <td class="td-no">0 (brak modułu)</td>
+              <td class="td-hi">2 000 klientów / 500 pojazdów</td>
+            </tr>
+            <tr>
+              <td>Zlecenia serwisowe, Marża mechanika, Checklisty, Czarna Skrzynka VIN</td>
+              <td class="td-no">Brak</td>
+              <td class="td-no">Brak</td>
+              <td class="td-hi">30 nowych/mc • 500 w archiwum</td>
+            </tr>
+            <tr>
+              <td>Karta serwisowa PDF z danymi warsztatu, Zawieszki PDF, WhatsApp/SMS, Eksport CSV</td>
+              <td class="td-no">Brak</td>
+              <td class="td-no">Brak</td>
+              <td class="td-yes">Pełny dostęp</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-box">
+        <strong>Ważne informacje o funkcjach i rozliczeniach:</strong>
+        <br>• <strong>Zdalna analiza zdjęć AI (Chwilowo niedostępne / Wkrótce):</strong> Moduł zdalnej analizy obrazowej w Asystencie Zdjęć pozostaje widoczny w interfejsie ze statusem <em>Chwilowo niedostępne / Wkrótce</em> (przycisk nieaktywny <code>disabled</code>, bez wysyłania zapytań do API). Lokalna Historia Napraw ze Zdjęciami oraz checklisty w pamięci IndexedDB działają w pełni offline.
+        <br>• <strong>Zasady płatności Stripe i Portfela BLIK:</strong> Pakiety 7-, 30- i 365-dniowe obsługuje Stripe Checkout (z obsługą kodu rabatowego -20%). W programie afiliacyjnym otrzymujesz 10 zł bonusu na start, -20% zniżki dla znajomego z kodem, oraz do 132 zł prowizji (30%) z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł.
+      </div>
+    </section>
+
+    <!-- APK VS PWA I AKTUALIZACJE -->
+    <section id="apk-vs-pwa">
+      <div class="sec-head">
+        <h2>Android APK a wersja Web (PWA) — różnice, izolacja i aktualizacje</h2>
+        <p>Obie wersje korzystają ze wspólnego kodu źródłowego bazy wiedzy (Single Source of Truth), ale różnią się sposobem dystrybucji i pracy w terenie.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th>Cecha</th>
+              <th>Aplikacja Android APK (ten instalator)</th>
+              <th>Aplikacja Web / PWA (przeglądarka)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Praca w garażu bez internetu</strong></td>
+              <td class="td-yes">100% Offline Standalone — wszystkie pliki, bazy OEM, procedury i kalkulatory wbudowane w paczkę APK.</td>
+              <td>Działa offline po zapisaniu w pamięci podręcznej Service Workera Chrome/Edge; po czyszczeniu pamięci przeglądarki wymaga sieci.</td>
+            </tr>
+            <tr>
+              <td><strong>Izolacja i brak OTA</strong></td>
+              <td class="td-yes">Pełna izolacja — APK nie łączy się z GitHub Pages i nie pobiera w tle zdalnych skryptów JS.</td>
+              <td>Ładowana bezpośrednio z serwera GitHub Pages z kontrolą integralności przez Service Worker.</td>
+            </tr>
+            <tr>
+              <td><strong>Jak przebiegają aktualizacje?</strong></td>
+              <td>Świadomie przez pobranie nowej wersji <code>naprawnik-release.apk</code> z tej strony i instalację nakładkową (dane lokalne zostają; przed instalacją zalecany eksport kopii <code>.json</code>).</td>
+              <td>Automatycznie — porównuje numer kompilacji z <code>version.json</code> i wyświetla przycisk aktualizacji na górnym pasku.</td>
+            </tr>
+            <tr>
+              <td><strong>Integracja z systemem Android</strong></td>
+              <td class="td-yes">Natywny mostek Capacitor: obsługa systemowego przycisku Wstecz, natywne okno Udostępnij/Zapisz dla kopii i PDF, zewnętrzne otwieranie Stripe Checkout.</td>
+              <td>Standardowe funkcje przeglądarki mobilnej lub skrótu na ekranie głównym.</td>
+            </tr>
+            <tr>
+              <td><strong>Kiedy potrzebny jest internet?</strong></td>
+              <td colspan="2">Wyłącznie do: logowania/odświeżania płatnej licencji PRO/WARSZTAT, zakupu w Stripe Checkout oraz opcjonalnego zapisu/odczytu kopii zapasowej w chmurze D1. Cała diagnostyka i katalogi działają bez sieci.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BEZPIECZEŃSTWO, SZYFROWANIE SSL, CLOUDFLARE I INSTALACJA -->
+    <section id="bezpieczenstwo">
+      <div class="sec-head">
+        <h2>Bezpieczeństwo SSL, hosting Cloudflare i weryfikacja czystego pliku APK</h2>
+        <p>Sprawdź kryptograficzną sumę kontrolną pobranego instalatora i zainstaluj aplikację na Androidzie w kilku prostych krokach.</p>
+      </div>
+
+      <div class="split-2">
+        <div class="info-box">
+          <h3>Plik APK i suma kontrolna SHA-256</h3>
+          <p>Każde wydanie produkcyjne paczki <code>naprawnik-release.apk</code> przechodzi automatyczną weryfikację zawartości modułów i izolacji od sieci przed publikacją na tej stronie.</p>
+          <p style="margin-top:0.85rem;"><strong>Oficjalna suma kontrolna SHA-256 aktualnego wydania:</strong></p>
+          <code class="code-block">a8a4bdcdcb66e05ca406a8fc2c8e3728b7460a57f7bef3751a0a1f1d42772bd9</code>
+          <p style="font-size:0.84rem; margin-bottom:1rem;"><a href="naprawnik-release.apk.sha256" download>Pobierz plik sumy kontrolnej (naprawnik-release.apk.sha256)</a></p>
+
+          <h2>Bezpieczeństwo SSL, Cloudflare i czysty plik APK</h2>
+          <!-- NAPRAWNIK_SECURITY_NOTE_START -->
+          <div class="security-verify-note" role="note" style="margin:1rem 0;padding:1rem;border:1px solid #38bdf8;border-radius:12px;background:rgba(14,165,233,0.06)">
+            <p><strong>Bezpieczne szyfrowanie SSL/TLS, hosting Cloudflare i czysty instalator APK</strong></p>
+            <p>Pobieranie instalatora odbywa się przez szyfrowane połączenie <strong>SSL/TLS (HTTPS)</strong> z globalnej sieci <strong>Cloudflare Pages &amp; Workers</strong> (ochrona DDoS, serwery brzegowe w UE). Plik <code>naprawnik-release.apk</code> jest w 100% czystym pakietem <em>Offline-First</em> — bez reklam, zewnętrznych SDK śledzących i ukrytych procesów w tle, a jego integralność potwierdza powyższa suma kontrolna <code>SHA-256</code>.</p>
+          </div>
+          <!-- NAPRAWNIK_SECURITY_NOTE_END -->
+        </div>
+
+        <div class="info-box">
+          <h3>Instrukcja pobrania i instalacji na Androidzie</h3>
+          <ol>
+            <li><strong>Pobierz instalator:</strong> kliknij przycisk <a href="naprawnik-release.apk" download>Pobierz NAPRAWNIK APK (v5.51)</a> na górze strony i poczekaj na pobranie pliku <code>naprawnik-release.apk</code>.</li>
+            <li><strong>Uruchom plik APK:</strong> otwórz powiadomienie o zakończeniu pobierania lub przejdź do aplikacji <em>Pliki / Pobrane (Downloads)</em> i stuknij <code>naprawnik-release.apk</code>.</li>
+            <li><strong>Zezwól na instalację:</strong> jeśli Android poprosi o zgodę dla przeglądarki lub menedżera plików, wybierz <em>Ustawienia → Zezwalaj z tego źródła</em> (wymóg systemu Android dla aplikacji spoza Google Play).</li>
+            <li><strong>Zainstaluj / Zaktualizuj:</strong> potwierdź „Zainstaluj”. Jeżeli aktualizujesz starsze wydanie NAPRAWNIKA, dla bezpieczeństwa przed instalacją wyeksportuj kopię lokalną w zakładce <em>Ustawienia → Eksport kopii (.json)</em>.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGULAMIN, PRYWATNOŚĆ RODO I KONTAKT -->
+    <section id="zaufanie">
+      <div class="sec-head">
+        <h2>Regulamin, prywatność (RODO) i oficjalny kontakt</h2>
+        <p>Przejrzyste zasady przetwarzania danych oraz realne kanały kontaktu i zgłoszeń — bez pośredników i bez fikcyjnych danych.</p>
+      </div>
+
+      <div class="split-2">
+        <div class="info-box">
+          <h3>Zasady korzystania i Prywatność (RODO)</h3>
+          <ul>
+            <li><strong>Minimalizacja danych (Local-First):</strong> korzystanie z bezpłatnego planu AMATOR nie wymaga zakładania konta ani podawania imienia, e-maila czy telefonu. Pojazdy, naprawy, notatki i zdjęcia pozostają domyślnie wyłącznie na Twoim urządzeniu.</li>
+            <li><strong>Klucz dostępu i Cloudflare D1 (region UE):</strong> dla planów PRO i WARSZTAT tworzony jest losowy klucz dostępu; serwer przechowuje wyłącznie jego kryptograficzny skrót jednokierunkowy (algorytm <code>SHA-256</code>) oraz datę ważności planu i techniczną kopię zapasową na Twoje żądanie.</li>
+            <li><strong>Płatności Stripe:</strong> płatności obsługuje certyfikowany operator <em>Stripe Payments Europe, Ltd.</em> — NAPRAWNIK nie widzi i nie przechowuje numerów kart płatniczych.</li>
+            <li><strong>Odpowiedzialność warsztatowa:</strong> dane katalogowe, momenty i procedury mają charakter wspomagający — przed naprawą zawsze zweryfikuj parametry w dokumentacji DTR dokładnego rocznika i kodu silnika.</li>
+            <li><strong>Twoje prawa:</strong> w zakładce <em>Ustawienia</em> w aplikacji możesz w dowolnej chwili pobrać kopię danych (JSON/CSV), włączyć/wyłączyć opcjonalne anonimowe statystyki (domyślnie wyłączone) lub trwale wyczyścić dane lokalne.</li>
+          </ul>
+          <div class="contact-actions">
+            <a class="btn-link" href="https://github.com/turbodiesel966-eng/Aktualizacja-17.10/blob/main/docs/POLITYKA_PRYWATNOSCI_RODO.md" target="_blank" rel="noopener noreferrer">Polityka prywatności (RODO) &rarr;</a>
+            <a class="btn-link" href="https://turbodiesel966-eng.github.io/Aktualizacja-17.10/" target="_blank" rel="noopener noreferrer">Regulamin w aplikacji PWA &rarr;</a>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h3>Kontakt, wsparcie techniczne i społeczność</h3>
+          <p>W sprawach błędów technicznych, propozycji nowych modeli OEM, rozliczeń oraz wsparcia skorzystaj z aktywnych kanałów twórcy aplikacji:</p>
+          <ul>
+            <li><strong>Formularz w aplikacji:</strong> zakładka <em>Kontakt</em> w menu aplikacji NAPRAWNIK (zgłoszenie automatycznie dołącza numer używanej wersji).</li>
+            <li><strong>Oficjalny kanał Discord:</strong> społeczność mechaników i bezpośredni kontakt z twórcą (<code>turbodiesel96</code>).</li>
+            <li><strong>Repozytorium GitHub (Issues):</strong> jawne zgłaszanie błędów kodu, procedur i sugestii zmian.</li>
+            <li><strong>Wsparcie rozwoju projektu:</strong> dobrowolne wsparcie poprzez BuyCoffee.</li>
+          </ul>
+          <div class="contact-actions">
+            <a class="btn-link" href="https://discord.gg/xhC3sKsx" target="_blank" rel="noopener noreferrer">Discord NAPRAWNIK &rarr;</a>
+            <a class="btn-link" href="https://github.com/turbodiesel966-eng/Aktualizacja-17.10/issues" target="_blank" rel="noopener noreferrer">GitHub Issues &rarr;</a>
+            <a class="btn-link" href="https://buycoffee.to/turbodieesel96-" target="_blank" rel="noopener noreferrer">BuyCoffee (Wesprzyj projekt) &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container" style="padding-top:0;padding-bottom:0;">
+      <p><strong>NAPRAWNIK v5.51 • Cyfrowy Mózg Warsztatu Motocyklowego</strong></p>
+      <div class="foot-links">
+        <a href="naprawnik-release.apk" download>Pobierz APK</a>
+        <a href="https://turbodiesel966-eng.github.io/Aktualizacja-17.10/" target="_blank" rel="noopener noreferrer">Wersja Web (PWA)</a>
+        <a href="https://github.com/turbodiesel966-eng/Aktualizacja-17.10" target="_blank" rel="noopener noreferrer">Repozytorium GitHub</a>
+        <a href="https://github.com/turbodiesel966-eng/Aktualizacja-17.10/blob/main/docs/POLITYKA_PRYWATNOSCI_RODO.md" target="_blank" rel="noopener noreferrer">Polityka prywatności (RODO)</a>
+        <a href="https://discord.gg/xhC3sKsx" target="_blank" rel="noopener noreferrer">Kontakt / Discord</a>
+      </div>
+      <p style="font-size:0.8rem; color:#64748b;">
+        Wersja produkcyjna APK (Offline-First) i PWA &bull; Dane weryfikowane na podstawie kodu źródłowego projektu.
+      </p>
+    </div>
+  </footer>
+
+  <!-- LIGHTBOX PODGLĄDU ZRZUTÓW EKRANU (v5.51) -->
+  <div id="shotLightbox" class="shot-lightbox" role="dialog" aria-modal="true" aria-label="Powiększony zrzut ekranu NAPRAWNIK v5.51" onclick="closeShotLightbox(event)">
+    <div class="shot-lightbox-inner" onclick="event.stopPropagation()">
+      <div class="shot-lightbox-top">
+        <strong id="shotLightboxCaption" style="color:#ffffff;font-size:0.95rem;">Podgląd ekranu NAPRAWNIK v5.51</strong>
+        <button type="button" class="shot-lightbox-close" onclick="closeShotLightbox()">✕ Zamknij (ESC)</button>
+      </div>
+      <div class="shot-lightbox-body">
+        <img id="shotLightboxImg" src="assets/screenshots/screen-01-6-modulow.jpg" alt="Powiększony ekran aplikacji NAPRAWNIK v5.51">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openShotLightbox(src, caption) {
+      var modal = document.getElementById('shotLightbox');
+      var img = document.getElementById('shotLightboxImg');
+      var cap = document.getElementById('shotLightboxCaption');
+      if (!modal || !img) return;
+      img.src = src;
+      img.alt = caption || 'Zrzut ekranu NAPRAWNIK v5.51';
+      if (cap) cap.textContent = caption || 'Podgląd ekranu NAPRAWNIK v5.51';
+      modal.classList.add('open');
+    }
+
+    function closeShotLightbox() {
+      var modal = document.getElementById('shotLightbox');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function filterGallery(category, btn) {
+      var buttons = document.querySelectorAll('.gallery-filters .gal-btn');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove('active');
+      }
+      if (btn) btn.classList.add('active');
+      var cards = document.querySelectorAll('#bentoGalleryGrid .bento-shot');
+      for (var j = 0; j < cards.length; j++) {
+        var card = cards[j];
+        var cat = card.getAttribute('data-cat');
+        if (!category || category === 'all' || cat === category) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeShotLightbox();
+    });
+  </script>
+</body>
+</html>

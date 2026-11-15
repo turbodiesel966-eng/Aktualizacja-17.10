@@ -443,17 +443,35 @@ test('analiza zdjęć używa endpointu Workera z tokenem Bearer, a nie starej fu
 test('strona pobierania opisuje szyfrowanie SSL, hosting Cloudflare oraz czysty plik APK z sumą SHA-256', () => {
   const script = read('scripts/prepare-download-release.py');
   const template = read('scripts/download-page-template.html');
+  const downloadHtml = read('download.html');
   assert.ok(script.includes('SSL/TLS'));
   assert.ok(script.includes('Cloudflare'));
   assert.ok(script.includes('naprawnik-release.apk'));
   assert.ok(script.includes('--require-existing-checksum'));
   assert.ok(script.includes('NAPRAWNIK_SECURITY_NOTE_START'));
   assert.ok(!script.includes('28.10.2026'));
-  assert.ok(template.includes('v5.51'));
-  assert.ok(template.includes('Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)'));
-  assert.ok(template.includes('10 zł bonusu na start'));
-  assert.ok(template.includes('do 132 zł prowizji (30%) z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł'));
-  assert.ok(!template.includes('28.10.2026'));
+  for (const page of [template, downloadHtml]) {
+    assert.ok(page.includes('v5.51'));
+    assert.ok(page.includes('Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)'));
+    assert.ok(page.includes('10 zł bonusu na start'));
+    assert.ok(page.includes('do 132 zł prowizji (30%) z rocznego pakietu WARSZTAT VIP (549 zł) wypłacane na BLIK od 50 zł'));
+    assert.ok(page.includes('btn-ai-disabled'));
+    assert.ok(page.includes('Chwilowo niedostępne'));
+    assert.ok(!page.includes('28.10.2026'));
+    for (const shot of [
+      'assets/screenshots/screen-01-6-modulow.jpg',
+      'assets/screenshots/screen-02-diagnostyka.jpg',
+      'assets/screenshots/screen-03-elektryka.jpg',
+      'assets/screenshots/screen-04-baza-techniczna.jpg',
+      'assets/screenshots/screen-05-silniki-cvt.jpg',
+      'assets/screenshots/screen-06-zlecenia.jpg',
+      'assets/screenshots/screen-07-ulubione-3d.jpg',
+      'assets/screenshots/screen-08-druciarstwo.jpg',
+      'assets/screenshots/screen-09-panel-status.jpg',
+    ]) {
+      assert.ok(page.includes(shot), `Brak screena ${shot} na stronie pobierania`);
+    }
+  }
 });
 
 test('siatka kafelków neonowych i filtrowanie kart diagnostycznych obsługują wielkość liter, polskie znaki oraz czyszczenie pola', () => {

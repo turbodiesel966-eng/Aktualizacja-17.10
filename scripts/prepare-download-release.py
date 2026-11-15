@@ -73,9 +73,14 @@ def local_url(raw, base):
 
 
 def save(url, out):
-    path = out / urllib.parse.unquote(urllib.parse.urlparse(url).path).lstrip("/")
+    rel_path = urllib.parse.unquote(urllib.parse.urlparse(url).path).lstrip("/")
+    path = out / rel_path
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = get(url)
+    local_src = Path(__file__).resolve().parent.parent / rel_path
+    if local_src.is_file():
+        data = local_src.read_bytes()
+    else:
+        data = get(url)
     path.write_bytes(data)
     return data
 
