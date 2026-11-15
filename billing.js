@@ -314,6 +314,507 @@
     }
   }
 
+  const AFFILIATE_PRO_PACKAGES = [
+    { key: 'weekend', title: 'NAPRAWNIK PRO - Pass Weekendowy (3 dni)', badge: '⚡ WEEKEND · 3 DNI', basePrice: 19, priceGrosze: 1900, durationDays: 3, planTier: 'pro', desc: 'Szybki dostęp na weekendową naprawę — pełna diagnostyka, schematy i kalkulatory.' },
+    { key: 'month', title: 'NAPRAWNIK PRO - Pass Miesięczny (30 dni)', badge: '💎 MIESIĄC · 30 DNI', basePrice: 39, priceGrosze: 3900, durationDays: 30, planTier: 'pro', desc: 'Pełny dostęp PRO na 30 dni — laboratorium 150 pomiarów, 3 pojazdy, chmura.' },
+    { key: 'year', title: 'NAPRAWNIK PRO - Na Sezon / Rok (365 dni)', badge: '🏆 SEZON / ROK · 365 DNI', basePrice: 79, priceGrosze: 7900, durationDays: 365, planTier: 'pro', desc: 'Cały rok dostępu PRO — najbardziej opłacalny wybór na cały sezon motocyklowy.' },
+    { key: 'workshop', title: 'NAPRAWNIK PRO - Warsztat VIP (365 dni)', badge: '🛠️ WARSZTAT VIP · 365 DNI', basePrice: 149, priceGrosze: 14900, durationDays: 365, planTier: 'warsztat', desc: 'Kompleksowy kombajn WARSZTAT VIP na 365 dni — zlecenia, PDF z podpisem, marża, 500 pojazdów.' }
+  ];
+  let currentAffiliatePromoCode = '';
+  let cachedWalletState = null;
+
+  function calcAffiliateDiscountedZl(basePrice, code) {
+    const clean = String(code || '').trim();
+    if (clean.length >= 3) {
+      return (basePrice * 0.8).toFixed(2).replace('.', ',') + ' zł';
+    }
+    return basePrice + ' zł';
+  }
+  window.npCalcAffiliatePrice = calcAffiliateDiscountedZl;
+
+  function buildAffiliatePackagesCardHtml(currentTier) {
+    const hasCode = String(currentAffiliatePromoCode || '').trim().length >= 3;
+    const cardsHtml = AFFILIATE_PRO_PACKAGES.map(pkg => {
+      const finalPriceStr = calcAffiliateDiscountedZl(pkg.basePrice, currentAffiliatePromoCode);
+      const baseStr = pkg.basePrice + ' zł';
+      const isWarsztat = pkg.key === 'workshop';
+      const borderCol = isWarsztat ? 'var(--hero)' : 'var(--accent)';
+      return '<div class="card" data-aff-card="' + pkg.key + '" style="border-color:' + borderCol + ';margin-bottom:8px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<span style="font-size:10px;font-weight:bold;color:var(--cyan);letter-spacing:0.6px">' + esc(pkg.badge) + '</span>' +
+          '<span data-aff-discount-pill="' + pkg.key + '" style="display:' + (hasCode ? 'inline-block' : 'none') + ';font-size:10px;background:#00f57a22;color:#00f57a;border:1px solid #00f57a;padding:2px 6px;border-radius:999px;font-weight:bold">-20% Z KODEM</span>' +
+        '</div>' +
+        '<h2 style="margin-top:6px">' + esc(pkg.title) + '</h2>' +
+        '<p style="font-size:12px;color:var(--dim);line-height:1.45;margin-bottom:8px">' + esc(pkg.desc) + '</p>' +
+        '<div style="display:flex;align-items:baseline;gap:10px;margin:8px 0">' +
+          '<span data-aff-price="' + pkg.key + '" style="font-size:22px;font-weight:900;color:var(--hero)">' + esc(finalPriceStr) + '</span>' +
+          '<span data-aff-old-price="' + pkg.key + '" style="display:' + (hasCode ? 'inline' : 'none') + ';font-size:13px;color:var(--dim);text-decoration:line-through">' + esc(baseStr) + '</span>' +
+        '</div>' +
+        '<button type="button" class="btn" data-aff-buy="' + pkg.key + '" style="border-color:' + borderCol + ';color:' + (isWarsztat ? 'var(--hero)' : 'var(--accent)') + '" onclick="window.npStartAffiliateCheckout && window.npStartAffiliateCheckout(\'' + pkg.key + '\')">' +
+          '⚡ Wybieram ' + esc(pkg.title) + ' — <span data-aff-btn-price="' + pkg.key + '">' + esc(finalPriceStr) + '</span>' +
+        '</button>' +
+      '</div>';
+    }).join('');
+
+    const bonusNum = cachedWalletState && cachedWalletState.bonusBalance !== undefined && cachedWalletState.bonusBalance !== null
+      ? Number(cachedWalletState.bonusBalance)
+      : 10.00;
+    const cashNum = cachedWalletState && cachedWalletState.walletBalance !== undefined && cachedWalletState.walletBalance !== null
+      ? Number(cachedWalletState.walletBalance)
+      : 0.00;
+    const totalProNum = Number((bonusNum + cashNum).toFixed(2));
+    const proBalStr = totalProNum.toFixed(2).replace('.', ',');
+    const bonusBalStr = bonusNum.toFixed(2).replace('.', ',');
+    const cashBalStr = cashNum.toFixed(2).replace('.', ',');
+    const blikPct = Math.min(100, Math.max(0, Math.round((cashNum / 50.00) * 100)));
+    const canPayoutBlik = cashNum >= 50.00;
+    const refCode = (cachedWalletState && cachedWalletState.refCode)
+      || (typeof localStorage !== 'undefined' && localStorage.getItem('naprawnik_ref_code'))
+      || 'NAP-START20';
+
+    return '<div class="card" id="npAffiliateSection" style="border-color:var(--cyan)">' +
+      '<h2>🚀 Pakiety NAPRAWNIK PRO i WARSZTAT VIP (Program Partnerski)</h2>' +
+      '<p style="font-size:12px;line-height:1.5;color:var(--dim);margin-bottom:10px">Wybierz pakiet czasowy dopasowany do potrzeb. Z kodem polecającym otrzymujesz <b>-20% zniżki</b> (15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł), a polecający zyskuje <b>30% prowizji</b> do portfela afiliacyjnego.</p>' +
+      '<div class="entry" style="margin-bottom:10px">' +
+        '<label for="npAffiliatePromoInput" style="font-size:11px;color:var(--cyan);font-weight:bold;display:block;margin-bottom:4px">🎟️ Kod rabatowy / polecający (-20% na każdy pakiet):</label>' +
+        '<input id="npAffiliatePromoInput" placeholder="Wpisz kod rabatowy (np. NAP-XXXXXX)" value="' + esc(currentAffiliatePromoCode) + '" oninput="window.npUpdateAffiliatePromoUI && window.npUpdateAffiliatePromoUI(this.value)">' +
+        '<small id="npAffiliatePromoStatus" style="color:' + (hasCode ? '#00f57a' : 'var(--dim)') + '">' +
+          (hasCode ? '✅ Aktywowano rabat -20%! Ceny po zniżce: 15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł.' : 'Wpisz kod polecający, aby obniżyć ceny o 20% (19 zł → 15,20 zł, 39 zł → 31,20 zł, 79 zł → 63,20 zł, 149 zł → 119,20 zł).') +
+        '</small>' +
+      '</div>' +
+      cardsHtml +
+      '<div class="card" style="border-color:#00f57a;margin-top:10px;margin-bottom:0">' +
+        '<h2 style="color:#00f57a">💼 Portfel / Zarabiaj (30% prowizji + 10 zł na start)</h2>' +
+        '<p style="font-size:12px;line-height:1.5">Polecaj NAPRAWNIKA znajomym mechanikom i na grupach motocyklowych — kupujący z Twoim kodem ma <b>-20% rabatu</b>, a Ty otrzymujesz <b>30% prowizji</b> od każdej wpłaty Stripe.</p>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0">' +
+          '<div class="entry" style="border:1px solid var(--accent);background:rgba(255,107,0,0.06);padding:12px;border-radius:10px;margin:0">' +
+            '<div style="font-size:11px;font-weight:bold;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px">🎁 Saldo na pakiety PRO</div>' +
+            '<div id="npWalletProBalanceVal" style="font-size:24px;font-weight:900;color:var(--hero);margin:6px 0">' + esc(proBalStr) + ' zł</div>' +
+            '<div style="font-size:11px;color:var(--dim);margin-bottom:6px">Bonus startowy: <b id="npWalletBonusVal" style="color:var(--text)">' + esc(bonusBalStr) + ' zł</b> + Prowizje: <b id="npWalletCashSubVal" style="color:#00f57a">' + esc(cashBalStr) + ' zł</b></div>' +
+            '<small style="display:block;color:var(--cyan);line-height:1.4">Masz 10 zł bonusu na start! Uzbieraj 39 zł, aby odblokować Miesiąc PRO za darmo</small>' +
+            '<button type="button" class="btn" style="border-color:var(--accent);color:var(--accent);margin-top:8px" onclick="window.npBuyProFromWallet && window.npBuyProFromWallet()">💎 Kup PRO (30 dni) z portfela — 39 zł</button>' +
+          '</div>' +
+          '<div class="entry" style="border:1px solid #00f57a;background:rgba(0,245,122,0.05);padding:12px;border-radius:10px;margin:0">' +
+            '<div style="font-size:11px;font-weight:bold;color:#00f57a;text-transform:uppercase;letter-spacing:0.5px">💸 Gotówka do wypłaty BLIK</div>' +
+            '<div id="npWalletBalanceVal" style="font-size:24px;font-weight:900;color:#00f57a;margin:6px 0">' + esc(cashBalStr) + ' zł</div>' +
+            '<div style="background:#0b111c;border:1px solid var(--border);border-radius:999px;height:10px;overflow:hidden;margin:6px 0">' +
+              '<div id="npWalletBlikProgressBar" style="width:' + blikPct + '%;height:100%;background:linear-gradient(90deg,var(--cyan),#00f57a);transition:width 0.3s ease"></div>' +
+            '</div>' +
+            '<small id="npWalletBlikProgressText" style="display:block;color:var(--dim);line-height:1.4">Postęp do wypłaty BLIK: ' + esc(cashBalStr) + ' zł / 50,00 zł (' + blikPct + '%) — wypłacie podlega wyłącznie zarobiona prowizja 30% (min. 50,00 zł).</small>' +
+            '<div style="margin-top:8px">' +
+              '<input id="npBlikPhoneInput" type="tel" inputmode="numeric" maxlength="9" placeholder="9-cyfrowy nr telefonu do BLIK (np. 500600700)" ' + (canPayoutBlik ? '' : 'disabled') + ' style="margin-bottom:6px;opacity:' + (canPayoutBlik ? '1' : '0.55') + '">' +
+              '<button type="button" id="npBlikPayoutBtn" class="btn" ' + (canPayoutBlik ? '' : 'disabled') + ' style="border-color:' + (canPayoutBlik ? '#00f57a' : 'var(--border)') + ';color:' + (canPayoutBlik ? '#00f57a' : 'var(--dim)') + ';opacity:' + (canPayoutBlik ? '1' : '0.55') + ';cursor:' + (canPayoutBlik ? 'pointer' : 'not-allowed') + '" onclick="window.npRequestBlikPayout && window.npRequestBlikPayout()">📲 Wypłać na BLIK</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="entry" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<div><b>Twój kod rabatowy (-20%):</b> <code id="npWalletRefCodeVal" style="color:var(--cyan);font-size:14px;font-weight:bold">' + esc(refCode) + '</code> <span id="npCopyRefCodeToast" style="display:none;color:#00f57a;font-weight:bold;margin-left:6px">Skopiowano!</span></div>' +
+        '</div>' +
+        '<button type="button" class="btn" id="npCopyRefCodeBtn" style="border-color:var(--cyan);color:var(--cyan)" onclick="window.npCopyAffiliateRefCode && window.npCopyAffiliateRefCode()">📋 Kopiuj mój kod rabatowy (-20%)</button>' +
+        '<button type="button" class="btn" onclick="window.npLoadWallet && window.npLoadWallet(true)">🔄 Odśwież stan portfela i kod polecający</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  window.npCopyAffiliateRefCode = async function() {
+    let code = (cachedWalletState && cachedWalletState.refCode)
+      || (typeof document !== 'undefined' && document.getElementById && document.getElementById('npWalletRefCodeVal') ? document.getElementById('npWalletRefCodeVal').textContent.trim() : '')
+      || (typeof localStorage !== 'undefined' && localStorage.getItem('naprawnik_ref_code'))
+      || '';
+    if ((!code || code === '—' || code === 'NAP-START20') && API) {
+      const loaded = await window.npLoadWallet(false);
+      if (loaded && loaded.refCode) code = loaded.refCode;
+    }
+    if (!code || code === '—') code = 'NAP-START20';
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      }
+    } catch (_) {}
+    const toastEl = typeof document !== 'undefined' && document.getElementById ? document.getElementById('npCopyRefCodeToast') : null;
+    if (toastEl) {
+      toastEl.textContent = 'Skopiowano!';
+      toastEl.style.display = 'inline';
+      setTimeout(() => { toastEl.style.display = 'none'; }, 2600);
+    }
+    const btnEl = typeof document !== 'undefined' && document.getElementById ? document.getElementById('npCopyRefCodeBtn') : null;
+    if (btnEl) {
+      const orig = btnEl.textContent;
+      btnEl.textContent = '✅ Skopiowano! (' + code + ')';
+      setTimeout(() => { btnEl.textContent = orig; }, 2200);
+    }
+    return code;
+  };
+
+  window.npUpdateAffiliatePromoUI = function(rawValue) {
+    currentAffiliatePromoCode = String(rawValue || '').trim().toUpperCase();
+    const hasCode = currentAffiliatePromoCode.length >= 3;
+    if (typeof document === 'undefined' || !document.querySelectorAll) return;
+    AFFILIATE_PRO_PACKAGES.forEach(pkg => {
+      const priceText = calcAffiliateDiscountedZl(pkg.basePrice, currentAffiliatePromoCode);
+      const priceEl = document.querySelector('[data-aff-price="' + pkg.key + '"]');
+      if (priceEl) priceEl.textContent = priceText;
+      const btnPriceEl = document.querySelector('[data-aff-btn-price="' + pkg.key + '"]');
+      if (btnPriceEl) btnPriceEl.textContent = priceText;
+      const oldPriceEl = document.querySelector('[data-aff-old-price="' + pkg.key + '"]');
+      if (oldPriceEl) oldPriceEl.style.display = hasCode ? 'inline' : 'none';
+      const pillEl = document.querySelector('[data-aff-discount-pill="' + pkg.key + '"]');
+      if (pillEl) pillEl.style.display = hasCode ? 'inline-block' : 'none';
+    });
+    const statusEl = document.getElementById ? document.getElementById('npAffiliatePromoStatus') : null;
+    if (statusEl) {
+      statusEl.style.color = hasCode ? '#00f57a' : 'var(--dim)';
+      statusEl.textContent = hasCode
+        ? '✅ Aktywowano rabat -20%! Ceny po zniżce: 15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł.'
+        : 'Wpisz kod polecający, aby obniżyć ceny o 20% (19 zł → 15,20 zł, 39 zł → 31,20 zł, 79 zł → 63,20 zł, 149 zł → 119,20 zł).';
+    }
+  };
+
+  window.npStartAffiliateCheckout = async function(planKey, customPromoCode) {
+    if (!['weekend', 'month', 'year', 'workshop'].includes(planKey)) return;
+    if (!API) { alert('Płatności są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.'); return; }
+    try {
+      const token = await accountEnsure();
+      const inputEl = typeof document !== 'undefined' && document.getElementById ? document.getElementById('npAffiliatePromoInput') : null;
+      const promoCode = String(customPromoCode !== undefined ? customPromoCode : (inputEl ? inputEl.value : currentAffiliatePromoCode) || '').trim().toUpperCase();
+      const data = await api('/api/create-checkout', { plan: planKey, promoCode }, 'POST', token);
+      if (!isSafeCheckoutUrl(data.url)) throw new Error('Stripe nie zwrócił bezpiecznego adresu Checkout.');
+      await openHostedBillingUrl(data.url, 'affiliate-plan');
+    } catch (error) {
+      alert(friendlyError(error, 'rozpocząć zakupu pakietu PRO'));
+    }
+  };
+
+  function syncWalletDomFromState(data) {
+    if (!data || typeof document === 'undefined' || !document.getElementById) return;
+    const bonusNum = data.bonusBalance !== undefined && data.bonusBalance !== null ? Number(data.bonusBalance) : 10.00;
+    const cashNum = Number(data.walletBalance || 0);
+    const totalProNum = Number((bonusNum + cashNum).toFixed(2));
+    const blikPct = Math.min(100, Math.max(0, Math.round((cashNum / 50.00) * 100)));
+    const canPayoutBlik = cashNum >= 50.00;
+
+    const proEl = document.getElementById('npWalletProBalanceVal');
+    if (proEl) proEl.textContent = totalProNum.toFixed(2).replace('.', ',') + ' zł';
+    const bonusEl = document.getElementById('npWalletBonusVal');
+    if (bonusEl) bonusEl.textContent = bonusNum.toFixed(2).replace('.', ',') + ' zł';
+    const cashSubEl = document.getElementById('npWalletCashSubVal');
+    if (cashSubEl) cashSubEl.textContent = cashNum.toFixed(2).replace('.', ',') + ' zł';
+    const balEl = document.getElementById('npWalletBalanceVal');
+    if (balEl) balEl.textContent = cashNum.toFixed(2).replace('.', ',') + ' zł';
+    const barEl = document.getElementById('npWalletBlikProgressBar');
+    if (barEl) barEl.style.width = blikPct + '%';
+    const barTxtEl = document.getElementById('npWalletBlikProgressText');
+    if (barTxtEl) barTxtEl.textContent = 'Postęp do wypłaty BLIK: ' + cashNum.toFixed(2).replace('.', ',') + ' zł / 50,00 zł (' + blikPct + '%) — wypłacie podlega wyłącznie zarobiona prowizja 30% (min. 50,00 zł).';
+    const phoneIn = document.getElementById('npBlikPhoneInput');
+    if (phoneIn) {
+      phoneIn.disabled = !canPayoutBlik;
+      phoneIn.style.opacity = canPayoutBlik ? '1' : '0.55';
+    }
+    const blikBtn = document.getElementById('npBlikPayoutBtn');
+    if (blikBtn) {
+      blikBtn.disabled = !canPayoutBlik;
+      blikBtn.style.opacity = canPayoutBlik ? '1' : '0.55';
+      blikBtn.style.cursor = canPayoutBlik ? 'pointer' : 'not-allowed';
+      blikBtn.style.borderColor = canPayoutBlik ? '#00f57a' : 'var(--border)';
+      blikBtn.style.color = canPayoutBlik ? '#00f57a' : 'var(--dim)';
+    }
+    const refEl = document.getElementById('npWalletRefCodeVal');
+    if (refEl && data.refCode) refEl.textContent = data.refCode;
+  }
+
+  window.npLoadWallet = async function(showAlert) {
+    if (!API) { if (showAlert) alert('Portfel dostępny wyłącznie w oficjalnej aplikacji NAPRAWNIK.'); return null; }
+    try {
+      const token = await accountEnsure();
+      const data = await api('/api/wallet', undefined, 'GET', token);
+      cachedWalletState = data;
+      if (data && data.refCode && typeof localStorage !== 'undefined') {
+        try { localStorage.setItem('naprawnik_ref_code', data.refCode); } catch (_) {}
+      }
+      syncWalletDomFromState(data);
+      if (showAlert) {
+        const bonusNum = data.bonusBalance !== undefined ? Number(data.bonusBalance) : 10.00;
+        const cashNum = Number(data.walletBalance || 0);
+        alert(
+          'Saldo na pakiety PRO: ' + (bonusNum + cashNum).toFixed(2).replace('.', ',') + ' zł (w tym ' + bonusNum.toFixed(2).replace('.', ',') + ' zł bonusu)\n' +
+          'Gotówka do wypłaty BLIK: ' + cashNum.toFixed(2).replace('.', ',') + ' zł\n' +
+          'Twój kod rabatowy (-20%): ' + (data.refCode || '—')
+        );
+      }
+      return data;
+    } catch (error) {
+      if (showAlert) alert(friendlyError(error, 'pobrać stanu portfela'));
+      return null;
+    }
+  };
+
+  window.npBuyProFromWallet = async function() {
+    const proCost = 39.00;
+    if (!API) { alert('Płatności są wyłączone dla tej domeny. Otwórz oficjalną aplikację NAPRAWNIK.'); return; }
+    if (cachedWalletState) {
+      const bonusNum = cachedWalletState.bonusBalance !== undefined ? Number(cachedWalletState.bonusBalance) : 10.00;
+      const cashNum = Number(cachedWalletState.walletBalance || 0);
+      if (Number((bonusNum + cashNum).toFixed(2)) < proCost) {
+        alert('Za mało środków w portfelu (wymagane 39 zł)');
+        return;
+      }
+    }
+    try {
+      const token = await accountEnsure();
+      const data = await api('/api/buy-pro-wallet', {}, 'POST', token);
+      cachedWalletState = {
+        ...(cachedWalletState || {}),
+        bonusBalance: data.bonusBalance !== undefined ? data.bonusBalance : 0,
+        walletBalance: data.walletBalance !== undefined ? data.walletBalance : 0,
+        totalProBalance: data.totalProBalance
+      };
+      await refresh(true);
+      alert(data.message || 'Aktywowano NAPRAWNIK PRO (30 dni) ze środków w portfelu!');
+      renderPlansBridge();
+    } catch (error) {
+      const msg = String(error && error.message || '');
+      if (msg.includes('Za mało środków w portfelu')) {
+        alert('Za mało środków w portfelu (wymagane 39 zł)');
+      } else {
+        alert(friendlyError(error, 'opłacić PRO z portfela') + (msg ? '\n' + msg : ''));
+      }
+    }
+  };
+
+  window.npRequestBlikPayout = async function(customPhone) {
+    if (!API) { alert('Wypłaty BLIK dostępne wyłącznie w oficjalnej aplikacji NAPRAWNIK.'); return; }
+    const cashNum = cachedWalletState ? Number(cachedWalletState.walletBalance || 0) : 0;
+    if (cachedWalletState && cashNum < 50.00) {
+      alert('Minimalna kwota wypłaty BLIK to 50,00 zł realnie zarobionej prowizji (bonus 10 zł na start służy wyłącznie do zakupu pakietu PRO).');
+      return;
+    }
+    const phoneIn = typeof document !== 'undefined' && document.getElementById ? document.getElementById('npBlikPhoneInput') : null;
+    const rawPhone = String(customPhone !== undefined ? customPhone : (phoneIn ? phoneIn.value : '') || '').replace(/\s+/g, '');
+    if (!/^\d{9}$/.test(rawPhone)) {
+      alert('Podaj prawidłowy 9-cyfrowy numer telefonu do wypłaty BLIK (np. 500600700).');
+      return;
+    }
+    try {
+      const token = await accountEnsure();
+      const data = await api('/api/payout', { phone: rawPhone, method: 'blik' }, 'POST', token);
+      cachedWalletState = {
+        ...(cachedWalletState || {}),
+        bonusBalance: data.bonusBalance !== undefined ? data.bonusBalance : (cachedWalletState && cachedWalletState.bonusBalance),
+        walletBalance: data.walletBalance !== undefined ? data.walletBalance : 0,
+        totalProBalance: data.totalProBalance
+      };
+      syncWalletDomFromState(cachedWalletState);
+      alert(data.message || 'Zlecenie wypłaty BLIK zostało przyjęte do realizacji!');
+    } catch (error) {
+      alert((error && error.message) || friendlyError(error, 'zlecić wypłaty BLIK'));
+    }
+  };
+
+  // Etap 4: Wiralowy Generator Kart Diagnozy na grupy FB w HTML5 Canvas
+  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+    const words = String(text || '').split(/\s+/).filter(Boolean);
+    let line = '';
+    let currentY = y;
+    let linesDrawn = 0;
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line ? (line + ' ' + words[n]) : words[n];
+      const metrics = ctx.measureText ? ctx.measureText(testLine) : { width: testLine.length * 14 };
+      if (metrics.width > maxWidth && n > 0) {
+        linesDrawn++;
+        if (maxLines && linesDrawn >= maxLines) {
+          ctx.fillText(line + '…', x, currentY);
+          return currentY + lineHeight;
+        }
+        ctx.fillText(line, x, currentY);
+        line = words[n];
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) {
+      ctx.fillText(line, x, currentY);
+      currentY += lineHeight;
+    }
+    return currentY;
+  }
+
+  window.npGenerateDiagnosisShareCard = function(diagnosisData) {
+    const data = typeof diagnosisData === 'string'
+      ? { result: diagnosisData }
+      : (diagnosisData || {});
+    const symptomTitle = String(data.title || data.symptom || 'Diagnostyka warsztatowa jednośladu').trim();
+    const faultResult = String(data.result || data.fault || 'Wykryto przyczynę usterki').trim();
+    const detailText = String(data.detail || data.repair || 'Potwierdź parametry pomiarowe w Elektronicznym Laboratorium NAPRAWNIK.').trim();
+    const userCode = String(
+      data.refCode
+      || (cachedWalletState && cachedWalletState.refCode)
+      || (typeof localStorage !== 'undefined' && localStorage.getItem('naprawnik_ref_code'))
+      || 'NAP-PRO20'
+    ).trim();
+
+    if (!cachedWalletState && API && typeof window.npLoadWallet === 'function') {
+      window.npLoadWallet(false).catch(() => {});
+    }
+
+    if (typeof document === 'undefined' || !document.createElement) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1080;
+    const ctx = canvas.getContext && canvas.getContext('2d');
+    if (ctx) {
+      // Tło ciemne warsztatowe (grafit / czerń)
+      const bgGrad = ctx.createLinearGradient ? ctx.createLinearGradient(0, 0, 1080, 1080) : null;
+      if (bgGrad) {
+        bgGrad.addColorStop(0, '#090d16');
+        bgGrad.addColorStop(0.55, '#111827');
+        bgGrad.addColorStop(1, '#0b0f19');
+        ctx.fillStyle = bgGrad;
+      } else {
+        ctx.fillStyle = '#0b0f19';
+      }
+      ctx.fillRect(0, 0, 1080, 1080);
+
+      // Ramka zewnętrzna neonowy cyjan + pomarańcz
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(28, 28, 1024, 1024);
+      ctx.strokeStyle = '#ff6b00';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(42, 42, 996, 996);
+
+      // Górny pasek nagłówka
+      ctx.fillStyle = '#151f32';
+      ctx.fillRect(45, 45, 990, 130);
+      ctx.fillStyle = '#ff6b00';
+      ctx.fillRect(45, 171, 990, 6);
+
+      ctx.fillStyle = '#00e5ff';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText('⚡ RAPORT WARSZTATOWY • SYSTEM EKSPERCKI', 80, 96);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 44px sans-serif';
+      ctx.fillText('NAPRAWNIK - Diagnostyka Jednośladów', 80, 148);
+
+      // Sekcja objawu / ścieżki
+      ctx.fillStyle = '#111a2e';
+      ctx.fillRect(72, 215, 936, 115);
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(72, 215, 936, 115);
+
+      ctx.fillStyle = '#00e5ff';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('🔎 BADANY OBJAW / ŚCIEŻKA DIAGNOSTYCZNA:', 100, 255);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 28px sans-serif';
+      wrapCanvasText(ctx, symptomTitle, 100, 298, 880, 36, 2);
+
+      // Główny boks wykrytej usterki / wyniku diagnozy
+      ctx.fillStyle = '#181410';
+      ctx.fillRect(72, 360, 936, 430);
+      ctx.strokeStyle = '#ff6b00';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(72, 360, 936, 430);
+
+      ctx.fillStyle = '#ff6b00';
+      ctx.font = '900 26px sans-serif';
+      ctx.fillText('⚠️ WYKRYTA USTERKA / WYNIK DIAGNOZY:', 104, 415);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 42px sans-serif';
+      const afterFaultY = wrapCanvasText(ctx, faultResult, 104, 480, 872, 54, 4);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '26px sans-serif';
+      wrapCanvasText(ctx, detailText, 104, Math.max(afterFaultY + 28, 630), 872, 36, 4);
+
+      // Dolny pasek promocyjny z kodem rabatowym użytkownika (-20%)
+      ctx.fillStyle = '#0d1f2d';
+      ctx.fillRect(45, 830, 990, 205);
+      ctx.fillStyle = '#00e5ff';
+      ctx.fillRect(45, 830, 990, 6);
+
+      const promoText = 'Zdiagnozuj swój skuter/motocykl w aplikacji NAPRAWNIK! Użyj mojego kodu: ' + userCode + ' i odbierz -20% na pakiet PRO!';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 28px sans-serif';
+      wrapCanvasText(ctx, promoText, 80, 888, 920, 40, 3);
+
+      ctx.fillStyle = '#00f57a';
+      ctx.font = '900 32px sans-serif';
+      ctx.fillText('🎟️ KOD RABATOWY -20%: ' + userCode + '   •   PRO od 15,20 zł', 80, 1002);
+    }
+
+    let dataUrl = '';
+    try { dataUrl = canvas.toDataURL('image/png'); } catch (_) {}
+
+    // Wyświetl modal podglądu i udostępniania w DOM
+    if (document.body) {
+      const existing = document.getElementById('npDiagnosisShareModal');
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+      const modal = document.createElement('div');
+      modal.id = 'npDiagnosisShareModal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(5,8,15,0.88);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+      modal.innerHTML =
+        '<div class="card" style="max-width:480px;width:100%;border:2px solid var(--accent);background:#0e1420;margin:auto">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">' +
+            '<h2 style="margin:0;color:var(--accent)">📣 Karta Diagnozy na Grupę FB</h2>' +
+            '<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px" onclick="var m=document.getElementById(\'npDiagnosisShareModal\');if(m)m.remove()">✕ Zamknij</button>' +
+          '</div>' +
+          '<p style="font-size:12px;color:var(--dim);line-height:1.45;margin-bottom:10px">Udostępnij wygenerowaną kartę diagnozy na grupie motocyklowej/skuterowej. Gdy ktoś kupi pakiet z Twoim kodem <b>' + esc(userCode) + '</b> (-20%), otrzymasz <b>30% prowizji</b> do portfela!</p>' +
+          '<div id="npDiagnosisCanvasHost" style="text-align:center;margin-bottom:10px"></div>' +
+          '<button type="button" class="btn" id="npShareDiagnosisNativeBtn" style="border-color:#00f57a;color:#00f57a;font-weight:bold">📲 Udostępnij na grupie / Messengerze (Web Share)</button>' +
+          '<button type="button" class="btn" id="npDownloadDiagnosisPngBtn" style="border-color:var(--cyan);color:var(--cyan)">💾 Pobierz obrazek PNG (1080×1080)</button>' +
+        '</div>';
+      document.body.appendChild(modal);
+
+      canvas.style.cssText = 'width:100%;max-width:380px;height:auto;border-radius:10px;border:1px solid var(--cyan);display:block;margin:0 auto';
+      const host = document.getElementById('npDiagnosisCanvasHost');
+      if (host && host.appendChild) host.appendChild(canvas);
+
+      const triggerDownload = () => {
+        const url = dataUrl || (canvas.toDataURL ? canvas.toDataURL('image/png') : '');
+        if (!url) return;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'naprawnik-diagnoza-' + userCode.toLowerCase() + '.png';
+        document.body.appendChild(a);
+        if (typeof a.click === 'function') a.click();
+        a.remove();
+      };
+
+      const dlBtn = document.getElementById('npDownloadDiagnosisPngBtn');
+      if (dlBtn) dlBtn.onclick = triggerDownload;
+
+      const shareBtn = document.getElementById('npShareDiagnosisNativeBtn');
+      if (shareBtn) {
+        shareBtn.onclick = async () => {
+          const shareCaption = 'NAPRAWNIK - Diagnostyka Jednośladów: ' + faultResult + '. Zdiagnozuj swój skuter/motocykl w aplikacji NAPRAWNIK! Użyj mojego kodu: ' + userCode + ' i odbierz -20% na pakiet PRO!';
+          if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+            try {
+              if (canvas.toBlob && typeof File === 'function') {
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (blob) {
+                  const file = new File([blob], 'naprawnik-diagnoza.png', { type: 'image/png' });
+                  if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+                    await navigator.share({ title: 'NAPRAWNIK - Diagnostyka Jednośladów', text: shareCaption, files: [file] });
+                    return;
+                  }
+                }
+              }
+              await navigator.share({ title: 'NAPRAWNIK - Diagnostyka Jednośladów', text: shareCaption });
+              return;
+            } catch (_) {}
+          }
+          triggerDownload();
+        };
+      }
+    }
+
+    return { canvas, dataUrl, refCode: userCode };
+  };
+
   function listHtml(tier) {
     try { return typeof planBullets === 'function' ? planBullets(tier) : ''; }
     catch (_) { return ''; }
@@ -365,6 +866,7 @@
             return '<div class="entry"><b>' + esc(offer.title) + ' · ' + esc(String(offer.days)) + ' dni — ' + esc(offer.price) + '</b><button class="btn" type="button" data-one-time-tier="' + esc(offer.tier) + '" data-one-time-days="' + esc(String(offer.days)) + '">Kup ' + esc(offer.title) + ' na ' + esc(String(offer.days)) + ' dni (1 raz na konto)</button></div>';
           }).join('')
         : '<p style="font-size:12px;line-height:1.5">Masz już aktywny plan WARSZTAT. Pakiety równe lub niższe od aktywnego planu są ukryte, aby nie proponować zbędnego zakupu.</p>') + '</div>';
+    const affiliatePackagesHtml = buildAffiliatePackagesCardHtml(current);
     let usageCard = '';
     const planUsage = license && license.planUsage;
     if (license && license.tier !== 'amator') {
@@ -386,10 +888,18 @@
     }
     root.innerHTML = (typeof back === 'function' ? back() : '') +
       '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka i pomiary (1 pojazd). PRO to 3 pojazdy, 150 pomiarów z automatyczną diagnozą, 50 dobierań części i zdjęć (analiza zdjęć AI jest chwilowo wyłączona) oraz kopia w chmurze. WARSZTAT to kompleksowe narzędzie: zlecenia, PDF z podpisem klienta, do 500 pojazdów, 5000 pomiarów i 30 nowych zleceń/mc. Subskrypcją zarządzasz w portalu Stripe.</p></div>' +
+      affiliatePackagesHtml +
       activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
       '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small><div class="btn" onclick="if(typeof nav===\'function\')nav(\'legal\')" style="margin-top:8px">📜 Regulamin i Polityka prywatności (RODO)</div></div>';
   }
   window.renderPlans = renderPlansBridge;
+  window.npOpenAffiliateWallet = function() {
+    if (typeof nav === 'function') nav('plans');
+    else renderPlansBridge();
+    if (API && typeof window.npLoadWallet === 'function') {
+      try { Promise.resolve(window.npLoadWallet(false)).catch(() => {}); } catch (_) {}
+    }
+  };
   window.npStartCheckout = checkout;
   window.npStartOneTimeCheckout = checkoutOneTime;
   window.licRefresh = refresh;

@@ -629,3 +629,56 @@ test('NAPRAWNIK MASTER — Zintegrowany system warsztatowy: diagnostyka różnic
   const resMap = ctx.getInventoryReservations();
   assert.strictEqual(resMap['inv_1'], 2, 'Otwarte zlecenie musi rezerwować 2 szt. w magazynie');
 });
+
+test('Cennik pakietów afiliacyjnych NAPRAWNIK PRO / VIP (-20% zniżki, 30% prowizji i portfel 39 zł)', () => {
+  const rootDir = path.resolve(__dirname, '..');
+  const billingSource = fs.readFileSync(path.join(rootDir, 'billing.js'), 'utf8');
+  const workerSource = fs.readFileSync(path.join(rootDir, 'workers/subscriptions/src/index.mjs'), 'utf8');
+  const migrationSource = fs.readFileSync(path.join(rootDir, 'workers/subscriptions/migrations/0009_affiliate_wallet_plans.sql'), 'utf8');
+
+  // 1. Worker plans (priceGrosze: 1900, 3900, 7900, 14900)
+  assert.match(workerSource, /weekend:\s*\{\s*name:\s*"NAPRAWNIK PRO - Pass Weekendowy \(3 dni\)",\s*priceGrosze:\s*1900,\s*days:\s*3/);
+  assert.match(workerSource, /month:\s*\{\s*name:\s*"NAPRAWNIK PRO - Pass Miesięczny \(30 dni\)",\s*priceGrosze:\s*3900,\s*days:\s*30/);
+  assert.match(workerSource, /year:\s*\{\s*name:\s*"NAPRAWNIK PRO - Na Sezon \/ Rok \(365 dni\)",\s*priceGrosze:\s*7900,\s*days:\s*365/);
+  assert.match(workerSource, /workshop:\s*\{\s*name:\s*"NAPRAWNIK PRO - Warsztat VIP \(365 dni\)",\s*priceGrosze:\s*14900,\s*days:\s*365/);
+
+  // 2. Worker /api/buy-pro-wallet z proCost = 39.00
+  assert.match(workerSource, /const proCost = 39\.00;/);
+  assert.match(workerSource, /Za mało środków w portfelu \(wymagane 39 zł\)/);
+
+  // 3. Frontend billing.js — 4 karty i przelicznik -20% (15,20 zł / 31,20 zł / 63,20 zł / 119,20 zł)
+  assert.match(billingSource, /basePrice:\s*19,\s*priceGrosze:\s*1900,\s*durationDays:\s*3/);
+  assert.match(billingSource, /basePrice:\s*39,\s*priceGrosze:\s*3900,\s*durationDays:\s*30/);
+  assert.match(billingSource, /basePrice:\s*79,\s*priceGrosze:\s*7900,\s*durationDays:\s*365/);
+  assert.match(billingSource, /basePrice:\s*149,\s*priceGrosze:\s*14900,\s*durationDays:\s*365/);
+  assert.match(billingSource, /\(basePrice \* 0\.8\)\.toFixed\(2\)\.replace\('\.', ','\) \+ ' zł'/);
+  assert.match(billingSource, /const proCost = 39\.00;/);
+
+  // 4. Schemat D1 i uszczelnienie Portfela (bonus_balance 10.0 vs wallet_balance 0.0 na BLIK)
+  assert.match(migrationSource, /CREATE TABLE IF NOT EXISTS users/);
+  assert.match(migrationSource, /bonus_balance REAL NOT NULL DEFAULT 10\.0/);
+  assert.match(migrationSource, /wallet_balance REAL NOT NULL DEFAULT 0\.0/);
+  assert.match(migrationSource, /CREATE TABLE IF NOT EXISTS referrals/);
+  assert.match(migrationSource, /CREATE TABLE IF NOT EXISTS payouts/);
+  assert.match(workerSource, /usedFromBonus = Number\(Math\.min\(bonusBalance, proCost\)\.toFixed\(2\)\)/);
+  assert.match(workerSource, /usedFromWallet = Number\(Math\.max\(0, proCost - usedFromBonus\)\.toFixed\(2\)\)/);
+  assert.match(workerSource, /walletBalance < 50\.00/);
+
+  // 5. Etap 3: UI Portfela (2 kafelki, kopiowanie kodu, wypłata BLIK)
+  assert.match(billingSource, /Saldo na pakiety PRO/);
+  assert.match(billingSource, /Masz 10 zł bonusu na start! Uzbieraj 39 zł, aby odblokować Miesiąc PRO za darmo/);
+  assert.match(billingSource, /Gotówka do wypłaty BLIK/);
+  assert.match(billingSource, /Kopiuj mój kod rabatowy \(-20%\)/);
+  assert.match(billingSource, /Skopiowano!/);
+  assert.match(billingSource, /Wypłać na BLIK/);
+
+  // 6. Etap 4: Wiralowy Generator Kart Diagnozy w HTML5 Canvas
+  const indexSource = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
+  assert.match(billingSource, /window\.npGenerateDiagnosisShareCard = function\(diagnosisData\)/);
+  assert.match(billingSource, /NAPRAWNIK - Diagnostyka Jednośladów/);
+  assert.match(billingSource, /Zdiagnozuj swój skuter\/motocykl w aplikacji NAPRAWNIK! Użyj mojego kodu:/);
+  assert.match(billingSource, /canvas\.toDataURL\('image\/png'\)/);
+  assert.match(billingSource, /navigator\.share/);
+  assert.match(indexSource, /Pokaż diagnozę na grupie \(Zgarnij \+19 zł\)/);
+});
+

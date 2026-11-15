@@ -625,7 +625,11 @@ async function handleWebhook(request, env) {
           await markWebhookProcessed(env, event.id);
           return json({ received: true, ignored: true });
         }
-        await grantOneTimePurchaseFromWebhook(env, event, obj);
+        if (obj.metadata?.purchase_type === "affiliate_plan" || (obj.metadata?.plan_key && AFFILIATE_PLANS[obj.metadata.plan_key])) {
+          await grantAffiliatePlanFromWebhook(env, event, obj);
+        } else {
+          await grantOneTimePurchaseFromWebhook(env, event, obj);
+        }
       } else if (obj.mode !== "subscription" || (obj.payment_status && obj.payment_status !== "paid" && event.type === "checkout.session.completed")) {
         await markWebhookProcessed(env, event.id);
         return json({ received: true, ignored: true });
@@ -2070,6 +2074,321 @@ async function registerAnonymousUser(request, env) {
   return json({ token, user: { id: userId, tier: 'amator' }, expiresAt }, 201);
 }
 
+const AFFILIATE_PLANS = {
+  weekend: { name: "NAPRAWNIK PRO - Pass Weekendowy (3 dni)", priceGrosze: 1900, days: 3, tier: "pro" },
+  month: { name: "NAPRAWNIK PRO - Pass Miesięczny (30 dni)", priceGrosze: 3900, days: 30, tier: "pro" },
+  year: { name: "NAPRAWNIK PRO - Na Sezon / Rok (365 dni)", priceGrosze: 7900, days: 365, tier: "pro" },
+  workshop: { name: "NAPRAWNIK PRO - Warsztat VIP (365 dni)", priceGrosze: 14900, days: 365, tier: "warsztat" },
+};
+
+async function ensureAffiliateSchema(env) {
+  try {
+    await env.DB.prepare("ALTER TABLE users ADD COLUMN bonus_balance REAL NOT NULL DEFAULT 10.0").run().catch(() => {});
+    await env.DB.prepare("ALTER TABLE users ADD COLUMN wallet_balance REAL NOT NULL DEFAULT 0.0").run().catch(() => {});
+    await env.DB.prepare("ALTER TABLE users ADD COLUMN ref_code TEXT").run().catch(() => {});
+    await env.DB.prepare("ALTER TABLE users ADD COLUMN referred_by TEXT").run().catch(() => {});
+    await env.DB.prepare("ALTER TABLE users ADD COLUMN pro_until INTEGER NOT NULL DEFAULT 0").run().catch(() => {});
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS referrals (
+      id TEXT PRIMARY KEY,
+      referrer_id TEXT NOT NULL,
+      buyer_id TEXT NOT NULL,
+      ref_code TEXT NOT NULL,
+      plan_key TEXT NOT NULL,
+      amount_gross REAL NOT NULL,
+      discount_amount REAL NOT NULL DEFAULT 0.0,
+      commission_amount REAL NOT NULL,
+      stripe_session_id TEXT UNIQUE,
+      status TEXT NOT NULL DEFAULT 'completed',
+      created_at INTEGER NOT NULL
+    )`).run().catch(() => {});
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS payouts (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      method TEXT NOT NULL DEFAULT 'blik',
+      payout_details TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at INTEGER NOT NULL,
+      processed_at INTEGER
+    )`).run().catch(() => {});
+  } catch { /* Schema helpers are best-effort for mocks/migrations. */ }
+}
+
+async function ensureUserRefCode(env, userId) {
+  await ensureAffiliateSchema(env);
+  const row = await env.DB.prepare("SELECT ref_code, bonus_balance, wallet_balance FROM users WHERE id = ? LIMIT 1").bind(userId).first().catch(() => null);
+  const parseBalances = (r) => {
+    const bonusBalance = r && r.bonus_balance !== undefined && r.bonus_balance !== null ? Number(r.bonus_balance) : 10.00;
+    const walletBalance = Number(r?.wallet_balance || 0);
+    const totalProBalance = Number((bonusBalance + walletBalance).toFixed(2));
+    return { bonusBalance, walletBalance, totalProBalance };
+  };
+  if (row?.ref_code) return { refCode: row.ref_code, ...parseBalances(row) };
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  const generated = "NAP-" + [...bytes].map(b => alphabet[b % alphabet.length]).join("");
+  await env.DB.prepare("UPDATE users SET ref_code = COALESCE(ref_code, ?) WHERE id = ?").bind(generated, userId).run().catch(() => {});
+  const updated = await env.DB.prepare("SELECT ref_code, bonus_balance, wallet_balance FROM users WHERE id = ? LIMIT 1").bind(userId).first().catch(() => null);
+  return { refCode: updated?.ref_code || generated, ...parseBalances(updated) };
+}
+
+async function createAffiliateCheckout(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  if (!env.STRIPE_SECRET_KEY) return err("Stripe is not configured", 500);
+  await ensureAffiliateSchema(env);
+  const body = await readJson(request, 8192);
+  const plans = {
+    weekend: { name: "NAPRAWNIK PRO - Pass Weekendowy (3 dni)", priceGrosze: 1900, days: 3, tier: "pro" },
+    month: { name: "NAPRAWNIK PRO - Pass Miesięczny (30 dni)", priceGrosze: 3900, days: 30, tier: "pro" },
+    year: { name: "NAPRAWNIK PRO - Na Sezon / Rok (365 dni)", priceGrosze: 7900, days: 365, tier: "pro" },
+    workshop: { name: "NAPRAWNIK PRO - Warsztat VIP (365 dni)", priceGrosze: 14900, days: 365, tier: "warsztat" },
+  };
+  const planKey = typeof body?.plan === "string" ? body.plan.trim().toLowerCase() : "";
+  const selectedPlan = plans[planKey];
+  if (!selectedPlan) return err("Nieprawidłowy plan subskrypcyjny.", 400);
+
+  const rawCode = typeof (body?.promoCode || body?.refCode) === "string"
+    ? String(body.promoCode || body.refCode).trim().toUpperCase()
+    : "";
+  let discountApplied = false;
+  let referrerId = "";
+  let appliedRefCode = "";
+  if (rawCode && /^[A-Z0-9_-]{3,40}$/.test(rawCode)) {
+    const refOwner = await env.DB.prepare("SELECT id, ref_code FROM users WHERE UPPER(ref_code) = ? LIMIT 1")
+      .bind(rawCode).first().catch(() => null);
+    if (refOwner && refOwner.id !== auth.userId) {
+      discountApplied = true;
+      referrerId = refOwner.id;
+      appliedRefCode = refOwner.ref_code || rawCode;
+    } else if (!refOwner) {
+      discountApplied = true;
+      appliedRefCode = rawCode;
+    }
+  }
+
+  const finalPriceGrosze = discountApplied
+    ? Math.round(selectedPlan.priceGrosze * 0.8)
+    : selectedPlan.priceGrosze;
+
+  const appBase = env.APP_BASE_URL || "https://turbodiesel966-eng.github.io/Aktualizacja-17.10";
+  let parsedAppBase;
+  try { parsedAppBase = new URL(appBase); } catch { return err("APP_BASE_URL must be an HTTPS URL", 500); }
+  if (parsedAppBase.protocol !== "https:") return err("APP_BASE_URL must be an HTTPS URL", 500);
+  const appRoot = appBase.replace(/\/$/, "");
+  const nativeReturn = isNativeAppRequest(request);
+  const workerOrigin = new URL(request.url).origin;
+  const successUrl = nativeReturn
+    ? workerOrigin + "/billing/return?result=success"
+    : (safeReturnUrl(env.CHECKOUT_SUCCESS_URL, appRoot + "/?checkout=success", appBase) || (appRoot + "/?checkout=success"));
+  const cancelUrl = nativeReturn
+    ? workerOrigin + "/billing/return?result=cancelled"
+    : (safeReturnUrl(env.CHECKOUT_CANCEL_URL, appRoot + "/?checkout=cancelled", appBase) || (appRoot + "/?checkout=cancelled"));
+
+  const form = new URLSearchParams();
+  form.set("mode", "payment");
+  form.set("branding_settings[display_name]", "NAPRAWNIK");
+  form.set("line_items[0][price_data][currency]", "pln");
+  form.set("line_items[0][price_data][product_data][name]", selectedPlan.name);
+  form.set("line_items[0][price_data][unit_amount]", String(finalPriceGrosze));
+  form.set("line_items[0][quantity]", "1");
+  form.set("success_url", successUrl);
+  form.set("cancel_url", cancelUrl);
+  form.set("client_reference_id", auth.userId);
+  form.set("metadata[purchase_type]", "affiliate_plan");
+  form.set("metadata[user_id]", auth.userId);
+  form.set("metadata[plan_key]", planKey);
+  form.set("metadata[plan_tier]", selectedPlan.tier);
+  form.set("metadata[duration_days]", String(selectedPlan.days));
+  if (appliedRefCode) form.set("metadata[ref_code]", appliedRefCode);
+  if (referrerId) form.set("metadata[referrer_id]", referrerId);
+
+  let response;
+  try {
+    response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: form,
+    });
+  } catch {
+    return err("Nie udało się połączyć ze Stripe Checkout.", 502);
+  }
+  let result = null;
+  try { result = await response.json(); } catch {}
+  if (!response.ok || !isString(result?.url, 2048) || !isString(result?.id, 128)) {
+    return err("Nie udało się utworzyć sesji płatności Stripe.", 502);
+  }
+  return json({
+    url: result.url,
+    sessionId: result.id,
+    plan: planKey,
+    priceGrosze: finalPriceGrosze,
+    discountApplied,
+  }, 200);
+}
+
+async function grantAffiliatePlanFromWebhook(env, event, eventObject) {
+  await ensureAffiliateSchema(env);
+  const sessionId = asId(eventObject);
+  const userId = eventObject?.metadata?.user_id || eventObject?.client_reference_id;
+  if (!sessionId || !isString(userId, 128)) throw new Error("AFFILIATE_CHECKOUT_METADATA_MISSING");
+  const planKey = String(eventObject?.metadata?.plan_key || "month").toLowerCase();
+  const planInfo = AFFILIATE_PLANS[planKey] || AFFILIATE_PLANS.month;
+  const tier = eventObject?.metadata?.plan_tier === "warsztat" ? "warsztat" : planInfo.tier;
+  const durationDays = Number(eventObject?.metadata?.duration_days) || planInfo.days;
+  const amountTotalGrosze = Number(eventObject?.amount_total) || planInfo.priceGrosze;
+  const now = nowSeconds();
+  const expiresAt = now + durationDays * 86400;
+
+  await env.DB.prepare(`
+    INSERT INTO one_time_purchases
+      (checkout_session_id, payment_intent_id, user_id, tier, duration_days, price_id, amount_total, currency, granted_at, expires_at, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'pln', ?, ?, ?)
+    ON CONFLICT(checkout_session_id) DO NOTHING
+  `).bind(sessionId, asId(eventObject?.payment_intent), userId, tier, durationDays, `affiliate_${planKey}`, amountTotalGrosze, now, expiresAt, now).run().catch(() => {});
+
+  await env.DB.prepare("UPDATE users SET pro_until = MAX(COALESCE(pro_until, 0), ?), updated_at = ? WHERE id = ?")
+    .bind(expiresAt, now, userId).run().catch(() => {});
+
+  const refCode = String(eventObject?.metadata?.ref_code || "").trim().toUpperCase();
+  let referrerId = String(eventObject?.metadata?.referrer_id || "").trim();
+  if (!referrerId && refCode) {
+    const refOwner = await env.DB.prepare("SELECT id FROM users WHERE UPPER(ref_code) = ? LIMIT 1")
+      .bind(refCode).first().catch(() => null);
+    if (refOwner?.id) referrerId = refOwner.id;
+  }
+  if (referrerId && referrerId !== userId) {
+    const grossPln = Number((amountTotalGrosze / 100).toFixed(2));
+    const basePln = Number((planInfo.priceGrosze / 100).toFixed(2));
+    const discountPln = Math.max(0, Number((basePln - grossPln).toFixed(2)));
+    // 30% prowizji dla polecającego
+    const commissionPln = Number((grossPln * 0.30).toFixed(2));
+    const refInsert = await env.DB.prepare(`
+      INSERT INTO referrals
+        (id, referrer_id, buyer_id, ref_code, plan_key, amount_gross, discount_amount, commission_amount, stripe_session_id, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?)
+      ON CONFLICT(stripe_session_id) DO NOTHING
+    `).bind(crypto.randomUUID(), referrerId, userId, refCode || "REF", planKey, grossPln, discountPln, commissionPln, sessionId, now).run().catch(() => ({ meta: { changes: 0 } }));
+    if (Number(refInsert?.meta?.changes || 0) === 1) {
+      await env.DB.prepare("UPDATE users SET wallet_balance = ROUND(COALESCE(wallet_balance, 0) + ?, 2), updated_at = ? WHERE id = ?")
+        .bind(commissionPln, now, referrerId).run().catch(() => {});
+    }
+  }
+  await recalcUserTier(env, userId);
+}
+
+async function buyProWithWallet(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  await ensureAffiliateSchema(env);
+  const proCost = 39.00;
+  const user = await env.DB.prepare("SELECT id, bonus_balance, wallet_balance, pro_until FROM users WHERE id = ? LIMIT 1")
+    .bind(auth.userId).first();
+  if (!user) return err("User not found", 404);
+  const bonusBalance = user.bonus_balance !== undefined && user.bonus_balance !== null ? Number(user.bonus_balance) : 10.00;
+  const walletBalance = Number(user.wallet_balance || 0);
+  const totalProBalance = Number((bonusBalance + walletBalance).toFixed(2));
+  if (totalProBalance < proCost) {
+    return err("Za mało środków w portfelu (wymagane 39 zł)", 400);
+  }
+  const now = nowSeconds();
+  const baseStart = Math.max(now, Number(user.pro_until || 0));
+  const expiresAt = baseStart + 30 * 86400;
+  // Ściągamy najpierw środki z bonus_balance, a resztę z wallet_balance
+  const usedFromBonus = Number(Math.min(bonusBalance, proCost).toFixed(2));
+  const usedFromWallet = Number(Math.max(0, proCost - usedFromBonus).toFixed(2));
+  const newBonusBalance = Number((bonusBalance - usedFromBonus).toFixed(2));
+  const newWalletBalance = Number((walletBalance - usedFromWallet).toFixed(2));
+  const newTotalProBalance = Number((newBonusBalance + newWalletBalance).toFixed(2));
+  const walletSessionId = `wallet_${auth.userId}_${now}`;
+
+  await env.DB.prepare("UPDATE users SET bonus_balance = ?, wallet_balance = ?, pro_until = ?, tier = CASE WHEN tier = 'warsztat' THEN 'warsztat' ELSE 'pro' END, updated_at = ? WHERE id = ? AND (COALESCE(bonus_balance, 10.0) + COALESCE(wallet_balance, 0)) >= ?")
+    .bind(newBonusBalance, newWalletBalance, expiresAt, now, auth.userId, proCost).run();
+
+  await env.DB.prepare(`
+    INSERT INTO one_time_purchases
+      (checkout_session_id, payment_intent_id, user_id, tier, duration_days, price_id, amount_total, currency, granted_at, expires_at, created_at)
+    VALUES (?, NULL, ?, 'pro', 30, 'wallet_pro_30d', 3900, 'pln', ?, ?, ?)
+  `).bind(walletSessionId, auth.userId, now, expiresAt, now).run().catch(() => {});
+
+  const effectiveTier = await recalcUserTier(env, auth.userId);
+  return json({
+    ok: true,
+    tier: effectiveTier,
+    days: 30,
+    proCost,
+    bonusBalance: newBonusBalance,
+    walletBalance: newWalletBalance,
+    totalProBalance: newTotalProBalance,
+    usedFromBonus,
+    usedFromWallet,
+    expiresAt,
+    message: "Aktywowano NAPRAWNIK PRO - Pass Miesięczny (30 dni) ze środków w portfelu!"
+  }, 200);
+}
+
+async function getWalletStatus(env, auth) {
+  const { refCode, bonusBalance, walletBalance, totalProBalance } = await ensureUserRefCode(env, auth.userId);
+  const { results: referrals = [] } = await env.DB.prepare(
+    "SELECT plan_key, amount_gross, commission_amount, status, created_at FROM referrals WHERE referrer_id = ? ORDER BY created_at DESC LIMIT 50"
+  ).bind(auth.userId).all().catch(() => ({ results: [] }));
+  const { results: payouts = [] } = await env.DB.prepare(
+    "SELECT id, amount, method, payout_details, status, created_at FROM payouts WHERE user_id = ? ORDER BY created_at DESC LIMIT 20"
+  ).bind(auth.userId).all().catch(() => ({ results: [] }));
+  return json({
+    ok: true,
+    bonusBalance,
+    walletBalance,
+    totalProBalance,
+    refCode,
+    proCost: 39.00,
+    minBlikPayout: 50.00,
+    referralsCount: referrals.length,
+    referrals,
+    payouts
+  }, 200);
+}
+
+async function requestWalletPayout(request, env, auth) {
+  if (request.method !== "POST") return err("Method not allowed", 405);
+  await ensureAffiliateSchema(env);
+  const body = await readJson(request, 4096);
+  const rawPhone = String(body?.phone || body?.blikPhone || body?.payoutDetails || "").replace(/\s+/g, "");
+  if (!/^\d{9}$/.test(rawPhone)) {
+    return err("Podaj prawidłowy 9-cyfrowy numer telefonu do wypłaty BLIK.", 400);
+  }
+  const user = await env.DB.prepare("SELECT bonus_balance, wallet_balance FROM users WHERE id = ? LIMIT 1").bind(auth.userId).first();
+  const walletBalance = Number(user?.wallet_balance || 0);
+  const bonusBalance = user && user.bonus_balance !== undefined && user.bonus_balance !== null ? Number(user.bonus_balance) : 10.00;
+  const amount = body?.amount !== undefined && body?.amount !== null && body?.amount !== ""
+    ? Number(body.amount)
+    : walletBalance;
+  // Wypłata BLIK może być zlecona WYŁĄCZNIE z wallet_balance (minimum 50.00 zł realnie zarobionej prowizji). Bonusowe 10 zł nigdy nie może zostać wypłacone na BLIK.
+  if (!Number.isFinite(amount) || amount < 50.00 || walletBalance < 50.00) {
+    return err("Minimalna kwota wypłaty BLIK to 50,00 zł realnie zarobionej prowizji (bonus 10 zł na start służy wyłącznie do zakupu pakietu PRO).", 400);
+  }
+  if (walletBalance < amount) {
+    return err("Niewystarczające środki z prowizji do wypłaty BLIK (bonus 10 zł nie podlega wypłacie).", 400);
+  }
+  const now = nowSeconds();
+  const newWalletBalance = Number((walletBalance - amount).toFixed(2));
+  await env.DB.prepare("UPDATE users SET wallet_balance = ?, updated_at = ? WHERE id = ? AND COALESCE(wallet_balance, 0) >= ?")
+    .bind(newWalletBalance, now, auth.userId, amount).run();
+  await env.DB.prepare("INSERT INTO payouts (id, user_id, amount, method, payout_details, status, created_at) VALUES (?, ?, ?, 'blik', ?, 'pending', ?)")
+    .bind(crypto.randomUUID(), auth.userId, amount, rawPhone, now).run();
+  return json({
+    ok: true,
+    amount,
+    method: "blik",
+    phone: rawPhone,
+    bonusBalance,
+    walletBalance: newWalletBalance,
+    totalProBalance: Number((bonusBalance + newWalletBalance).toFixed(2)),
+    message: "Zlecenie wypłaty BLIK (" + amount.toFixed(2).replace(".", ",") + " zł na nr " + rawPhone + ") zostało przyjęte do realizacji."
+  }, 200);
+}
+
 
 export default {
   async fetch(request, env) {
@@ -2102,6 +2421,22 @@ export default {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
         else response = await oneTimeCheckout(request, env, auth);
+      } else if (url.pathname === "/api/create-checkout" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await createAffiliateCheckout(request, env, auth);
+      } else if (url.pathname === "/api/buy-pro-wallet" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await buyProWithWallet(request, env, auth);
+      } else if (url.pathname === "/api/wallet" && request.method === "GET") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await getWalletStatus(env, auth);
+      } else if (url.pathname === "/api/payout" && request.method === "POST") {
+        const auth = await authenticate(request, env);
+        if (!auth) response = err("Unauthorized", 401);
+        else response = await requestWalletPayout(request, env, auth);
       } else if (url.pathname === "/api/billing-portal" && request.method === "POST") {
         const auth = await authenticate(request, env);
         if (!auth) response = err("Unauthorized", 401);
@@ -2242,6 +2577,6 @@ export default {
   },
 };
 
-export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, getUsage, postUsageConsume, postUsageRefund, userPlanContext };
+export { authenticate, allowedOrigin, billingReturnPage, isNativeAppRequest, enforceRateLimit, requiredTierForDataKey, safeReturnUrl, isReservedDataKey, isSubscriptionLifecycleEvent, graceUntilForFailedInvoice, checkoutLockAction, ensureStripeCustomerLink, checkout, oneTimeCheckout, oneTimePriceMap, validateStripeOneTimePrice, handleWebhook, photoDiagnosis, createBillingPortalSession, readBodyLimited, supportedImageBytes, responseOutputText, isAdminUser, bootstrapAdmin, createAdminDeviceLink, adminMobileLogin, getAdminStats, listAdminPromoRedemptions, createAdminPromo, redeemPromo, trackVisit, recalcUserTier, diagnoseStripeConfig, reservePhotoBudget, settlePhotoBudget, photoBudgetConfig, estimatePhotoCostMicrousd, photoImageDimensions, photoMonthStart, getAdminPhotoBudget, grantOneTimePurchaseFromWebhook, getUsage, postUsageConsume, postUsageRefund, userPlanContext, AFFILIATE_PLANS, createAffiliateCheckout, grantAffiliatePlanFromWebhook, buyProWithWallet, getWalletStatus, requestWalletPayout };
 
 

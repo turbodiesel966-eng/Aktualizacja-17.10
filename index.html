@@ -1500,7 +1500,7 @@ a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
 </head>
 <body>
 <div class="frame">
-  <div class="topbar"><span>⚙️ NAPRAWNIK v5.50 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b></span><span id="clock"></span></div>
+  <div class="topbar"><span>⚙️ NAPRAWNIK v5.50 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b><button type="button" id="topWalletBtn" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')" style="background:linear-gradient(135deg,#00f57a,#00b862);color:#04120a;border:1px solid #a7f3d0;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:900;cursor:pointer;margin-left:6px;box-shadow:0 0 10px rgba(0,245,122,0.38)">💰 Portfel / Zarabiaj</button></span><span id="clock"></span></div>
   <div id="topUpdateBar" class="top-update-bar">
     <button id="btnAppUpdate" class="btn-update normal" type="button" onclick="handleAppUpdateClick()" title="Sprawdź lub zainstaluj aktualizację">
       <span id="updateBtnIcon" class="update-icon">🔄</span>
@@ -1511,6 +1511,7 @@ a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
   <div class="nav">
     <div class="nav-item" data-nav="home"><span aria-hidden="true">🏠</span><span>Home</span></div>
     <div class="nav-item" data-nav="market" aria-label="NAPRAWNIK MARKET"><img src="./assets/naprawnik-market-icon.svg" alt="" width="25" height="25" style="display:block;width:25px;height:25px;object-fit:contain;margin:0 auto 2px"><span>Market</span></div>
+    <div class="nav-item" data-nav="plans" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')"><span aria-hidden="true">💰</span><span>Portfel</span></div>
     <div class="nav-item" data-nav="vehicles"><span aria-hidden="true">🛵</span><span>Garaż</span></div>
     <div class="nav-item" data-nav="search"><span aria-hidden="true">🔍</span><span>Szukaj</span></div>
     <div class="nav-item" data-nav="settings"><span aria-hidden="true">⚙️</span><span>Ustawienia</span></div>
@@ -2618,6 +2619,7 @@ function renderDiagFlow(){
       <div class="entry">${escapeHtml(st.detail)}</div>
       <small style="color:var(--dim)">Wynik jest wskazówką diagnostyczną — potwierdź ją pomiarem w Laboratorium przed wymianą podzespołów.</small>
       </div>
+      <div class="btn" style="border-color:var(--accent);color:var(--accent);font-weight:bold" onclick="window.npGenerateDiagnosisShareCard && window.npGenerateDiagnosisShareCard({ title: '${escapeHtml(f.title).replace(/'/g,"\\'")}', result: '${escapeHtml(st.result).replace(/'/g,"\\'")}', detail: '${escapeHtml(st.detail || '').replace(/'/g,"\\'")}' })">📣 Pokaż diagnozę na grupie (Zgarnij +19 zł)</div>
       <div class="btn" style="border-color:#00f57a;color:#00f57a" onclick="saveFlowResultToContext('${escapeHtml(st.result).replace(/'/g,"\\'")}', '${escapeHtml(st.detail).replace(/'/g,"\\'")}')">💾 Zapisz wynik w historii pojazdu / zlecenia</div>
       <div class="btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="nav('lab')">⚡ Potwierdź pomiarem w Laboratorium</div>
       <div class="btn" onclick="nav('parts')">🔩 Dobierz części dla tej naprawy</div>
@@ -3416,6 +3418,7 @@ function renderLocked(min,label,backJs){
   screen.innerHTML=(backJs?'<div class="btn back" onclick="'+backJs+'">← Wróć</div>':back())+
    '<div class="card" style="border-color:var(--hero)"><h2>🔒 '+escapeHtml(label)+'</h2><p style="font-size:13px;line-height:1.5">Ta funkcja jest w planie <b>'+name+'</b>. Plan AMATOR zostaje bezpłatny: pełna diagnostyka, katalog modeli, kalkulatory i checklisty.</p>'+
    '<b style="color:var(--accent);font-size:12px">W planie '+name+':</b>'+planBullets(min)+
+   '<div class="entry" style="margin:8px 0;font-size:12px"><b>Nowy cennik pakietów PRO / VIP:</b><br>⚡ Pass Weekendowy (3 dni): <b>19 zł</b> (z kodem -20%: <b>15,20 zł</b>)<br>💎 Pass Miesięczny (30 dni): <b>39 zł</b> (z kodem -20%: <b>31,20 zł</b>)<br>🏆 Na Sezon / Rok (365 dni): <b>79 zł</b> (z kodem -20%: <b>63,20 zł</b>)<br>🛠️ Warsztat VIP (365 dni): <b>149 zł</b> (z kodem -20%: <b>119,20 zł</b>)</div>'+
    '<div class="btn" data-billing-nav="plans">💎 Zobacz abonamenty</div>'+
    '<div class="btn" onclick="nav(\'plans\')">Porównaj plany / aktywuj licencję</div></div>';
 }
@@ -3959,6 +3962,8 @@ function renderHome(){
       <button type="button" id="clearHomeSearch" class="home-search-clear" onclick="clearHomeSearch()" title="Wyczyść wyszukiwanie" aria-label="Wyczyść wyszukiwanie">✕</button>
     </div>
     <div class="symptom-chips-row" aria-label="Szybkie filtry objawów">
+      <button type="button" class="symptom-chip" style="border-color:#00f57a;color:#00f57a;font-weight:900" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')">💰 Portfel / Zarabiaj</button>
+      <button type="button" class="symptom-chip" style="border-color:var(--hero);color:var(--hero);font-weight:900" onclick="nav('plans')">⭐ PRO / Portfel</button>
       <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('brak iskry')">⚡ Brak iskry</button>
       <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('ładowanie')">🔋 Nie ładuje</button>
       <button type="button" class="symptom-chip" onclick="quickSymptomChipSearch('gaśnie na ciepło')">🔥 Gaśnie na ciepło</button>
@@ -3969,6 +3974,20 @@ function renderHome(){
     </div>
     <div class="home-search-meta"><span id="homeTileCount"></span></div>
     <div id="symptomResults"></div>
+  </div>
+
+  <div class="diag-card" style="border-color:#00f57a;background:linear-gradient(135deg,rgba(0,245,122,0.10),rgba(0,229,255,0.06));margin:8px 0 12px;padding:12px 14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:10px;font-weight:900;color:#00f57a;letter-spacing:0.6px">🎁 +10 ZŁ NA START • PROWIZJA 30% NA BLIK • RABAT -20% Z KODEM</div>
+        <h2 style="margin:3px 0;color:#fff;font-size:15px">💰 Portfel / Zarabiaj &amp; Pakiety PRO (19 / 39 / 79 / 149 zł)</h2>
+        <div class="diag-sub" style="margin:0">Masz 10 zł bonusu na start! Kopiuj swój kod rabatowy (-20% dla znajomych) i wypłacaj 30% prowizji na BLIK.</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 14px;border-color:#00f57a;color:#00f57a;font-weight:900" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')">💰 Portfel / Zarabiaj →</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 14px;border-color:var(--hero);color:var(--hero);font-weight:900" onclick="nav('plans')">⭐ PRO / Portfel</button>
+      </div>
+    </div>
   </div>
 
   <button type="button" class="market-hero-tile" data-market-open aria-label="Otwórz NAPRAWNIK MARKET" style="display:block;width:100%;padding:0;margin:10px 0 14px;overflow:hidden;border:1px solid rgba(255,142,46,.8);border-radius:18px;background:#101827;box-shadow:0 8px 24px rgba(0,0,0,.32),0 0 18px rgba(255,132,38,.16);color:#fff;cursor:pointer;">
@@ -4616,6 +4635,7 @@ function renderDifferentialPanel(){
           <small style="display:block;color:var(--cyan);margin-top:3px"><b>Kontrola po naprawie:</b> ${escapeHtml(h.verify)}</small>
           <small style="display:block;color:var(--dim);margin-top:2px">Źródło: ${escapeHtml(h.source)}</small>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+            <button type="button" class="btn" style="width:auto;margin:0;padding:5px 9px;font-size:11px;border-color:var(--accent);color:var(--accent);font-weight:bold" onclick="window.npGenerateDiagnosisShareCard && window.npGenerateDiagnosisShareCard({ title: '${escapeHtml(profile.label).replace(/'/g,"\\'")}', result: '${escapeHtml(h.cause).replace(/'/g,"\\'")}', detail: '${escapeHtml(h.repair || '').replace(/'/g,"\\'")}' })">📣 Pokaż diagnozę na grupie (Zgarnij +19 zł)</button>
             <button type="button" class="btn" style="width:auto;margin:0;padding:5px 9px;font-size:11px;border-color:#00f57a;color:#00f57a" onclick="saveDifferentialDiagnosisToVehicle('${h.id}')">💾 Zapisz w pojeździe / zleceniu</button>
             <button type="button" class="btn" style="width:auto;margin:0;padding:5px 9px;font-size:11px" onclick="nav('parts');setTimeout(()=>{var q=document.getElementById('partsQuery');if(q){q.value='${escapeHtml(h.repairPartsTag)}';filterPartsFinder();}},40)">🔩 Dobierz części</button>
             <button type="button" class="btn" style="width:auto;margin:0;padding:5px 9px;font-size:11px" onclick="activeQualityType='${h.qualityType}';nav('checklist')">✅ Kontrola po naprawie</button>
@@ -4644,6 +4664,7 @@ function renderDiag(){
     supportOptionsOpen = false;
     screen.innerHTML = diagBackBtn() + ctxBar + crumbsHtml() + `<div class="card"><h2>Prawdopodobne przyczyny</h2>` +
       diagLeaf.causes.map(c=>`<div class="entry">• ${escapeHtml(c)}</div>`).join('') +
+      `<div class="btn" style="border-color:var(--accent);color:var(--accent);font-weight:bold;margin-top:8px" onclick="window.npGenerateDiagnosisShareCard && window.npGenerateDiagnosisShareCard({ title: (typeof diagCrumbs!=='undefined'?diagCrumbs.join(' → '):'Diagnostyka'), result: (diagLeaf && diagLeaf.causes && diagLeaf.causes[0]) || 'Wykryta usterka jednośladu', detail: (diagLeaf && diagLeaf.causes ? diagLeaf.causes.slice(1,4).join(' • ') : '') })">📣 Pokaż diagnozę na grupie (Zgarnij +19 zł)</div>` +
       `</div>` +
       renderDifferentialPanel() +
       `<div class="card"><h2>Żadna z powyższych nie pasuje?</h2>
@@ -10175,7 +10196,7 @@ function zoomPhoto(dataUrl){
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
 const CURRENT_APP_VERSION = "5.50";
-const CURRENT_APP_BUILD = 1731571200000;
+const CURRENT_APP_BUILD = 1731702000000;
 let isAppUpdateAvailable = false;
 function triggerUpdateState(){
   if (isAppUpdateAvailable) return;
