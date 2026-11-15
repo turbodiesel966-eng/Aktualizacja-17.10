@@ -96,6 +96,9 @@ export function patchBuildGradle(gradle, { versionCode, versionName, keystoreCon
             storePassword System.getenv("NAPRAWNIK_KEYSTORE_PASS")
             keyAlias System.getenv("NAPRAWNIK_KEYSTORE_ALIAS")
             keyPassword System.getenv("NAPRAWNIK_KEYSTORE_KEY_PASS")
+            // Zachowaj zgodność z Androidem 6 i starszymi instalatorami.
+            v1SigningEnabled true
+            v2SigningEnabled true
         }
     }
     buildTypes {`;
