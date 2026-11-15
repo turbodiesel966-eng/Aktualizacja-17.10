@@ -20,7 +20,7 @@
     { id: 'honda', name: 'Honda', country: 'Japonia', note: 'Pełne pokrycie rodzin CBR/CB/CBF 400–650 cm³ (R4 oraz V4 NC30/NC35).' },
     { id: 'yamaha', name: 'Yamaha', country: 'Japonia', note: 'Pełne pokrycie rodzin YZF-R6, FZ6, XJ6, XJ600, FZR/FZ/XJR 400–600 cm³ (R4).' },
     { id: 'suzuki', name: 'Suzuki', country: 'Japonia', note: 'Pełne pokrycie rodzin GSX-R, GSF Bandit, GSR, GSX-F, RF (R4) oraz klasycznych GT550 (R3 2T).' },
-    { id: 'kawasaki', name: 'Kawasaki', country: 'Japonia', note: 'Pełne pokrycie rodzin ZX-6R/636/6RR, ZX-4R, ZXR400, ZZR400/600, GPZ/Zephyr (R4) oraz H1 500 (R3 2T).' },
+    { id: 'kawasaki', name: 'Kawasaki', country: 'Japonia', note: 'Pełne pokrycie rodzin ZX-6R/636/6RR, ZX-4R, ZXR400, ZZR400/600, GPZ/Zephyr (R4) oraz H1 500 i S3/KH400 400 (R3 2T).' },
     { id: 'triumph', name: 'Triumph', country: 'Wielka Brytania', note: 'W zakresie 400–650 cm³ obsługiwane są 4-cylindrowe TT600, Speed Four, Daytona 600 i Daytona 650 (646 cm³). Trzycylindrowe 675/660 przekraczają 650 cm³ (kandydaci do rozszerzenia zakresu).' },
     { id: 'bmw', name: 'BMW', country: 'Niemcy', note: 'Pełne pokrycie modeli: Boxer R1150/R1200/R1250/R1300GS, rzędowe S1000RR/XR, F800/F850/F900, K75 R3 oraz K1200/K1300/K1600.' },
     { id: 'ktm', name: 'KTM', country: 'Austria', note: 'Pełne pokrycie modeli: 1-cylindrowe LC4 (690 Duke/SMC/Enduro), rzędowe dwucylindrowe LC8c (790/890) oraz widlaste 75° V2 LC8 (990, 1190, 1290, 1390).' },
@@ -369,6 +369,10 @@
       sparkPlug: P('NGK DR8ES / DR9EA', 'B', SRC_LIT)
     }, faults: ['f_carb_sync', 'f_pilot_jets', 'f_cct', 'f_intake_boot_crack'] }),
     E('kawasaki_z400fx', { brand: 'kawasaki', code: 'KZ400EE', codeVerified: true, cc: 399, bore: 52, strokeMm: 47, cooling: 'air', valves: 8, ignition: 'Stykowy / elektroniczny zależnie od rocznika', faults: ['f_carb_sync', 'f_pilot_jets', 'f_points'] }),
+    E('kawasaki_kh400', { brand: 'kawasaki', code: 'S3E', codeVerified: false, cc: 400, cyl: 3, layout: 'R3', stroke: 2, bore: 57, strokeMm: 52.3, cooling: 'air', fuel: 'carb', ignition: 'S3A: akumulatorowy; KH400-A3/A4: CDI', cam: 'brak (2T - sterowanie tłokiem)', valves: 0, params: {
+      compression: P('6,5:1', 'A', 'Kawasaki Service Specifications Manual 1975–77, pp. 18 and 42'),
+      sparkPlug: P('S3A: NGK B9HS; KH400-A3/A4: NGK B8HS', 'A', 'Kawasaki Service Specifications Manual 1975–77, pp. 42 and 108')
+    }, faults: ['f_carb_sync', 'f_2t_crank_seal', 'f_2t_oil_pump'], dataNote: 'Rzędowy trzycylindrowy dwusuw 400 cm3; 57,0 × 52,3 mm, stopień sprężania 6,5:1. S3A 1975: 42 HP/7000 rpm; KH400-A3/A4 1976–77: 38 HP/7000 rpm.' }),
     E('kawasaki_h1', { brand: 'kawasaki', code: 'KAE', codeVerified: true, cc: 498, cyl: 3, layout: 'R3', stroke: 2, bore: 60, strokeMm: 58.8, cooling: 'air', cam: 'brak (2T – sterowanie tłokiem)', valves: 0, carbType: '3× Mikuni VM28SC', ignition: 'CDI (rozdzielacz / 3 impulsatory) lub stykowy (H1D/E/F/KH500 – zależnie od wersji)', params: {
       firing: P('1-3-2 (co 120° obrotu wału)', 'B', SRC_LIT)
     }, dataNote: 'Dwusuw R3 (Mach III / KH500) z wtryskiem oleju Superlube. Procedury zaworowe nie dotyczą.', faults: ['f_2t_crank_seal', 'f_2t_oil_pump', 'f_carb_sync'] }),
@@ -1101,6 +1105,9 @@
     M('k_gpz550', 'kawasaki', 'GPZ550 / Z550', 'KZ550D / H / ZX550A', 1980, 1985, 'KZ550 / ZX550A', 'kawasaki_gpz550', 'Klasyk 553 cm³'),
     M('k_zephyr550', 'kawasaki', 'ZR550 Zephyr', 'ZR550B', 1990, 1999, 'ZR550B', 'kawasaki_zephyr550', 'Retro naked'),
     M('k_z400fx', 'kawasaki', 'Z400FX / Z400J', 'KZ400E / J', 1979, 1983, 'KZ400E / J', 'kawasaki_z400fx', 'Klasyk 400 R4'),
+    M('k_s3a_400', 'kawasaki', 'S3A 400 Mach II', 'S3A', 1975, 1975, null, 'kawasaki_kh400', 'Klasyk 2T R3 400 cm3', 'Dane silnika wg Kawasaki 1975–77 Service Specifications Handbook.'),
+    M('k_kh400_a3', 'kawasaki', 'KH400', 'A3', 1976, 1976, null, 'kawasaki_kh400', 'Klasyk 2T R3 400 cm3', 'Wersja A3; CDI; 38 HP przy 7000 rpm wg handbooka Kawasaki.'),
+    M('k_kh400_a4', 'kawasaki', 'KH400', 'A4', 1977, 1977, null, 'kawasaki_kh400', 'Klasyk 2T R3 400 cm3', 'Wersja A4; CDI; 38 HP przy 7000 rpm wg handbooka Kawasaki.'),
     M('k_h1', 'kawasaki', '500 H1 Mach III / KH500', 'H1 / H1A–F / KH500A8', 1969, 1976, 'KAE / H1', 'kawasaki_h1', 'Klasyk 2T R3'),
     // TRIUMPH
     M('t_tt600', 'triumph', 'TT600', '806AD', 2000, 2003, '806AD', 'triumph_tt600', 'Supersport R4'),

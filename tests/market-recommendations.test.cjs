@@ -34,8 +34,8 @@ test('Market nav is present in PWA and APK and accepts contextual search query',
 test('Market recommendation scripts and assets are cached separately for web and APK', () => {
   assert.match(sw, /market-recommendations\.js/);
   assert.match(mobileSw, /market-recommendations\.js/);
-  assert.match(sw, /naprawnik-v5-50-market-integration/);
-  assert.match(mobileSw, /naprawnik-v5-50-market-integration-native/);
+  assert.match(sw, new RegExp(manifest.cacheVersion));
+  assert.match(mobileSw, new RegExp(manifest.nativeCacheVersion));
   assert.equal(manifest.appVersion, '5.50');
 });
 test('diagnostic, pinout, jetting, manuals and service schedule contain contextual Market cards', () => {

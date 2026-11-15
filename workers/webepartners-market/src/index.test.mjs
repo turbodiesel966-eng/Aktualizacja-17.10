@@ -57,8 +57,27 @@ test("excludes garden-only and car-only products while retaining explicit motorc
   assert.equal(isWorkshopProduct("Kosiarka elektryczna ogrodowa", "ogród", "do trawnika"), 0);
   assert.equal(isWorkshopProduct("Gaźnik do kosy spalinowej", "części do urządzeń ogrodowych", "silnik 2T"), 0);
   assert.equal(isWorkshopProduct("Dywaniki samochodowe gumowe", "akcesoria samochodowe", ""), 0);
+  assert.equal(isWorkshopProduct("Gaźnik benzynowy do podkaszarki DEMON", "części", "2T"), 0);
+  assert.equal(isWorkshopProduct("Głowica kompletna silnika", "części", ""), 0);
+  assert.equal(isWorkshopProduct("Klucz dynamometryczny 20–200 Nm", "narzędzia i sprzęt warsztatowy", ""), 1);
+  assert.equal(isWorkshopProduct("Filtr oleju", "części", "do quada ATV"), 1);
+
   assert.equal(isWorkshopProduct("Podnośnik motocyklowy", "akcesoria samochodowe", "do motocykla"), 1);
   assert.equal(isWorkshopProduct("Regulator napięcia 12V", "elektronika i diagnostyka", "do skutera 4T"), 1);
+  assert.equal(isWorkshopProduct("Głowica kompletna silnika", "części", ""), 0);
+  assert.equal(isWorkshopProduct("Filtr oleju", "części", ""), 0);
+  assert.equal(isWorkshopProduct("Zestaw kluczy warsztatowych", "narzędzia i sprzęt warsztatowy", "uniwersalny"), 1);
+  assert.equal(isWorkshopProduct("Akcesoria samochodowe - kamera cofania", "akcesoria samochodowe", "do auta"), 0);
+  assert.equal(isWorkshopProduct("Prostownik samochodowy 12V", "akcesoria samochodowe", "do auta"), 0);
+  assert.equal(isWorkshopProduct("Akumulator AGM 12V 120Ah", "Akcesoria Off-Road", "do systemów zasilania awaryjnego"), 0);
+  assert.equal(isWorkshopProduct("Akumulator AGM 12V", "Części motocyklowe", ""), 1);
+  assert.equal(isWorkshopProduct("Akumulator AGM 12V 120Ah", "Przetwornice napięcia > Akumulatory", "do systemów zasilania awaryjnego"), 0);
+  assert.equal(isWorkshopProduct("Koszulka t-shirt Rally-Raid Toyota Gazoo Racing", "Koszulki t-shirt/Męskie", "kolekcja off-road W2RC"), 0);
+  assert.equal(isWorkshopProduct("Fotel Sparco EVO QRT", "Fotele/Z homologacją FIA", "fotel rajdowy off-road"), 0);
+  assert.equal(isWorkshopProduct("Akumulator AGM 12V 120Ah", "Przetwornice napięcia > Akumulatory", "do UPS"), 0);
+  assert.equal(isWorkshopProduct("Frez tarnik do drewna", "Narzędzia i sprzęt warsztatowy > Frezy", "do szlifowania drewna"), 0);
+  assert.equal(isWorkshopProduct("Spinki samochodowe", "akcesoria samochodowe", "zastosowanie również przy motocyklach i quadach"), 1);
+  assert.equal(isWorkshopProduct("Zestaw do synchronizacji regulacji gaźników spalinowych", "Dom i ogród", "narzędzie mechanika"), 1);
 });
 test("sanitizeFtsQuery produces safe FTS5 prefix tokens", () => {
   assert.equal(sanitizeFtsQuery("multimetr"), '"multimetr"*');

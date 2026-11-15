@@ -1,9 +1,9 @@
 {
   "$schema": "./shared-manifest.schema.json",
   "appVersion": "5.50",
-  "cacheVersion": "naprawnik-v5-50-market-integration",
-  "cacheName": "naprawnik-v5-50-market-integration",
-  "nativeCacheVersion": "naprawnik-v5-50-market-integration-native",
+  "cacheVersion": "naprawnik-v5-50-market-rollout",
+  "cacheName": "naprawnik-v5-50-market-rollout",
+  "nativeCacheVersion": "naprawnik-v5-50-market-rollout-native",
   "sharedScripts": [
     "platform-adapter.js",
     "billing.js",
@@ -32,7 +32,8 @@
     "tile-squish.jpg",
     "tile-orders.jpg",
     "tile-druciarstwo.jpg",
-    "naprawnik-market-icon.svg"
+    "naprawnik-market-icon.svg",
+    "naprawnik-market-banner.png"
   ],
   "requiredWebFiles": [
     "index.html",
@@ -60,6 +61,7 @@
     "./affiliate/catalog.json",
     "./affiliate/market-ui.js",
     "./assets/naprawnik-market-icon.svg",
+    "./assets/naprawnik-market-banner.png",
     "./affiliate/market-recommendations.js"
   ],
   "apkPrecache": [
@@ -77,6 +79,7 @@
     "./affiliate/catalog.json",
     "./affiliate/market-ui.js",
     "./assets/naprawnik-market-icon.svg",
+    "./assets/naprawnik-market-banner.png",
     "./affiliate/market-recommendations.js"
   ],
   "blockedOtaTerms": [

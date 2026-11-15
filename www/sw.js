@@ -1,4 +1,4 @@
-const CACHE='naprawnik-v5-50-market-integration-native';
+const CACHE='naprawnik-v5-50-market-rollout-native';
 const PRECACHE=[
   './index.html',
   './platform-adapter.js',
@@ -14,6 +14,7 @@ const PRECACHE=[
   './affiliate/catalog.json',
   './affiliate/market-ui.js',
   './assets/naprawnik-market-icon.svg',
+  './assets/naprawnik-market-banner.png',
   './affiliate/market-recommendations.js',
   './assets/naprawnik-icon.svg',
   './assets/naprawnik-icon-192.svg',
@@ -33,7 +34,8 @@ const PRECACHE=[
   './assets/tile-squish.jpg',
   './assets/tile-orders.jpg',
   './assets/tile-druciarstwo.jpg',
-  './assets/naprawnik-market-icon.svg'
+  './assets/naprawnik-market-icon.svg',
+  './assets/naprawnik-market-banner.png'
 ];
 
 self.addEventListener('install', e => {
