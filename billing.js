@@ -323,6 +323,7 @@
     { key: 'workshop_365d', title: 'NAPRAWNIK WARSZTAT VIP - 365 dni (Rok)', badge: '👑 WARSZTAT VIP · 365 DNI', basePrice: 549, priceGrosze: 54900, durationDays: 365, planTier: 'warsztat', commissionLabel: '131,76 zł', desc: 'Roczny kombajn WARSZTAT VIP (365 dni) — pełna automatyzacja serwisu, flota 500 pojazdów i eksport CSV.' }
   ];
   let currentAffiliatePromoCode = '';
+  let currentAffiliateTab = 'pro';
   let cachedWalletState = null;
 
   function calcAffiliateDiscountedZl(basePrice, code) {
@@ -338,26 +339,72 @@
     const finalPriceStr = calcAffiliateDiscountedZl(pkg.basePrice, currentAffiliatePromoCode);
     const baseStr = pkg.basePrice + ' zł';
     const isWarsztat = pkg.planTier === 'warsztat';
-    const borderCol = isWarsztat ? 'var(--hero)' : 'var(--accent)';
-    return '<div class="card" data-aff-card="' + pkg.key + '" style="border-color:' + borderCol + ';margin-bottom:8px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
-        '<span style="font-size:10px;font-weight:bold;color:var(--cyan);letter-spacing:0.6px">' + esc(pkg.badge) + '</span>' +
-        '<span data-aff-discount-pill="' + pkg.key + '" style="display:' + (hasCode ? 'inline-block' : 'none') + ';font-size:10px;background:#00f57a22;color:#00f57a;border:1px solid #00f57a;padding:2px 6px;border-radius:999px;font-weight:bold">-20% Z KODEM</span>' +
+    const isPopular = pkg.durationDays === 30;
+    const isBestValue = pkg.durationDays === 365;
+    const borderCol = isBestValue ? '#f97316' : (isPopular ? '#06b6d4' : (isWarsztat ? '#eab308' : '#334155'));
+    const cardBg = isBestValue
+      ? 'linear-gradient(160deg,rgba(249,115,22,0.16) 0%,rgba(15,23,42,0.96) 55%,rgba(30,41,59,0.98) 100%)'
+      : (isPopular
+        ? 'linear-gradient(160deg,rgba(6,182,212,0.14) 0%,rgba(15,23,42,0.96) 55%,rgba(30,41,59,0.98) 100%)'
+        : 'linear-gradient(160deg,rgba(30,41,59,0.95) 0%,rgba(15,23,42,0.98) 100%)');
+    const cardShadow = isBestValue
+      ? '0 0 20px rgba(249,115,22,0.28),inset 0 1px 0 rgba(255,255,255,0.15)'
+      : (isPopular ? '0 0 16px rgba(6,182,212,0.22),inset 0 1px 0 rgba(255,255,255,0.12)' : '0 6px 16px rgba(0,0,0,0.45)');
+    const highlightRibbon = isBestValue
+      ? '<div style="background:linear-gradient(90deg,#f97316,#eab308);color:#0f172a;font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;letter-spacing:0.4px;margin-bottom:8px;display:inline-block">🔥 NAJBARDZIEJ OPŁACALNY (Prowizja do 132 zł!)</div>'
+      : (isPopular
+        ? '<div style="background:linear-gradient(90deg,#06b6d4,#10b981);color:#04120a;font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;letter-spacing:0.5px;margin-bottom:8px;display:inline-block">⭐ POPULARNY</div>'
+        : '');
+    return '<div class="card" data-aff-card="' + pkg.key + '" style="border:2px solid ' + borderCol + ';background:' + cardBg + ';box-shadow:' + cardShadow + ';margin:0;display:flex;flex-direction:column;justify-content:space-between;border-radius:16px;padding:14px">' +
+      '<div>' +
+        highlightRibbon +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">' +
+          '<span style="font-size:10.5px;font-weight:900;color:#06b6d4;letter-spacing:0.6px">' + esc(pkg.badge) + '</span>' +
+          '<span data-aff-discount-pill="' + pkg.key + '" style="display:' + (hasCode ? 'inline-block' : 'none') + ';font-size:10px;background:rgba(16,185,129,0.18);color:#10b981;border:1px solid #10b981;padding:2px 7px;border-radius:999px;font-weight:900">-20% Z KODEM</span>' +
+        '</div>' +
+        '<h2 style="margin:6px 0 4px;font-size:15px;color:#f8fafc">' + esc(pkg.title) + '</h2>' +
+        '<p style="font-size:11.5px;color:#94a3b8;line-height:1.45;margin:0 0 10px">' + esc(pkg.desc) + '</p>' +
       '</div>' +
-      '<h2 style="margin-top:6px">' + esc(pkg.title) + '</h2>' +
-      '<p style="font-size:12px;color:var(--dim);line-height:1.45;margin-bottom:8px">' + esc(pkg.desc) + '</p>' +
-      '<div style="display:flex;align-items:baseline;gap:10px;margin:8px 0">' +
-        '<span data-aff-price="' + pkg.key + '" style="font-size:22px;font-weight:900;color:var(--hero)">' + esc(finalPriceStr) + '</span>' +
-        '<span data-aff-old-price="' + pkg.key + '" style="display:' + (hasCode ? 'inline' : 'none') + ';font-size:13px;color:var(--dim);text-decoration:line-through">' + esc(baseStr) + '</span>' +
+      '<div>' +
+        '<div style="display:flex;align-items:baseline;gap:8px;margin:6px 0 4px">' +
+          '<span data-aff-price="' + pkg.key + '" style="font-size:24px;font-weight:900;color:#eab308">' + esc(finalPriceStr) + '</span>' +
+          '<span data-aff-old-price="' + pkg.key + '" style="display:' + (hasCode ? 'inline' : 'none') + ';font-size:13px;color:#64748b;text-decoration:line-through">' + esc(baseStr) + '</span>' +
+        '</div>' +
+        '<div style="font-size:10.5px;color:#10b981;font-weight:700;margin-bottom:8px">💸 Prowizja polecającego (30%): +' + esc(pkg.commissionLabel) + '</div>' +
+        '<button type="button" class="btn" data-aff-buy="' + pkg.key + '" style="margin:0;border:1.5px solid ' + (isBestValue ? '#f97316' : (isPopular ? '#06b6d4' : '#eab308')) + ';background:' + (isBestValue ? 'linear-gradient(90deg,rgba(249,115,22,0.22),rgba(234,179,8,0.18))' : 'rgba(15,23,42,0.85)') + ';color:' + (isBestValue ? '#fed7aa' : (isPopular ? '#67e8f9' : '#fde047')) + ';font-weight:900" onclick="window.npStartAffiliateCheckout && window.npStartAffiliateCheckout(\'' + pkg.key + '\')">' +
+          '⚡ Wybieram — <span data-aff-btn-price="' + pkg.key + '">' + esc(finalPriceStr) + '</span>' +
+        '</button>' +
       '</div>' +
-      '<button type="button" class="btn" data-aff-buy="' + pkg.key + '" style="border-color:' + borderCol + ';color:' + (isWarsztat ? 'var(--hero)' : 'var(--accent)') + '" onclick="window.npStartAffiliateCheckout && window.npStartAffiliateCheckout(\'' + pkg.key + '\')">' +
-        '⚡ Wybieram ' + esc(pkg.title) + ' — <span data-aff-btn-price="' + pkg.key + '">' + esc(finalPriceStr) + '</span>' +
-      '</button>' +
     '</div>';
   }
 
+  window.npSwitchAffiliateTab = function(tabKey) {
+    currentAffiliateTab = tabKey === 'warsztat' ? 'warsztat' : 'pro';
+    if (typeof document === 'undefined' || !document.getElementById) return;
+    const proGrid = document.getElementById('npTabGridPro');
+    const warGrid = document.getElementById('npTabGridWarsztat');
+    const proBtn = document.getElementById('npTabBtnPro');
+    const warBtn = document.getElementById('npTabBtnWarsztat');
+    const isPro = currentAffiliateTab === 'pro';
+    if (proGrid) proGrid.style.display = isPro ? 'grid' : 'none';
+    if (warGrid) warGrid.style.display = isPro ? 'none' : 'grid';
+    if (proBtn) {
+      proBtn.style.background = isPro ? 'linear-gradient(135deg,#06b6d4,#0284c7)' : '#0f172a';
+      proBtn.style.color = isPro ? '#04121d' : '#94a3b8';
+      proBtn.style.borderColor = isPro ? '#67e8f9' : '#334155';
+      proBtn.style.boxShadow = isPro ? '0 0 16px rgba(6,182,212,0.38)' : 'none';
+    }
+    if (warBtn) {
+      warBtn.style.background = !isPro ? 'linear-gradient(135deg,#f97316,#eab308)' : '#0f172a';
+      warBtn.style.color = !isPro ? '#0f172a' : '#94a3b8';
+      warBtn.style.borderColor = !isPro ? '#fde047' : '#334155';
+      warBtn.style.boxShadow = !isPro ? '0 0 16px rgba(249,115,22,0.38)' : 'none';
+    }
+  };
+
   function buildAffiliatePackagesCardHtml(currentTier) {
     const hasCode = String(currentAffiliatePromoCode || '').trim().length >= 3;
+    const isProTab = currentAffiliateTab !== 'warsztat';
     const proCardsHtml = AFFILIATE_PRO_PACKAGES
       .filter(pkg => pkg.planTier === 'pro')
       .map(pkg => renderAffiliatePackageCard(pkg, hasCode))
@@ -366,11 +413,6 @@
       .filter(pkg => pkg.planTier === 'warsztat')
       .map(pkg => renderAffiliatePackageCard(pkg, hasCode))
       .join('');
-    const cardsHtml =
-      '<div style="margin:10px 0 6px;font-size:13px;font-weight:900;color:var(--accent);letter-spacing:0.4px">💎 LINIA 1: NAPRAWNIK PRO (7 dni: 19 zł • 30 dni: 39 zł • 365 dni: 299 zł)</div>' +
-      proCardsHtml +
-      '<div style="margin:14px 0 6px;font-size:13px;font-weight:900;color:var(--hero);letter-spacing:0.4px">🛠️ LINIA 2: NAPRAWNIK WARSZTAT VIP (7 dni: 39 zł • 30 dni: 69 zł • 365 dni: 549 zł)</div>' +
-      workshopCardsHtml;
 
     const bonusNum = cachedWalletState && cachedWalletState.bonusBalance !== undefined && cachedWalletState.bonusBalance !== null
       ? Number(cachedWalletState.bonusBalance)
@@ -388,48 +430,80 @@
       || (typeof localStorage !== 'undefined' && localStorage.getItem('naprawnik_ref_code'))
       || 'NAP-START20';
 
-    return '<div class="card" id="npAffiliateSection" style="border-color:var(--cyan)">' +
-      '<h2>🚀 Pakiety NAPRAWNIK PRO i WARSZTAT VIP (Program Partnerski)</h2>' +
-      '<p style="font-size:12px;line-height:1.5;color:var(--dim);margin-bottom:10px">Wybierz pakiet czasowy dopasowany do potrzeb (7, 30 lub 365 dni). Z kodem polecającym otrzymujesz <b>-20% zniżki</b> (PRO: 15,20 zł / 31,20 zł / 239,20 zł • WARSZTAT VIP: 31,20 zł / 55,20 zł / 439,20 zł), a polecający zyskuje <b>30% prowizji</b> (nawet do <b>131,76 zł</b> za jedno polecenie!).</p>' +
-      '<div class="entry" style="margin-bottom:10px">' +
-        '<label for="npAffiliatePromoInput" style="font-size:11px;color:var(--cyan);font-weight:bold;display:block;margin-bottom:4px">🎟️ Kod rabatowy / polecający (-20% na każdy z 6 pakietów):</label>' +
-        '<input id="npAffiliatePromoInput" placeholder="Wpisz kod rabatowy (np. NAP-XXXXXX)" value="' + esc(currentAffiliatePromoCode) + '" oninput="window.npUpdateAffiliatePromoUI && window.npUpdateAffiliatePromoUI(this.value)">' +
-        '<small id="npAffiliatePromoStatus" style="color:' + (hasCode ? '#00f57a' : 'var(--dim)') + '">' +
-          (hasCode ? '✅ Aktywowano rabat -20%! Ceny PRO: 15,20 zł / 31,20 zł / 239,20 zł • WARSZTAT VIP: 31,20 zł / 55,20 zł / 439,20 zł.' : 'Wpisz kod polecający, aby obniżyć ceny wszystkich 6 pakietów o 20% (PRO: 19→15,20 zł, 39→31,20 zł, 299→239,20 zł | WARSZTAT VIP: 39→31,20 zł, 69→55,20 zł, 549→439,20 zł).') +
-        '</small>' +
-      '</div>' +
-      cardsHtml +
-      '<div class="card" style="border-color:#00f57a;margin-top:10px;margin-bottom:0">' +
-        '<h2 style="color:#00f57a">💼 Portfel / Zarabiaj (30% prowizji + 10 zł na start)</h2>' +
-        '<p style="font-size:12px;line-height:1.5">Polecaj NAPRAWNIKA znajomym mechanikom i na grupach motocyklowych — kupujący z Twoim kodem ma <b>-20% rabatu</b>, a Ty otrzymujesz <b>30% prowizji</b> od każdej wpłaty Stripe.</p>' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0">' +
-          '<div class="entry" style="border:1px solid var(--accent);background:rgba(255,107,0,0.06);padding:12px;border-radius:10px;margin:0">' +
-            '<div style="font-size:11px;font-weight:bold;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px">🎁 Saldo na pakiety PRO</div>' +
-            '<div id="npWalletProBalanceVal" style="font-size:24px;font-weight:900;color:var(--hero);margin:6px 0">' + esc(proBalStr) + ' zł</div>' +
-            '<div style="font-size:11px;color:var(--dim);margin-bottom:6px">Bonus startowy: <b id="npWalletBonusVal" style="color:var(--text)">' + esc(bonusBalStr) + ' zł</b> + Prowizje: <b id="npWalletCashSubVal" style="color:#00f57a">' + esc(cashBalStr) + ' zł</b></div>' +
-            '<small style="display:block;color:var(--cyan);line-height:1.4">Masz 10 zł bonusu na start! Uzbieraj 39 zł, aby odblokować Miesiąc PRO za darmo</small>' +
-            '<button type="button" class="btn" style="border-color:var(--accent);color:var(--accent);margin-top:8px" onclick="window.npBuyProFromWallet && window.npBuyProFromWallet()">💎 Kup PRO (30 dni) z portfela — 39 zł</button>' +
-          '</div>' +
-          '<div class="entry" style="border:1px solid #00f57a;background:rgba(0,245,122,0.05);padding:12px;border-radius:10px;margin:0">' +
-            '<div style="font-size:11px;font-weight:bold;color:#00f57a;text-transform:uppercase;letter-spacing:0.5px">💸 Gotówka do wypłaty BLIK</div>' +
-            '<div id="npWalletBalanceVal" style="font-size:24px;font-weight:900;color:#00f57a;margin:6px 0">' + esc(cashBalStr) + ' zł</div>' +
-            '<div style="background:#0b111c;border:1px solid var(--border);border-radius:999px;height:10px;overflow:hidden;margin:6px 0">' +
-              '<div id="npWalletBlikProgressBar" style="width:' + blikPct + '%;height:100%;background:linear-gradient(90deg,var(--cyan),#00f57a);transition:width 0.3s ease"></div>' +
+    const walletBentoHtml =
+      '<div class="card" style="border:2px solid #10b981;background:linear-gradient(145deg,#0f172a 0%,#1e293b 65%,rgba(16,185,129,0.12) 100%);margin-top:0;margin-bottom:14px;border-radius:18px;padding:15px;box-shadow:0 8px 24px rgba(0,0,0,0.55),0 0 20px rgba(16,185,129,0.18)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">' +
+          '<h2 style="margin:0;color:#10b981;font-size:17px">💼 Portfel / Zarabiaj (30% prowizji + 10 zł na start)</h2>' +
+          '<span style="background:linear-gradient(90deg,#10b981,#eab308);color:#04120a;font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:999px">🎁 +10 ZŁ NA START • WYPŁATY BLIK</span>' +
+        '</div>' +
+        '<p style="font-size:12px;line-height:1.5;color:#cbd5e1;margin:0 0 12px">Polecaj NAPRAWNIKA znajomym mechanikom i na grupach motocyklowych — kupujący z Twoim kodem ma <b>-20% rabatu</b>, a Ty otrzymujesz <b>30% prowizji</b> (do <b>132 zł</b> z jednego polecenia!) prosto na BLIK.</p>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:10px 0">' +
+          '<div class="entry" style="border:2px solid #10b981;background:linear-gradient(160deg,rgba(16,185,129,0.12) 0%,rgba(15,23,42,0.96) 100%);padding:14px;border-radius:14px;margin:0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.1)">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px">' +
+              '<span style="font-size:11px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:0.6px">💸 Gotówka do wypłaty BLIK</span>' +
+              '<span style="font-size:10px;background:rgba(234,179,8,0.18);color:#eab308;border:1px solid #eab308;padding:2px 7px;border-radius:999px;font-weight:800">PROWIZJA 30%</span>' +
             '</div>' +
-            '<small id="npWalletBlikProgressText" style="display:block;color:var(--dim);line-height:1.4">Postęp do wypłaty BLIK: ' + esc(cashBalStr) + ' zł / 50,00 zł (' + blikPct + '%) — wypłacie podlega wyłącznie zarobiona prowizja 30% (min. 50,00 zł).</small>' +
-            '<div style="margin-top:8px">' +
-              '<input id="npBlikPhoneInput" type="tel" inputmode="numeric" maxlength="9" placeholder="9-cyfrowy nr telefonu do BLIK (np. 500600700)" ' + (canPayoutBlik ? '' : 'disabled') + ' style="margin-bottom:6px;opacity:' + (canPayoutBlik ? '1' : '0.55') + '">' +
-              '<button type="button" id="npBlikPayoutBtn" class="btn" ' + (canPayoutBlik ? '' : 'disabled') + ' style="border-color:' + (canPayoutBlik ? '#00f57a' : 'var(--border)') + ';color:' + (canPayoutBlik ? '#00f57a' : 'var(--dim)') + ';opacity:' + (canPayoutBlik ? '1' : '0.55') + ';cursor:' + (canPayoutBlik ? 'pointer' : 'not-allowed') + '" onclick="window.npRequestBlikPayout && window.npRequestBlikPayout()">📲 Wypłać na BLIK</button>' +
+            '<div id="npWalletBalanceVal" style="font-size:28px;font-weight:900;color:#10b981;margin:8px 0 4px;text-shadow:0 0 12px rgba(16,185,129,0.35)">' + esc(cashBalStr) + ' zł</div>' +
+            '<div style="background:#090d16;border:1px solid #334155;border-radius:999px;height:11px;overflow:hidden;margin:8px 0">' +
+              '<div id="npWalletBlikProgressBar" style="width:' + blikPct + '%;height:100%;background:linear-gradient(90deg,#10b981,#eab308);transition:width 0.3s ease"></div>' +
+            '</div>' +
+            '<small id="npWalletBlikProgressText" style="display:block;color:#94a3b8;line-height:1.4;font-size:11px">Postęp do wypłaty BLIK: ' + esc(cashBalStr) + ' zł / 50,00 zł (' + blikPct + '%) — wypłacie podlega wyłącznie zarobiona prowizja 30% (min. 50,00 zł).</small>' +
+            '<div style="margin-top:10px">' +
+              '<input id="npBlikPhoneInput" type="tel" inputmode="numeric" maxlength="9" placeholder="9-cyfrowy nr telefonu do BLIK (np. 500600700)" ' + (canPayoutBlik ? '' : 'disabled') + ' style="margin-bottom:6px;opacity:' + (canPayoutBlik ? '1' : '0.55') + ';background:#090d16;border-color:#334155">' +
+              '<button type="button" id="npBlikPayoutBtn" class="btn" ' + (canPayoutBlik ? '' : 'disabled') + ' style="margin:0;border-color:' + (canPayoutBlik ? '#10b981' : '#334155') + ';color:' + (canPayoutBlik ? '#10b981' : '#64748b') + ';font-weight:900;opacity:' + (canPayoutBlik ? '1' : '0.55') + ';cursor:' + (canPayoutBlik ? 'pointer' : 'not-allowed') + '" onclick="window.npRequestBlikPayout && window.npRequestBlikPayout()">📲 Wypłać na BLIK</button>' +
             '</div>' +
           '</div>' +
+          '<div class="entry" style="border:2px solid #06b6d4;background:linear-gradient(160deg,rgba(6,182,212,0.12) 0%,rgba(15,23,42,0.96) 100%);padding:14px;border-radius:14px;margin:0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);display:flex;flex-direction:column;justify-content:space-between">' +
+            '<div>' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">' +
+                '<span style="font-size:11px;font-weight:900;color:#06b6d4;text-transform:uppercase;letter-spacing:0.6px">🎁 Saldo na pakiety PRO</span>' +
+                '<span style="font-size:10px;background:rgba(6,182,212,0.18);color:#67e8f9;border:1px solid #06b6d4;padding:2px 7px;border-radius:999px;font-weight:800">🎁 +10 zł bonusu na start</span>' +
+              '</div>' +
+              '<div id="npWalletProBalanceVal" style="font-size:28px;font-weight:900;color:#eab308;margin:8px 0 4px;text-shadow:0 0 12px rgba(234,179,8,0.3)">' + esc(proBalStr) + ' zł</div>' +
+              '<div style="font-size:11.5px;color:#cbd5e1;margin-bottom:6px">Bonus startowy: <b id="npWalletBonusVal" style="color:#f8fafc">' + esc(bonusBalStr) + ' zł</b> + Prowizje: <b id="npWalletCashSubVal" style="color:#10b981">' + esc(cashBalStr) + ' zł</b></div>' +
+              '<small style="display:block;color:#67e8f9;line-height:1.45;font-size:11px">Masz 10 zł bonusu na start! Uzbieraj 39 zł, aby odblokować Miesiąc PRO za darmo</small>' +
+            '</div>' +
+            '<button type="button" class="btn" style="border:1.5px solid #06b6d4;background:rgba(6,182,212,0.15);color:#67e8f9;font-weight:900;margin-top:10px;margin-bottom:0" onclick="window.npBuyProFromWallet && window.npBuyProFromWallet()">💎 Odblokuj PRO 30 dni z portfela (39 zł)</button>' +
+          '</div>' +
         '</div>' +
-        '<div class="entry" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
-          '<div><b>Twój kod rabatowy (-20%):</b> <code id="npWalletRefCodeVal" style="color:var(--cyan);font-size:14px;font-weight:bold">' + esc(refCode) + '</code> <span id="npCopyRefCodeToast" style="display:none;color:#00f57a;font-weight:bold;margin-left:6px">Skopiowano!</span></div>' +
+        '<div class="entry" style="border:1.5px dashed #eab308;background:linear-gradient(90deg,rgba(234,179,8,0.10),rgba(6,182,212,0.08));padding:12px;border-radius:14px;margin-top:10px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">' +
+            '<div>' +
+              '<div style="font-size:10.5px;font-weight:900;color:#eab308;text-transform:uppercase;letter-spacing:0.6px">🎟️ Kupon Warsztatowy (Twój kod polecający)</div>' +
+              '<div style="margin-top:3px"><b>Twój kod rabatowy (-20%):</b> <code id="npWalletRefCodeVal" style="color:#67e8f9;font-size:16px;font-weight:900;background:#090d16;padding:3px 9px;border-radius:6px;border:1px solid #06b6d4">' + esc(refCode) + '</code> <span id="npCopyRefCodeToast" style="display:none;color:#10b981;font-weight:900;margin-left:6px">Skopiowano!</span></div>' +
+            '</div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+              '<button type="button" class="btn" id="npCopyRefCodeBtn" style="width:auto;margin:0;padding:8px 14px;border-color:#eab308;background:rgba(234,179,8,0.16);color:#fde047;font-weight:900" onclick="window.npCopyAffiliateRefCode && window.npCopyAffiliateRefCode()">📋 Kopiuj mój kod rabatowy (-20%) — +30% dla Ciebie</button>' +
+              '<button type="button" class="btn" style="width:auto;margin:0;padding:8px 12px;border-color:#334155;color:#cbd5e1" onclick="window.npLoadWallet && window.npLoadWallet(true)">🔄 Odśwież</button>' +
+            '</div>' +
+          '</div>' +
+          '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1)">' +
+            '<label for="npAffiliatePromoInput" style="font-size:11px;color:#67e8f9;font-weight:800;display:block;margin-bottom:4px">🏷️ Masz kod rabatowy od znajomego? Wpisz tutaj (-20% na wszystkie 6 pakietów):</label>' +
+            '<input id="npAffiliatePromoInput" placeholder="Wpisz kod rabatowy (np. NAP-XXXXXX)" value="' + esc(currentAffiliatePromoCode) + '" oninput="window.npUpdateAffiliatePromoUI && window.npUpdateAffiliatePromoUI(this.value)" style="background:#090d16;border-color:#06b6d4;margin-bottom:4px">' +
+            '<small id="npAffiliatePromoStatus" style="color:' + (hasCode ? '#10b981' : '#94a3b8') + ';display:block">' +
+              (hasCode ? '✅ Aktywowano rabat -20%! Ceny PRO: 15,20 zł / 31,20 zł / 239,20 zł • WARSZTAT VIP: 31,20 zł / 55,20 zł / 439,20 zł.' : 'Wpisz kod polecający, aby obniżyć ceny wszystkich 6 pakietów o 20% (PRO: 19→15,20 zł, 39→31,20 zł, 299→239,20 zł | WARSZTAT VIP: 39→31,20 zł, 69→55,20 zł, 549→439,20 zł).') +
+            '</small>' +
+          '</div>' +
         '</div>' +
-        '<button type="button" class="btn" id="npCopyRefCodeBtn" style="border-color:var(--cyan);color:var(--cyan)" onclick="window.npCopyAffiliateRefCode && window.npCopyAffiliateRefCode()">📋 Kopiuj mój kod rabatowy (-20%)</button>' +
-        '<button type="button" class="btn" onclick="window.npLoadWallet && window.npLoadWallet(true)">🔄 Odśwież stan portfela i kod polecający</button>' +
-      '</div>' +
-    '</div>';
+      '</div>';
+
+    const pricingTabsHtml =
+      '<div class="card" style="border:2px solid #334155;background:linear-gradient(160deg,#0f172a 0%,#1e293b 100%);border-radius:18px;padding:15px;margin-bottom:12px">' +
+        '<h2 style="margin:0 0 4px;color:#f8fafc">🚀 Wybierz Pakiet: PRO lub WARSZTAT VIP (7 / 30 / 365 dni)</h2>' +
+        '<p style="font-size:12px;color:#94a3b8;margin:0 0 12px">Przełącz linię pakietów poniżej. Wszystkie ceny reagują na żywo na wpisany wyżej kod rabatowy (-20%).</p>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:14px">' +
+          '<button type="button" id="npTabBtnPro" onclick="window.npSwitchAffiliateTab && window.npSwitchAffiliateTab(\'pro\')" style="padding:11px 14px;border-radius:12px;font-size:13px;font-weight:900;cursor:pointer;border:2px solid ' + (isProTab ? '#67e8f9' : '#334155') + ';background:' + (isProTab ? 'linear-gradient(135deg,#06b6d4,#0284c7)' : '#0f172a') + ';color:' + (isProTab ? '#04121d' : '#94a3b8') + ';box-shadow:' + (isProTab ? '0 0 16px rgba(6,182,212,0.38)' : 'none') + ';transition:all 0.2s ease">💎 PAKIETY PRO (Dla Ciebie)</button>' +
+          '<button type="button" id="npTabBtnWarsztat" onclick="window.npSwitchAffiliateTab && window.npSwitchAffiliateTab(\'warsztat\')" style="padding:11px 14px;border-radius:12px;font-size:13px;font-weight:900;cursor:pointer;border:2px solid ' + (!isProTab ? '#fde047' : '#334155') + ';background:' + (!isProTab ? 'linear-gradient(135deg,#f97316,#eab308)' : '#0f172a') + ';color:' + (!isProTab ? '#0f172a' : '#94a3b8') + ';box-shadow:' + (!isProTab ? '0 0 16px rgba(249,115,22,0.38)' : 'none') + ';transition:all 0.2s ease">🛠️ WARSZTAT VIP (Dla Mechaników)</button>' +
+        '</div>' +
+        '<div id="npTabGridPro" style="display:' + (isProTab ? 'grid' : 'none') + ';grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">' +
+          proCardsHtml +
+        '</div>' +
+        '<div id="npTabGridWarsztat" style="display:' + (!isProTab ? 'grid' : 'none') + ';grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">' +
+          workshopCardsHtml +
+        '</div>' +
+      '</div>';
+
+    return '<div id="npAffiliateSection">' + walletBentoHtml + pricingTabsHtml + '</div>';
   }
 
   window.npCopyAffiliateRefCode = async function() {
@@ -903,10 +977,13 @@
       activation = activation + usageCard;
     }
     root.innerHTML = (typeof back === 'function' ? back() : '') +
-      '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka i pomiary (1 pojazd). PRO to 3 pojazdy, 150 pomiarów z automatyczną diagnozą, 50 dobierań części i zdjęć (analiza zdjęć AI jest chwilowo wyłączona) oraz kopia w chmurze. WARSZTAT to kompleksowe narzędzie: zlecenia, PDF z podpisem klienta, do 500 pojazdów, 5000 pomiarów i 30 nowych zleceń/mc. Subskrypcją zarządzasz w portalu Stripe.</p></div>' +
       affiliatePackagesHtml +
+      '<div class="card"><h2>💎 Plany NAPRAWNIK</h2><p style="font-size:12px;line-height:1.5">AMATOR to bezpłatna diagnostyka i pomiary (1 pojazd). PRO to 3 pojazdy, 150 pomiarów z automatyczną diagnozą, 50 dobierań części i zdjęć (analiza zdjęć AI jest chwilowo wyłączona) oraz kopia w chmurze. WARSZTAT to kompleksowe narzędzie: zlecenia, PDF z podpisem klienta, do 500 pojazdów, 5000 pomiarów i 30 nowych zleceń/mc. Subskrypcją zarządzasz w portalu Stripe.</p></div>' +
       activation + card('amator') + card('pro') + card('warsztat') + oneTimePackages +
       '<div class="card"><small style="color:var(--dim)">Dostęp PRO/WARSZTAT jest sprawdzany po stronie serwera, a płatność potwierdzana przez Stripe.</small><div class="btn" onclick="if(typeof nav===\'function\')nav(\'legal\')" style="margin-top:8px">📜 Regulamin i Polityka prywatności (RODO)</div></div>';
+    if (!cachedWalletState && API && typeof window.npLoadWallet === 'function') {
+      try { Promise.resolve(window.npLoadWallet(false)).catch(() => {}); } catch (_) {}
+    }
   }
   window.renderPlans = renderPlansBridge;
   window.npOpenAffiliateWallet = function() {

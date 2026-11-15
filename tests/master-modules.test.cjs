@@ -682,7 +682,7 @@ test('Cennik 6 pakietów afiliacyjnych NAPRAWNIK PRO / VIP (7/30/365 dni, -20% z
   assert.match(billingSource, /Skopiowano!/);
   assert.match(billingSource, /Wypłać na BLIK/);
 
-  // 6. Etap 4: Wiralowy Generator Kart Diagnozy w HTML5 Canvas
+  // 6. Etap 4: Wiralowy Generator Kart Diagnozy w HTML5 Canvas + Bento Grid UI & Taby Cennika
   const indexSource = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
   assert.match(billingSource, /window\.npGenerateDiagnosisShareCard = function\(diagnosisData\)/);
   assert.match(billingSource, /NAPRAWNIK - Diagnostyka Jednośladów/);
@@ -690,5 +690,12 @@ test('Cennik 6 pakietów afiliacyjnych NAPRAWNIK PRO / VIP (7/30/365 dni, -20% z
   assert.match(billingSource, /canvas\.toDataURL\('image\/png'\)/);
   assert.match(billingSource, /navigator\.share/);
   assert.match(indexSource, /Pokaż diagnozę na grupie \(Zgarnij do \+132 zł\)/);
+  assert.match(billingSource, /PAKIETY PRO \(Dla Ciebie\)/);
+  assert.match(billingSource, /WARSZTAT VIP \(Dla Mechaników\)/);
+  assert.match(billingSource, /NAJBARDZIEJ OPŁACALNY \(Prowizja do 132 zł!\)/);
+  assert.match(billingSource, /window\.npSwitchAffiliateTab = function\(tabKey\)/);
+  assert.match(indexSource, /Twój Portfel Warsztatowy: 10,00 zł na start!/);
+  assert.match(indexSource, /Odbierz \/ Zarabiaj →/);
+  assert.match(indexSource, /nav-wallet-badge/);
 });
 

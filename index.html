@@ -1496,11 +1496,117 @@ a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
  outline:2px solid var(--np-link-hover);border-radius:3px
 }
 
+/* ===== BENTO GRID COCKPIT & VIP WALLET BANNER (HOME + NAV BADGE) ===== */
+.nav-item{position:relative}
+.nav-wallet-badge{
+  position:absolute;
+  top:2px;
+  right:6px;
+  background:linear-gradient(135deg,#10b981,#eab308);
+  color:#04120a;
+  font-size:8.5px;
+  font-weight:900;
+  padding:1px 5px;
+  border-radius:999px;
+  letter-spacing:0.3px;
+  box-shadow:0 0 8px rgba(16,185,129,0.65);
+  pointer-events:none;
+  line-height:1.2;
+}
+.bento-cockpit{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin:10px 0;
+}
+@media (min-width:760px){
+  .bento-cockpit{
+    grid-template-columns:1.15fr 1fr;
+    align-items:stretch;
+  }
+}
+.bento-hero-diag{
+  position:relative;
+  overflow:hidden;
+  border-radius:18px;
+  border:2px solid #f97316;
+  background:
+    radial-gradient(circle at 85% 20%,rgba(249,115,22,0.24) 0%,transparent 55%),
+    linear-gradient(145deg,#0f172a 0%,#1e293b 65%,#171126 100%);
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  cursor:pointer;
+  box-shadow:0 10px 26px rgba(0,0,0,0.6),0 0 20px rgba(249,115,22,0.22),inset 0 1px 1px rgba(255,255,255,0.2);
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.bento-hero-diag:hover{
+  transform:translateY(-2px);
+  border-color:#ffd43b;
+  box-shadow:0 12px 30px rgba(0,0,0,0.72),0 0 26px rgba(249,115,22,0.38);
+}
+.bento-tools-2x2{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.bento-tool-tile{
+  position:relative;
+  border-radius:15px;
+  border:1.5px solid #334155;
+  background:linear-gradient(160deg,#1e293b 0%,#0f172a 100%);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  cursor:pointer;
+  box-shadow:0 6px 16px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.12);
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.bento-tool-tile:hover{
+  transform:translateY(-2px);
+  border-color:#06b6d4;
+  box-shadow:0 8px 20px rgba(0,0,0,0.65),0 0 14px rgba(6,182,212,0.28);
+}
+.bento-hit-badge{
+  position:absolute;
+  top:8px;
+  right:8px;
+  background:linear-gradient(90deg,#f97316,#eab308);
+  color:#0f172a;
+  font-size:9px;
+  font-weight:900;
+  padding:2px 6px;
+  border-radius:999px;
+  letter-spacing:0.5px;
+  box-shadow:0 0 10px rgba(249,115,22,0.5);
+}
+.vip-blik-banner{
+  border-radius:18px;
+  border:2px solid #10b981;
+  background:linear-gradient(135deg,#0f172a 0%,rgba(16,185,129,0.20) 52%,#1e293b 100%);
+  padding:14px 16px;
+  margin:10px 0 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  cursor:pointer;
+  box-shadow:0 8px 24px rgba(0,0,0,0.58),0 0 20px rgba(16,185,129,0.22),inset 0 1px 1px rgba(255,255,255,0.16);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.vip-blik-banner:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 28px rgba(0,0,0,0.7),0 0 26px rgba(16,185,129,0.36);
+}
+
 </style>
 </head>
 <body>
 <div class="frame">
-  <div class="topbar"><span>⚙️ NAPRAWNIK v5.50 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b><button type="button" id="topWalletBtn" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')" style="background:linear-gradient(135deg,#00f57a,#00b862);color:#04120a;border:1px solid #a7f3d0;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:900;cursor:pointer;margin-left:6px;box-shadow:0 0 10px rgba(0,245,122,0.38)">💰 Portfel / Zarabiaj</button></span><span id="clock"></span></div>
+  <div class="topbar"><span>⚙️ NAPRAWNIK v5.50 <b id="planBadge" onclick="nav('plans')" style="cursor:pointer;color:var(--hero)"></b><button type="button" id="topWalletBtn" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')" style="background:linear-gradient(135deg,#10b981,#eab308);color:#04120a;border:1px solid #fde047;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:900;cursor:pointer;margin-left:6px;box-shadow:0 0 10px rgba(16,185,129,0.45)">💰 Portfel / Zarabiaj</button></span><span id="clock"></span></div>
   <div id="topUpdateBar" class="top-update-bar">
     <button id="btnAppUpdate" class="btn-update normal" type="button" onclick="handleAppUpdateClick()" title="Sprawdź lub zainstaluj aktualizację">
       <span id="updateBtnIcon" class="update-icon">🔄</span>
@@ -1511,7 +1617,7 @@ a:not(.btn):not(.support-cta):not(.pa-photo-link):focus-visible{
   <div class="nav">
     <div class="nav-item" data-nav="home"><span aria-hidden="true">🏠</span><span>Home</span></div>
     <div class="nav-item" data-nav="market" aria-label="NAPRAWNIK MARKET"><img src="./assets/naprawnik-market-icon.svg" alt="" width="25" height="25" style="display:block;width:25px;height:25px;object-fit:contain;margin:0 auto 2px"><span>Market</span></div>
-    <div class="nav-item" data-nav="plans" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')"><span aria-hidden="true">💰</span><span>Portfel</span></div>
+    <div class="nav-item" data-nav="plans" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')"><span class="nav-wallet-badge">10 zł</span><span aria-hidden="true">💰</span><span>Portfel</span></div>
     <div class="nav-item" data-nav="vehicles"><span aria-hidden="true">🛵</span><span>Garaż</span></div>
     <div class="nav-item" data-nav="search"><span aria-hidden="true">🔍</span><span>Szukaj</span></div>
     <div class="nav-item" data-nav="settings"><span aria-hidden="true">⚙️</span><span>Ustawienia</span></div>
@@ -3976,17 +4082,63 @@ function renderHome(){
     <div id="symptomResults"></div>
   </div>
 
-  <div class="diag-card" style="border-color:#00f57a;background:linear-gradient(135deg,rgba(0,245,122,0.10),rgba(0,229,255,0.06));margin:8px 0 12px;padding:12px 14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+  <div class="bento-cockpit" id="homeBentoCockpit">
+    <div class="bento-hero-diag" onclick="nav('module','mod_diag')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
       <div>
-        <div style="font-size:10px;font-weight:900;color:#00f57a;letter-spacing:0.6px">🎁 +10 ZŁ NA START • PROWIZJA 30% NA BLIK (DO 131,76 ZŁ) • RABAT -20% Z KODEM</div>
-        <h2 style="margin:3px 0;color:#fff;font-size:15px">💰 Portfel / Zarabiaj &amp; Pakiety PRO (19/39/299 zł) i WARSZTAT VIP (39/69/549 zł)</h2>
-        <div class="diag-sub" style="margin:0">Masz 10 zł bonusu na start! Kopiuj swój kod rabatowy (-20% dla znajomych) i wypłacaj 30% prowizji na BLIK.</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:10.5px;font-weight:900;color:#f97316;letter-spacing:0.8px;background:rgba(249,115,22,0.16);border:1px solid #f97316;padding:2px 8px;border-radius:999px">🔥 GŁÓWNY KOKPIT DIAGNOSTYCZNY</span>
+          <span style="font-size:10.5px;color:#eab308;font-weight:800">2T • 4T • R3/R4 • EFI</span>
+        </div>
+        <h2 style="margin:6px 0 4px;font-size:19px;font-weight:900;color:#f8fafc;letter-spacing:0.3px">🩺 INTERAKTYWNA DIAGNOSTYKA</h2>
+        <p style="font-size:12px;color:#cbd5e1;line-height:1.45;margin:0 0 12px">Drzewo objawów krok po kroku (TAK/NIE), 152 karty usterek silnikowych i elektrycznych oraz 12 drzew dla motocykli 3–4 cylindrowych.</p>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 14px;border-color:#00f57a;color:#00f57a;font-weight:900" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')">💰 Portfel / Zarabiaj →</button>
-        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 14px;border-color:var(--hero);color:var(--hero);font-weight:900" onclick="nav('plans')">⭐ PRO / Portfel</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 14px;background:linear-gradient(90deg,#f97316,#eab308);color:#0f172a;border:none;font-weight:900" onclick="event.stopPropagation();resetDiagFlow()">⚡ Start Diagnozy TAK/NIE →</button>
+        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 12px;border-color:#f97316;color:#fed7aa;font-weight:800" onclick="event.stopPropagation();nav('diag')">🌳 Drzewo Objawów</button>
       </div>
+    </div>
+
+    <div class="bento-tools-2x2">
+      <div class="bento-tool-tile" onclick="nav('hud')" role="button" tabindex="0">
+        <span class="bento-hit-badge">HIT</span>
+        <div style="font-size:22px;margin-bottom:4px">🎙️</div>
+        <div>
+          <div style="font-size:12.5px;font-weight:900;color:#f8fafc;line-height:1.25">Obrotomierz Akustyczny / HUD</div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:2px">Pomiary RPM, Squish &amp; Momenty</div>
+        </div>
+      </div>
+      <div class="bento-tool-tile" onclick="nav('module','mod_tools')" role="button" tabindex="0">
+        <div style="font-size:22px;margin-bottom:4px">🧮</div>
+        <div>
+          <div style="font-size:12.5px;font-weight:900;color:#06b6d4;line-height:1.25">Kalkulatory</div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:2px">Gaźnik, CVT, Squish/CR, Mieszanka</div>
+        </div>
+      </div>
+      <div class="bento-tool-tile" onclick="nav('module','mod_electric')" role="button" tabindex="0">
+        <div style="font-size:22px;margin-bottom:4px">⚡</div>
+        <div>
+          <div style="font-size:12.5px;font-weight:900;color:#eab308;line-height:1.25">Pomiary Elektryki</div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:2px">Pinouty CDI, Multimetr &amp; Lab</div>
+        </div>
+      </div>
+      <div class="bento-tool-tile" onclick="nav('vehicles')" role="button" tabindex="0">
+        <div style="font-size:22px;margin-bottom:4px">🛵</div>
+        <div>
+          <div style="font-size:12.5px;font-weight:900;color:#10b981;line-height:1.25">Garaż</div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:2px">Kartoteka VIN, Zlecenia &amp; Historia</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vip-blik-banner" id="homeVipBlikBanner" onclick="window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+    <div style="flex:1;min-width:220px">
+      <div style="font-size:10px;font-weight:900;color:#10b981;letter-spacing:0.7px;text-transform:uppercase">🎁 PROGRAM PARTNERSKI NAPRAWNIK • RABAT -20% Z KODEM • PROWIZJA 30%</div>
+      <h2 style="margin:4px 0 3px;color:#ffffff;font-size:15.5px;font-weight:900">💰 Twój Portfel Warsztatowy: 10,00 zł na start!</h2>
+      <div style="font-size:12px;color:#cbd5e1;line-height:1.4">Polecaj aplikację i odbieraj do <b style="color:#eab308">132 zł na BLIK</b> z jednego polecenia (PRO: 19/39/299 zł • WARSZTAT VIP: 39/69/549 zł).</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button type="button" class="btn" style="width:auto;margin:0;padding:10px 16px;background:linear-gradient(135deg,#10b981,#eab308);color:#04120a;border:none;font-weight:900;font-size:12.5px;box-shadow:0 0 14px rgba(16,185,129,0.4)" onclick="event.stopPropagation();window.npOpenAffiliateWallet ? window.npOpenAffiliateWallet() : nav('plans')">Odbierz / Zarabiaj →</button>
     </div>
   </div>
 
@@ -10196,7 +10348,7 @@ function zoomPhoto(dataUrl){
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 // ---------- SYSTEM SZYBKICH AKTUALIZACJI APLIKACJI ----------
 const CURRENT_APP_VERSION = "5.50";
-const CURRENT_APP_BUILD = 1731708000000;
+const CURRENT_APP_BUILD = 1731712000000;
 let isAppUpdateAvailable = false;
 function triggerUpdateState(){
   if (isAppUpdateAvailable) return;

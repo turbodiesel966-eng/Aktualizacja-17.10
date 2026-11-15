@@ -1,9 +1,9 @@
 {
   "$schema": "./shared-manifest.schema.json",
   "appVersion": "5.50",
-  "cacheVersion": "naprawnik-v5-50-affiliate-wallet-v3",
-  "cacheName": "naprawnik-v5-50-affiliate-wallet-v3",
-  "nativeCacheVersion": "naprawnik-v5-50-affiliate-wallet-v3-native",
+  "cacheVersion": "naprawnik-v5-50-affiliate-wallet-v4",
+  "cacheName": "naprawnik-v5-50-affiliate-wallet-v4",
+  "nativeCacheVersion": "naprawnik-v5-50-affiliate-wallet-v4-native",
   "sharedScripts": [
     "platform-adapter.js",
     "billing.js",
