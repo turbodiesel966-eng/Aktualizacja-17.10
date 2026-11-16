@@ -6,6 +6,7 @@ on:
       - main
       - fix/mobile-admin-access-capacitor-apk-20261026
       - feature/homepage-6-modules-redesign
+      - apk/master-v552-isolated
   pull_request:
     branches:
       - main
@@ -72,14 +73,33 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build debug APK
+      - name: Build installable APK
         working-directory: android
-        run: ./gradlew --no-daemon assembleDebug
+        run: ./gradlew --no-daemon assembleRelease assembleDebug
+
+      - name: Verify APK with official apksigner and zipalign
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK" ]; then APK="android/app/build/outputs/apk/debug/app-debug.apk"; fi
+          echo "Verifying APK with official Android SDK apksigner and zipalign: $APK"
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose --print-certs "$APK"
+          $ANDROID_HOME/build-tools/34.0.0/zipalign -c -v 4 "$APK"
 
       - name: Verify packaged app features and branded icon
-        run: python3 scripts/verify-apk.py android/app/build/outputs/apk/debug/app-debug.apk
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK" ]; then APK="android/app/build/outputs/apk/debug/app-debug.apk"; fi
+          python3 scripts/verify-apk.py "$APK"
 
-      - name: Upload installable APK
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: naprawnik-android-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: naprawnik-android-debug-apk
