@@ -1,6 +1,6 @@
-# NAPRAWNIK — audyt funkcji, rozwój bazy i kampania TikTok
+# NAPRAWNIK v5.51 — audyt funkcji, rozwój bazy i kampania TikTok / Shorts / Wykop / Reddit / Discord (bez FB i IG)
 
-Stan odniesienia: 26 października 2026 r. Wersja interfejsu: NAPRAWNIK v5.18. Repozytorium: [Aktualizacja-17.10](https://github.com/turbodiesel966-eng/Aktualizacja-17.10). Ten dokument odróżnia funkcje potwierdzone w kodzie od elementów wymagających testu użytkowego. Nie oznacza, że każda funkcja jest zweryfikowana na każdym telefonie.
+Stan odniesienia: 16 listopada 2026 r. Wersja interfejsu: NAPRAWNIK v5.51. Repozytorium: [Aktualizacja-17.10](https://github.com/turbodiesel966-eng/Aktualizacja-17.10). Strona pobierania APK: [naprawnik-download.pages.dev](https://naprawnik-download.pages.dev/). Ten dokument odróżnia funkcje potwierdzone w kodzie od elementów wymagających testu użytkowego. Nie oznacza, że każda funkcja jest zweryfikowana na każdym telefonie.
 
 ## 1. Zawartość aplikacji widoczna w kodzie
 
@@ -144,3 +144,86 @@ Każda karta zawiera objaw, możliwe przyczyny, kolejność bezpiecznych kontrol
 - **Prezentacja kampanii — 10 slajdów:** [otwórz podgląd](https://www.canva.com/d/4JVIp-tcRot4pDN) · [edytuj w Canva](https://www.canva.com/d/HXadx5HkVKx32ug)
 
 To materiały robocze do publikacji. Nie oznaczają, że filmy opublikowano na TikToku ani że konto TikTok jest połączone z harmonogramem publikacji.
+
+---
+
+## 7. Pakiet Promocyjny v5.51 na TikTok, YouTube Shorts, Wykop, Reddit, Discord, Telegram i Fora (bez Facebooka i Instagrama)
+
+### A. Kanały, na których ogłoszenie v5.51 zostało już opublikowane automatycznie:
+1. **Oficjalny serwer Discord NAPRAWNIK (kanał ogłoszeń):** opublikowano pełny Embed z premierą **NAPRAWNIK v5.51**, galerią 9 ekranów, linkiem do pobrania APK (`https://naprawnik-download.pages.dev/`), aplikacją PWA (`https://turbodiesel966-eng.github.io/Aktualizacja-17.10/`), bazą 480+ modeli oraz programem afiliacyjnym BLIK (`10 zł bonusu na start`, `-20% z kodem NAP-START20`, `do 132 zł prowizji 30% na BLIK od 50 zł`).
+2. **GitHub Releases / Tags (`v5.51`):** opublikowano oficjalny tag wydawniczy `v5.51` w repozytorium `turbodiesel966-eng/Aktualizacja-17.10`.
+3. **Wbudowane Centrum Promocji w aplikacji (`billing.js`):** w zakładce **Portfel / Zarabiaj BLIK** dodano 1-klikowe przyciski kopiowania gotowych materiałów promocyjnych na **TikTok / YT Shorts**, **Wykop (#motocykle)**, **Discord / Telegram**, **Reddit / Fora 2T/4T/ATV** i **WhatsApp / SMS** oraz generator pionowych grafik **9:16 (1080×1920 PNG)** pod TikTok i YouTube Shorts.
+
+### B. Gotowe publikacje do wklejenia 1-klikiem (TikTok, YouTube Shorts, Wykop, Reddit, X/Twitter, Elektroda/Fora)
+
+#### 1. TikTok & YouTube Shorts — 3 wiralowe scenariusze 9:16 + opis i BIO
+- **Tekst do BIO na TikToku / YouTube:**
+  > 🛠️ NAPRAWNIK v5.51 — Baza 480+ modeli (skutery 2T/4T, crossy, ATV, Maxi) 100% Offline w telefonie! 🎁 10 zł na start + kod `NAP-START20` (-20%) 👇  
+  > 🔗 `https://naprawnik-download.pages.dev/`
+
+- **Film #1 (Diagnostyka i Pinouty CDI — 20 s):**
+  - **0–3 s (Hook na ekranie):** *„Skuter kręci, ale nie ma iskry? Przestań wymieniać moduł CDI w ciemno!”*
+  - **3–10 s:** Pokaż na ekranie telefonu **Moduł 04: Elektryka i Pomiary** (`screen-03-elektryka.jpg`) — interaktywne pinouty CDI i regulatorów napięcia oraz Elektroniczne Laboratorium.
+  - **10–16 s:** Pokaż porównanie pomiaru rezystancji z normą fabryczną (status OK / UWAGA / KRYTYCZNY) i schemat instalacji SVG z zoomem.
+  - **16–20 s (CTA):** *„Aplikacja NAPRAWNIK v5.51 działa 100% offline w garażu. Pobierz APK z linku w BIO — masz 10 zł na start w Portfelu BLIK i -20% z kodem NAP-START20!”*
+  - **Opis filmu:**
+    `Brak iskry albo ładowania w skuterze 2T/4T, crossie lub quadzie ATV? ⚡ Sprawdź pinouty CDI, oporności statora i 37 drzew diagnostycznych w aplikacji NAPRAWNIK v5.51 (Baza ponad 480 modeli i wariantów, 100% offline w APK). 📲 Pobierz z linku w BIO: https://naprawnik-download.pages.dev/ | Kod -20%: NAP-START20 #skuter #motocykle #mechanika #2T #4T #warsztat #quady #atv #naprawnik`
+
+- **Film #2 (Baza 480+ modeli, Momenty Nm i Tuning CVT/Gaźnika — 22 s):**
+  - **0–3 s (Hook):** *„Skąd wziąć momenty dokręcania głowicy, luzy zaworowe i wagę rolek CVT bez szukania po forach przez 2 godziny?”*
+  - **3–12 s:** Pokaż **Kokpit Bento Grid (`screen-01-6-modulow.jpg`)** oraz **Moduł 05: Baza Techniczna (`screen-04-baza-techniczna.jpg` i `screen-05-silniki-cvt.jpg`)** — 229 rekordów OEM (2 284 parametry) i kalkulatory 3D (`screen-07-ulubione-3d.jpg`): Tryb HUD, Stroiciel Gaźnika, Kalkulator Squish/CR.
+  - **12–22 s (CTA):** *„Ponad 480 modeli i wariantów za darmo w planie AMATOR bez internetu w garażu. Pobierz z BIO!”*
+
+- **Film #3 (Program Afiliacyjny BLIK dla mechaników i pasjonatów — 20 s):**
+  - **0–3 s (Hook):** *„Pomagasz znajomym naprawiać skutery, crossy albo motocykle? Zobacz jak zarabiać na tym wypłaty BLIK!”*
+  - **3–14 s:** Pokaż zakładkę **Portfel / Zarabiaj BLIK** w NAPRAWNIKU v5.51: `10 zł bonusu na start`, Twój kod rabatowy `-20%` dla znajomego oraz `30% prowizji (aż do 132 zł z rocznego pakietu WARSZTAT VIP 549 zł)` wypłacane na BLIK od 50 zł.
+  - **14–20 s (CTA):** *„Odbierz 10 zł na start i swój kod polecający na naprawnik-download.pages.dev!”*
+
+#### 2. Wykop.pl (Mikroblog + Znalezisko)
+```text
+🛠️ NAPRAWNIK v5.51 — Warsztatowy Kombajn i Encyklopedia Mechanika Motocyklowego (APK 100% Offline + PWA)
+
+Mirki spod tagów motocyklowych i warsztatowych — wydaliśmy wersję v5.51 aplikacji NAPRAWNIK w nowym, kafelkowym kokpicie Bento Grid 3D:
+
+✅ Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi) — od 50cc (Minarelli, Piaggio, GY6, AM6, D50B0) po motocykle wielocylindrowe R2/R3/R4/V2/V4/Boxer i quady użytkowe ATV/UTV 4x4.
+✅ 229 rekordów OEM (2 284 parametry serwisowe): momenty dokręcania (Nm), luzy zaworowe, dysze gaźnika, rolki i paski CVT, świece.
+✅ Kompletna diagnostyka: 37 drzew objawowych 2T/4T, 12 drzew Multi/ATV, 10 ścieżek TAK/NIE, 47 procedur w 8 działach A–H, 158+38 kart usterek i 91 kodów OBD/EFI Blink.
+✅ Narzędzia i pomiary: Elektroniczne Laboratorium (automatyczna ocena pomiarów multimetrem), 10 pinoutów CDI i regulatorów, 7 schematów SVG z zoomem, Dekoder VIN (70 WMI), kalkulatory (Tryb HUD, Squish/CR, Stroiciel Gaźnika, Tuning CVT, Płytki zaworowe) oraz Druciarstwo Ultimate (47 patentów).
+✅ Darmowy plan AMATOR działa w 100% offline w garażu (izolowany instalator Android APK bez reklam i bez zakładania konta).
+✅ Portfel Afiliacyjny BLIK: 10 zł bonusu na start na każdym koncie, -20% zniżki z kodem NAP-START20 na pakiety PRO i WARSZTAT VIP oraz 30% prowizji (do 132 zł z pakietu rocznego) wypłacane na BLIK od 50 zł.
+
+📲 Pobierz APK + zobacz galerię 9 ekranów: https://naprawnik-download.pages.dev/
+🌐 Uruchom w przeglądarce (PWA): https://turbodiesel966-eng.github.io/Aktualizacja-17.10/
+
+#motocykle #skutery #mechanika #warsztat #motoryzacja #quady #atv #2t #zrobtosam #programowanie
+```
+
+#### 3. Reddit (`r/motocykle`, `r/Polska`, `r/scooters`, `r/ATV`)
+- **Tytuł:** `[Projekt Offline] NAPRAWNIK v5.51 — Baza 480+ modeli (skutery 2T/4T, motocykle R2-R4/V2-V4, quady ATV), Pinouty CDI, Momenty Nm i Drzewa Diagnostyczne (APK Offline + PWA)`
+- **Treść:**
+  ```markdown
+  Cześć! Rozwijam polską aplikację warsztatowo-diagnostyczną **NAPRAWNIK** (aktualnie wydanie **v5.51**), zaprojektowaną do pracy bezpośrednio w garażu bez dostępu do internetu (natywny instalator Android APK Offline-First + wersja Web PWA).
+
+  **Co znajduje się w darmowym planie AMATOR (bez konta i bez reklam):**
+  * **Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)** oraz **229 rekordów OEM** (2 284 parametry: momenty dokręcania Nm, luzy zaworowe, dysze, rolki i paski CVT, świece).
+  * **Diagnostyka krok po kroku:** 37 drzew objawowych 2T/4T, 12 drzew dla motocykli wielocylindrowych i quadów, 10 ścieżek decyzyjnych TAK/NIE, 47 procedur warsztatowych w 8 działach A–H oraz 158+38 przypadków usterek.
+  * **Elektryka i pomiary:** Elektroniczne Laboratorium porównujące pomiary multimetrem z normami, 12 procedur pomiarowych, 7 interaktywnych schematów SVG z zoomem.
+  * **Kalkulatory 3D:** Tryb Warsztatowy HUD, Kalkulator Squish & CR (z presetami AM6, Aerox, GY6), Stroiciel Gaźnika, Tuning CVT, Kalkulator płytek zaworowych (Shim Calculator), Dekoder VIN (70 kodów WMI) i Druciarstwo Ultimate (47 patentów awaryjnych).
+
+  Dla osób potrzebujących funkcji komercyjnych (karty zleceń PDF z marżą mechanika, baza 2000 klientów, 91 kodów OBD/EFI Blink, 10 pinoutów CDI/Reg PRO) wbudowaliśmy **Portfel BLIK**: każde konto dostaje **10 zł bonusu na start**, kod **`NAP-START20`** daje **-20% zniżki**, a za polecenie wpada **30% prowizji (do 132 zł)** wypłacane na BLIK od 50 zł.
+
+  * **Strona pobierania APK (z sumą SHA-256 i galerią 9 ekranów v5.51):** https://naprawnik-download.pages.dev/
+  * **Wersja Web (PWA):** https://turbodiesel966-eng.github.io/Aktualizacja-17.10/
+  ```
+
+#### 4. X (Twitter) / Threads / Fora branżowe (Elektroda, Forum Motocyklistów, ATV Polska)
+```text
+🛠️ NAPRAWNIK v5.51 (APK 100% Offline + PWA) już dostępny!
+• Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)
+• 229 rekordów OEM (momenty Nm, luzy zaworowe, dysze, CVT)
+• Elektroniczne Lab, Pinouty CDI, 37 drzew 2T/4T, 47 procedur A–H
+• Portfel BLIK: 10 zł na start, -20% z kodem NAP-START20 i 30% prowizji (do 132 zł)
+📲 Pobierz: https://naprawnik-download.pages.dev/
+#motocykle #skutery #mechanika #warsztat #ATV
+```
+

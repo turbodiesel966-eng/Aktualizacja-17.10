@@ -478,6 +478,17 @@
             '</div>' +
           '</div>' +
           '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1)">' +
+            '<div style="font-size:11px;color:#fb923c;font-weight:900;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">📣 Promuj swój kod i zarabiaj BLIK (TikTok • YT Shorts • Wykop • Discord • Telegram • WhatsApp • Fora):</div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+              '<button type="button" class="btn" style="width:auto;margin:0;padding:6px 10px;font-size:11.5px;border-color:#f97316;color:#fb923c" onclick="window.npSharePromoChannel && window.npSharePromoChannel(\'tiktok\')">🎬 TikTok / YT Shorts (Skrypt + Opis)</button>' +
+              '<button type="button" class="btn" style="width:auto;margin:0;padding:6px 10px;font-size:11.5px;border-color:#06b6d4;color:#67e8f9" onclick="window.npGenerateTikTokPromoCard && window.npGenerateTikTokPromoCard()">📱 Karta 9:16 TikTok/Shorts (PNG)</button>' +
+              '<button type="button" class="btn" style="width:auto;margin:0;padding:6px 10px;font-size:11.5px;border-color:#38bdf8;color:#38bdf8" onclick="window.npSharePromoChannel && window.npSharePromoChannel(\'wykop\')">💬 Wykop (#motocykle)</button>' +
+              '<button type="button" class="btn" style="width:auto;margin:0;padding:6px 10px;font-size:11.5px;border-color:#a855f7;color:#c084fc" onclick="window.npSharePromoChannel && window.npSharePromoChannel(\'discord\')">👾 Discord / Telegram</button>' +
+              '<button type="button" class="btn" style="width:auto;margin:0;padding:6px 10px;font-size:11.5px;border-color:#eab308;color:#fde047" onclick="window.npSharePromoChannel && window.npSharePromoChannel(\'forum\')">🛠️ Reddit / Fora 2T/4T/ATV</button>' +
+              '<button type="button" class="btn" style="width:auto;margin:0;padding:6px 10px;font-size:11.5px;border-color:#10b981;color:#34d399" onclick="window.npSharePromoChannel && window.npSharePromoChannel(\'whatsapp\')">📲 WhatsApp / SMS</button>' +
+            '</div>' +
+          '</div>' +
+          '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1)">' +
             '<label for="npAffiliatePromoInput" style="font-size:11px;color:#67e8f9;font-weight:800;display:block;margin-bottom:4px">🏷️ Masz kod rabatowy od znajomego? Wpisz tutaj (-20% na wszystkie 6 pakietów):</label>' +
             '<input id="npAffiliatePromoInput" placeholder="Wpisz kod rabatowy (np. NAP-XXXXXX)" value="' + esc(currentAffiliatePromoCode) + '" oninput="window.npUpdateAffiliatePromoUI && window.npUpdateAffiliatePromoUI(this.value)" style="background:#090d16;border-color:#06b6d4;margin-bottom:4px">' +
             '<small id="npAffiliatePromoStatus" style="color:' + (hasCode ? '#10b981' : '#94a3b8') + ';display:block">' +
@@ -902,6 +913,186 @@
       }
     }
 
+    return { canvas, dataUrl, refCode: userCode };
+  };
+
+  window.npSharePromoChannel = async function(channel) {
+    const userCode = String(
+      (cachedWalletState && cachedWalletState.refCode)
+      || (typeof document !== 'undefined' && document.getElementById && document.getElementById('npWalletRefCodeVal') ? document.getElementById('npWalletRefCodeVal').textContent.trim() : '')
+      || (typeof localStorage !== 'undefined' && localStorage.getItem('naprawnik_ref_code'))
+      || 'NAP-START20'
+    ).trim();
+    const downloadUrl = 'https://naprawnik-download.pages.dev/';
+    const pwaUrl = 'https://turbodiesel966-eng.github.io/Aktualizacja-17.10/';
+    const templates = {
+      tiktok: [
+        '🎬 [SKRYPT TIKTOK / YOUTUBE SHORTS 9:16 — 20 s]',
+        '0-3s (Hook): Skuter albo motocykl kręci, ale nie odpala? Przestań wymieniać moduł CDI i cewkę w ciemno!',
+        '3-10s (Problem): Pokaż aplikację NAPRAWNIK v5.51 na telefonie — Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi), 37 drzew objawowych, ścieżka TAK/NIE i pinouty CDI.',
+        '10-16s (Rozwiązanie): W 30 sekund sprawdzasz fabryczne luzy zaworowe, momenty Nm, dysze i oporności statora — działa 100% offline w garażu!',
+        '16-20s (CTA): Pobierz za darmo z linku w BIO! A z moim kodem ' + userCode + ' masz -20% na pakiety PRO i WARSZTAT VIP + 10 zł bonusu na start w Portfelu BLIK!',
+        '',
+        '📋 OPIS DO WKLEJENIA POD FILMEM (TIKTOK / YT SHORTS):',
+        'Skuter 2T/4T, cross albo quad nie odpala lub traci moc? 🛠️ Sprawdź NAPRAWNIK v5.51 — Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi), 229 rekordów OEM, 158+38 usterek, Elektroniczne Lab i kalkulatory (Squish, Gaźnik, CVT) 100% offline w APK! 📲 Pobierz: ' + downloadUrl + ' | Użyj kodu: ' + userCode + ' (-20% zniżki + 10 zł na start w Portfelu BLIK!). #skuter #motocykle #mechanika #2T #4T #warsztat #quady #atv #tuning #naprawnik'
+      ].join('\n'),
+      wykop: [
+        '🛠️ **NAPRAWNIK v5.51 — Warsztatowy Kombajn i Encyklopedia Mechanika Motocyklowego (APK 100% Offline + PWA)**',
+        '',
+        'Mirki spod tagów motocyklowych i warsztatowych — wyszła wersja **v5.51** aplikacji **NAPRAWNIK** w nowym kafelkowym układzie Bento Grid 3D:',
+        '• **Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)** — od 50cc (Minarelli, Piaggio, GY6, AM6, D50B0) po motocykle R2/R3/R4/V2/V4/Boxer i quady 4x4.',
+        '• **229 rekordów OEM (2 284 parametry):** momenty dokręcania (Nm), luzy zaworowe, dysze, rolki CVT, paski, świece.',
+        '• **Diagnostyka:** 37 drzew 2T/4T, 12 drzew Multi/ATV, 10 ścieżek TAK/NIE, 47 procedur w 8 działach A–H i 91 kodów OBD/EFI Blink.',
+        '• **Narzędzia:** Elektroniczne Laboratorium, 10 pinoutów CDI/Reg, 7 schematów SVG z zoomem, Dekoder VIN (70 WMI), kalkulatory Squish/CR/Gaźnik/CVT i Druciarstwo Ultimate (47 patentów).',
+        '• **Darmowy plan AMATOR** działa w 100% offline w garażu bez konta i bez reklam!',
+        '• **Portfel BLIK:** 10 zł bonusu na start, a z kodem **' + userCode + '** macie **-20% zniżki** na pakiety PRO i WARSZTAT VIP (oraz 30% prowizji do 132 zł wypłacane na BLIK od 50 zł).',
+        '',
+        '📲 Pobierz APK / Zobacz galerię 9 ekranów: ' + downloadUrl,
+        '🌐 Wersja Web (PWA): ' + pwaUrl,
+        '',
+        '#motocykle #skutery #mechanika #warsztat #motoryzacja #quady #atv #2t #zrobtosam #aplikacje'
+      ].join('\n'),
+      discord: [
+        '🚀 **NAPRAWNIK v5.51 — Cyfrowy Mózg Warsztatu Motocyklowego (APK Offline + PWA)** 🛵🔧',
+        'Szukasz momentów dokręcania (Nm), luzów zaworowych, pinoutów CDI, doboru dysz/rolek CVT albo schematu instalacji?',
+        '✅ **Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)** + 229 rekordów OEM + 47 procedur A–H + kalkulatory 3D (HUD, Squish, Gaźnik, CVT) — za darmo w planie AMATOR (100% offline w APK!).',
+        '🎁 **Portfel BLIK:** Odbierz **10 zł bonusu na start**, wpisz kod rabatowy **`' + userCode + '`** (**-20% zniżki** na PRO i WARSZTAT VIP) i zgarniaj **30% prowizji (do 132 zł) na BLIK**!',
+        '👉 **Pobierz APK / Galeria v5.51:** ' + downloadUrl,
+        '👉 **Uruchom w przeglądarce (PWA):** ' + pwaUrl
+      ].join('\n'),
+      forum: [
+        'Tytuł: [Narzędzie Offline] NAPRAWNIK v5.51 — Baza 480+ modeli (2T/4T, Multi, ATV), Pinouty CDI, Momenty Nm i Diagnostyka',
+        '',
+        'Cześć! Podrzucam zaktualizowany do wersji v5.51 kombajn warsztatowy NAPRAWNIK (działa jako izolowany instalator Android APK 100% offline w garażu oraz w przeglądarce PWA):',
+        '- Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi) oraz 229 rekordów OEM (2 284 parametry serwisowe: luzy zaworowe, momenty Nm, dysze, rolki, paski, świece)',
+        '- Elektroniczne Laboratorium pomiarowe + 12 procedur multimetrem + 10 interaktywnych pinoutów CDI/regulatorów + 7 schematów SVG z zoomem',
+        '- 37 drzew objawowych 2T/4T, 10 ścieżek decyzyjnych TAK/NIE, 47 procedur w 8 działach A-H (R2/R3/R4/V2/V4/Boxer/ATV) oraz 91 kodów OBD/EFI Blink',
+        '- Kalkulatory: Squish & CR, Stroiciel Gaźnika, Tuning CVT, Płytki zaworowe (Shim Calculator), Tryb HUD i Dekoder VIN (70 kodów WMI)',
+        '',
+        'Plan AMATOR jest całkowicie darmowy (bez rejestracji i bez reklam). Jeśli ktoś chce odblokować pakiety PRO lub WARSZTAT VIP (karty zleceń PDF, marża, 91 kodów OBD, pinouty PRO), na start w portfelu jest 10 zł bonusu, a kod ' + userCode + ' obniża cenę wszystkich pakietów o -20%.',
+        '',
+        'Link do pobrania APK (z sumą SHA-256 i galerią ekranów): ' + downloadUrl
+      ].join('\n'),
+      whatsapp: 'Cześć! Sprawdź aplikację warsztatową NAPRAWNIK v5.51 (Baza ponad 480 modeli i wariantów: skutery 2T/4T, crossy, ATV i Maxi — momenty Nm, luzy zaworowe, pinouty CDI, kalkulatory CVT/gaźnika, 100% offline na telefonie): ' + downloadUrl + ' 🛠️ Masz 10 zł na start w portfelu, a z moim kodem ' + userCode + ' dostaniesz -20% zniżki na pakiet PRO lub WARSZTAT VIP!'
+    };
+    const text = templates[channel] || templates.tiktok;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      }
+    } catch (_) {}
+    if (channel === 'whatsapp' && typeof window !== 'undefined' && typeof window.open === 'function') {
+      try {
+        window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
+      } catch (_) {}
+    }
+    if (typeof alert === 'function') {
+      alert('✅ Skopiowano gotowy materiał promocyjny (' + String(channel || 'tiktok').toUpperCase() + ') z Twoim kodem ' + userCode + ' (-20%)!\n\nWklej go teraz na TikToku, YouTube Shorts, Wykopie, Discordzie, Telegramie lub forum motocyklowym.');
+    }
+    return text;
+  };
+
+  window.npGenerateTikTokPromoCard = function() {
+    const userCode = String(
+      (cachedWalletState && cachedWalletState.refCode)
+      || (typeof document !== 'undefined' && document.getElementById && document.getElementById('npWalletRefCodeVal') ? document.getElementById('npWalletRefCodeVal').textContent.trim() : '')
+      || (typeof localStorage !== 'undefined' && localStorage.getItem('naprawnik_ref_code'))
+      || 'NAP-START20'
+    ).trim();
+    if (typeof document === 'undefined' || !document.createElement) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext && canvas.getContext('2d');
+    if (ctx) {
+      const bg = ctx.createLinearGradient ? ctx.createLinearGradient(0, 0, 1080, 1920) : null;
+      if (bg) {
+        bg.addColorStop(0, '#060a14');
+        bg.addColorStop(0.5, '#0f172a');
+        bg.addColorStop(1, '#090d16');
+        ctx.fillStyle = bg;
+      } else {
+        ctx.fillStyle = '#0f172a';
+      }
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(36, 36, 1008, 1848);
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(54, 54, 972, 1812);
+
+      ctx.fillStyle = '#f97316';
+      ctx.font = '900 34px sans-serif';
+      ctx.fillText('⚡ NAPRAWNIK v5.51 • APK 100% OFFLINE & PWA', 90, 145);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 64px sans-serif';
+      wrapCanvasText(ctx, 'CYFROWY MÓZG WARSZTATU MOTOCYKLOWEGO', 90, 240, 900, 76, 3);
+
+      ctx.fillStyle = '#67e8f9';
+      ctx.font = 'bold 34px sans-serif';
+      wrapCanvasText(ctx, 'Baza ponad 480 modeli i wariantów (skutery 2T/4T, crossy, ATV i Maxi)', 90, 445, 900, 46, 2);
+
+      const bullets = [
+        '✅ 229 rekordów OEM (2 284 parametry: momenty Nm, luzy, dysze, CVT)',
+        '✅ 37 drzew objawowych 2T/4T + 10 ścieżek TAK/NIE + 47 procedur A–H',
+        '✅ Elektroniczne Lab, 10 pinoutów CDI/Reg i 7 schematów SVG',
+        '✅ Kalkulatory 3D: Tryb HUD, Squish/CR, Gaźnik, Tuning CVT, VIN',
+        '✅ Druciarstwo Ultimate (47 patentów) + Zlecenia Warsztatowe PDF'
+      ];
+      ctx.fillStyle = '#131d36';
+      ctx.fillRect(80, 560, 920, 620);
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(80, 560, 920, 620);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 31px sans-serif';
+      let by = 640;
+      for (let i = 0; i < bullets.length; i++) {
+        by = wrapCanvasText(ctx, bullets[i], 115, by, 850, 44, 2) + 28;
+      }
+
+      ctx.fillStyle = '#11221c';
+      ctx.fillRect(80, 1230, 920, 560);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(80, 1230, 920, 560);
+
+      ctx.fillStyle = '#fde047';
+      ctx.font = '900 38px sans-serif';
+      ctx.fillText('💰 PORTFEL BLIK + KOD RABATOWY -20%', 120, 1315);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px sans-serif';
+      wrapCanvasText(ctx, '• 10 zł bonusu na start w aplikacji\n• -20% zniżki na pakiety PRO i WARSZTAT VIP z kodem:', 120, 1385, 840, 46, 3);
+
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(120, 1500, 840, 120);
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(120, 1500, 840, 120);
+
+      ctx.fillStyle = '#10b981';
+      ctx.font = '900 58px monospace';
+      ctx.fillText('KOD: ' + userCode, 175, 1580);
+
+      ctx.fillStyle = '#67e8f9';
+      ctx.font = '900 32px sans-serif';
+      ctx.fillText('📲 Pobierz: naprawnik-download.pages.dev', 120, 1715);
+    }
+    let dataUrl = '';
+    try { dataUrl = canvas.toDataURL('image/png'); } catch (_) {}
+    if (document.body && dataUrl) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'naprawnik-tiktok-shorts-9x16-' + userCode.toLowerCase() + '.png';
+      document.body.appendChild(a);
+      if (typeof a.click === 'function') a.click();
+      a.remove();
+    }
     return { canvas, dataUrl, refCode: userCode };
   };
 
