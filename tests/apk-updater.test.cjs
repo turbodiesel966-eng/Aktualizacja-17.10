@@ -263,6 +263,8 @@ test("APK updater rejects downgrade, older/equal versions and cross-package payl
   assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.50", versionCode: 3065372 }, installed), false);
   // Odrzucenie obcego pakietu
   assert.equal(updater.isUpdateNewer({ appId: "com.other.app", versionName: "9.99", versionCode: 9999999 }, installed), false);
+  // Gdy mostek natywny nie potwierdził wersji (isNativeVerified: false, versionCode: 0), a remote ma wydanie produkcyjne, wymagana jest aktualizacja
+  assert.equal(updater.isUpdateNewer({ appId: "pl.turbodiesel.naprawnik", versionName: "5.51", versionCode: 3171649 }, { packageName: "pl.turbodiesel.naprawnik", versionName: "5.51", versionCode: 0, isNativeVerified: false }), true);
 });
 
 test("APK updater throttles background checks, bypasses throttle manually and stays safe offline", async () => {
@@ -420,10 +422,12 @@ test("APK and PWA remain strictly isolated", () => {
   const rootHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
   const wwwBridge = fs.readFileSync(path.join(root, "www", "native-bridge.js"), "utf8");
   const wwwHtml = fs.readFileSync(path.join(root, "www", "index.html"), "utf8");
+  const wwwSw = fs.readFileSync(path.join(root, "www", "sw.js"), "utf8");
 
   assert.equal(rootHtml.includes("__naprawnikApkUpdater"), false, "PWA nie może ładować natywnego instalatora APK");
   assert.equal(rootHtml.includes("ApkUpdaterPlugin"), false);
   assert.match(wwwBridge, /__naprawnikApkUpdater/);
   assert.match(wwwBridge, /naprawnik-download\.pages\.dev\/apk-version\.json/);
   assert.match(wwwHtml, /id="topUpdateBar" class="top-update-bar" style="display:none !important"/);
+  assert.match(wwwSw, /ks\.filter\(k\s*=>\s*k\.startsWith\('naprawnik-'\)\s*&&\s*k\s*!==\s*CACHE\)/, "Service Worker APK musi usuwać wszystkie stare cache naprawnik-*");
 });

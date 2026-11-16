@@ -277,6 +277,13 @@ if (Capacitor.isNativePlatform()) {
         return rCode > iCode;
       }
 
+      // Gdy remote ma kod versionCode > 0, a zainstalowany nie miał potwierdzonego kodu z mostka (iCode === 0)
+      if (rCode > 0 && (!iCode || iCode <= 0)) {
+        if (installed.isNativeVerified === false) {
+          return true;
+        }
+      }
+
       // 2. Semver fallback (np. testy jednostkowe lub środowisko bez odczytanego natywnego versionCode)
       const semCmp = compareSemver(remote.versionName || "0", installed.versionName || "0");
       if (semCmp !== 0) return semCmp > 0;
@@ -336,6 +343,7 @@ if (Capacitor.isNativePlatform()) {
         try {
           const info = await plugin.getInstalledInfo();
           if (info && (info.versionCode || info.versionName)) {
+            info.isNativeVerified = Boolean(info.versionCode && Number(info.versionCode) > 0);
             state.installed = info;
             return info;
           }
@@ -350,6 +358,7 @@ if (Capacitor.isNativePlatform()) {
         build: typeof window.CURRENT_APP_BUILD === "number" ? window.CURRENT_APP_BUILD : 0,
         canRequestPackageInstalls: false,
         hasDownloadedApk: false,
+        isNativeVerified: false,
       };
       state.installed = fallback;
       return fallback;
@@ -475,7 +484,11 @@ if (Capacitor.isNativePlatform()) {
           break;
         case "up_to_date":
           icon.textContent = "✅";
-          text.textContent = curVer ? `APK aktualny (${curVer})` : "APK jest aktualny";
+          if (state.installed && (state.installed.isNativeVerified || state.installed.versionCode > 0)) {
+            text.textContent = curVer ? `APK aktualny (${curVer})` : "APK jest aktualny";
+          } else {
+            text.textContent = curVer ? `Gotowy offline (${curVer})` : "Aplikacja gotowa offline";
+          }
           break;
         case "error":
           icon.textContent = "⚠️";
@@ -568,9 +581,12 @@ if (Capacitor.isNativePlatform()) {
           `</div>`;
         actionsHtml = '<button type="button" class="btn" id="apkUpdCloseBtn" style="border-color:#00f57a;color:#00f57a">OK</button>';
       } else if (state.status === "up_to_date") {
+        const isVerif = Boolean(state.installed && (state.installed.isNativeVerified || state.installed.versionCode > 0));
         bodyHtml =
           `<div style="background:rgba(0,229,255,0.08);border:1px solid #00e5ff;border-radius:10px;padding:10px;margin:8px 0;font-size:13px">` +
-          `✅ Korzystasz z najnowszej wersji APK: <b>${curVer}</b>${curCode}.` +
+          (isVerif
+            ? `✅ Korzystasz z najnowszej wersji APK: <b>${curVer}</b>${curCode}.`
+            : `ℹ️ Wersja zadeklarowana: <b>${curVer}</b> (oczekiwanie na potwierdzenie mostka natywnego Android).`) +
           `</div>`;
         actionsHtml =
           `<button type="button" class="btn" id="apkUpdCheckBtn">🔄 Sprawdź ponownie</button>` +

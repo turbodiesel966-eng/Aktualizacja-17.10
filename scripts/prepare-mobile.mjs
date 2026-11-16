@@ -310,7 +310,7 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(ks =>
       Promise.all(
-        ks.filter(k => k.startsWith('naprawnik-') && k.endsWith('-native') && k !== CACHE)
+        ks.filter(k => k.startsWith('naprawnik-') && k !== CACHE)
           .map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
